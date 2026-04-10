@@ -79,18 +79,31 @@
                                         $leftPct = ($offsetHours / $totalHoursScope) * 100;
                                         $widthPct = ($durationHours / $totalHoursScope) * 100;
 
-                                        // Status aesthetics
+                                        // Status aesthetics (Shadcn Transparent Badge Style)
                                         $isPending = $rental->status == 'pending';
-                                        $bgColor = $isPending ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300';
-                                        $icon = $isPending ? '⏳' : '🔒';
+                                        $isPaid = $rental->status == 'paid';
+                                        
+                                        if ($isPending) {
+                                            $bgColor = 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30';
+                                            $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+                                            $label = 'Menunggu';
+                                        } elseif ($isPaid) {
+                                            $bgColor = 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30';
+                                            $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>';
+                                            $label = 'Disewa';
+                                        } else {
+                                            $bgColor = 'bg-slate-500/20 text-slate-700 dark:text-slate-400 border border-slate-500/30';
+                                            $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>';
+                                            $label = 'Selesai';
+                                        }
                                     @endphp
-                                    <div class="absolute top-3 bottom-3 rounded-lg shadow-sm border px-2 py-1 overflow-hidden transition-all hover:opacity-90 hover:scale-y-[1.02] cursor-default flex flex-col justify-center"
+                                    <div class="absolute top-2 bottom-2 rounded-md {{ $bgColor }} px-2 py-1 overflow-hidden transition-all hover:bg-opacity-80 hover:scale-y-[1.02] cursor-default flex flex-col justify-center"
                                          style="left: {{ $leftPct }}%; width: {{ $widthPct }}%; z-index: 5;"
                                          title="{{ $rental->nama }} ({{ $rentStart->format('d/m H:i') }} - {{ $rentEnd->format('d/m H:i') }})"
                                     >
-                                         <div class="flex items-center gap-1 w-full opacity-100">
-                                             <span class="text-[10px]">{{ $icon }}</span>
-                                             <span class="text-[10px] font-bold truncate leading-tight w-full">{{ $isPending ? 'Menunggu Bayar' : 'Disewa' }}</span>
+                                         <div class="flex items-center gap-1.5 w-full">
+                                             <span class="shrink-0 flex items-center justify-center">{!! $icon !!}</span>
+                                             <span class="text-[10px] font-semibold truncate leading-tight w-full tracking-tight">{{ $label }}</span>
                                          </div>
                                     </div>
                                 @endforeach
@@ -101,10 +114,11 @@
                 </div>
             </div>
             
-            <div class="flex items-center gap-6 justify-center text-xs text-muted-foreground">
-                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-emerald-100 border border-emerald-300"></div> Telah Disewa</div>
-                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-amber-100 border border-amber-300"></div> Menunggu Pembayaran</div>
-                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded border border-dashed border-border"></div> Tersedia</div>
+            <div class="flex items-center gap-8 justify-center text-xs font-medium text-muted-foreground mt-4">
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div> Telah Disewa</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div> Menunggu Pembayaran</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-slate-500/20 border border-slate-500/30 flex items-center justify-center text-slate-700 dark:text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg></div> Selesai</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border border-dashed border-border bg-muted/20"></div> Tersedia</div>
             </div>
         @endif
     </div>
