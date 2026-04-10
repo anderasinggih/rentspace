@@ -40,6 +40,6 @@ class Transactions extends Component
     {
         return view('livewire.admin.transactions', [
             'transactions' => Rental::with('unit')->latest()->get()
-        ])->layout('layouts.app');
+        ])->layout('layouts.admin');
     }
 }

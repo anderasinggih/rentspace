@@ -74,6 +74,6 @@ class UnitManager extends Component
     {
         return view('livewire.admin.unit-manager', [
             'units' => Unit::latest()->get()
-        ])->layout('layouts.app');
+        ])->layout('layouts.admin');
     }
 }

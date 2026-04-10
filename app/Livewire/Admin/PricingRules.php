@@ -69,6 +69,6 @@ class PricingRules extends Component
     {
         return view('livewire.admin.pricing-rules', [
             'rules' => PricingRule::latest()->get()
-        ])->layout('layouts.app');
+        ])->layout('layouts.admin');
     }
 }
