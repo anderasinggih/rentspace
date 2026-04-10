@@ -36,6 +36,9 @@
                     <a href="{{ route('admin.transactions') }}" wire:navigate class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Mutasi Transaksi
                     </a>
+                    <a href="{{ route('admin.settings') }}" wire:navigate class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Pengaturan
+                    </a>
                 </div>
             </div>
 
@@ -80,6 +83,7 @@
         <a href="{{ route('admin.units') }}" wire:navigate class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Manajemen Unit</a>
         <a href="{{ route('admin.promo') }}" wire:navigate class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Promo & Diskon</a>
         <a href="{{ route('admin.transactions') }}" wire:navigate class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Mutasi Transaksi</a>
+        <a href="{{ route('admin.settings') }}" wire:navigate class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pengaturan Web</a>
         
         <div class="h-px bg-border my-4"></div>
         

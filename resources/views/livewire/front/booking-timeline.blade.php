@@ -21,21 +21,21 @@
         @else
         <!-- GANTT TIMELINE CHART -->
         <div class="overflow-x-auto hide-scrollbar pb-6 rounded-2xl border border-border bg-background shadow-sm">
-            <div class="min-w-[2800px] relative">
+            <div class="min-w-[900px] md:min-w-[2800px] relative">
                 <!-- HEADER DATES -->
                 <div class="flex border-b border-border bg-muted/30">
                     <div
-                        class="w-48 shrink-0 p-4 font-semibold text-sm border-r border-border border-dashed flex items-center justify-center tracking-wide uppercase text-muted-foreground">
+                        class="w-24 md:w-48 shrink-0 p-2 md:p-4 font-semibold text-[10px] md:text-sm border-r border-border border-dashed flex items-center justify-center tracking-wide uppercase text-muted-foreground text-center">
                         Unit Tersedia</div>
                     <div class="flex-1 relative">
                         <div class="flex w-full h-full divide-x divide-border/50 divide-dashed">
                             @foreach($dates as $date)
-                            <div class="flex-1 p-2 text-center {{ $date->isToday() ? 'bg-primary/5' : '' }}">
+                            <div class="flex-1 p-1 md:p-2 text-center {{ $date->isToday() ? 'bg-primary/5' : '' }}">
                                 <div
-                                    class="text-sm font-bold text-foreground {{ $date->isToday() ? 'text-primary' : '' }}">
+                                    class="text-[10px] md:text-sm font-bold text-foreground {{ $date->isToday() ? 'text-primary' : '' }}">
                                     {{ $date->format('d/m') }}</div>
-                                <div class="text-[10px] text-muted-foreground uppercase font-medium">{{
-                                    \Carbon\Carbon::parse($date)->translatedFormat('l') }}</div>
+                                <div class="text-[8px] md:text-[10px] text-muted-foreground uppercase font-medium">{{
+                                    \Carbon\Carbon::parse($date)->translatedFormat('D') }}</div>
                             </div>
                             @endforeach
                         </div>
@@ -45,18 +45,19 @@
                 <!-- BODY ROWS -->
                 <div class="flex flex-col relative divide-y divide-border/50">
                     @foreach($units as $unit)
-                    <div class="flex h-20 group hover:bg-muted/10 transition-colors">
+                    <div class="flex h-14 md:h-20 group hover:bg-muted/10 transition-colors">
                         <!-- Unit Details Fixed width -->
                         <div
-                            class="w-48 shrink-0 p-4 border-r border-border border-dashed flex items-center gap-3 bg-background z-10 transition-colors group-hover:bg-muted/30">
-                            <div class="w-1.5 h-10 rounded-full bg-primary/40"></div>
-                            <div>
-                                <div class="font-bold text-sm tracking-tight">{{ $unit->seri }}</div>
-                                <div class="text-[11px] text-muted-foreground flex gap-1.5 items-center mt-0.5">
-                                    <div class="w-2 h-2 rounded-full"
+                            class="w-24 md:w-48 shrink-0 p-2 md:p-4 border-r border-border border-dashed flex items-center gap-2 md:gap-3 bg-background z-10 transition-colors group-hover:bg-muted/30">
+                            <div class="w-1 md:w-1.5 h-8 md:h-10 rounded-full bg-primary/40 hidden md:block"></div>
+                            <div class="w-full">
+                                <div class="font-bold text-[11px] md:text-sm tracking-tight leading-tight truncate md:whitespace-normal">{{ $unit->seri }}</div>
+                                <div class="text-[9px] md:text-[11px] text-muted-foreground flex flex-col md:flex-row md:gap-1.5 md:items-center mt-0.5">
+                                    <div class="w-2 h-2 rounded-full hidden md:block"
                                         style="background-color: {{ strtolower($unit->warna) == 'hitam' ? '#222' : (strtolower($unit->warna) == 'putih' ? '#eee' : 'orange') }}">
                                     </div>
-                                    {{ $unit->warna }} &bull; {{ $unit->memori }}
+                                    <span class="md:hidden">{{ $unit->memori }}</span>
+                                    <span class="hidden md:inline">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
                                 </div>
                             </div>
                         </div>
@@ -123,13 +124,13 @@
                                     $label = 'Selesai';
                                     }
                                     @endphp
-                                    <div class="absolute top-2 bottom-2 rounded-md {{ $bgColor }} px-2 py-1 overflow-hidden transition-all hover:bg-opacity-80 hover:scale-y-[1.02] cursor-default flex flex-col justify-center"
+                                    <div class="absolute top-1 bottom-1 md:top-2 md:bottom-2 rounded-sm md:rounded-md {{ $bgColor }} px-1 md:px-2 py-0.5 overflow-hidden transition-all hover:bg-opacity-80 hover:scale-y-[1.02] cursor-default flex flex-col justify-center"
                                         style="left: {{ $leftPct }}%; width: {{ $widthPct }}%; z-index: 5;"
                                         title="{{ $rental->nama }} ({{ $rentStart->format('d/m H:i') }} - {{ $rentEnd->format('d/m H:i') }})">
-                                        <div class="flex items-center gap-1.5 w-full">
-                                            <span class="shrink-0 flex items-center justify-center">{!! $icon !!}</span>
+                                        <div class="flex items-center gap-1 md:gap-1.5 w-full">
+                                            <span class="shrink-0 flex items-center justify-center scale-75 md:scale-100">{!! $icon !!}</span>
                                             <span
-                                                class="text-[10px] font-semibold truncate leading-tight w-full tracking-tight">{{
+                                                class="text-[7px] md:text-[10px] font-semibold truncate leading-tight w-full tracking-tight">{{
                                                 $label }}</span>
                                         </div>
                                     </div>

@@ -44,9 +44,12 @@
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-base font-bold text-primary">
                                         Rp {{ number_format($trx->grand_total, 0, ',', '.') }}<br/>
-                                        <div class="mt-1 flex items-center">
-                                            <span class="inline-flex rounded border border-orange-300 bg-orange-100 text-orange-800 px-1.5 font-mono text-xs font-semibold mr-2">
+                                        <div class="mt-1 flex items-center gap-1">
+                                            <span class="inline-flex rounded border border-orange-300 bg-orange-100 text-orange-800 px-1.5 font-mono text-xs font-semibold uppercase">
                                                 Kode: {{ $trx->kode_unik_pembayaran }}
+                                            </span>
+                                            <span class="inline-flex rounded border border-blue-300 bg-blue-100 text-blue-800 px-1.5 font-mono text-xs font-semibold uppercase">
+                                                {{ $trx->metode_pembayaran }}
                                             </span>
                                         </div>
                                     </td>

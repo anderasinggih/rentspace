@@ -8,6 +8,7 @@ use Livewire\Component;
 class Payment extends Component
 {
     public $rental;
+    public $metode_pembayaran = 'qris';
 
     public function mount($id)
     {
@@ -16,9 +17,10 @@ class Payment extends Component
 
     public function finish()
     {
-        // This button just signals that the user has simulated transferring the money.
-        // The admin will verify it on the Dashboard Tracking Mutation using the Unique Code.
-        // It brings the user back to the timeline, and the rent schedule will immediately be seen as yellow/pending.
+        $this->rental->update([
+            'metode_pembayaran' => $this->metode_pembayaran
+        ]);
+
         return redirect()->route('public.timeline');
     }
 
