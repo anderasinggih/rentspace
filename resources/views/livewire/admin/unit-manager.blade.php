@@ -6,9 +6,11 @@
                 <p class="mt-2 text-sm text-muted-foreground">A list of all iPhone units available for rent, their specs, and pricing configurations.</p>
             </div>
             <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                @if(auth()->user()->role === 'admin')
                 <button wire:click="create" class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                     Add new unit
                 </button>
+                @endif
             </div>
         </div>
 
@@ -53,10 +55,14 @@
                                     <div class="flex items-center justify-end w-full mt-1.5 gap-4">
                                         @if($unit->trashed())
                                             <span class="text-[11px] font-semibold text-red-500 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-full">Dihapus Sistem</span>
+                                            @if(auth()->user()->role === 'admin')
                                             <button wire:click="restoreUnit({{ $unit->id }})" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-emerald-100 text-emerald-700 hover:bg-emerald-200 h-8 px-4">Pulihkan</button>
+                                            @endif
                                         @else
+                                            @if(auth()->user()->role === 'admin')
                                             <button wire:click="edit({{ $unit->id }})" class="text-primary hover:underline text-sm font-semibold transition-colors hover:text-primary/80">Edit</button>
                                             <button wire:click="delete({{ $unit->id }})" class="text-destructive hover:underline text-sm font-semibold transition-colors hover:text-destructive/80" onclick="confirm('Yakin ingin menghapus unit ini? Transaksi lamanya akan aman, namun unit akan masuk kotak arsip (abu-abu).') || event.stopImmediatePropagation()">Hapus</button>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>

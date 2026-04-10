@@ -123,14 +123,28 @@ class Dashboard extends Component
             ->limit(5)
             ->get();
 
-        $topUnits = Rental::selectRaw('unit_id, COUNT(id) as rent_count, SUM(grand_total) as revenue')
-            ->with(['unit' => function($q) { $q->withTrashed(); }])
+        // Unit performance with Rented Hours calculation
+        $topUnits = Rental::with(['unit' => function($q) { $q->withTrashed(); }])
             ->where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
             ->whereBetween('created_at', [$start, $end])
+            ->get()
             ->groupBy('unit_id')
-            ->orderByDesc('revenue')
-            ->limit(5)
-            ->get();
+            ->map(function($group) {
+                $unit = $group->first()->unit;
+                $rent_count = $group->count();
+                $revenue = $group->sum('grand_total');
+                $hours = $group->sum(function($r) {
+                    return abs(\Carbon\Carbon::parse($r->waktu_selesai)->diffInHours(\Carbon\Carbon::parse($r->waktu_mulai)));
+                });
+                return (object)[
+                    'unit' => $unit,
+                    'rent_count' => $rent_count,
+                    'revenue' => $revenue,
+                    'hours' => $hours
+                ];
+            })
+            ->sortByDesc('revenue')
+            ->take(5);
 
         $chartInfo = $this->getChartData();
         $chartCategories = $chartInfo['categories'];

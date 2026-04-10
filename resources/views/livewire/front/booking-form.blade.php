@@ -1,7 +1,13 @@
 <div class="py-12 px-4 sm:px-6 lg:px-8 bg-muted/20 min-h-[calc(100vh-4rem)]">
     
     <div class="max-w-3xl mx-auto">
-        <h1 class="text-3xl font-extrabold tracking-tight text-foreground mb-8">Formulir Penyewaan iPhone</h1>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Formulir Penyewaan</h1>
+            <a href="{{ route('public.timeline') }}" wire:navigate class="inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 text-sm font-medium shadow-sm w-full sm:w-auto text-center transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+                Lihat Kalender Jadwal
+            </a>
+        </div>
 
         <div class="bg-background rounded-2xl shadow-sm border border-border p-6 sm:p-8">
             <form wire:submit.prevent="submit" class="space-y-8">
@@ -12,12 +18,12 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium leading-none">Waktu Mulai</label>
-                            <input type="datetime-local" wire:model.live="waktu_mulai" class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <input type="datetime-local" wire:model.live="waktu_mulai" class="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]">
                             @error('waktu_mulai') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="text-sm font-medium leading-none">Waktu Selesai</label>
-                            <input type="datetime-local" wire:model.live="waktu_selesai" class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <input type="datetime-local" wire:model.live="waktu_selesai" class="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]">
                             @error('waktu_selesai') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                     </div>

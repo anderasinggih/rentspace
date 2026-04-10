@@ -73,12 +73,26 @@
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right sm:pr-6">
                                         <div class="flex flex-col gap-2 items-end">
                                         @if($trx->status === 'pending')
+                                            @if(auth()->user()->role === 'admin')
                                             <button wire:click="markAsPaid({{ $trx->id }})" wire:confirm="Transaksi ini sudah valid transfer?" class="inline-flex items-center justify-center rounded-md border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs font-medium">Validasi Lunas</button>
                                             <button wire:click="cancel({{ $trx->id }})" wire:confirm="Batalkan pesanan ini?" class="text-xs text-red-500 hover:text-red-700 hover:underline">Batalkan</button>
+                                            @endif
                                         @elseif($trx->status === 'paid')
-                                            <button wire:click="complete({{ $trx->id }})" wire:confirm="Sewa sudah dikembalikan dan selesai?" class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 px-3 text-xs font-medium">Tandai Selesai</button>
+                                            @php
+                                                $tolerance = (int) \App\Models\Setting::getVal('late_tolerance_minutes', 60);
+                                                $isLate = (\Carbon\Carbon::parse($trx->waktu_selesai)->addMinutes($tolerance) < now());
+                                            @endphp
+                                            @if(auth()->user()->role === 'admin')
+                                                @if($isLate)
+                                                    <button wire:click="openDendaModal({{ $trx->id }})" class="inline-flex items-center justify-center rounded-md bg-red-600 text-white shadow hover:bg-red-700 h-8 px-3 text-xs font-medium">Selesai (Telat?)</button>
+                                                @else
+                                                    <button wire:click="finishWithoutDenda({{ $trx->id }})" wire:confirm="Sewa sudah dikembalikan dan selesai?" class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 px-3 text-xs font-medium">Tandai Selesai</button>
+                                                @endif
+                                            @endif
                                         @endif
-                                        <button wire:click="deleteRow({{ $trx->id }})" wire:confirm="Hapus data secara permanen?" class="text-xs text-muted-foreground hover:text-foreground mt-1">Delete Record</button>
+                                        @if(auth()->user()->role === 'admin')
+                                        <button wire:click="deleteRow({{ $trx->id }})" class="text-xs text-muted-foreground hover:text-foreground mt-1 text-right flex self-end" onclick="confirm('Hapus data secara permanen?') || event.stopImmediatePropagation()">Delete Record</button>
+                                        @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -90,9 +104,60 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($transactions->hasPages())
+                        <div class="px-6 py-4 border-t border-border">
+                            <div class="mt-4">
+                                {{ $transactions->links(data: ['scrollTo' => false]) }}
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
 
+        <!-- Denda Modal -->
+        @if($completingTrxId)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div class="bg-background rounded-xl p-6 shadow-xl w-full max-w-md border border-border">
+                <h3 class="text-lg font-bold mb-2">Penyelesaian Masa Sewa Terlambat</h3>
+                <p class="text-xs text-muted-foreground mb-4 leading-relaxed">Sistem mendeteksi jadwal melampaui batas toleransi. Jika ada denda yang dibebankan, masukkan nominalnya di bawah. Kosongkan (0) jika tidak ditarik denda.</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nominal Denda (Rp)</label>
+                        <input type="number" wire:model.live="dendaAmount" min="0" class="w-full h-10 rounded-md border border-input bg-background px-3 shadow-sm focus:outline-none focus:ring-1 focus:ring-primary" placeholder="0">
+                    </div>
+                    
+                    @if($dendaAmount > 0)
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Metode Pembayaran Denda</label>
+                        <div class="grid grid-cols-2 gap-3 mt-2">
+                            <label class="relative flex cursor-pointer rounded-lg border bg-background p-3 shadow-sm focus:outline-none hover:border-primary/50 transition-colors {{ $dendaMethod === 'cash' ? 'border-primary ring-1 ring-primary' : 'border-border' }}">
+                                <input type="radio" wire:model="dendaMethod" value="cash" class="sr-only">
+                                <span class="flex flex-1 items-center justify-center">
+                                    <span class="font-medium {{ $dendaMethod === 'cash' ? 'text-primary' : 'text-foreground' }}">💵 Tunai (Cash)</span>
+                                </span>
+                            </label>
+                            <label class="relative flex cursor-pointer rounded-lg border bg-background p-3 shadow-sm focus:outline-none hover:border-primary/50 transition-colors {{ $dendaMethod === 'qris' ? 'border-primary ring-1 ring-primary' : 'border-border' }}">
+                                <input type="radio" wire:model="dendaMethod" value="qris" class="sr-only">
+                                <span class="flex flex-1 items-center justify-center">
+                                    <span class="font-medium {{ $dendaMethod === 'qris' ? 'text-primary' : 'text-foreground' }}">📱 QRIS</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button wire:click="closeDendaModal" class="h-[36px] px-4 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors">Batalkan</button>
+                    <button wire:click="confirmDenda" class="h-[36px] px-4 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 shadow transition-colors flex items-center justify-center w-[160px]" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="confirmDenda">Selesaikan & Tagih</span>
+                        <span wire:loading wire:target="confirmDenda">Memproses...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 </div>

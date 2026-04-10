@@ -43,7 +43,7 @@
                 <div class="w-64 h-64 bg-background border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
                     <span class="text-muted-foreground text-sm font-medium mb-3">Pindai QRIS ini</span>
                     <div class="w-48 h-48 bg-muted/50 rounded flex items-center justify-center pt-2 relative">
-                        <img src="{{ Storage::url('public/qris.jpg') }}" onerror="this.style.display='none'" class="absolute inset-0 w-full h-full object-cover">
+                        <img src="{{ asset('storage/qris.jpg') }}" onerror="this.style.display='none'" class="absolute inset-0 w-full h-full object-cover">
                         <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground/30 z-0"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><rect width="8" height="8" x="7" y="7"/><path d="M3 13h18"/><path d="M13 3v18"/></svg>
                     </div>
                 </div>

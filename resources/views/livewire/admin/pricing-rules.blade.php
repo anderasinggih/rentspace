@@ -6,9 +6,11 @@
                 <p class="mt-2 text-sm text-muted-foreground">Manage dynamic discounts, like "35% off for 12 hours" or "Rent 1 day, free 1 day".</p>
             </div>
             <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                @if(auth()->user()->role === 'admin')
                 <button wire:click="create" class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
                     Create Rule
                 </button>
+                @endif
             </div>
         </div>
 
@@ -52,8 +54,10 @@
                                         @endif
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                        @if(auth()->user()->role === 'admin')
                                         <button wire:click="edit({{ $rule->id }})" class="text-primary hover:underline group-hover:text-primary/80 mr-3">Edit</button>
                                         <button wire:click="delete({{ $rule->id }})" wire:confirm="Hapus aturan ini?" class="text-red-500 hover:text-red-700">Del</button>
+                                        @endif
                                     </td>
                                 </tr>
                                 @empty

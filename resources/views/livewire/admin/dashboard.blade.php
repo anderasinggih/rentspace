@@ -135,6 +135,7 @@
                         <tr>
                             <th class="px-4 py-2 font-medium">Seri iPhone</th>
                             <th class="px-4 py-2 font-medium text-center">Sewa</th>
+                            <th class="px-4 py-2 font-medium text-center">Total Durasi</th>
                             <th class="px-4 py-2 font-medium text-right">Pendapatan</th>
                         </tr>
                     </thead>
@@ -145,12 +146,13 @@
                                 {{ $tu->unit ? $tu->unit->seri : 'Unit Terhapus' }}
                             </td>
                             <td class="px-4 py-3 text-center">{{ $tu->rent_count }}x</td>
+                            <td class="px-4 py-3 text-center">{{ $tu->hours }} Jam</td>
                             <td class="px-4 py-3 text-right font-medium text-emerald-600">Rp {{
                                 number_format($tu->revenue/1000, 0, ',', '.') }}k</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="3" class="px-4 py-6 text-center text-muted-foreground">Belum ada data unit
+                            <td colspan="4" class="px-4 py-6 text-center text-muted-foreground">Belum ada data unit
                                 tersewa.</td>
                         </tr>
                         @endforelse

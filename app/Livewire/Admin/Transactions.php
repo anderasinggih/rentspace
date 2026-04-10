@@ -4,11 +4,15 @@ namespace App\Livewire\Admin;
 
 use App\Models\Rental;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Transactions extends Component
 {
+    use WithPagination;
+
     public function markAsPaid($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'pending') {
             $rental->update(['status' => 'paid']);
@@ -17,22 +21,67 @@ class Transactions extends Component
 
     public function cancel($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid'])) {
             $rental->update(['status' => 'cancelled']);
         }
     }
 
-    public function complete($id)
+    public $completingTrxId = null;
+    public $dendaAmount = 0;
+    public $dendaMethod = 'cash';
+
+    public function openDendaModal($id)
     {
+        if (auth()->user()->role !== 'admin') return;
+        $this->completingTrxId = $id;
+        $this->dendaAmount = 0;
+        $this->dendaMethod = 'cash';
+    }
+
+    public function closeDendaModal()
+    {
+        $this->completingTrxId = null;
+    }
+
+    public function confirmDenda()
+    {
+        $this->validate([
+            'dendaAmount' => 'required|numeric|min:0',
+            'dendaMethod' => 'required|in:cash,qris',
+        ]);
+
+        if ($this->completingTrxId) {
+            $rental = Rental::findOrFail($this->completingTrxId);
+            if (in_array($rental->status, ['pending', 'paid'])) {
+                $rental->update([
+                    'status' => 'completed',
+                    'denda' => (int) $this->dendaAmount,
+                    'denda_payment_method' => $this->dendaAmount > 0 ? $this->dendaMethod : null
+                ]);
+            }
+        }
+
+        $this->closeDendaModal();
+    }
+
+    public function finishWithoutDenda($id)
+    {
+        if (auth()->user()->role !== 'admin') return;
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid'])) {
-            $rental->update(['status' => 'completed']);
+            $rental->update([
+                'status' => 'completed',
+                'denda' => 0,
+                'denda_payment_method' => null
+            ]);
         }
     }
 
     public function deleteRow($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         Rental::findOrFail($id)->delete();
     }
 
@@ -76,7 +125,7 @@ class Transactions extends Component
     public function render()
     {
         return view('livewire.admin.transactions', [
-            'transactions' => Rental::with('unit')->latest()->get()
+            'transactions' => Rental::with('unit')->latest()->paginate(10)
         ])->layout('layouts.admin');
     }
 }
