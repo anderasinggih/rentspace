@@ -11,9 +11,14 @@
                 <p class="text-sm font-semibold text-muted-foreground mb-2">Total Transaksi</p>
                 <div class="flex items-end justify-center tracking-tight mb-8">
                     @php
-                       $grandTotalStr = (string)$rental->grand_total;
-                       $lastThree = substr($grandTotalStr, -3);
-                       $basePrice = substr($grandTotalStr, 0, -3);
+                       $grandTotalStr = (string) floor($rental->grand_total);
+                       if (strlen($grandTotalStr) <= 3) {
+                           $basePrice = 0;
+                           $lastThree = str_pad($grandTotalStr, 3, '0', STR_PAD_LEFT);
+                       } else {
+                           $lastThree = substr($grandTotalStr, -3);
+                           $basePrice = (float) substr($grandTotalStr, 0, -3);
+                       }
                     @endphp
                     <span class="text-2xl font-bold align-baseline mr-1 text-foreground">Rp</span>
                     <span class="text-5xl font-extrabold text-foreground">{{ number_format($basePrice, 0, ',', '.') }}</span>

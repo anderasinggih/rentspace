@@ -62,9 +62,9 @@
                 </div>
 
                 <!-- Rincian Harga -->
-                @if($subtotal > 0)
+                @if($unit_id && $waktu_mulai && $waktu_selesai)
                 <div class="bg-primary/5 rounded-xl p-6 border border-primary/20">
-                    <h3 class="font-bold text-lg mb-4 text-foreground">Rincian Tagihan</h3>
+                    <h3 class="font-bold text-lg mb-4 text-foreground">Rincian Tagihan Kalkulasi Otomatis</h3>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-muted-foreground">Subtotal Sewa</span>

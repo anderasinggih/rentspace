@@ -24,9 +24,7 @@ class BookingForm extends Component
         if (in_array($propertyName, ['waktu_mulai', 'waktu_selesai'])) {
             $this->checkAvailability();
         }
-        if ($propertyName === 'unit_id') {
-            $this->calculatePrice();
-        }
+        $this->calculatePrice();
     }
 
     public function checkAvailability()
@@ -55,6 +53,10 @@ class BookingForm extends Component
                       });
             })->get();
             
+        if ($this->unit_id && !$this->available_units->contains('id', $this->unit_id)) {
+            $this->unit_id = null;
+        }
+
         $this->calculatePrice();
     }
 
@@ -72,7 +74,9 @@ class BookingForm extends Component
         $start = Carbon::parse($this->waktu_mulai);
         $end = Carbon::parse($this->waktu_selesai);
         
-        $diffInHours = $end->diffInHours($start);
+        $diffInHours = $start->diffInHours($end);
+        if ($diffInHours == 0) $diffInHours = 1; // minimum 1 hr
+
         $days = floor($diffInHours / 24);
         $remainingHours = $diffInHours % 24;
 
