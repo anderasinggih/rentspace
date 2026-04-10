@@ -10,8 +10,11 @@
 
         @livewireStyles
     </head>
-    <body>
-        {{ $slot }}
+    <body class="bg-background text-foreground antialiased font-sans flex flex-col min-h-screen">
+        <livewire:navbar />
+        <main class="flex-1 w-full flex flex-col pt-12">
+            {{ $slot }}
+        </main>
 
         @livewireScripts
     </body>
