@@ -10,7 +10,7 @@ class BookingTimeline extends Component
     public function render()
     {
         $startDate = \Carbon\Carbon::today();
-        $totalDays = 7;
+        $totalDays = 30; // Extended to 30 Days as requested
         $endDate = $startDate->copy()->addDays($totalDays - 1)->endOfDay();
         
         $dates = [];

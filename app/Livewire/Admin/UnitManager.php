@@ -70,10 +70,17 @@ class UnitManager extends Component
         Unit::findOrFail($id)->delete();
     }
 
+    public function restoreUnit($id)
+    {
+        \App\Models\Unit::withTrashed()->find($id)->restore();
+    }
+
     public function render()
     {
+        $units = \App\Models\Unit::withTrashed()->orderBy('deleted_at', 'asc')->orderBy('is_active', 'desc')->get();
+        
         return view('livewire.admin.unit-manager', [
-            'units' => Unit::latest()->get()
+            'units' => $units
         ])->layout('layouts.admin');
     }
 }

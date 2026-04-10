@@ -18,7 +18,7 @@
         @else
             <!-- GANTT TIMELINE CHART -->
             <div class="overflow-x-auto hide-scrollbar pb-6 rounded-2xl border border-border bg-background shadow-sm">
-                <div class="min-w-[900px] relative">
+                <div class="min-w-[2800px] relative">
                     <!-- HEADER DATES -->
                     <div class="flex border-b border-border bg-muted/30">
                         <div class="w-48 shrink-0 p-4 font-semibold text-sm border-r border-border border-dashed flex items-center justify-center tracking-wide uppercase text-muted-foreground">Unit Tersedia</div>

@@ -28,36 +28,47 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border">
-                                @forelse ($units as $unit)
-                                <tr>
-                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                                        <div class="font-medium text-foreground">{{ $unit->seri }}</div>
-                                        <div class="text-muted-foreground">{{ $unit->imei }}</div>
-                                    </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-foreground">
-                                        {{ $unit->memori }} • {{ $unit->warna }}<br/>
-                                        <span class="text-xs text-muted-foreground">{{ Str::limit($unit->kondisi, 20) }}</span>
-                                    </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">Rp {{ number_format($unit->harga_per_jam, 0, ',', '.') }}</td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }}</td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
-                                        @if($unit->is_active)
-                                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 border-green-200">Active</span>
+                        @foreach($units as $unit)
+                            <tr class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5 opacity-60 grayscale' : (!$unit->is_active ? 'opacity-50' : '') }}">
+                                <td class="px-6 py-4 align-middle">
+                                    <div class="font-bold {{ $unit->trashed() ? 'line-through text-muted-foreground' : '' }}">{{ $unit->seri }}</div>
+                                    <div class="text-xs text-muted-foreground">{{ $unit->imei }}</div>
+                                </td>
+                                <td class="px-6 py-4 align-middle">
+                                    {{ $unit->warna }} - {{ $unit->memori }}
+                                </td>
+                                <td class="px-6 py-4 align-middle">
+                                    <div class="text-sm font-semibold">Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }} / hari</div>
+                                    <div class="text-xs text-muted-foreground">Rp {{ number_format($unit->harga_per_jam, 0, ',', '.') }} / jam</div>
+                                </td>
+                                <td class="px-6 py-4 align-middle">
+                                    @if($unit->trashed())
+                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-red-500 bg-red-100/50">Dihapus</span>
+                                    @elseif($unit->is_active)
+                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-emerald-500 bg-emerald-100/50">Aktif</span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-amber-500 bg-amber-100/50">Inactive</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 align-middle text-right h-full">
+                                    <div class="flex items-center justify-end w-full mt-1.5 gap-4">
+                                        @if($unit->trashed())
+                                            <span class="text-[11px] font-semibold text-red-500 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-full">Dihapus Sistem</span>
+                                            <button wire:click="restoreUnit({{ $unit->id }})" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-emerald-100 text-emerald-700 hover:bg-emerald-200 h-8 px-4">Pulihkan</button>
                                         @else
-                                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold bg-muted text-muted-foreground border-border">Inactive</span>
+                                            <button wire:click="edit({{ $unit->id }})" class="text-primary hover:underline text-sm font-semibold transition-colors hover:text-primary/80">Edit</button>
+                                            <button wire:click="delete({{ $unit->id }})" class="text-destructive hover:underline text-sm font-semibold transition-colors hover:text-destructive/80" onclick="confirm('Yakin ingin menghapus unit ini? Transaksi lamanya akan aman, namun unit akan masuk kotak arsip (abu-abu).') || event.stopImmediatePropagation()">Hapus</button>
                                         @endif
-                                    </td>
-                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                        <button wire:click="edit({{ $unit->id }})" class="text-primary hover:underline group-hover:text-primary/80 mr-3">Edit</button>
-                                        <button wire:click="delete({{ $unit->id }})" wire:confirm="Yakin ingin menghapus unit ini?" class="text-red-500 hover:text-red-700">Del</button>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="6" class="py-10 text-center text-sm text-muted-foreground">Tidak ada unit yang terdaftar.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                        @if(count($units) == 0)
+                            <tr>
+                                <td colspan="5" class="p-8 text-center text-muted-foreground">Belum ada data unit iPhone.</td>
+                            </tr>
+                        @endif
+                    </tbody>
                         </table>
                     </div>
                 </div>
