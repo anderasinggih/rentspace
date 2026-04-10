@@ -28,7 +28,7 @@
 
             <!-- Right side context -->
             <div class="flex items-center gap-2 sm:gap-4">
-                <a href="{{ route('public.timeline') }}" wire:navigate class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
+                <a href="/" wire:navigate class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
                     Lihat Web Publik ↗
                 </a>
                 
@@ -68,6 +68,6 @@
             <span class="text-sm font-medium">{{ auth()->user()->name ?? 'Administrator' }}</span>
             <button wire:click="logout" class="text-sm text-destructive font-medium px-3 py-1.5 rounded-md hover:bg-destructive/10">Logout</button>
         </div>
-        <a href="{{ route('public.timeline') }}" wire:navigate class="block text-center mt-2 px-3 py-2 rounded-md text-sm font-medium bg-secondary text-secondary-foreground">Ke Web Publik</a>
+        <a href="/" wire:navigate class="block text-center mt-2 px-3 py-2 rounded-md text-sm font-medium bg-secondary text-secondary-foreground">Ke Web Publik</a>
     </div>
 </nav>

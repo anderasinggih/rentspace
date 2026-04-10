@@ -1,5 +1,4 @@
-<div class="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-muted/20">
-    <livewire:navbar />
+<div class="py-12 px-4 sm:px-6 lg:px-8 bg-muted/20 min-h-[calc(100vh-4rem)]">
     
     <div class="max-w-2xl mx-auto">
         <div class="bg-background rounded-2xl shadow-sm border border-border p-6 sm:p-8 text-center">

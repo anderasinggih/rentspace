@@ -11,8 +11,10 @@
         @livewireStyles
     </head>
     <body class="bg-background text-foreground antialiased font-sans flex flex-col min-h-screen">
-        <livewire:navbar />
-        <main class="flex-1 w-full flex flex-col pt-12">
+        @unless (request()->routeIs('public.booking'))
+            <livewire:navbar />
+        @endunless
+        <main class="flex-1 w-full flex flex-col">
             {{ $slot }}
         </main>
 
