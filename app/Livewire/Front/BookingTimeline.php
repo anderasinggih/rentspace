@@ -9,17 +9,27 @@ class BookingTimeline extends Component
 {
     public function render()
     {
-        // Simple 7-day timeline logic: We pass units and their active rentals
-        $units = Unit::where('is_active', true)
-                     ->with(['rentals' => function($query) {
-                         $query->whereIn('status', ['pending', 'paid', 'completed'])
-                               ->where('waktu_selesai', '>=', now())
-                               ->where('waktu_mulai', '<=', now()->addDays(7));
-                     }])
-                     ->get();
+        $startDate = \Carbon\Carbon::today();
+        $totalDays = 7;
+        $endDate = $startDate->copy()->addDays($totalDays - 1)->endOfDay();
+        
+        $dates = [];
+        for ($i = 0; $i < $totalDays; $i++) {
+            $dates[] = $startDate->copy()->addDays($i);
+        }
+
+        $units = \App\Models\Unit::where('is_active', true)->with(['rentals' => function ($q) use ($startDate, $endDate) {
+            $q->whereIn('status', ['paid', 'pending', 'completed'])
+              ->where('waktu_mulai', '<=', $endDate)
+              ->where('waktu_selesai', '>=', $startDate);
+        }])->get();
 
         return view('livewire.front.booking-timeline', [
-            'units' => $units
+            'units' => $units,
+            'dates' => $dates,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'totalDays' => $totalDays
         ])->layout('layouts.app');
     }
 }

@@ -6,7 +6,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Sewa iPhone Premium</title>
+        <title>IPHONE RENT SPACE PURWOKERTO</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>
@@ -18,10 +18,10 @@
         <main class="flex-1 w-full">
             <!-- Hero section -->
             <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 flex flex-col items-center text-center">
-                <div class="inline-flex items-center rounded-full border px-4 py-1 text-sm font-medium transition-colors border-border bg-secondary text-secondary-foreground mb-8 cursor-default">
-                    📱 Platform Sewa iPhone Terpercaya
+                <div class="inline-flex items-center rounded-full border px-4 py-1 text-sm font-medium transition-colors border-border bg-secondary text-secondary-foreground mb-8 cursor-default tracking-wide">
+                    IPHONE RENT SPACE PURWOKERTO
                 </div>
-                <h1 class="text-4xl font-extrabold tracking-tight sm:text-6xl text-foreground max-w-4xl">
+                <h1 class="text-4xl font-extrabold tracking-tight sm:text-6xl text-foreground max-w-4xl uppercase">
                     Sewa iPhone Impian Anda<br/>
                     <span class="text-primary">Lebih Mudah & Terjangkau.</span>
                 </h1>
@@ -29,8 +29,8 @@
                     Pilihan terbaik untuk merasakan pengalaman menggunakan produk Apple original tanpa harus membeli baru. Proses cepat, stok terlihat transparan, dan langsung transaksi!
                 </p>
                 <div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a href="{{ route('public.timeline') }}" wire:navigate class="w-full sm:w-auto inline-flex items-center justify-center rounded-md font-medium transition-colors bg-primary text-primary-foreground shadow-md hover:bg-primary/90 h-11 px-8 py-2">
-                        Pesan Cepat / Cek Katalog
+                    <a href="{{ route('public.booking') }}" wire:navigate class="w-full sm:w-auto inline-flex items-center justify-center rounded-md font-medium transition-colors bg-primary text-primary-foreground shadow-md hover:bg-primary/90 h-11 px-8 py-2 text-base">
+                        Sewa Sekarang
                     </a>
                 </div>
             </section>
@@ -39,7 +39,7 @@
         <!-- Footer -->
         <footer class="border-t border-border py-8 bg-muted/20">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
-                &copy; {{ date('Y') }} SewaPhone. Hak Cipta Dilindungi. Sistem dikelola dengan RentSpace.
+                &copy; {{ date('Y') }} IPHONE RENT SPACE PURWOKERTO. Hak Cipta Dilindungi.
             </div>
         </footer>
 

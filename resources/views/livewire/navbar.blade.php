@@ -1,10 +1,10 @@
-<div class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12">
-    <nav x-data="{ publicMenuOpen: false }" class="flex items-center justify-between w-full h-14 bg-background border border-border shadow-md rounded-full px-4 transition-all">
+<div x-data="{ publicMenuOpen: false }" class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12">
+    <nav class="flex items-center justify-between w-full h-14 bg-background border border-border shadow-md rounded-full px-4 transition-all">
         <!-- Left Side: Logo & Links -->
         <div class="flex items-center">
             <!-- Logo Box -->
-            <a href="/" wire:navigate class="flex items-center justify-center w-8 h-8 rounded-md bg-foreground text-background mr-6 shrink-0 transition-transform hover:scale-105">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" x2="12" y1="18" y2="18.01"/></svg>
+            <a href="/" wire:navigate class="font-extrabold tracking-tight text-foreground flex items-center mr-6 shrink-0 transition-transform hover:scale-105">
+                RENT SPACE
             </a>
             
             <!-- Desktop Navigation Links -->
