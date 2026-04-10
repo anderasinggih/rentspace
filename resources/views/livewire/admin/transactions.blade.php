@@ -61,13 +61,13 @@
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4">
                                         @if($trx->status === 'pending')
-                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold border-yellow-200 bg-yellow-100 text-yellow-800">Menunggu (Pending)</span>
+                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-orange-500 text-primary-foreground hover:bg-orange-600">Menunggu (Pending)</span>
                                         @elseif($trx->status === 'paid')
-                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold border-blue-200 bg-blue-100 text-blue-800">Lunas (Aktif)</span>
+                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-blue-500 text-primary-foreground hover:bg-blue-600">Lunas (Aktif)</span>
                                         @elseif($trx->status === 'completed')
-                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold border-green-200 bg-green-100 text-green-800">Selesai</span>
+                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-emerald-500 text-primary-foreground hover:bg-emerald-600">Selesai</span>
                                         @else
-                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold border-border bg-muted text-muted-foreground">Batal</span>
+                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">Batal</span>
                                         @endif
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right sm:pr-6">

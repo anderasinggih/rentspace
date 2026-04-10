@@ -44,17 +44,17 @@
                                 </td>
                                 <td class="px-6 py-4 align-middle">
                                     @if($unit->trashed())
-                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-red-500 bg-red-100/50">Dihapus</span>
+                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80">Dihapus</span>
                                     @elseif($unit->is_active)
-                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-emerald-500 bg-emerald-100/50">Aktif</span>
+                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">Aktif</span>
                                     @else
-                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-amber-500 bg-amber-100/50">Inactive</span>
+                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">Inactive</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 align-middle text-right h-full">
                                     <div class="flex items-center justify-end w-full mt-1.5 gap-4">
                                         @if($unit->trashed())
-                                            <span class="text-[11px] font-semibold text-red-500 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-full">Dihapus Sistem</span>
+                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-destructive text-destructive-foreground uppercase tracking-widest">Dihapus Sistem</span>
                                             @if(auth()->user()->role === 'admin')
                                             <button wire:click="restoreUnit({{ $unit->id }})" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-emerald-100 text-emerald-700 hover:bg-emerald-200 h-8 px-4">Pulihkan</button>
                                             @endif

@@ -18,12 +18,12 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium leading-none">Waktu Mulai</label>
-                            <input type="datetime-local" wire:model.live="waktu_mulai" class="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]">
+                            <input type="datetime-local" wire:model.live="waktu_mulai" class="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             @error('waktu_mulai') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="text-sm font-medium leading-none">Waktu Selesai</label>
-                            <input type="datetime-local" wire:model.live="waktu_selesai" class="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]">
+                            <input type="datetime-local" wire:model.live="waktu_selesai" class="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             @error('waktu_selesai') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                     </div>

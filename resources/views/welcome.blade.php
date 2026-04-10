@@ -57,12 +57,12 @@
                         @foreach($promos as $promo)
                         <a href="{{ route('public.booking') }}" wire:navigate class="block p-5 bg-background shadow-sm border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all group">
                             <div class="flex items-start gap-4">
-                                <div class="bg-primary/10 text-primary p-2.5 rounded-lg group-hover:-translate-y-1 transition-transform">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-7.58 7.58a2 2 0 0 0 2.83 2.83l7.58-7.58a3 3 0 0 0 0-4.24l-3.88-3.88a1 1 0 1 0-3 3l2.5 2.5"/></svg>
-                                </div>
                                 <div class="flex-1">
-                                    <h3 class="font-bold text-foreground text-sm">{{ $promo->nama_promo }}</h3>
-                                    <p class="text-xs text-muted-foreground mt-1 line-clamp-2">Syarat sewa min. {{ $promo->syarat_minimal_durasi }} Jam. {{ $promo->tipe === 'diskon_persen' ? "Diskon special {$promo->value}%" : "Penyesuaian Harga Spesial" }}</p>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="font-bold text-foreground text-sm">{{ $promo->nama_promo }}</h3>
+                                        <span class="inline-flex items-center rounded-full border border-transparent bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">Promo Aktif</span>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground line-clamp-2">Syarat sewa min. {{ $promo->syarat_minimal_durasi }} Jam. {{ $promo->tipe === 'diskon_persen' ? "Diskon special {$promo->value}%" : "Penyesuaian Harga Spesial" }}</p>
                                 </div>
                             </div>
                         </a>
