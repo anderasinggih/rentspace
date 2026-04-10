@@ -1,4 +1,17 @@
-<div x-data="{ publicMenuOpen: false }" class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12">
+<div x-data="{ 
+    publicMenuOpen: false,
+    darkMode: localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+    toggleTheme() {
+        this.darkMode = !this.darkMode;
+        if (this.darkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        }
+    }
+}" class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12">
     <nav class="flex items-center justify-between w-full h-14 bg-background border border-border shadow-md rounded-full px-4 transition-all">
         <!-- Left Side: Logo & Links -->
         <div class="flex items-center">
@@ -24,7 +37,7 @@
         <!-- Right Side: Utils & CTA -->
         <div class="flex items-center gap-3">
             <!-- Dark Mode Toggle -->
-            <button @click="darkMode = !darkMode" class="hidden sm:flex p-2 items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors focus:outline-none">
+            <button @click="toggleTheme()" class="hidden sm:flex p-2 items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors focus:outline-none">
                 <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
                 <svg x-cloak x-show="darkMode" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
             </button>

@@ -1,5 +1,5 @@
-<div class="min-h-screen bg-muted/30 py-8 px-4 sm:px-6 lg:px-8">
-    <div class="mx-auto max-w-7xl">
+<div>
+    <div>
         <div class="sm:flex sm:items-center">
             <div class="sm:flex-auto">
                 <h1 class="text-2xl font-bold tracking-tight text-foreground">Unit Management</h1>
@@ -21,8 +21,7 @@
                                 <tr class="bg-muted/50">
                                     <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">Seri & IMEI</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Spesifikasi</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Harga/Jam</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Harga/Hari</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Harga Sewa</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Status</th>
                                     <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Aksi</span></th>
                                 </tr>

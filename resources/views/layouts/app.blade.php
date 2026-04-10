@@ -9,6 +9,19 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         @livewireStyles
+        <script>
+            function applyTheme() {
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+            // Run on initial load
+            applyTheme();
+            // Re-apply after Livewire 3 attribute morphs the HTML tag
+            document.addEventListener('livewire:navigated', applyTheme);
+        </script>
     </head>
     <body class="bg-background text-foreground antialiased font-sans flex flex-col min-h-screen">
         @unless (request()->routeIs('public.booking'))

@@ -1,5 +1,5 @@
-<div class="min-h-screen bg-muted/30 py-8 px-4 sm:px-6 lg:px-8">
-    <div class="mx-auto max-w-7xl">
+<div>
+    <div>
         <div class="sm:flex sm:items-center">
             <div class="sm:flex-auto">
                 <h1 class="text-2xl font-bold tracking-tight text-foreground">Promo & Pricing Rules</h1>
