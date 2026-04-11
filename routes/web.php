@@ -8,6 +8,7 @@ use App\Livewire\Admin\Settings;
 use App\Livewire\Front\BookingTimeline;
 use App\Livewire\Front\BookingForm;
 use App\Livewire\Front\Payment;
+use App\Livewire\Front\About;
 use App\Livewire\Auth\Login;
 
 Route::get('/', function () {
@@ -28,7 +29,8 @@ Route::middleware('auth')->group(function () {
 });
 
 // Public Booking Routes
-Route::get('/timeline', BookingTimeline::class)->name('public.timeline');
+Route::get('/sewa', BookingTimeline::class)->name('public.timeline');
+Route::get('/tentang', About::class)->name('public.about');
 Route::get('/booking', BookingForm::class)->name('public.booking');
 Route::get('/payment/{id}', Payment::class)->name('public.payment');
 Route::get('/booking/success/{id}', \App\Livewire\Front\Success::class)->name('public.success');

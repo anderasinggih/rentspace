@@ -28,7 +28,7 @@
                 <a href="{{ route('public.timeline') }}" wire:navigate class="text-sm font-medium transition-colors {{ request()->routeIs('public.timeline') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
                     Katalog & Jadwal
                 </a>
-                <a href="#tentang" class="text-sm font-medium transition-colors text-muted-foreground hover:text-foreground">
+                <a href="{{ route('public.about') }}" wire:navigate class="text-sm font-medium transition-colors {{ request()->routeIs('public.about') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
                     Tentang
                 </a>
             </div>
@@ -62,7 +62,7 @@
          class="md:hidden absolute top-[110%] left-0 right-0 p-4 bg-background border border-border shadow-lg rounded-2xl flex flex-col gap-2 mx-1">
         <a href="/" wire:navigate class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->is('/') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">Beranda</a>
         <a href="{{ route('public.timeline') }}" wire:navigate class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.timeline') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">Katalog & Jadwal</a>
-        <a href="#tentang" class="px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">Tentang</a>
+        <a href="{{ route('public.about') }}" wire:navigate class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.about') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">Tentang</a>
         <div class="h-px bg-border my-1"></div>
         <a href="{{ route('public.booking') }}" wire:navigate class="flex items-center justify-center rounded-xl bg-foreground text-background text-sm font-semibold px-4 py-3 hover:bg-foreground/90 transition-all mt-2">
             Sewa Sekarang

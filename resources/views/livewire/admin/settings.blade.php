@@ -302,5 +302,55 @@
                 </form>
             </div>
         </div>
+
+        <!-- Pengaturan Konten Tentang (FAQ Accordion) -->
+        <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm md:col-span-2">
+            <div class="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-semibold">Konten Halaman Tentang (FAQ)</h2>
+                    <p class="text-xs text-muted-foreground">Kelola pertanyaan dan jawaban yang akan ditampilkan pada halaman /tentang.</p>
+                </div>
+                <button wire:click="addFaq" class="inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 h-8 px-3 text-xs font-medium transition-colors">
+                    + Tambah Item
+                </button>
+            </div>
+            <div class="p-4">
+                @if (session()->has('faq_message'))
+                <div class="p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-100 border border-green-200">
+                    {{ session('faq_message') }}
+                </div>
+                @endif
+                <form wire:submit="saveFaqSettings" class="flex flex-col gap-4">
+                    @forelse($about_faq_items as $index => $item)
+                        <div class="p-4 border border-border rounded-lg bg-muted/10 relative group">
+                            <div class="absolute top-2 right-2">
+                                <button type="button" wire:click="removeFaq({{ $index }})" class="text-red-500 hover:text-red-700 text-xs p-1 rounded-sm opacity-50 group-hover:opacity-100 transition-opacity">Hapus</button>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-xs font-semibold mb-1 text-muted-foreground uppercase">Pertanyaan / Judul</label>
+                                <input type="text" wire:model="about_faq_items.{{ $index }}.question" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Contoh: Apa saja syarat sewanya?">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-muted-foreground uppercase">Jawaban / Deskripsi</label>
+                                <textarea wire:model="about_faq_items.{{ $index }}.answer" rows="3" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Jelaskan secara detail di sini..."></textarea>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-6 border border-dashed rounded-lg text-muted-foreground text-sm">
+                            Belum ada item konten. Klik tombol "+ Tambah Item" di atas untuk menambahkan.
+                        </div>
+                    @endforelse
+
+                    <button type="submit"
+                        class="mt-2 self-start inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
+                        wire:loading.attr="disabled"
+                        {{ count($about_faq_items) === 0 ? 'disabled' : '' }}>
+                        <span wire:loading.remove wire:target="saveFaqSettings">Simpan Konten FAQ</span>
+                        <span wire:loading wire:target="saveFaqSettings">Menyimpan...</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
     </div>
 </div>

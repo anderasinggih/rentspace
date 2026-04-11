@@ -19,6 +19,7 @@ class Settings extends Component
     public $home_title = '', $home_description = '', $late_tolerance_minutes = 60;
     public $admin_wa = '', $admin_address = '', $terms_conditions = '';
     public $payment_methods = ['qris' => true, 'cash' => true, 'transfer' => false];
+    public $about_faq_items = [];
 
     public function mount()
     {
@@ -36,6 +37,9 @@ class Settings extends Component
         $this->terms_conditions = \App\Models\Setting::getVal('terms_conditions', $defaultTerms);
         $savedPayment = \App\Models\Setting::getVal('payment_methods', json_encode(['qris' => true, 'cash' => true, 'transfer' => false]));
         $this->payment_methods = json_decode($savedPayment, true) ?: ['qris' => true, 'cash' => true, 'transfer' => false];
+
+        $savedFaq = \App\Models\Setting::getVal('about_faq_items', json_encode([]));
+        $this->about_faq_items = json_decode($savedFaq, true) ?: [];
     }
 
     public function loadUsers()
@@ -98,6 +102,29 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
 
         session()->flash('general_message', 'Pengaturan Umum berhasil disimpan.');
+    }
+
+    public function addFaq()
+    {
+        $this->about_faq_items[] = ['question' => '', 'answer' => ''];
+    }
+
+    public function removeFaq($index)
+    {
+        unset($this->about_faq_items[$index]);
+        $this->about_faq_items = array_values($this->about_faq_items);
+    }
+
+    public function saveFaqSettings()
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'about_faq_items'], 
+            ['value' => json_encode($this->about_faq_items)]
+        );
+
+        session()->flash('faq_message', 'Konten Halaman Tentang (FAQ) berhasil disimpan.');
     }
 
     public function saveHero()
