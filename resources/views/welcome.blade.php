@@ -48,7 +48,15 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
             <!-- Promo -->
             @php
-                $promos = \App\Models\PricingRule::where('is_active', true)->get();
+                $now = \Carbon\Carbon::now();
+                $promos = \App\Models\PricingRule::where('is_active', true)
+                    ->where(function($q) use ($now) {
+                        $q->whereNull('start_date')->orWhere('start_date', '<=', $now->format('Y-m-d'));
+                    })
+                    ->where(function($q) use ($now) {
+                        $q->whereNull('end_date')->orWhere('end_date', '>=', $now->format('Y-m-d'));
+                    })
+                    ->get();
             @endphp
             @if($promos->count() > 0)
                 <div class="mt-16 w-full max-w-4xl text-left">
@@ -60,9 +68,16 @@
                                 <div class="flex-1">
                                     <div class="flex items-center justify-between mb-2">
                                         <h3 class="font-bold text-foreground text-sm">{{ $promo->nama_promo }}</h3>
-                                        <span class="inline-flex items-center rounded-full border border-transparent bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">Promo Aktif</span>
+                                        <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200/50 dark:border-green-900/50 uppercase tracking-tight">Promo Aktif</span>
                                     </div>
-                                    <p class="text-xs text-muted-foreground line-clamp-2">Syarat sewa min. {{ $promo->syarat_minimal_durasi }} Jam. {{ $promo->tipe === 'diskon_persen' ? "Diskon special {$promo->value}%" : "Penyesuaian Harga Spesial" }}</p>
+                                    <p class="text-xs text-muted-foreground line-clamp-2 mb-1">Syarat sewa min. {{ $promo->syarat_minimal_durasi }} Jam. {{ $promo->tipe === 'diskon_persen' ? "Diskon special {$promo->value}%" : "Penyesuaian Harga Spesial" }}</p>
+                                    @if($promo->start_date || $promo->end_date)
+                                        <div class="text-[10px] text-primary/70 font-medium">
+                                            Berlaku: {{ $promo->start_date ? \Carbon\Carbon::parse($promo->start_date)->format('d M') : 'Sekarang' }} 
+                                            s/d 
+                                            {{ $promo->end_date ? \Carbon\Carbon::parse($promo->end_date)->format('d M y') : 'Selesai' }}
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </a>

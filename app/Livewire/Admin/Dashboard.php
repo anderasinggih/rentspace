@@ -49,7 +49,7 @@ class Dashboard extends Component
         $end = Carbon::parse($this->endDate)->endOfDay();
         
         $chartDataObj = Rental::selectRaw('DATE(created_at) as date_val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
-            ->where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+            ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('date_val')
             ->orderBy('date_val')
@@ -65,7 +65,7 @@ class Dashboard extends Component
         if ($diffDays > 90) {
             // Group by Month if > 90 days
             $chartDataObj = Rental::selectRaw('strftime("%Y-%m", created_at) as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
-                ->where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+                ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
                 ->whereBetween('created_at', [$start, $end])
                 ->groupBy('val')
                 ->orderBy('val')
@@ -107,15 +107,15 @@ class Dashboard extends Component
 
         // Snapshot Metrics (Global)
         $totalUnits = Unit::withTrashed()->count();
-        $activeUnits = Unit::where(function($q) { $q->where('is_active', true); })->count();
-        $pendingRentals = Rental::where(function($q) { $q->where('status', 'pending'); })->count();
+        $activeUnits = Unit::where(fn($q) => $q->where('is_active', true))->count();
+        $pendingRentals = Rental::where(fn($q) => $q->where('status', 'pending'))->count();
 
         // Period Metrics
         $periodRentals = Rental::whereBetween('created_at', [$start, $end])->count();
-        $periodRevenue = Rental::where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+        $periodRevenue = Rental::where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
                             ->whereBetween('created_at', [$start, $end])->sum('grand_total');
         $periodDiscounts = Rental::whereBetween('created_at', [$start, $end])->sum('potongan_diskon');
-        $todayRevenue = Rental::where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+        $todayRevenue = Rental::where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
                             ->whereDate('created_at', Carbon::today())->sum('grand_total');
         $todayRentals = Rental::whereDate('created_at', Carbon::today())->count();
 
@@ -130,7 +130,7 @@ class Dashboard extends Component
 
         // Leaderboards scoped by date to reflect trends
         $topTenants = Rental::selectRaw('nik, nama, no_wa, COUNT(id) as total_rentals, SUM(grand_total) as total_spent')
-            ->where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+            ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('nik', 'nama', 'no_wa')
             ->orderByDesc('total_spent')
@@ -139,7 +139,7 @@ class Dashboard extends Component
 
         // Unit performance with Rented Hours calculation
         $topUnits = Rental::with(['unit' => function($q) { $q->withTrashed(); }])
-            ->where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+            ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
             ->whereBetween('created_at', [$start, $end])
             ->get()
             ->groupBy('unit_id')
@@ -161,7 +161,7 @@ class Dashboard extends Component
             ->take(5);
 
         // Payment Method Breakdown
-        $paymentSplit = Rental::where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+        $paymentSplit = Rental::where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
             ->whereBetween('created_at', [$start, $end])
             ->selectRaw('metode_pembayaran, COUNT(id) as cnt')
             ->groupBy('metode_pembayaran')

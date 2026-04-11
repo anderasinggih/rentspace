@@ -21,7 +21,7 @@ class Payment extends Component
             'metode_pembayaran' => $this->metode_pembayaran
         ]);
 
-        return redirect()->route('public.timeline');
+        return redirect()->route('public.success', $this->rental->id);
     }
 
     public function render()

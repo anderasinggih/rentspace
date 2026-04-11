@@ -40,8 +40,15 @@
                                     <input type="radio" wire:model.live="unit_id" value="{{ $unit->id }}" class="sr-only" aria-labelledby="unit-label-{{ $unit->id }}">
                                     <span class="flex flex-1">
                                         <span class="flex flex-col">
-                                            <span id="unit-label-{{ $unit->id }}" class="block font-medium text-foreground">{{ $unit->seri }}</span>
-                                            <span class="mt-1 flex items-center text-sm text-muted-foreground">{{ $unit->warna }} • {{ $unit->memori }}</span>
+                                            <span id="unit-label-{{ $unit->id }}" class="block font-medium text-foreground">
+                                                {{ $unit->seri }}
+                                                @if($unit->kategori === 'gear')
+                                                    <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded-md border bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200/50 dark:border-purple-900/50 font-bold uppercase">Alat</span>
+                                                @endif
+                                            </span>
+                                            @if($unit->warna || $unit->memori)
+                                                <span class="mt-1 flex items-center text-sm text-muted-foreground">{{ $unit->warna }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}</span>
+                                            @endif
                                             <span class="mt-2 font-semibold text-primary">Rp {{ number_format($unit->harga_per_hari,0,',','.') }}/hari</span>
                                         </span>
                                     </span>

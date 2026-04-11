@@ -85,8 +85,18 @@ class BookingForm extends Component
 
         $this->potongan_diskon = 0;
         
-        // Cek rule diskon
-        $rules = PricingRule::where('is_active', true)->get();
+        // Cek rule diskon yang aktif dan dalam rentang tanggal
+        $now = Carbon::now();
+        $rules = PricingRule::where('is_active', true)
+            ->where(function($q) use ($now) {
+                $q->whereNull('start_date')
+                  ->orWhere('start_date', '<=', $now->format('Y-m-d'));
+            })
+            ->where(function($q) use ($now) {
+                $q->whereNull('end_date')
+                  ->orWhere('end_date', '>=', $now->format('Y-m-d'));
+            })
+            ->get();
         foreach ($rules as $rule) {
             // Cek durasi minimum terpenuhi atau tidak
             $durasiTerkonversi = $rule->syarat_tipe_durasi === 'hari' ? $days : $diffInHours;

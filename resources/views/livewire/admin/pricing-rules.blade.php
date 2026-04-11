@@ -22,47 +22,75 @@
                             <thead>
                                 <tr class="bg-muted/50">
                                     <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">Nama Promo</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Tipe</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Value</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Syarat Min/Durasi</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Kriteria</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Berlaku (Tanggal)</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Status</th>
                                     <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Aksi</span></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border">
                                 @forelse ($rules as $rule)
-                                <tr>
-                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{{ $rule->nama_promo }}</td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
-                                        @if($rule->tipe === 'diskon_persen') Diskon Persen
-                                        @elseif($rule->tipe === 'hari_gratis') Hari Gratis
-                                        @elseif($rule->tipe === 'fix_price') Fix Price
-                                        @elseif($rule->tipe === 'diskon_nominal') Diskon Nominal
-                                        @elseif($rule->tipe === 'jam_gratis') Jam Gratis
-                                        @elseif($rule->tipe === 'cashback') Cashback Nominal
-                                        @else {{ $rule->tipe }} @endif
-                                    </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm font-bold text-primary">
-                                        @if($rule->tipe === 'diskon_persen') {{ $rule->value }}%
-                                        @elseif($rule->tipe === 'hari_gratis') {{ $rule->value }} Hari
-                                        @elseif($rule->tipe === 'jam_gratis') {{ $rule->value }} Jam
-                                        @elseif(in_array($rule->tipe, ['fix_price','diskon_nominal','cashback'])) Rp {{ number_format($rule->value, 0, ',', '.') }}
-                                        @else {{ $rule->value }} @endif
-                                    </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
-                                        {{ $rule->syarat_minimal_durasi ? '> '.$rule->syarat_minimal_durasi.' '.$rule->syarat_tipe_durasi : 'Tanpa Syarat' }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
-                                        @if($rule->is_active)
-                                            <span class="inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/80">Active</span>
-                                        @else
-                                            <span class="inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80">Inactive</span>
+                                @php
+                                    $isExpired = $rule->end_date && \Carbon\Carbon::now()->isAfter($rule->end_date);
+                                    $isDeleted = $rule->trashed();
+                                    $dimmed = $isExpired || $isDeleted || !$rule->is_active;
+                                @endphp
+                                <tr class="{{ $dimmed ? 'opacity-50 grayscale bg-muted/20' : '' }} transition-all">
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">
+                                        {{ $rule->nama_promo }}
+                                        @if($isDeleted)
+                                            <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded-md border bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50 font-bold uppercase">Soft Deleted</span>
                                         @endif
                                     </td>
-                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                    <td class="px-3 py-4 text-sm text-muted-foreground">
+                                        <div class="font-bold text-primary">
+                                            @if($rule->tipe === 'diskon_persen') {{ $rule->value }}%
+                                            @elseif($rule->tipe === 'hari_gratis') {{ $rule->value }} Hari
+                                            @elseif($rule->tipe === 'jam_gratis') {{ $rule->value }} Jam
+                                            @elseif(in_array($rule->tipe, ['fix_price','diskon_nominal','cashback'])) Rp {{ number_format($rule->value, 0, ',', '.') }}
+                                            @else {{ $rule->value }} @endif
+                                        </div>
+                                        <div class="text-[10px]">
+                                            @if($rule->tipe === 'diskon_persen') Diskon Persen
+                                            @elseif($rule->tipe === 'hari_gratis') Hari Gratis
+                                            @elseif($rule->tipe === 'fix_price') Fix Price
+                                            @elseif($rule->tipe === 'diskon_nominal') Diskon Nominal
+                                            @elseif($rule->tipe === 'jam_gratis') Jam Gratis
+                                            @elseif($rule->tipe === 'cashback') Cashback Nominal
+                                            @endif
+                                            &bull; {{ $rule->syarat_minimal_durasi ? '> '.$rule->syarat_minimal_durasi.' '.$rule->syarat_tipe_durasi : 'Tanpa Syarat' }}
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-xs text-muted-foreground">
+                                        @if($rule->start_date || $rule->end_date)
+                                            {{ $rule->start_date ? \Carbon\Carbon::parse($rule->start_date)->format('d M y') : '...' }} 
+                                            s/d 
+                                            {{ $rule->end_date ? \Carbon\Carbon::parse($rule->end_date)->format('d M y') : '...' }}
+                                        @else
+                                            <span class="italic opacity-50 text-[10px]">Selamanya</span>
+                                        @endif
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
+                                        @if($isDeleted)
+                                            <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50 uppercase">Dihapus</span>
+                                        @elseif($isExpired)
+                                            <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50 uppercase">Expired</span>
+                                        @elseif($rule->is_active)
+                                            <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-semibold bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200/50 dark:border-green-900/50 uppercase">Aktif</span>
+                                        @else
+                                            <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-semibold bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200/50 dark:border-zinc-700/50 uppercase">Nonaktif</span>
+                                        @endif
+                                    </td>
+                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-xs font-medium sm:pr-6 space-x-2">
                                         @if(auth()->user()->role === 'admin')
-                                        <button wire:click="edit({{ $rule->id }})" class="text-primary hover:underline group-hover:text-primary/80 mr-3">Edit</button>
-                                        <button wire:click="delete({{ $rule->id }})" wire:confirm="Hapus aturan ini?" class="text-red-500 hover:text-red-700">Del</button>
+                                            @if($isDeleted)
+                                                <button wire:click="restore({{ $rule->id }})" class="text-green-600 hover:underline">Restore</button>
+                                                <button wire:click="delete({{ $rule->id }})" wire:confirm="Hapus PERMANEN aturan ini?" class="text-red-600 font-bold hover:underline">Destroy</button>
+                                            @else
+                                                <button wire:click="edit({{ $rule->id }})" class="text-primary hover:underline">Edit</button>
+                                                <button wire:click="duplicate({{ $rule->id }})" class="text-sky-600 hover:underline">Duplikat</button>
+                                                <button wire:click="delete({{ $rule->id }})" wire:confirm="Hapus (Soft Delete) aturan ini?" class="text-red-500 hover:text-red-700">Del</button>
+                                            @endif
                                         @endif
                                     </td>
                                 </tr>
@@ -75,6 +103,8 @@
                         </table>
                     </div>
                 </div>
+
+
             </div>
         </div>
 
@@ -107,6 +137,19 @@
                                 <label class="text-sm font-medium leading-none">Value Potongan</label>
                                 <input type="number" wire:model="value" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Misal: 35">
                                 @error('value') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-medium leading-none">Tanggal Mulai (Opsional)</label>
+                                <input type="date" wire:model="start_date" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                @error('start_date') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium leading-none">Tanggal Berakhir (Opsional)</label>
+                                <input type="date" wire:model="end_date" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                @error('end_date') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
                         </div>
 

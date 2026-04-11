@@ -1,8 +1,12 @@
 <div class="pb-10">
-    <div class="mb-6">
-        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Dashboard Admin</h1>
-        <p class="text-muted-foreground mt-1 text-xs md:text-sm">Ringkasan statistik, grafis pendapatan, dan
-            analisis penyewaan.</p>
+
+    <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto mb-2">
+            <h1 class="text-2xl font-bold tracking-tight text-foreground">Dashboard Admin</h1>
+            <p class="mt-2 text-sm text-muted-foreground">Ringkasan statistik, grafis pendapatan, dan
+                analisis penyewaan.</p>
+        </div>
+
     </div>
 
     <!-- Snapshot Metrics -->
@@ -46,7 +50,7 @@
             @else
             <h2 class="text-sm font-semibold text-foreground">Performa Periode Terpilih</h2>
             @endif
-            
+
             <div class="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
                 <select wire:model.live="preset"
                     class="h-8 w-full sm:w-[140px] rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -70,19 +74,19 @@
         </div>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
             @php
-                function gainBadge($gain, $abs = null) {
-                    if ($gain === null) return '<span class="text-[10px] text-muted-foreground">vs periode lalu: -</span>';
-                    $isPositive = $gain >= 0;
-                    $color = $isPositive
-                        ? 'bg-emerald-500 text-white border-emerald-500'
-                        : 'bg-red-500 text-white border-red-500';
-                    $arrow = $isPositive ? '▲' : '▼';
-                    $absText = $abs !== null
-                        ? ' (' . ($abs >= 0 ? '+' : '') . 'Rp ' . number_format(abs($abs)/1000, 0, ',', '.') . 'k)'
-                        : '';
-                    return '<span class="inline-flex items-center border rounded px-1.5 py-0.5 text-[10px] font-semibold ' . $color . '">'
-                        . $arrow . ' ' . abs($gain) . '%' . $absText . '</span>';
-                }
+            function gainBadge($gain, $abs = null) {
+                if ($gain === null) return '<span class="text-[10px] text-muted-foreground">vs periode lalu: -</span>';
+                $isPositive = $gain >= 0;
+                $color = $isPositive
+                    ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200/50 dark:border-green-900/50'
+                    : 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50';
+                $arrow = $isPositive ? '▲' : '▼';
+                $absText = $abs !== null
+                    ? ' (' . ($abs >= 0 ? '+' : '') . 'Rp ' . number_format(abs($abs)/1000, 0, ',', '.') . 'k)'
+                    : '';
+                return '<span class="inline-flex items-center border rounded-md px-1.5 py-0.5 text-[10px] font-semibold ' . $color . '">'
+                    . $arrow . ' ' . abs($gain) . '%' . $absText . '</span>';
+            }
             @endphp
             <div class="bg-muted/40 rounded-xl border border-border p-4 flex flex-col justify-between">
                 <h3 class="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">
@@ -231,7 +235,7 @@
     <!-- Active Rentals Right Now -->
     <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm w-full">
         <div class="p-4 border-b border-border">
-            <h2 class="text-sm font-semibold leading-none tracking-tight">Status Sewa Berjalan Berjalan</h2>
+            <h2 class="text-sm font-semibold leading-none tracking-tight">Status Sewa Berjalan</h2>
             <p class="text-[11px] text-muted-foreground mt-1">Daftar unit yang sedang beredar di tangan pelanggan saat
                 ini</p>
         </div>
@@ -249,7 +253,13 @@
                     @forelse($activeRentals as $rental)
                     @php
                     $end = \Carbon\Carbon::parse($rental->waktu_selesai);
-                    $diff = now()->diffInHours($end, false);
+                    $diffInHours = now()->diffInHours($end, false);
+                    
+                    // Human readable diff
+                    $totalMinutes = abs(now()->diffInMinutes($end));
+                    $h = floor($totalMinutes / 60);
+                    $m = $totalMinutes % 60;
+                    $diffText = ($h > 0 ? $h . ' jam ' : '') . ($m > 0 ? $m . ' menit' : ($h == 0 ? '0 menit' : ''));
                     @endphp
                     <tr class="hover:bg-muted/30">
                         <td class="px-4 py-3 font-medium text-foreground">{{ $rental->unit ? $rental->unit->seri :
@@ -260,20 +270,19 @@
                         </td>
                         <td class="px-4 py-3">{{ $end->format('d M, H:i') }}</td>
                         <td class="px-4 py-3 text-right">
-                            @if($diff < 0) <span
-                                class="inline-flex px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-destructive/10 text-destructive">
-                                Telat Masuk
+                            @if($diffInHours < 0) 
+                                <span class="inline-flex px-1.5 py-0.5 rounded-md border text-[10px] font-bold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50 uppercase">
+                                    Telat Masuk
                                 </span>
-                                @elseif($diff < 3) <span
-                                    class="inline-flex px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-amber-500/10 text-amber-600">
-                                    Sisa {{ $diff }} Jam
-                                    </span>
-                                    @else
-                                    <span
-                                        class="inline-flex px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-emerald-500/10 text-emerald-600">
-                                        Aman
-                                    </span>
-                                    @endif
+                            @elseif($diffInHours < 3) 
+                                <span class="inline-flex px-1.5 py-0.5 rounded-md border text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200/50 dark:border-amber-900/50 uppercase">
+                                    Sisa {{ $diffText }}
+                                </span>
+                            @else
+                                <span class="inline-flex px-1.5 py-0.5 rounded-md border text-[10px] font-bold bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200/50 dark:border-green-900/50 uppercase">
+                                    Aman
+                                </span>
+                            @endif
                         </td>
                     </tr>
                     @empty
@@ -298,7 +307,7 @@
             const resolve = (v) => `hsl(${style.getPropertyValue(v).trim()})`;
             return {
                 isDark,
-                textColor:   isDark ? '#a1a1aa' : '#71717a',
+                textColor: isDark ? '#a1a1aa' : '#71717a',
                 borderColor: isDark ? '#27272a' : '#e4e4e7',
                 tooltipTheme: isDark ? 'dark' : 'light',
             };
@@ -335,8 +344,10 @@
             },
             fill: {
                 type: 'gradient',
-                gradient: { shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0.01, stops: [0, 100],
-                    colorStops: [{ offset: 0, color: '#6366f1', opacity: 0.3 }, { offset: 100, color: '#6366f1', opacity: 0 }] }
+                gradient: {
+                    shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0.01, stops: [0, 100],
+                    colorStops: [{ offset: 0, color: '#6366f1', opacity: 0.3 }, { offset: 100, color: '#6366f1', opacity: 0 }]
+                }
             },
             theme: { mode: colors.isDark ? 'dark' : 'light' },
             tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } }
@@ -403,7 +414,8 @@
             const mode = { mode: c.isDark ? 'dark' : 'light' };
             revChart.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: xStyle, yaxis: yStyle, grid: { borderColor: c.borderColor } });
             trxChart.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: xStyle, yaxis: yStyle, grid: { borderColor: c.borderColor } });
-            donutChart.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, legend: { labels: { colors: c.textColor } },
+            donutChart.updateOptions({
+                theme: mode, tooltip: { theme: c.tooltipTheme }, legend: { labels: { colors: c.textColor } },
                 plotOptions: { pie: { donut: { labels: { total: { color: c.textColor } } } } },
                 dataLabels: { style: { colors: [c.isDark ? '#fff' : '#111'] } }
             });

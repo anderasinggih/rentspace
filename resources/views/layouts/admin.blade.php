@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="antialiased font-sans">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Admin Panel' }} - {{ config('app.name', 'RentSpace') }}</title>
+    <title>{{ $title ?? 'Dashboard Admin' }} - {{ config('app.name', 'RentSpace') }}</title>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script>
@@ -19,8 +20,9 @@
     </script>
     <!-- Alpine.js is included via Vite/Livewire usually but handled automatically by Livewire 3 -->
 </head>
+
 <body class="bg-background min-h-screen text-foreground antialiased font-sans flex flex-col">
-    
+
     <!-- Admin Sticky Top Navbar Navigation -->
     <livewire:admin.admin-navbar />
 
@@ -29,4 +31,5 @@
         {{ $slot }}
     </main>
 </body>
+
 </html>

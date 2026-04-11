@@ -5,8 +5,7 @@
             class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-background p-6 rounded-2xl border border-border shadow-sm">
             <div>
                 <h1 class="text-2xl font-extrabold tracking-tight text-foreground">Timeline Ketersediaan</h1>
-                <p class="text-muted-foreground mt-1 text-sm">Lihat kapan daftar iPhone kami kosong dan siap disewa.
-                    (Skala 30 Hari)</p>
+                <p class="text-muted-foreground mt-1 text-sm">Lihat kapan daftar unit kami kosong dan siap disewa.</p>
             </div>
             <a href="{{ route('public.booking') }}" wire:navigate
                 class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow-md hover:bg-primary/90 h-10 px-6 py-2">
@@ -53,11 +52,15 @@
                             <div class="w-full">
                                 <div class="font-bold text-[11px] md:text-sm tracking-tight leading-tight truncate md:whitespace-normal">{{ $unit->seri }}</div>
                                 <div class="text-[9px] md:text-[11px] text-muted-foreground flex flex-col md:flex-row md:gap-1.5 md:items-center mt-0.5">
-                                    <div class="w-2 h-2 rounded-full hidden md:block"
-                                        style="background-color: {{ strtolower($unit->warna) == 'hitam' ? '#222' : (strtolower($unit->warna) == 'putih' ? '#eee' : 'orange') }}">
-                                    </div>
-                                    <span class="md:hidden">{{ $unit->memori }}</span>
-                                    <span class="hidden md:inline">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
+                                    @if($unit->kategori === 'iphone')
+                                        <div class="w-2 h-2 rounded-full hidden md:block"
+                                            style="background-color: {{ strtolower($unit->warna) == 'hitam' ? '#222' : (strtolower($unit->warna) == 'putih' ? '#eee' : 'orange') }}">
+                                        </div>
+                                        <span class="md:hidden">{{ $unit->memori }}</span>
+                                        <span class="hidden md:inline">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
+                                    @else
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded-md border bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200/50 dark:border-purple-900/50 font-bold uppercase transition-colors">ALAT</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>

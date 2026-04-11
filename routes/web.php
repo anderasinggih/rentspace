@@ -31,3 +31,4 @@ Route::middleware('auth')->group(function () {
 Route::get('/timeline', BookingTimeline::class)->name('public.timeline');
 Route::get('/booking', BookingForm::class)->name('public.booking');
 Route::get('/payment/{id}', Payment::class)->name('public.payment');
+Route::get('/booking/success/{id}', \App\Livewire\Front\Success::class)->name('public.success');
