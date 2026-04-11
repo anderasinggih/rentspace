@@ -1,4 +1,4 @@
-<div class="py-12 px-4 sm:px-6 lg:px-8 bg-muted/20 min-h-[calc(100vh-4rem)]">
+<div class="py-12 px-4 sm:px-6 lg:px-8 bg-background min-h-[calc(100vh-4rem)]">
 
     <div class="max-w-7xl mx-auto flex flex-col gap-6">
         <div

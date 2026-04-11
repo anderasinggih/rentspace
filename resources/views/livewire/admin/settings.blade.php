@@ -207,6 +207,32 @@
                         <textarea wire:model="admin_address" rows="2" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"></textarea>
                     </div>
                     <div>
+                        <label class="block text-sm font-medium mb-2">Metode Pembayaran Aktif <span class="text-xs text-muted-foreground">(Ditampilkan kepada penyewa saat checkout)</span></label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-input bg-background cursor-pointer hover:bg-muted/40 transition-colors">
+                                <input type="checkbox" wire:model="payment_methods.qris" class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                                <div>
+                                    <p class="text-sm font-medium">QRIS</p>
+                                    <p class="text-xs text-muted-foreground">Scan QR bayar langsung</p>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-input bg-background cursor-pointer hover:bg-muted/40 transition-colors">
+                                <input type="checkbox" wire:model="payment_methods.cash" class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                                <div>
+                                    <p class="text-sm font-medium">Tunai (Cash)</p>
+                                    <p class="text-xs text-muted-foreground">Bayar langsung di tempat</p>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-input bg-background cursor-pointer hover:bg-muted/40 transition-colors">
+                                <input type="checkbox" wire:model="payment_methods.transfer" class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                                <div>
+                                    <p class="text-sm font-medium">Transfer Bank</p>
+                                    <p class="text-xs text-muted-foreground">Transfer rekening admin</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium mb-1">Syarat & Ketentuan Penyewaan <span class="text-xs text-muted-foreground">(Ditampilkan di form booking, satu baris = satu poin)</span></label>
                         <textarea wire:model="terms_conditions" rows="8" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono" placeholder="1. Penyewa wajib..."></textarea>
                     </div>

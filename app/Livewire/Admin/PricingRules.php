@@ -39,7 +39,7 @@ class PricingRules extends Component
     {
         $this->validate([
             'nama_promo' => 'required|string',
-            'tipe' => 'required|string|in:diskon_persen,hari_gratis,fix_price',
+            'tipe' => 'required|string|in:diskon_persen,hari_gratis,fix_price,diskon_nominal,jam_gratis,cashback',
             'value' => 'required|numeric',
             'syarat_minimal_durasi' => 'nullable|numeric',
             'syarat_tipe_durasi' => 'required|string|in:jam,hari',

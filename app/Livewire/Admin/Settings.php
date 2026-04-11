@@ -18,6 +18,7 @@ class Settings extends Component
 
     public $home_title = '', $home_description = '', $late_tolerance_minutes = 60;
     public $admin_wa = '', $admin_address = '', $terms_conditions = '';
+    public $payment_methods = ['qris' => true, 'cash' => true, 'transfer' => false];
 
     public function mount()
     {
@@ -33,6 +34,8 @@ class Settings extends Component
         $this->admin_address = \App\Models\Setting::getVal('admin_address', 'Jl. Jend. Sudirman, Purwokerto');
         $defaultTerms = "1. Penyewa wajib menjaga iPhone yang disewa dan bertanggung jawab atas kerusakan atau kehilangan selama masa sewa.\n2. Pembayaran dilakukan di awal sebelum unit diserahkan, sesuai total tagihan yang tertera.\n3. Keterlambatan pengembalian melewati batas toleransi waktu akan dikenakan denda yang ditentukan oleh pengelola.\n4. Pengelola berhak menolak penyewaan apabila dokumen identitas (NIK/KTP) tidak valid atau tidak sesuai.\n5. Pemesanan yang sudah terkonfirmasi tidak dapat dibatalkan secara sepihak oleh penyewa.";
         $this->terms_conditions = \App\Models\Setting::getVal('terms_conditions', $defaultTerms);
+        $savedPayment = \App\Models\Setting::getVal('payment_methods', json_encode(['qris' => true, 'cash' => true, 'transfer' => false]));
+        $this->payment_methods = json_decode($savedPayment, true) ?: ['qris' => true, 'cash' => true, 'transfer' => false];
     }
 
     public function loadUsers()
@@ -92,6 +95,7 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa'], ['value' => $this->admin_wa]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_address'], ['value' => $this->admin_address]);
         \App\Models\Setting::updateOrCreate(['key' => 'terms_conditions'], ['value' => $this->terms_conditions]);
+        \App\Models\Setting::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
 
         session()->flash('general_message', 'Pengaturan Umum berhasil disimpan.');
     }

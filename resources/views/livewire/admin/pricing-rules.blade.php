@@ -36,21 +36,27 @@
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
                                         @if($rule->tipe === 'diskon_persen') Diskon Persen
                                         @elseif($rule->tipe === 'hari_gratis') Hari Gratis
-                                        @else Fix Price @endif
+                                        @elseif($rule->tipe === 'fix_price') Fix Price
+                                        @elseif($rule->tipe === 'diskon_nominal') Diskon Nominal
+                                        @elseif($rule->tipe === 'jam_gratis') Jam Gratis
+                                        @elseif($rule->tipe === 'cashback') Cashback Nominal
+                                        @else {{ $rule->tipe }} @endif
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm font-bold text-primary">
                                         @if($rule->tipe === 'diskon_persen') {{ $rule->value }}%
                                         @elseif($rule->tipe === 'hari_gratis') {{ $rule->value }} Hari
-                                        @else Rp {{ number_format($rule->value, 0, ',', '.') }} @endif
+                                        @elseif($rule->tipe === 'jam_gratis') {{ $rule->value }} Jam
+                                        @elseif(in_array($rule->tipe, ['fix_price','diskon_nominal','cashback'])) Rp {{ number_format($rule->value, 0, ',', '.') }}
+                                        @else {{ $rule->value }} @endif
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
                                         {{ $rule->syarat_minimal_durasi ? '> '.$rule->syarat_minimal_durasi.' '.$rule->syarat_tipe_durasi : 'Tanpa Syarat' }}
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
                                         @if($rule->is_active)
-                                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 border-green-200">Active</span>
+                                            <span class="inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/80">Active</span>
                                         @else
-                                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold bg-muted text-muted-foreground border-border">Inactive</span>
+                                            <span class="inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80">Inactive</span>
                                         @endif
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -89,9 +95,12 @@
                             <div>
                                 <label class="text-sm font-medium leading-none">Tipe Potongan</label>
                                 <select wire:model="tipe" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                    <option value="diskon_persen">Diskon Persentase (%)</option>
-                                    <option value="hari_gratis">Gratis Hari Tambahan</option>
-                                    <option value="fix_price">Harga Pas (Fix Price)</option>
+                                    <option value="diskon_persen">Diskon Persentase (%) — misal 20%</option>
+                                    <option value="diskon_nominal">Diskon Nominal (Rp) — misal Rp 50.000</option>
+                                    <option value="hari_gratis">Gratis Hari Tambahan — misal +1 hari</option>
+                                    <option value="jam_gratis">Gratis Jam Tambahan — misal +3 jam</option>
+                                    <option value="fix_price">Harga Pas (Fix Price) — total jadi Rp X</option>
+                                    <option value="cashback">Cashback Tunai (Rp) — dikembalikan saat selesai</option>
                                 </select>
                             </div>
                             <div>

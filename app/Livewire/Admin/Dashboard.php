@@ -100,6 +100,11 @@ class Dashboard extends Component
         $start = Carbon::parse($this->startDate)->startOfDay();
         $end = Carbon::parse($this->endDate)->endOfDay();
 
+        // --- Previous period for gain delta ---
+        $periodDays = max(1, $start->diffInDays($end) + 1);
+        $prevStart = $start->copy()->subDays($periodDays)->startOfDay();
+        $prevEnd = $start->copy()->subDay()->endOfDay();
+
         // Snapshot Metrics (Global)
         $totalUnits = Unit::withTrashed()->count();
         $activeUnits = Unit::where(function($q) { $q->where('is_active', true); })->count();
@@ -113,6 +118,15 @@ class Dashboard extends Component
         $todayRevenue = Rental::where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
                             ->whereDate('created_at', Carbon::today())->sum('grand_total');
         $todayRentals = Rental::whereDate('created_at', Carbon::today())->count();
+
+        // Previous Period Metrics (for gain delta)
+        $prevRentals = Rental::whereBetween('created_at', [$prevStart, $prevEnd])->count();
+        $prevRevenue = Rental::where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+                            ->whereBetween('created_at', [$prevStart, $prevEnd])->sum('grand_total');
+
+        $gainRentals = $prevRentals > 0 ? round((($periodRentals - $prevRentals) / $prevRentals) * 100, 1) : null;
+        $gainRevenue = $prevRevenue > 0 ? round((($periodRevenue - $prevRevenue) / $prevRevenue) * 100, 1) : null;
+        $gainAbsRevenue = $periodRevenue - $prevRevenue;
 
         // Leaderboards scoped by date to reflect trends
         $topTenants = Rental::selectRaw('nik, nama, no_wa, COUNT(id) as total_rentals, SUM(grand_total) as total_spent')
@@ -146,6 +160,15 @@ class Dashboard extends Component
             ->sortByDesc('revenue')
             ->take(5);
 
+        // Payment Method Breakdown
+        $paymentSplit = Rental::where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw('metode_pembayaran, COUNT(id) as cnt')
+            ->groupBy('metode_pembayaran')
+            ->get();
+        $paymentLabels = $paymentSplit->pluck('metode_pembayaran')->map(fn($v) => strtoupper($v ?? 'QRIS'))->values()->toArray();
+        $paymentCounts = $paymentSplit->pluck('cnt')->values()->toArray();
+
         $chartInfo = $this->getChartData();
         $chartCategories = $chartInfo['categories'];
         $chartRevenue = $chartInfo['revenue'];
@@ -160,8 +183,10 @@ class Dashboard extends Component
         return view('livewire.admin.dashboard', compact(
             'totalUnits', 'activeUnits', 'pendingRentals',
             'periodRentals', 'periodRevenue', 'periodDiscounts', 'todayRevenue', 'todayRentals',
+            'gainRentals', 'gainRevenue', 'gainAbsRevenue',
             'activeRentals', 'topTenants', 'topUnits',
-            'chartCategories', 'chartRevenue', 'chartTransactions'
+            'chartCategories', 'chartRevenue', 'chartTransactions',
+            'paymentLabels', 'paymentCounts'
         ))->layout('layouts.admin');
     }
 }

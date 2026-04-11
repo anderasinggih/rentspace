@@ -21,47 +21,51 @@
                         <table class="min-w-full divide-y divide-border">
                             <thead>
                                 <tr class="bg-muted/50">
-                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">Seri & IMEI</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Spesifikasi</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Harga Sewa</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Status</th>
-                                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Aksi</span></th>
+                                    <th scope="col" class="py-3 pl-3 pr-3 text-left text-xs sm:text-sm font-semibold text-foreground sm:pl-6">Seri & IMEI</th>
+                                    <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">Spesifikasi</th>
+                                    <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">Harga Sewa</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs sm:text-sm font-semibold text-foreground">Status</th>
+                                    <th scope="col" class="relative py-3 pl-3 pr-2 sm:pr-6"><span class="sr-only">Aksi</span></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border">
                         @foreach($units as $unit)
                             <tr class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5 opacity-60 grayscale' : (!$unit->is_active ? 'opacity-50' : '') }}">
-                                <td class="px-6 py-4 align-middle">
-                                    <div class="font-bold {{ $unit->trashed() ? 'line-through text-muted-foreground' : '' }}">{{ $unit->seri }}</div>
+                                <td class="px-3 sm:px-6 py-3 sm:py-4 align-middle">
+                                    <div class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'line-through text-muted-foreground' : '' }}">{{ $unit->seri }}</div>
                                     <div class="text-xs text-muted-foreground">{{ $unit->imei }}</div>
+                                    {{-- Specs + price shown only on mobile --}}
+                                    <div class="sm:hidden mt-1 space-y-0.5">
+                                        <div class="text-xs text-muted-foreground">{{ $unit->warna }} · {{ $unit->memori }}</div>
+                                        <div class="text-xs font-semibold text-foreground">Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }}/hari · Rp {{ number_format($unit->harga_per_jam, 0, ',', '.') }}/jam</div>
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 align-middle">
+                                <td class="hidden sm:table-cell px-6 py-4 align-middle">
                                     {{ $unit->warna }} - {{ $unit->memori }}
                                 </td>
-                                <td class="px-6 py-4 align-middle">
+                                <td class="hidden sm:table-cell px-6 py-4 align-middle">
                                     <div class="text-sm font-semibold">Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }} / hari</div>
                                     <div class="text-xs text-muted-foreground">Rp {{ number_format($unit->harga_per_jam, 0, ',', '.') }} / jam</div>
                                 </td>
-                                <td class="px-6 py-4 align-middle">
+                                <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle">
                                     @if($unit->trashed())
-                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80">Dihapus</span>
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] sm:text-xs font-semibold border-transparent bg-destructive text-destructive-foreground">Dihapus</span>
                                     @elseif($unit->is_active)
-                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">Aktif</span>
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] sm:text-xs font-semibold border-transparent bg-primary text-primary-foreground">Aktif</span>
                                     @else
-                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">Inactive</span>
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] sm:text-xs font-semibold border-transparent bg-secondary text-secondary-foreground">Inactive</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 align-middle text-right h-full">
-                                    <div class="flex items-center justify-end w-full mt-1.5 gap-4">
+                                <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle text-right h-full">
+                                    <div class="flex items-center justify-end w-full gap-2 sm:gap-4">
                                         @if($unit->trashed())
-                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-destructive text-destructive-foreground uppercase tracking-widest">Dihapus Sistem</span>
                                             @if(auth()->user()->role === 'admin')
-                                            <button wire:click="restoreUnit({{ $unit->id }})" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-emerald-100 text-emerald-700 hover:bg-emerald-200 h-8 px-4">Pulihkan</button>
+                                            <button wire:click="restoreUnit({{ $unit->id }})" class="inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors bg-emerald-100 text-emerald-700 hover:bg-emerald-200 h-7 sm:h-8 px-2 sm:px-4">Pulihkan</button>
                                             @endif
                                         @else
                                             @if(auth()->user()->role === 'admin')
-                                            <button wire:click="edit({{ $unit->id }})" class="text-primary hover:underline text-sm font-semibold transition-colors hover:text-primary/80">Edit</button>
-                                            <button wire:click="delete({{ $unit->id }})" class="text-destructive hover:underline text-sm font-semibold transition-colors hover:text-destructive/80" onclick="confirm('Yakin ingin menghapus unit ini? Transaksi lamanya akan aman, namun unit akan masuk kotak arsip (abu-abu).') || event.stopImmediatePropagation()">Hapus</button>
+                                            <button wire:click="edit({{ $unit->id }})" class="text-primary hover:underline text-xs sm:text-sm font-semibold">Edit</button>
+                                            <button wire:click="delete({{ $unit->id }})" class="text-destructive hover:underline text-xs sm:text-sm font-semibold" onclick="confirm('Yakin ingin menghapus unit ini?') || event.stopImmediatePropagation()">Hapus</button>
                                             @endif
                                         @endif
                                     </div>
