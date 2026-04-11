@@ -7,10 +7,23 @@
                 <h1 class="text-2xl font-extrabold tracking-tight text-foreground">Timeline Ketersediaan</h1>
                 <p class="text-muted-foreground mt-1 text-sm">Lihat kapan daftar unit kami kosong dan siap disewa.</p>
             </div>
-            <a href="{{ route('public.booking') }}" wire:navigate
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow-md hover:bg-primary/90 h-10 px-6 py-2">
-                Sewa Sekarang
-            </a>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="inline-flex rounded-md shadow-sm h-10 w-full md:w-auto" role="group">
+                    <button wire:click="$set('timeframe', 7)" type="button" class="relative flex-1 md:flex-none px-4 py-2 text-xs md:text-sm font-medium border rounded-s-md focus:outline-none transition-colors {{ $timeframe == 7 ? 'bg-primary text-primary-foreground border-primary z-10' : 'bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground z-0' }}">
+                        7hr
+                    </button>
+                    <button wire:click="$set('timeframe', 14)" type="button" class="relative flex-1 md:flex-none px-4 py-2 text-xs md:text-sm font-medium border -ml-px focus:outline-none transition-colors {{ $timeframe == 14 ? 'bg-primary text-primary-foreground border-primary z-10' : 'bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground z-0' }}">
+                        14hr
+                    </button>
+                    <button wire:click="$set('timeframe', 30)" type="button" class="relative flex-1 md:flex-none px-4 py-2 text-xs md:text-sm font-medium border -ml-px rounded-e-md focus:outline-none transition-colors {{ $timeframe == 30 ? 'bg-primary text-primary-foreground border-primary z-10' : 'bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground z-0' }}">
+                        30hr
+                    </button>
+                </div>
+                <a href="{{ route('public.booking') }}" wire:navigate
+                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow-md hover:bg-primary/90 h-10 px-6 py-2 w-full md:w-auto">
+                    Sewa
+                </a>
+            </div>
         </div>
 
         @if($units->isEmpty())
@@ -50,16 +63,19 @@
                             class="w-24 md:w-48 shrink-0 p-2 md:p-4 border-r border-border border-dashed flex items-center gap-2 md:gap-3 bg-background z-10 transition-colors group-hover:bg-muted/30">
                             <div class="w-1 md:w-1.5 h-8 md:h-10 rounded-full bg-primary/40 hidden md:block"></div>
                             <div class="w-full">
-                                <div class="font-bold text-[11px] md:text-sm tracking-tight leading-tight truncate md:whitespace-normal">{{ $unit->seri }}</div>
-                                <div class="text-[9px] md:text-[11px] text-muted-foreground flex flex-col md:flex-row md:gap-1.5 md:items-center mt-0.5">
+                                <div
+                                    class="font-bold text-[11px] md:text-sm tracking-tight leading-tight truncate md:whitespace-normal">
+                                    {{ $unit->seri }}</div>
+                                <div
+                                    class="text-[9px] md:text-[11px] text-muted-foreground flex flex-col md:flex-row md:gap-1.5 md:items-center mt-0.5">
                                     @if($unit->kategori === 'iphone')
-                                        <div class="w-2 h-2 rounded-full hidden md:block"
-                                            style="background-color: {{ strtolower($unit->warna) == 'hitam' ? '#222' : (strtolower($unit->warna) == 'putih' ? '#eee' : 'orange') }}">
-                                        </div>
-                                        <span class="md:hidden">{{ $unit->memori }}</span>
-                                        <span class="hidden md:inline">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
+                                    <div class="w-2 h-2 rounded-full hidden md:block"
+                                        style="background-color: {{ strtolower($unit->warna) == 'hitam' ? '#222' : (strtolower($unit->warna) == 'putih' ? '#eee' : 'orange') }}">
+                                    </div>
+                                    <span class="md:hidden">{{ $unit->memori }}</span>
+                                    <span class="hidden md:inline">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
                                     @else
-                                        <span class="text-[10px] px-1.5 py-0.5 rounded-md border bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200/50 dark:border-purple-900/50 font-bold uppercase transition-colors">ALAT</span>
+                                    <x-ui.badge variant="purple" class="text-[10px] uppercase">ALAT</x-ui.badge>
                                     @endif
                                 </div>
                             </div>
@@ -131,7 +147,9 @@
                                         style="left: {{ $leftPct }}%; width: {{ $widthPct }}%; z-index: 5;"
                                         title="{{ $rental->nama }} ({{ $rentStart->format('d/m H:i') }} - {{ $rentEnd->format('d/m H:i') }})">
                                         <div class="flex items-center gap-1 md:gap-1.5 w-full">
-                                            <span class="shrink-0 flex items-center justify-center scale-75 md:scale-100">{!! $icon !!}</span>
+                                            <span
+                                                class="shrink-0 flex items-center justify-center scale-75 md:scale-100">{!!
+                                                $icon !!}</span>
                                             <span
                                                 class="text-[7px] md:text-[10px] font-semibold truncate leading-tight w-full tracking-tight">{{
                                                 $label }}</span>
@@ -145,11 +163,11 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-8 justify-center text-xs font-medium text-muted-foreground mt-4">
+        <div class="flex items-center gap-1 justify-center text-xs font-medium text-muted-foreground mt-4">
             <div class="flex items-center gap-2">
                 <div
                     class="w-4 h-4 rounded bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-2.5" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                         <path d="m9 11 3 3L22 4" />
@@ -159,7 +177,7 @@
             <div class="flex items-center gap-2">
                 <div
                     class="w-4 h-4 rounded bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-2.5" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10" />
                         <polyline points="12 6 12 12 16 14" />

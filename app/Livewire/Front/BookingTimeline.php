@@ -7,10 +7,12 @@ use Livewire\Component;
 
 class BookingTimeline extends Component
 {
+    public $timeframe = 30; // Default to 30 days
+
     public function render()
     {
         $startDate = \Carbon\Carbon::today();
-        $totalDays = 30; // Extended to 30 Days as requested
+        $totalDays = (int) $this->timeframe; 
         $endDate = $startDate->copy()->addDays($totalDays - 1)->endOfDay();
         
         $dates = [];

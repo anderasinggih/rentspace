@@ -100,13 +100,13 @@
                                     </td>
                                     <td class="whitespace-nowrap px-2 sm:px-3 py-2 sm:py-4">
                                         @if($trx->status === 'pending')
-                                            <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200/50 dark:border-amber-900/50">Pending</span>
+                                            <x-ui.badge variant="amber" class="text-[10px] sm:text-xs">Pending</x-ui.badge>
                                         @elseif($trx->status === 'paid')
-                                            <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200/50 dark:border-blue-900/50">Paid</span>
+                                            <x-ui.badge variant="blue" class="text-[10px] sm:text-xs">Paid</x-ui.badge>
                                         @elseif($trx->status === 'completed')
-                                            <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200/50 dark:border-green-900/50">Selesai</span>
+                                            <x-ui.badge variant="green" class="text-[10px] sm:text-xs">Selesai</x-ui.badge>
                                         @else
-                                            <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50">Batal</span>
+                                            <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Batal</x-ui.badge>
                                         @endif
                                     </td>
                                     <td class="relative whitespace-nowrap py-2 sm:py-4 pl-2 pr-2 sm:pr-6 text-right">

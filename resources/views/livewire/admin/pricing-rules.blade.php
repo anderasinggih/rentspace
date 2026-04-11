@@ -3,11 +3,13 @@
         <div class="sm:flex sm:items-center">
             <div class="sm:flex-auto">
                 <h1 class="text-2xl font-bold tracking-tight text-foreground">Promo & Pricing Rules</h1>
-                <p class="mt-2 text-sm text-muted-foreground">Manage dynamic discounts, like "35% off for 12 hours" or "Rent 1 day, free 1 day".</p>
+                <p class="mt-2 text-sm text-muted-foreground">Manage dynamic discounts, like "35% off for 12 hours" or
+                    "Rent 1 day, free 1 day".</p>
             </div>
             <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
                 @if(auth()->user()->role === 'admin')
-                <button wire:click="create" class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                <button wire:click="create"
+                    class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
                     Create Rule
                 </button>
                 @endif
@@ -21,82 +23,107 @@
                         <table class="min-w-full divide-y divide-border">
                             <thead>
                                 <tr class="bg-muted/50">
-                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">Nama Promo</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Kriteria</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Berlaku (Tanggal)</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Status</th>
-                                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Aksi</span></th>
+                                    <th scope="col"
+                                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">
+                                        Nama Promo</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
+                                        Kriteria</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
+                                        Berlaku (Tanggal)</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
+                                        Status</th>
+                                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span
+                                            class="sr-only">Aksi</span></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border">
                                 @forelse ($rules as $rule)
                                 @php
-                                    $isExpired = $rule->end_date && \Carbon\Carbon::now()->isAfter($rule->end_date);
-                                    $isDeleted = $rule->trashed();
-                                    $dimmed = $isExpired || $isDeleted || !$rule->is_active;
+                                $isExpired = $rule->end_date && \Carbon\Carbon::now()->isAfter($rule->end_date);
+                                $isDeleted = $rule->trashed();
+                                $dimmed = $isExpired || $isDeleted || !$rule->is_active;
                                 @endphp
                                 <tr class="{{ $dimmed ? 'opacity-50 grayscale bg-muted/20' : '' }} transition-all">
-                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">
+                                    <td
+                                        class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">
                                         {{ $rule->nama_promo }}
                                         @if($isDeleted)
-                                            <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded-md border bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50 font-bold uppercase">Soft Deleted</span>
+                                        <x-ui.badge variant="red" class="ml-1 text-[10px] uppercase font-bold">Soft
+                                            Deleted</x-ui.badge>
                                         @endif
                                     </td>
                                     <td class="px-3 py-4 text-sm text-muted-foreground">
                                         <div class="font-bold text-primary">
-                                            @if($rule->tipe === 'diskon_persen') {{ $rule->value }}%
-                                            @elseif($rule->tipe === 'hari_gratis') {{ $rule->value }} Hari
-                                            @elseif($rule->tipe === 'jam_gratis') {{ $rule->value }} Jam
-                                            @elseif(in_array($rule->tipe, ['fix_price','diskon_nominal','cashback'])) Rp {{ number_format($rule->value, 0, ',', '.') }}
+                                            @if($rule->tipe === 'diskon_persen') Diskon {{ $rule->value }}%
+                                            @elseif($rule->tipe === 'hari_gratis') Gratis {{ $rule->value }} Hari
+                                            @elseif($rule->tipe === 'jam_gratis') Gratis {{ $rule->value }} Jam
+                                            @elseif($rule->tipe === 'fix_price') Harga Spesial Rp {{
+                                            number_format($rule->value, 0, ',', '.') }}
+                                            @elseif($rule->tipe === 'diskon_nominal') Potongan Rp {{
+                                            number_format($rule->value, 0, ',', '.') }}
+                                            @elseif($rule->tipe === 'cashback') Cashback Rp {{
+                                            number_format($rule->value, 0, ',', '.') }}
                                             @else {{ $rule->value }} @endif
                                         </div>
                                         <div class="text-[10px]">
-                                            @if($rule->tipe === 'diskon_persen') Diskon Persen
-                                            @elseif($rule->tipe === 'hari_gratis') Hari Gratis
-                                            @elseif($rule->tipe === 'fix_price') Fix Price
-                                            @elseif($rule->tipe === 'diskon_nominal') Diskon Nominal
-                                            @elseif($rule->tipe === 'jam_gratis') Jam Gratis
-                                            @elseif($rule->tipe === 'cashback') Cashback Nominal
+                                            @if($rule->tipe === 'diskon_persen') Diskon Persentase
+                                            @elseif($rule->tipe === 'hari_gratis') Hari Tambahan
+                                            @elseif($rule->tipe === 'fix_price') Harga Pas (Fix)
+                                            @elseif($rule->tipe === 'diskon_nominal') Diskon Nominal (Rp)
+                                            @elseif($rule->tipe === 'jam_gratis') Jam Tambahan
+                                            @elseif($rule->tipe === 'cashback') Cashback Tunai
                                             @endif
-                                            &bull; {{ $rule->syarat_minimal_durasi ? '> '.$rule->syarat_minimal_durasi.' '.$rule->syarat_tipe_durasi : 'Tanpa Syarat' }}
+                                            &bull; {{ $rule->syarat_minimal_durasi ? '> '.$rule->syarat_minimal_durasi.'
+                                            '.$rule->syarat_tipe_durasi : 'Tanpa Syarat' }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-xs text-muted-foreground">
                                         @if($rule->start_date || $rule->end_date)
-                                            {{ $rule->start_date ? \Carbon\Carbon::parse($rule->start_date)->format('d M y') : '...' }} 
-                                            s/d 
-                                            {{ $rule->end_date ? \Carbon\Carbon::parse($rule->end_date)->format('d M y') : '...' }}
+                                        {{ $rule->start_date ? \Carbon\Carbon::parse($rule->start_date)->format('d M y')
+                                        : '...' }}
+                                        s/d
+                                        {{ $rule->end_date ? \Carbon\Carbon::parse($rule->end_date)->format('d M y') :
+                                        '...' }}
                                         @else
-                                            <span class="italic opacity-50 text-[10px]">Selamanya</span>
+                                        <span class="italic opacity-50 text-[10px]">Selamanya</span>
                                         @endif
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
                                         @if($isDeleted)
-                                            <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50 uppercase">Dihapus</span>
+                                        <x-ui.badge variant="red" class="text-[10px] uppercase">Dihapus</x-ui.badge>
                                         @elseif($isExpired)
-                                            <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50 uppercase">Expired</span>
+                                        <x-ui.badge variant="red" class="text-[10px] uppercase">Expired</x-ui.badge>
                                         @elseif($rule->is_active)
-                                            <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-semibold bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200/50 dark:border-green-900/50 uppercase">Aktif</span>
+                                        <x-ui.badge variant="green" class="text-[10px] uppercase">Aktif</x-ui.badge>
                                         @else
-                                            <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-semibold bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200/50 dark:border-zinc-700/50 uppercase">Nonaktif</span>
+                                        <x-ui.badge variant="zinc" class="text-[10px] uppercase">Nonaktif</x-ui.badge>
                                         @endif
                                     </td>
-                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-xs font-medium sm:pr-6 space-x-2">
+                                    <td
+                                        class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-xs font-medium sm:pr-6 space-x-2">
                                         @if(auth()->user()->role === 'admin')
-                                            @if($isDeleted)
-                                                <button wire:click="restore({{ $rule->id }})" class="text-green-600 hover:underline">Restore</button>
-                                                <button wire:click="delete({{ $rule->id }})" wire:confirm="Hapus PERMANEN aturan ini?" class="text-red-600 font-bold hover:underline">Destroy</button>
-                                            @else
-                                                <button wire:click="edit({{ $rule->id }})" class="text-primary hover:underline">Edit</button>
-                                                <button wire:click="duplicate({{ $rule->id }})" class="text-sky-600 hover:underline">Duplikat</button>
-                                                <button wire:click="delete({{ $rule->id }})" wire:confirm="Hapus (Soft Delete) aturan ini?" class="text-red-500 hover:text-red-700">Del</button>
-                                            @endif
+                                        @if($isDeleted)
+                                        <button wire:click="restore({{ $rule->id }})"
+                                            class="text-green-600 hover:underline">Restore</button>
+                                        <button wire:click="delete({{ $rule->id }})"
+                                            wire:confirm="Hapus PERMANEN aturan ini?"
+                                            class="text-red-600 font-bold hover:underline">Destroy</button>
+                                        @else
+                                        <button wire:click="edit({{ $rule->id }})"
+                                            class="text-primary hover:underline">Edit</button>
+                                        <button wire:click="duplicate({{ $rule->id }})"
+                                            class="text-sky-600 hover:underline">Duplikat</button>
+                                        <button wire:click="delete({{ $rule->id }})"
+                                            wire:confirm="Hapus (Soft Delete) aturan ini?"
+                                            class="text-red-500 hover:text-red-700">Del</button>
+                                        @endif
                                         @endif
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="py-10 text-center text-sm text-muted-foreground">Belum ada promo / rules yang dibuat.</td>
+                                    <td colspan="6" class="py-10 text-center text-sm text-muted-foreground">Belum ada
+                                        promo / rules yang dibuat.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -112,19 +139,23 @@
         <div class="relative z-50">
             <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"></div>
             <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div class="relative w-full max-w-lg rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8">
+                <div
+                    class="relative w-full max-w-lg rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8">
                     <h2 class="text-lg font-semibold">{{ $isEditing ? 'Edit Rule' : 'Tambah Rule / Promo Baru' }}</h2>
                     <form wire:submit="save" class="mt-6 space-y-4">
                         <div>
                             <label class="text-sm font-medium leading-none">Nama Promo / Rule</label>
-                            <input type="text" wire:model="nama_promo" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Diskon Lebaran 35% / Setengah Hari">
+                            <input type="text" wire:model="nama_promo"
+                                class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                placeholder="Diskon Lebaran 35% / Setengah Hari">
                             @error('nama_promo') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-sm font-medium leading-none">Tipe Potongan</label>
-                                <select wire:model="tipe" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                <select wire:model="tipe"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="diskon_persen">Diskon Persentase (%) — misal 20%</option>
                                     <option value="diskon_nominal">Diskon Nominal (Rp) — misal Rp 50.000</option>
                                     <option value="hari_gratis">Gratis Hari Tambahan — misal +1 hari</option>
@@ -134,8 +165,10 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="text-sm font-medium leading-none">Value Potongan</label>
-                                <input type="number" wire:model="value" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Misal: 35">
+                                <label class="text-sm font-medium leading-none">Value</label>
+                                <input type="number" wire:model="value"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    placeholder="Misal: 35">
                                 @error('value') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -143,41 +176,51 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-sm font-medium leading-none">Tanggal Mulai (Opsional)</label>
-                                <input type="date" wire:model="start_date" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                <input type="date" wire:model="start_date"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                 @error('start_date') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="text-sm font-medium leading-none">Tanggal Berakhir (Opsional)</label>
-                                <input type="date" wire:model="end_date" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                <input type="date" wire:model="end_date"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                 @error('end_date') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 border-t border-border pt-4 mt-2">
                             <div>
-                                <label class="text-sm font-medium leading-none">Berlaku Minimal Durasi (Opsional)</label>
-                                <input type="number" wire:model="syarat_minimal_durasi" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Misal: 12">
+                                <label class="text-sm font-medium leading-none">Berlaku Minimal Durasi
+                                    (Opsional)</label>
+                                <input type="number" wire:model="syarat_minimal_durasi"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    placeholder="Misal: 12">
                                 <p class="text-[10px] text-muted-foreground mt-1">Kosongkan jika selalu berlaku.</p>
                             </div>
                             <div>
                                 <label class="text-sm font-medium leading-none">Satuan Durasi Syarat</label>
-                                <select wire:model="syarat_tipe_durasi" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                <select wire:model="syarat_tipe_durasi"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="jam">Jam</option>
                                     <option value="hari">Hari</option>
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="flex items-center space-x-2 mt-2">
-                            <input type="checkbox" id="is_active_rule" wire:model="is_active" class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
-                            <label for="is_active_rule" class="text-sm font-medium leading-none cursor-pointer">Rule Aktif</label>
+                            <input type="checkbox" id="is_active_rule" wire:model="is_active"
+                                class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                            <label for="is_active_rule" class="text-sm font-medium leading-none cursor-pointer">Rule
+                                Aktif</label>
                         </div>
-                        
+
                         <div class="mt-6 flex justify-end gap-3">
-                            <button type="button" wire:click="$set('showModal', false)" class="inline-flex items-center justify-center rounded-md border border-input bg-background h-9 px-4 text-sm font-medium shadow-sm hover:bg-muted hover:text-foreground">
+                            <button type="button" wire:click="$set('showModal', false)"
+                                class="inline-flex items-center justify-center rounded-md border border-input bg-background h-9 px-4 text-sm font-medium shadow-sm hover:bg-muted hover:text-foreground">
                                 Batal
                             </button>
-                            <button type="submit" class="inline-flex items-center justify-center rounded-md bg-primary h-9 px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                            <button type="submit"
+                                class="inline-flex items-center justify-center rounded-md bg-primary h-9 px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
                                 Simpan
                             </button>
                         </div>

@@ -271,17 +271,17 @@
                         <td class="px-4 py-3">{{ $end->format('d M, H:i') }}</td>
                         <td class="px-4 py-3 text-right">
                             @if($diffInHours < 0) 
-                                <span class="inline-flex px-1.5 py-0.5 rounded-md border text-[10px] font-bold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50 uppercase">
+                                <x-ui.badge variant="red" class="text-[10px] font-bold uppercase">
                                     Telat Masuk
-                                </span>
+                                </x-ui.badge>
                             @elseif($diffInHours < 3) 
-                                <span class="inline-flex px-1.5 py-0.5 rounded-md border text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200/50 dark:border-amber-900/50 uppercase">
+                                <x-ui.badge variant="amber" class="text-[10px] font-bold uppercase">
                                     Sisa {{ $diffText }}
-                                </span>
+                                </x-ui.badge>
                             @else
-                                <span class="inline-flex px-1.5 py-0.5 rounded-md border text-[10px] font-bold bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200/50 dark:border-green-900/50 uppercase">
+                                <x-ui.badge variant="green" class="text-[10px] font-bold uppercase">
                                     Aman
-                                </span>
+                                </x-ui.badge>
                             @endif
                         </td>
                     </tr>
@@ -324,8 +324,14 @@
             xaxis: {
                 categories: @json($chartCategories),
                 tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
-                labels: { style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '10px' } },
-                tickAmount: 8
+                labels: { 
+                    hideOverlappingLabels: true,
+                    rotate: -45,
+                    rotateAlways: false,
+                    minHeight: 30,
+                    style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
+                },
+                tickAmount: window.innerWidth < 640 ? 3 : 6
             },
             yaxis: {
                 labels: {

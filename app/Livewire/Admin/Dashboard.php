@@ -176,8 +176,8 @@ class Dashboard extends Component
 
         $activeRentals = Rental::with(['unit' => function($q) { $q->withTrashed(); }])
             ->whereIn('status', ['paid', 'pending'])
-            ->where('waktu_mulai', '<=', now())
-            ->where('waktu_selesai', '>=', now())
+            ->where(fn($q) => $q->where('waktu_mulai', '<=', now()))
+            ->where(fn($q) => $q->where('waktu_selesai', '>=', now()))
             ->get();
 
         return view('livewire.admin.dashboard', compact(

@@ -43,7 +43,7 @@
                                             <span id="unit-label-{{ $unit->id }}" class="block font-medium text-foreground">
                                                 {{ $unit->seri }}
                                                 @if($unit->kategori === 'gear')
-                                                    <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded-md border bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200/50 dark:border-purple-900/50 font-bold uppercase">Alat</span>
+                                                    <x-ui.badge variant="purple" class="ml-1 text-[10px] uppercase font-bold">ALAT</x-ui.badge>
                                                 @endif
                                             </span>
                                             @if($unit->warna || $unit->memori)

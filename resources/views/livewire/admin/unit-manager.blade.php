@@ -34,9 +34,9 @@
                                 <td class="px-3 sm:px-6 py-3 sm:py-4 align-middle">
                                     <div class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'line-through text-muted-foreground' : '' }}">
                                         {{ $unit->seri }}
-                                        <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded-md border @if($unit->kategori === 'gear') bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200/50 dark:border-purple-900/50 @else bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200/50 dark:border-blue-900/50 @endif font-medium uppercase">
+                                        <x-ui.badge variant="{{ $unit->kategori === 'gear' ? 'purple' : 'blue' }}" class="ml-1 text-[10px] uppercase font-medium">
                                             {{ $unit->kategori === 'gear' ? 'Alat' : 'Ponsel' }}
-                                        </span>
+                                        </x-ui.badge>
                                     </div>
                                     @if($unit->imei)
                                         <div class="text-xs text-muted-foreground">{{ $unit->imei }}</div>
@@ -65,11 +65,11 @@
                                 </td>
                                 <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle">
                                     @if($unit->trashed())
-                                        <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50">Dihapus</span>
+                                        <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Dihapus</x-ui.badge>
                                     @elseif($unit->is_active)
-                                        <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200/50 dark:border-green-900/50">Aktif</span>
+                                        <x-ui.badge variant="green" class="text-[10px] sm:text-xs">Aktif</x-ui.badge>
                                     @else
-                                        <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200/50 dark:border-zinc-700/50">Nonaktif</span>
+                                        <x-ui.badge variant="zinc" class="text-[10px] sm:text-xs">Nonaktif</x-ui.badge>
                                     @endif
                                 </td>
                                 <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle text-right h-full">
