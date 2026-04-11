@@ -364,8 +364,14 @@
             xaxis: {
                 categories: @json($chartCategories),
                 tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
-                labels: { style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '10px' } },
-                tickAmount: 8
+                labels: { 
+                    hideOverlappingLabels: true,
+                    rotate: -45,
+                    rotateAlways: false,
+                    minHeight: 30,
+                    style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
+                },
+                tickAmount: window.innerWidth < 640 ? 3 : 6 // Density reduction
             },
             yaxis: {
                 labels: {
@@ -390,8 +396,14 @@
             chart: { type: 'donut', height: 220, fontFamily: 'inherit', background: 'transparent' },
             colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
             dataLabels: { enabled: true, style: { fontSize: '11px', fontFamily: 'inherit', colors: [colors.isDark ? '#fff' : '#111'] } },
-            legend: { position: 'bottom', fontSize: '11px', fontFamily: 'inherit', labels: { colors: colors.textColor } },
-            plotOptions: { pie: { donut: { size: '60%', labels: { show: true, total: { show: true, label: 'Total', color: colors.textColor, fontSize: '12px', fontFamily: 'inherit' } } } } },
+            legend: { 
+                position: 'bottom', 
+                fontSize: '10px', 
+                fontFamily: 'inherit', 
+                labels: { colors: colors.textColor },
+                itemMargin: { horizontal: 8, vertical: 4 }
+            },
+            plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: 'Total', color: colors.textColor, fontSize: '14px', fontWeight: 600, fontFamily: 'inherit' } } } } },
             theme: { mode: colors.isDark ? 'dark' : 'light' },
             tooltip: { theme: colors.tooltipTheme, style: { fontSize: '11px', fontFamily: 'inherit' } }
         });
