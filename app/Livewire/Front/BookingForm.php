@@ -18,6 +18,7 @@ class BookingForm extends Component
     public $potongan_diskon = 0;
     public $grand_total = 0;
     public $kode_unik = 0;
+    public $agree = false;
     
     public function updated($propertyName)
     {
@@ -42,7 +43,7 @@ class BookingForm extends Component
 
         $this->available_units = Unit::where('is_active', true)
             ->whereDoesntHave('rentals', function ($query) use ($start, $end) {
-                $query->whereIn('status', ['pending', 'paid', 'completed'])
+                $query->whereIn('status', ['pending', 'paid'])  // 'completed' = sudah selesai, unit bebas
                       ->where(function ($q) use ($start, $end) {
                           $q->whereBetween('waktu_mulai', [$start, $end])
                             ->orWhereBetween('waktu_selesai', [$start, $end])
@@ -125,7 +126,10 @@ class BookingForm extends Component
             'alamat' => 'required',
             'waktu_mulai' => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
-            'unit_id' => 'required|exists:units,id'
+            'unit_id' => 'required|exists:units,id',
+            'agree' => 'accepted',
+        ], [
+            'agree.accepted' => 'Anda wajib menyetujui syarat & ketentuan penyewaan sebelum melanjutkan.',
         ]);
 
         $this->checkAvailability();

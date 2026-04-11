@@ -17,7 +17,7 @@ class Settings extends Component
     public $name = '', $email = '', $password = '', $role = 'admin';
 
     public $home_title = '', $home_description = '', $late_tolerance_minutes = 60;
-    public $admin_wa = '', $admin_address = '';
+    public $admin_wa = '', $admin_address = '', $terms_conditions = '';
 
     public function mount()
     {
@@ -31,6 +31,8 @@ class Settings extends Component
         $this->late_tolerance_minutes = \App\Models\Setting::getVal('late_tolerance_minutes', 60);
         $this->admin_wa = \App\Models\Setting::getVal('admin_wa', '6281234567890');
         $this->admin_address = \App\Models\Setting::getVal('admin_address', 'Jl. Jend. Sudirman, Purwokerto');
+        $defaultTerms = "1. Penyewa wajib menjaga iPhone yang disewa dan bertanggung jawab atas kerusakan atau kehilangan selama masa sewa.\n2. Pembayaran dilakukan di awal sebelum unit diserahkan, sesuai total tagihan yang tertera.\n3. Keterlambatan pengembalian melewati batas toleransi waktu akan dikenakan denda yang ditentukan oleh pengelola.\n4. Pengelola berhak menolak penyewaan apabila dokumen identitas (NIK/KTP) tidak valid atau tidak sesuai.\n5. Pemesanan yang sudah terkonfirmasi tidak dapat dibatalkan secara sepihak oleh penyewa.";
+        $this->terms_conditions = \App\Models\Setting::getVal('terms_conditions', $defaultTerms);
     }
 
     public function loadUsers()
@@ -89,6 +91,7 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'late_tolerance_minutes'], ['value' => $this->late_tolerance_minutes]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa'], ['value' => $this->admin_wa]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_address'], ['value' => $this->admin_address]);
+        \App\Models\Setting::updateOrCreate(['key' => 'terms_conditions'], ['value' => $this->terms_conditions]);
 
         session()->flash('general_message', 'Pengaturan Umum berhasil disimpan.');
     }

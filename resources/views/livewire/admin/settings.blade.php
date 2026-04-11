@@ -206,6 +206,10 @@
                         <label class="block text-sm font-medium mb-1">Alamat Offline Toko (tampil di Footer Web Publik)</label>
                         <textarea wire:model="admin_address" rows="2" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"></textarea>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Syarat & Ketentuan Penyewaan <span class="text-xs text-muted-foreground">(Ditampilkan di form booking, satu baris = satu poin)</span></label>
+                        <textarea wire:model="terms_conditions" rows="8" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono" placeholder="1. Penyewa wajib..."></textarea>
+                    </div>
                     <button type="submit" class="mt-4 self-start inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer" wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="saveGeneralSettings">Simpan Pengaturan</span>
                         <span wire:loading wire:target="saveGeneralSettings">Menyimpan...</span>

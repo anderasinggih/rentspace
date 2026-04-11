@@ -3,7 +3,7 @@
     <div class="max-w-3xl mx-auto">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Formulir Penyewaan</h1>
-            <a href="{{ route('public.timeline') }}" wire:navigate class="inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 text-sm font-medium shadow-sm w-full sm:w-auto text-center transition-colors">
+            <a href="{{ route('public.timeline') }}" wire:navigate class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 text-sm font-medium shadow-sm w-full sm:w-auto text-center transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
                 Lihat Kalender Jadwal
             </a>
@@ -118,6 +118,26 @@
                             @error('alamat') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                     </div>
+                </div>
+
+                <!-- Persetujuan Pengguna -->
+                <div class="rounded-xl border border-border bg-muted/30 p-5 space-y-3">
+                    <h3 class="font-semibold text-sm text-foreground">Syarat & Ketentuan Penyewaan</h3>
+                    @php
+                        $defaultTerms = "1. Penyewa wajib menjaga iPhone yang disewa dan bertanggung jawab atas kerusakan atau kehilangan selama masa sewa.\n2. Pembayaran dilakukan di awal sebelum unit diserahkan, sesuai total tagihan yang tertera.\n3. Keterlambatan pengembalian melewati batas toleransi waktu akan dikenakan denda yang ditentukan oleh pengelola.\n4. Pengelola berhak menolak penyewaan apabila dokumen identitas (NIK/KTP) tidak valid atau tidak sesuai.\n5. Pemesanan yang sudah terkonfirmasi tidak dapat dibatalkan secara sepihak oleh penyewa.";
+                        $termsRaw = \App\Models\Setting::getVal('terms_conditions', $defaultTerms);
+                        $termLines = array_filter(explode("\n", $termsRaw));
+                    @endphp
+                    <ul class="text-xs text-muted-foreground space-y-1.5 list-disc list-inside leading-relaxed">
+                        @foreach($termLines as $line)
+                            <li>{{ trim($line) }}</li>
+                        @endforeach
+                    </ul>
+                    <label class="flex items-start gap-3 cursor-pointer mt-1">
+                        <input type="checkbox" wire:model="agree" id="agree_terms" class="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-primary focus:ring-primary">
+                        <span class="text-sm font-medium text-foreground">Saya telah membaca dan <strong>menyetujui</strong> seluruh syarat & ketentuan penyewaan di atas.</span>
+                    </label>
+                    @error('agree') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <button type="submit" class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-8.5 font-bold text-lg">
