@@ -41,7 +41,8 @@ class Transactions extends Component
 
     public function markAsPaid($id)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'pending') {
             $rental->update(['status' => 'paid']);
@@ -50,7 +51,8 @@ class Transactions extends Component
 
     public function cancel($id)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid'])) {
             $rental->update(['status' => 'cancelled']);
@@ -59,7 +61,8 @@ class Transactions extends Component
 
     public function openDendaModal($id)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
         $trx = Rental::findOrFail($id);
         $this->completingTrxId = $id;
         $this->dendaAmount = 0;
@@ -72,11 +75,15 @@ class Transactions extends Component
         $diff = now()->diff($end);
         if (now() > $end) {
             $parts = [];
-            if ($diff->d > 0) $parts[] = $diff->d . ' hari';
-            if ($diff->h > 0) $parts[] = $diff->h . ' jam';
-            if ($diff->i > 0) $parts[] = $diff->i . ' menit';
+            if ($diff->d > 0)
+                $parts[] = $diff->d . ' hari';
+            if ($diff->h > 0)
+                $parts[] = $diff->h . ' jam';
+            if ($diff->i > 0)
+                $parts[] = $diff->i . ' menit';
             $this->lateDurationText = implode(' ', $parts);
-        } else {
+        }
+        else {
             $this->lateDurationText = 'Tidak telat (Dalam masa sewa)';
         }
     }
@@ -100,8 +107,8 @@ class Transactions extends Component
                 $newGrandTotal = $rental->grand_total + (int)$this->dendaAmount + (int)$this->dendaKerusakanAmount;
                 $rental->update([
                     'status' => 'completed',
-                    'denda' => (int) $this->dendaAmount,
-                    'denda_kerusakan' => (int) $this->dendaKerusakanAmount,
+                    'denda' => (int)$this->dendaAmount,
+                    'denda_kerusakan' => (int)$this->dendaKerusakanAmount,
                     'catatan_kerusakan' => $this->catatanKerusakan,
                     'grand_total' => $newGrandTotal,
                     'denda_payment_method' => ($this->dendaAmount > 0 || $this->dendaKerusakanAmount > 0) ? $this->dendaMethod : null,
@@ -115,7 +122,8 @@ class Transactions extends Component
 
     public function finishWithoutDenda($id)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid'])) {
             $rental->update([
@@ -129,7 +137,8 @@ class Transactions extends Component
 
     public function deleteRow($id)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
         Rental::findOrFail($id)->delete();
     }
 
@@ -147,7 +156,8 @@ class Transactions extends Component
 
     public function editTrx($id)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
         $trx = Rental::findOrFail($id);
         $this->editTrxId = $trx->id;
         $this->edit_nama = $trx->nama;
@@ -174,8 +184,9 @@ class Transactions extends Component
 
     public function updateTrx()
     {
-        if (auth()->user()->role !== 'admin') return;
-        
+        if (auth()->user()->role !== 'admin')
+            return;
+
         $this->validate([
             'edit_nama' => 'required',
             'edit_waktu_mulai' => 'required',
@@ -187,7 +198,7 @@ class Transactions extends Component
         ]);
 
         $trx = Rental::findOrFail($this->editTrxId);
-        
+
         // Recalculate Grand Total
         $grandTotal = $this->edit_subtotal - $this->edit_diskon + $this->edit_denda + $this->edit_denda_kerusakan + $trx->kode_unik_pembayaran;
 
@@ -215,22 +226,22 @@ class Transactions extends Component
     public function exportCsv()
     {
         $transactions = Rental::with('unit')->orderBy('created_at', 'desc')->get();
-        
+
         $headers = [
-            "Content-type"        => "text/csv",
+            "Content-type" => "text/csv",
             "Content-Disposition" => "attachment; filename=mutasi_transaksi.csv",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
         ];
 
-        $callback = function() use($transactions) {
+        $callback = function () use ($transactions) {
             $file = fopen('php://output', 'w');
             fputcsv($file, ['ID Transaksi', 'Tgl Mulai', 'Tgl Selesai', 'Penyewa', 'WA', 'Unit', 'Subtotal', 'Diskon', 'Denda Telat', 'Denda Kerusakan', 'Grand Total', 'Metode', 'Status']);
 
             foreach ($transactions as $trx) {
                 fputcsv($file, [
-                    'INV-'.str_pad($trx->id, 5, '0', STR_PAD_LEFT),
+                    'INV-' . str_pad($trx->id, 5, '0', STR_PAD_LEFT),
                     $trx->waktu_mulai->format('Y-m-d H:i'),
                     $trx->waktu_selesai->format('Y-m-d H:i'),
                     $trx->nama,
@@ -254,14 +265,14 @@ class Transactions extends Component
     public function render()
     {
         $query = Rental::with('unit')
-            ->when($this->search, function($q) {
-                $q->where(fn($qq) => $qq->where('nama', 'like', '%'.$this->search.'%')
-                       ->orWhere('id', 'like', '%'.$this->search.'%')
-                       ->orWhere('no_wa', 'like', '%'.$this->search.'%'));
-            })
-            ->when($this->filterStatus, function($q) {
-                $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
-            })
+            ->when($this->search, function ($q) {
+            $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
+            ->orWhere('id', 'like', '%' . $this->search . '%')
+            ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
+        })
+            ->when($this->filterStatus, function ($q) {
+            $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
+        })
             ->latest()
             ->get();
 
