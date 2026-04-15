@@ -11,6 +11,7 @@ class Rental extends Model
     protected $casts = [
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     public function unit()

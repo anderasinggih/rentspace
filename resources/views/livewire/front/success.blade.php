@@ -8,11 +8,16 @@
                 </svg>
             </div>
 
-            <!-- Title -->
             <h1 class="text-2xl font-bold tracking-tight text-foreground mb-2">Terima Kasih, {{ $rental->nama }}!</h1>
-            <p class="text-muted-foreground mb-8">
+            <p class="text-muted-foreground mb-4">
                 Pesanan Anda telah kami terima. Silakan lakukan pembayaran sesuai instruksi sebelumnya jika belum tuntas.
             </p>
+            <div class="mb-8 p-3 bg-primary/10 border border-primary/20 rounded-xl">
+                <p class="text-sm font-bold text-primary flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L3 21"/></svg>
+                    Mohon SCREENSHOT halaman ini sebagai bukti pesanan Anda!
+                </p>
+            </div>
 
             <!-- Info Card -->
             <div class="bg-muted/40 rounded-xl border border-border p-6 text-left space-y-4 mb-8">

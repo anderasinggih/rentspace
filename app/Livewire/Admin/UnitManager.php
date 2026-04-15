@@ -15,6 +15,11 @@ class UnitManager extends Component
     public $isEditing = false;
     public $showModal = false;
 
+    // Search & Filter
+    public $search = '';
+    public $filterKategori = '';
+    public $filterStatus = '';
+
     public function create()
     {
         $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'isEditing']);
@@ -91,7 +96,18 @@ class UnitManager extends Component
 
     public function render()
     {
-        $query = \App\Models\Unit::withTrashed()->orderBy('deleted_at', 'asc')->orderBy('is_active', 'desc');
+        $query = \App\Models\Unit::withTrashed()
+            ->when($this->search, fn($q) => $q->where('seri', 'like', '%'.$this->search.'%')
+                ->orWhere('imei', 'like', '%'.$this->search.'%')
+                ->orWhere('warna', 'like', '%'.$this->search.'%'))
+            ->when($this->filterKategori, fn($q) => $q->where('kategori', $this->filterKategori))
+            ->when($this->filterStatus !== '', function($q) {
+                if ($this->filterStatus === 'active') return $q->whereNull('deleted_at')->where('is_active', true);
+                if ($this->filterStatus === 'inactive') return $q->whereNull('deleted_at')->where('is_active', false);
+                if ($this->filterStatus === 'deleted') return $q->whereNotNull('deleted_at');
+            })
+            ->orderBy('deleted_at', 'asc')
+            ->orderBy('is_active', 'desc');
         
         return view('livewire.admin.unit-manager', [
             'units' => $query->get()

@@ -22,6 +22,9 @@ class Settings extends Component
     public $admin_wa = '', $admin_address = '', $terms_conditions = '';
     public $payment_methods = ['qris' => true, 'cash' => true, 'transfer' => false];
     public $about_faq_items = [];
+    public $social_ig_url = '', $social_ig_name = '', $social_tiktok_url = '', $social_tiktok_name = '';
+    
+    public $importFile;
 
     public function mount()
     {
@@ -45,6 +48,11 @@ class Settings extends Component
 
         $this->qris = \App\Models\Setting::getVal('qris', 'default.jpg');
         $this->hero = \App\Models\Setting::getVal('hero', 'default.jpg');
+
+        $this->social_ig_url = \App\Models\Setting::getVal('social_ig_url', '');
+        $this->social_ig_name = \App\Models\Setting::getVal('social_ig_name', '');
+        $this->social_tiktok_url = \App\Models\Setting::getVal('social_tiktok_url', '');
+        $this->social_tiktok_name = \App\Models\Setting::getVal('social_tiktok_name', '');
     }
 
     public function loadUsers()
@@ -105,6 +113,10 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'admin_address'], ['value' => $this->admin_address]);
         \App\Models\Setting::updateOrCreate(['key' => 'terms_conditions'], ['value' => $this->terms_conditions]);
         \App\Models\Setting::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'social_ig_url'], ['value' => $this->social_ig_url]);
+        \App\Models\Setting::updateOrCreate(['key' => 'social_ig_name'], ['value' => $this->social_ig_name]);
+        \App\Models\Setting::updateOrCreate(['key' => 'social_tiktok_url'], ['value' => $this->social_tiktok_url]);
+        \App\Models\Setting::updateOrCreate(['key' => 'social_tiktok_name'], ['value' => $this->social_tiktok_name]);
 
         session()->flash('general_message', 'Pengaturan Umum berhasil disimpan.');
     }
@@ -157,6 +169,98 @@ class Settings extends Component
         $this->hero = $filename;
 
         session()->flash('hero_message', '1:1 Foto Beranda berhasil diperbarui!');
+    }
+
+    public function exportData()
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        $data = [
+            'version' => '1.0',
+            'exported_at' => now()->toDateTimeString(),
+            'units' => \App\Models\Unit::withTrashed()->get(),
+            'pricing_rules' => \App\Models\PricingRule::withTrashed()->get(),
+            'rentals' => \App\Models\Rental::all(),
+            'settings' => \App\Models\Setting::all(),
+            'users' => \App\Models\User::all(),
+        ];
+
+        $filename = 'backup_rentspace_' . now()->format('Y-m-d_H-i-s') . '.json';
+        
+        return response()->streamDownload(function () use ($data) {
+            echo json_encode($data, JSON_PRETTY_PRINT);
+        }, $filename);
+    }
+
+    public function importData()
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        $this->validate([
+            'importFile' => 'required|mimes:json|max:10240', // 10MB Max
+        ]);
+
+        try {
+            $jsonContent = file_get_contents($this->importFile->getRealPath());
+            $data = json_decode($jsonContent, true);
+
+            if (!$data || !isset($data['version'])) {
+                session()->flash('import_error', 'File backup tidak valid atau format salah.');
+                return;
+            }
+
+            // Disable foreign keys for SQLite outside the transaction
+            \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = OFF;');
+            
+            try {
+                \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+                    if (isset($data['settings'])) {
+                        \Illuminate\Support\Facades\DB::table('settings')->delete();
+                        foreach ($data['settings'] as $row) {
+                            \Illuminate\Support\Facades\DB::table('settings')->insert($row);
+                        }
+                    }
+
+                    if (isset($data['units'])) {
+                        \Illuminate\Support\Facades\DB::table('units')->delete();
+                        foreach ($data['units'] as $row) {
+                            \Illuminate\Support\Facades\DB::table('units')->insert($row);
+                        }
+                    }
+
+                    if (isset($data['pricing_rules'])) {
+                        \Illuminate\Support\Facades\DB::table('pricing_rules')->delete();
+                        foreach ($data['pricing_rules'] as $row) {
+                            \Illuminate\Support\Facades\DB::table('pricing_rules')->insert($row);
+                        }
+                    }
+
+                    if (isset($data['rentals'])) {
+                        \Illuminate\Support\Facades\DB::table('rentals')->delete();
+                        foreach ($data['rentals'] as $row) {
+                            \Illuminate\Support\Facades\DB::table('rentals')->insert($row);
+                        }
+                    }
+
+                    if (isset($data['users'])) {
+                        foreach ($data['users'] as $row) {
+                            \Illuminate\Support\Facades\DB::table('users')->updateOrInsert(
+                                ['email' => $row['email']],
+                                \Illuminate\Support\Arr::except($row, ['id'])
+                            );
+                        }
+                    }
+                });
+            } finally {
+                \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = ON;');
+            }
+
+            session()->flash('import_message', 'Data berhasil dipulihkan dari cadangan!');
+            $this->reset('importFile');
+            $this->mount(); // Refresh local properties
+        } catch (\Exception $e) {
+            session()->flash('import_error', 'Gagal memproses file: ' . $e->getMessage());
+        }
     }
 
     public function saveQris()

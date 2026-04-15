@@ -286,6 +286,27 @@
                         </div>
                     </div>
                     <div>
+                        <label class="block text-sm font-medium mb-2">Link Media Sosial <span class="text-xs text-muted-foreground">(Tampil di Footer)</span></label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Instagram URL</label>
+                                <input type="url" wire:model="social_ig_url" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="https://instagram.com/namaakun">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Nama Akun IG</label>
+                                <input type="text" wire:model="social_ig_name" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="@namaakun">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">TikTok URL</label>
+                                <input type="url" wire:model="social_tiktok_url" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="https://tiktok.com/@namaakun">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Nama Akun TikTok</label>
+                                <input type="text" wire:model="social_tiktok_name" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="@namaakun">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium mb-1">Syarat & Ketentuan Penyewaan <span
                                 class="text-xs text-muted-foreground">(Ditampilkan di form booking, satu baris = satu
                                 poin)</span></label>
@@ -303,52 +324,49 @@
             </div>
         </div>
 
-        <!-- Pengaturan Konten Tentang (FAQ Accordion) -->
+        <!-- Sistem Cadangan & Pemulihan -->
         <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm md:col-span-2">
-            <div class="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
-                <div>
-                    <h2 class="text-lg font-semibold">Konten Halaman Tentang (FAQ)</h2>
-                    <p class="text-xs text-muted-foreground">Kelola pertanyaan dan jawaban yang akan ditampilkan pada halaman /tentang.</p>
-                </div>
-                <button wire:click="addFaq" class="inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 h-8 px-3 text-xs font-medium transition-colors">
-                    + Tambah Item
-                </button>
+            <div class="p-4 border-b border-border bg-muted/30">
+                <h2 class="text-lg font-semibold">Sistem Cadangan & Pemulihan</h2>
+                <p class="text-xs text-muted-foreground">Ekspor semua data sistem (Unit, Promo, Transaksi, Pengaturan) ke file JSON atau pulihkan dari file cadangan.</p>
             </div>
-            <div class="p-4">
-                @if (session()->has('faq_message'))
-                <div class="p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-100 border border-green-200">
-                    {{ session('faq_message') }}
-                </div>
-                @endif
-                <form wire:submit="saveFaqSettings" class="flex flex-col gap-4">
-                    @forelse($about_faq_items as $index => $item)
-                        <div class="p-4 border border-border rounded-lg bg-muted/10 relative group">
-                            <div class="absolute top-2 right-2">
-                                <button type="button" wire:click="removeFaq({{ $index }})" class="text-red-500 hover:text-red-700 text-xs p-1 rounded-sm opacity-50 group-hover:opacity-100 transition-opacity">Hapus</button>
-                            </div>
-                            <div class="mb-3">
-                                <label class="block text-xs font-semibold mb-1 text-muted-foreground uppercase">Pertanyaan / Judul</label>
-                                <input type="text" wire:model="about_faq_items.{{ $index }}.question" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Contoh: Apa saja syarat sewanya?">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold mb-1 text-muted-foreground uppercase">Jawaban / Deskripsi</label>
-                                <textarea wire:model="about_faq_items.{{ $index }}.answer" rows="3" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Jelaskan secara detail di sini..."></textarea>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-6 border border-dashed rounded-lg text-muted-foreground text-sm">
-                            Belum ada item konten. Klik tombol "+ Tambah Item" di atas untuk menambahkan.
-                        </div>
-                    @endforelse
-
-                    <button type="submit"
-                        class="mt-2 self-start inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
-                        wire:loading.attr="disabled"
-                        {{ count($about_faq_items) === 0 ? 'disabled' : '' }}>
-                        <span wire:loading.remove wire:target="saveFaqSettings">Simpan Konten FAQ</span>
-                        <span wire:loading wire:target="saveFaqSettings">Menyimpan...</span>
+            <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Export Section -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold uppercase tracking-tight text-foreground">Ekspor Data (Backup)</h3>
+                    <p class="text-xs text-muted-foreground leading-relaxed">Gunakan fitur ini untuk mendownload seluruh data sistem Anda saat ini. Simpan file ini di tempat yang aman sebagai cadangan.</p>
+                    <button wire:click="exportData" class="inline-flex items-center justify-center rounded-md bg-sky-600 text-white shadow hover:bg-sky-700 h-10 px-6 text-sm font-bold transition-colors w-full sm:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        Ekspor ke .JSON
                     </button>
-                </form>
+                </div>
+
+                <!-- Import Section -->
+                <div class="space-y-4 border-t md:border-t-0 md:border-l border-border pt-6 md:pt-0 md:pl-8">
+                    <h3 class="text-sm font-bold uppercase tracking-tight text-foreground">Pulihkan Data (Restore)</h3>
+                    <p class="text-xs text-red-500 font-semibold leading-relaxed">PERINGATAN: Mengimpor data akan menimpa data yang ada saat ini. Pastikan file backup valid dan sesuai.</p>
+                    
+                    @if (session()->has('import_message'))
+                        <div class="p-3 text-sm text-green-800 rounded-lg bg-green-100 border border-green-200">{{ session('import_message') }}</div>
+                    @endif
+                    @if (session()->has('import_error'))
+                        <div class="p-3 text-sm text-red-800 rounded-lg bg-red-100 border border-red-200">{{ session('import_error') }}</div>
+                    @endif
+
+                    <form wire:submit="importData" class="space-y-3">
+                        <div class="relative">
+                            <input type="file" wire:model="importFile" accept=".json" class="w-full text-xs text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors">
+                            <div wire:loading wire:target="importFile" class="text-[10px] text-primary animate-pulse mt-1">Mengunggah file...</div>
+                        </div>
+                        @error('importFile') <p class="text-[10px] text-red-500">{{ $message }}</p> @enderror
+                        
+                        <button type="submit" wire:click="importData" wire:confirm="Apakah Anda yakin ingin melakukan import? Data yang ada saat ini akan ditimpa." class="inline-flex items-center justify-center rounded-md bg-red-600 text-white shadow hover:bg-red-700 h-10 px-6 text-sm font-bold transition-colors w-full sm:w-auto" wire:loading.attr="disabled">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                            <span wire:loading.remove wire:target="importData">Pulihkan Data</span>
+                            <span wire:loading wire:target="importData">Memproses...</span>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
 

@@ -25,6 +25,10 @@ class Transactions extends Component
     public $dendaMethod = 'cash';
     public $lateDurationText = '';
 
+    // Inspect Modal
+    public $inspectTrxId = null;
+    public $inspectTrx = null;
+
     protected $queryString = [
         'search' => ['except' => ''],
         'filterStatus' => ['except' => ''],
@@ -100,7 +104,8 @@ class Transactions extends Component
                     'denda_kerusakan' => (int) $this->dendaKerusakanAmount,
                     'catatan_kerusakan' => $this->catatanKerusakan,
                     'grand_total' => $newGrandTotal,
-                    'denda_payment_method' => ($this->dendaAmount > 0 || $this->dendaKerusakanAmount > 0) ? $this->dendaMethod : null
+                    'denda_payment_method' => ($this->dendaAmount > 0 || $this->dendaKerusakanAmount > 0) ? $this->dendaMethod : null,
+                    'completed_at' => now(),
                 ]);
             }
         }
@@ -116,7 +121,8 @@ class Transactions extends Component
             $rental->update([
                 'status' => 'completed',
                 'denda' => 0,
-                'denda_payment_method' => null
+                'denda_payment_method' => null,
+                'completed_at' => now(),
             ]);
         }
     }
@@ -125,6 +131,18 @@ class Transactions extends Component
     {
         if (auth()->user()->role !== 'admin') return;
         Rental::findOrFail($id)->delete();
+    }
+
+    public function openInspect($id)
+    {
+        $this->inspectTrxId = $id;
+        $this->inspectTrx = Rental::with('unit')->find($id);
+    }
+
+    public function closeInspect()
+    {
+        $this->inspectTrxId = null;
+        $this->inspectTrx = null;
     }
 
     public function editTrx($id)

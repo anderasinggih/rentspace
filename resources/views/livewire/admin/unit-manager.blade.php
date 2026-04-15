@@ -14,7 +14,33 @@
             </div>
         </div>
 
-        <div class="mt-8 flow-root">
+        <!-- Search + Filter -->
+        <div class="mt-8 flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between">
+            <div class="flex flex-1 flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <div class="relative flex-1 max-w-sm">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
+                    <input type="text" wire:model.live.debounce.300ms="search" class="block w-full h-9 pl-10 pr-3 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Cari seri, IMEI, warna...">
+                </div>
+                
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <select wire:model.live="filterKategori" class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        <option value="">Semua Kategori</option>
+                        <option value="iphone">iPhone</option>
+                        <option value="gear">Gear/Alat</option>
+                    </select>
+                    <select wire:model.live="filterStatus" class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        <option value="">Semua Status</option>
+                        <option value="active">🟢 Aktif</option>
+                        <option value="inactive">⚪ Nonaktif</option>
+                        <option value="deleted">🔴 Dihapus</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 flow-root">
             <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                     <div class="overflow-hidden shadow ring-1 ring-border rounded-lg bg-background">
