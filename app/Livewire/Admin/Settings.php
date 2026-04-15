@@ -12,6 +12,8 @@ class Settings extends Component
 
     public $qris_photo;
     public $hero_photo;
+    public $qris;
+    public $hero;
     
     public $users = [];
     public $name = '', $email = '', $password = '', $role = 'admin';
@@ -40,6 +42,9 @@ class Settings extends Component
 
         $savedFaq = \App\Models\Setting::getVal('about_faq_items', json_encode([]));
         $this->about_faq_items = json_decode($savedFaq, true) ?: [];
+
+        $this->qris = \App\Models\Setting::getVal('qris', 'default.jpg');
+        $this->hero = \App\Models\Setting::getVal('hero', 'default.jpg');
     }
 
     public function loadUsers()
@@ -135,7 +140,22 @@ class Settings extends Component
             'hero_photo' => 'required|image|max:3072|mimes:jpg,jpeg,png,webp',
         ]);
 
-        $this->hero_photo->storeAs('/', 'hero.jpg', 'public');
+        $filename = 'hero_' . time() . '.' . $this->hero_photo->getClientOriginalExtension();
+
+        if (!file_exists(public_path('uploads'))) {
+            mkdir(public_path('uploads'), 0777, true);
+        }
+
+        // Use standard PHP copy as it's more reliable across different volumes
+        copy($this->hero_photo->getRealPath(), public_path('uploads/' . $filename));
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'hero'],
+            ['value' => $filename]
+        );
+
+        $this->hero = $filename;
+
         session()->flash('hero_message', '1:1 Foto Beranda berhasil diperbarui!');
     }
 
@@ -145,7 +165,21 @@ class Settings extends Component
             'qris_photo' => 'required|image|max:2048', // 2MB Max
         ]);
 
-        $this->qris_photo->storeAs('/', 'qris.jpg', 'public');
+        $filename = 'qris_' . time() . '.' . $this->qris_photo->getClientOriginalExtension();
+
+        if (!file_exists(public_path('uploads'))) {
+            mkdir(public_path('uploads'), 0777, true);
+        }
+
+        // Use standard PHP copy as it's more reliable across different volumes
+        copy($this->qris_photo->getRealPath(), public_path('uploads/' . $filename));
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'qris'],
+            ['value' => $filename]
+        );
+
+        $this->qris = $filename;
         
         session()->flash('message', 'QRIS Photo successfully updated.');
     }

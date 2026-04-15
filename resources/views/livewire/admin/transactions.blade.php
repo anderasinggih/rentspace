@@ -208,7 +208,7 @@
                             </div>
                             <div class="flex justify-center">
                                 <div class="p-2 bg-white rounded-lg shadow-inner border border-zinc-200">
-                                    <img src="{{ asset('storage/qris.jpg') }}" class="w-48 h-48 object-contain">
+                                    <img src="{{ asset('uploads/' . \App\Models\Setting::getVal('qris', 'default.jpg')) }}" class="w-48 h-48 object-contain">
                                 </div>
                             </div>
                         </div>

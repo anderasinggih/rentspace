@@ -32,7 +32,7 @@
 
                             <!-- Current Photo -->
                             <div x-show="!photoPreview" class="absolute inset-0 z-10">
-                                <img src="{{ asset('storage/qris.jpg') }}?t={{ time() }}"
+                                <img src="/uploads/{{ $qris }}?t={{ time() }}"
                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                     class="w-full h-full object-cover">
                                 <div style="display:none;"
@@ -93,7 +93,7 @@
 
                             <div x-show="!heroPreview"
                                 class="absolute inset-0 z-10 bg-muted flex items-center justify-center bg-cover bg-center"
-                                style="background-image: url('{{ asset('storage/hero.jpg') }}?t={{ time() }}')">
+                                style="background-image: url('/uploads/{{ $hero }}?t={{ time() }}')">
                             </div>
                         </div>
                     </div>

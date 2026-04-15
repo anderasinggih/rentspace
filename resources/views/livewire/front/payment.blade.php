@@ -59,7 +59,7 @@
                 @if($metode_pembayaran === 'qris')
                 <!-- QRIS Box -->
                 <div class="w-[220px] h-[220px] sm:w-64 sm:h-64 bg-background border-2 border-dashed border-border rounded-xl overflow-hidden shadow-sm relative">
-                    <img src="{{ asset('storage/qris.jpg') }}"
+                    <img src="{{ asset('uploads/' . \App\Models\Setting::getVal('qris', 'default.jpg')) }}"
                          onerror="this.style.display='none'"
                          class="absolute inset-0 w-full h-full object-cover">
                     <div class="absolute inset-0 flex items-center justify-center">

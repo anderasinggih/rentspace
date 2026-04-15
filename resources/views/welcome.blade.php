@@ -22,7 +22,7 @@
             class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-12 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl">
             <!-- Background Image -->
             <div class="absolute inset-0 z-0 bg-zinc-950">
-                <img src="{{ asset('storage/hero.jpg') }}?t={{ time() }}" onerror="this.style.opacity='0.1'"
+                <img src="/uploads/{{ \App\Models\Setting::getVal('hero', 'default.jpg') }}?t={{ time() }}" onerror="this.style.opacity='0.1'"
                     class="w-full h-full object-cover opacity-60 transition-transform duration-1000 scale-105">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent"></div>
                 <div class="absolute inset-0 bg-black/20"></div>

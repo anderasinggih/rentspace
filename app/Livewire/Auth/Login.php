@@ -19,7 +19,7 @@ class Login extends Component
 
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
             session()->regenerate();
-            return redirect()->route('admin.units');
+            return redirect()->route('admin.dashboard');
         }
 
         $this->addError('email', 'Kombinasi email dan password salah.');
