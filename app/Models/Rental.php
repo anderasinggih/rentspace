@@ -14,8 +14,29 @@ class Rental extends Model
         'completed_at' => 'datetime',
     ];
 
-    public function unit()
+    protected static function booted()
     {
-        return $this->belongsTo(Unit::class);
+        static::creating(function ($rental) {
+            $rental->booking_code = self::generateUniqueBookingCode();
+        });
+    }
+
+    private static function generateUniqueBookingCode()
+    {
+        do {
+            $code = strtoupper(\Illuminate\Support\Str::random(12));
+        } while (self::where('booking_code', $code)->exists());
+
+        return $code;
+    }
+
+    public function units()
+    {
+        return $this->belongsToMany(Unit::class, 'rental_items')->withPivot('price_snapshot')->withTimestamps();
+    }
+
+    public function items()
+    {
+        return $this->hasMany(RentalItem::class);
     }
 }

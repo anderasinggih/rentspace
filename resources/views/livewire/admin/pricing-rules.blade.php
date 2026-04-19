@@ -29,7 +29,7 @@
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
                                         Kriteria</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
-                                        Berlaku (Tanggal)</th>
+                                        Kode Promo</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
                                         Status</th>
                                     <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span
@@ -78,26 +78,33 @@
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-xs text-muted-foreground">
-                                        @if($rule->start_date || $rule->end_date)
-                                        {{ $rule->start_date ? \Carbon\Carbon::parse($rule->start_date)->format('d M y')
-                                        : '...' }}
-                                        s/d
-                                        {{ $rule->end_date ? \Carbon\Carbon::parse($rule->end_date)->format('d M y') :
-                                        '...' }}
+                                        @if($rule->kode_promo)
+                                        <code class="px-1.5 py-0.5 rounded bg-muted text-primary font-bold">{{ $rule->kode_promo }}</code>
                                         @else
-                                        <span class="italic opacity-50 text-[10px]">Selamanya</span>
+                                        <span class="italic opacity-50">—</span>
                                         @endif
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
-                                        @if($isDeleted)
-                                        <x-ui.badge variant="red" class="text-[10px] uppercase">Dihapus</x-ui.badge>
-                                        @elseif($isExpired)
-                                        <x-ui.badge variant="red" class="text-[10px] uppercase">Expired</x-ui.badge>
-                                        @elseif($rule->is_active)
-                                        <x-ui.badge variant="green" class="text-[10px] uppercase">Aktif</x-ui.badge>
-                                        @else
-                                        <x-ui.badge variant="zinc" class="text-[10px] uppercase">Nonaktif</x-ui.badge>
-                                        @endif
+                                        <div class="flex flex-col items-start gap-1">
+                                            @if($isDeleted)
+                                            <x-ui.badge variant="red" class="text-[10px] uppercase">Dihapus</x-ui.badge>
+                                            @elseif($isExpired)
+                                            <x-ui.badge variant="red" class="text-[10px] uppercase">Expired</x-ui.badge>
+                                            @elseif($rule->is_active)
+                                            <x-ui.badge variant="green" class="text-[10px] uppercase">Aktif</x-ui.badge>
+                                            @else
+                                            <x-ui.badge variant="zinc" class="text-[10px] uppercase">Nonaktif</x-ui.badge>
+                                            @endif
+
+                                            <div class="flex gap-1">
+                                                @if($rule->is_hidden)
+                                                <x-ui.badge variant="zinc" class="text-[9px] uppercase px-1">Hidden</x-ui.badge>
+                                                @endif
+                                                @if($rule->can_stack)
+                                                <x-ui.badge variant="sky" class="text-[9px] uppercase px-1">Stackable</x-ui.badge>
+                                                @endif
+                                            </div>
+                                        </div>
                                     </td>
                                     <td
                                         class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-xs font-medium sm:pr-6 space-x-2">
@@ -143,12 +150,21 @@
                     class="relative w-full max-w-lg rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8">
                     <h2 class="text-lg font-semibold">{{ $isEditing ? 'Edit Rule' : 'Tambah Rule / Promo Baru' }}</h2>
                     <form wire:submit="save" class="mt-6 space-y-4">
-                        <div>
-                            <label class="text-sm font-medium leading-none">Nama Promo / Rule</label>
-                            <input type="text" wire:model="nama_promo"
-                                class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                placeholder="Diskon Lebaran 35% / Setengah Hari">
-                            @error('nama_promo') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-medium leading-none">Nama Promo / Rule</label>
+                                <input type="text" wire:model="nama_promo"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    placeholder="Diskon Lebaran 35%">
+                                @error('nama_promo') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium leading-none">Kode Promo (Opsional)</label>
+                                <input type="text" wire:model="kode_promo"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    placeholder="LEBARAN2026">
+                                @error('kode_promo') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -207,11 +223,22 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center space-x-2 mt-2">
-                            <input type="checkbox" id="is_active_rule" wire:model="is_active"
-                                class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
-                            <label for="is_active_rule" class="text-sm font-medium leading-none cursor-pointer">Rule
-                                Aktif</label>
+                        <div class="grid grid-cols-3 gap-2 mt-2">
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="is_active_rule" wire:model="is_active"
+                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                                <label for="is_active_rule" class="text-xs font-medium leading-none cursor-pointer">Rule Aktif</label>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="is_hidden_rule" wire:model="is_hidden"
+                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                                <label for="is_hidden_rule" class="text-xs font-medium leading-none cursor-pointer">Sembunyikan</label>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="can_stack_rule" wire:model="can_stack"
+                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                                <label for="can_stack_rule" class="text-xs font-medium leading-none cursor-pointer">Stackable</label>
+                            </div>
                         </div>
 
                         <div class="mt-6 flex justify-end gap-3">

@@ -51,39 +51,52 @@
                     @if(count($available_units) > 0)
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         @foreach($available_units as $unit)
+                        @php
+                        $isSelected = in_array($unit->id, $selected_unit_ids);
+                        @endphp
                         <label
-                            class="relative flex cursor-pointer rounded-lg border bg-background p-4 shadow-sm focus:outline-none">
-                            <input type="radio" wire:model.live="unit_id" value="{{ $unit->id }}" class="sr-only"
-                                aria-labelledby="unit-label-{{ $unit->id }}">
-                            <span class="flex flex-1">
+                            class="relative flex cursor-pointer rounded-lg border-2 p-4 shadow-sm transition-all focus:outline-none {{ $isSelected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-primary/30' }}">
+                            <input type="checkbox" wire:model.live="selected_unit_ids" value="{{ $unit->id }}"
+                                class="sr-only">
+
+                            <span class="flex flex-1 items-start justify-between gap-3">
                                 <span class="flex flex-col">
-                                    <span id="unit-label-{{ $unit->id }}" class="block font-medium text-foreground">
+                                    <span class="block font-bold text-foreground">
                                         {{ $unit->seri }}
-                                        @if($unit->kategori === 'gear')
-                                        <x-ui.badge variant="purple"
-                                            class="ml-1 text-[10px] uppercase font-bold">ALAT</x-ui.badge>
+                                        @if($unit->category)
+                                        <span
+                                            class="ml-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{{
+                                            $unit->category->name }}</span>
                                         @endif
                                     </span>
                                     @if($unit->warna || $unit->memori)
-                                    <span class="mt-1 flex items-center text-sm text-muted-foreground">{{ $unit->warna
+                                    <span class="mt-1 flex items-center text-xs text-muted-foreground">{{ $unit->warna
                                         }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}</span>
                                     @endif
-                                    <span class="mt-2 font-semibold text-primary">Rp {{
-                                        number_format($unit->harga_per_hari,0,',','.') }}/hari</span>
+                                    <div class="mt-2 flex items-baseline gap-1">
+                                        <span class="text-[10px] font-bold text-primary">Rp</span>
+                                        <span class="text-sm font-bold text-primary">{{
+                                            number_format($unit->harga_per_hari,0,',','.') }}</span>
+                                        <span class="text-[10px] text-muted-foreground">/hari</span>
+                                    </div>
                                 </span>
+
+                                @if($isSelected)
+                                <div
+                                    class="shrink-0 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm border-2 border-background">
+                                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                @endif
                             </span>
-                            @if($unit_id == $unit->id)
-                            <svg class="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor"
-                                aria-hidden="true">
-                                <path fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                            @endif
                         </label>
                         @endforeach
                     </div>
-                    @error('unit_id') <span class="text-xs text-red-500 block mt-2">{{ $message }}</span> @enderror
+                    @error('selected_unit_ids') <span class="text-xs text-red-500 block mt-2">{{ $message }}</span>
+                    @enderror
                     @else
                     <div class="p-4 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
                         Menyesal sekali, tidak ada unit yang tersedia untuk rentang waktu yang dipilih. Silakan coba
@@ -98,29 +111,40 @@
                 </div>
 
                 <!-- 3. Pilih Promo (optional) -->
-                @if($unit_id && $waktu_mulai && $waktu_selesai)
+                @if(!empty($selected_unit_ids) && $waktu_mulai && $waktu_selesai)
                 <div>
                     <h2 class="text-xl font-semibold mb-4">3. Pilih Promo <span
                             class="text-sm font-normal text-muted-foreground">(Opsional)</span></h2>
+                    
+                    <!-- Promo Code Input -->
+                    <div class="mb-6">
+                        <label class="text-sm font-medium leading-none mb-2 block">Punya kode promo? Masukkan di sini:</label>
+                        <div class="flex gap-2">
+                            <input type="text" wire:model="promo_code_input" 
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring uppercase"
+                                placeholder="CONTOH: PROMOHEBOH">
+                            <button type="button" wire:click="applyPromoCode" 
+                                class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 text-sm font-medium shadow-sm transition-colors shrink-0">
+                                <span wire:loading.remove wire:target="applyPromoCode">Gunakan</span>
+                                <span wire:loading wire:target="applyPromoCode">...</span>
+                            </button>
+                        </div>
+                        @error('promo_code_input') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
+                        @if (session()->has('promo_message'))
+                            <span class="text-xs text-green-600 font-bold block mt-1">{{ session('promo_message') }}</span>
+                        @endif
+                    </div>
+
                     @if(count($available_promos) > 0)
                     <div class="grid grid-cols-1 gap-3">
-                        <!-- None option -->
-                        <label
-                            class="relative flex cursor-pointer rounded-lg border p-4 shadow-sm {{ !$selected_promo_id ? 'border-primary bg-primary/5' : 'border-border bg-background' }}">
-                            <input type="radio" wire:model.live="selected_promo_id" value="" class="sr-only">
-                            <span class="flex flex-1 items-center gap-3">
-                                <span
-                                    class="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-bold">—</span>
-                                <span class="font-medium text-sm text-muted-foreground">Tanpa Promo</span>
-                            </span>
-                        </label>
                         @foreach($available_promos as $promo)
                         @php
                         $isEligible = $promo['is_eligible'] ?? true;
+                        $isSelected = in_array($promo['id'], $selected_promo_ids);
                         @endphp
                         <label
-                            class="relative flex {{ $isEligible ? 'cursor-pointer hover:border-primary/50' : 'cursor-not-allowed opacity-50 grayscale bg-muted/20 border-border/50 shadow-inner' }} rounded-lg border-2 p-4 shadow-sm transition-all {{ $isEligible && $selected_promo_id == $promo['id'] ? 'border-primary bg-primary/10' : 'border-border bg-background' }}">
-                            <input type="radio" wire:model.live="selected_promo_id" value="{{ $promo['id'] }}"
+                            class="relative flex {{ $isEligible ? 'cursor-pointer hover:border-primary/50' : 'cursor-not-allowed opacity-50 grayscale bg-muted/20 border-border/50 shadow-inner' }} rounded-lg border-2 p-4 shadow-sm transition-all {{ $isEligible && $isSelected ? 'border-primary bg-primary/10' : 'border-border bg-background' }}">
+                            <input type="checkbox" wire:model.live="selected_promo_ids" value="{{ $promo['id'] }}"
                                 class="sr-only" {{ !$isEligible ? 'disabled' : '' }}>
                             <span class="flex flex-1 items-center gap-3">
                                 <span
@@ -136,8 +160,17 @@
                                     </svg>
                                 </span>
                                 <span class="flex flex-col">
-                                    <span class="font-bold text-sm {{ $isEligible ? 'text-foreground' : 'text-muted-foreground' }}">{{ $promo['nama_promo'] }}</span>
-                                    <span class="text-xs {{ $isEligible ? 'text-muted-foreground' : 'text-muted-foreground/60' }}">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-sm {{ $isEligible ? 'text-foreground' : 'text-muted-foreground' }}">{{ $promo['nama_promo'] }}</span>
+                                        @if($promo['can_stack'])
+                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 leading-none">Gabungan OK</span>
+                                        @endif
+                                        @if($promo['is_hidden'])
+                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 leading-none italic">KODE</span>
+                                        @endif
+                                    </div>
+                                    <span
+                                        class="text-xs {{ $isEligible ? 'text-muted-foreground' : 'text-muted-foreground/60' }}">
                                         @if($promo['tipe'] === 'diskon_persen') Diskon {{ $promo['value'] }}%
                                         @elseif($promo['tipe'] === 'diskon_nominal') Potongan Rp {{
                                         number_format($promo['value'],0,',','.') }}
@@ -151,15 +184,20 @@
                                         number_format($promo['value'],0,',','.') }}
                                         @endif
                                         @if(!$isEligible)
-                                        <br /><span class="text-[9px] text-red-500 font-black uppercase tracking-tighter">⚠️ TIDAK MEMENUHI SYARAT DURASI</span>
+                                        <br /><span
+                                            class="text-[9px] text-red-500 font-black uppercase tracking-tighter">⚠️
+                                            TIDAK MEMENUHI SYARAT DURASI</span>
                                         @endif
                                     </span>
                                 </span>
                             </span>
-                            @if($isEligible && $selected_promo_id == $promo['id'])
-                            <div class="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1 shadow-md">
+                            @if($isEligible && $isSelected)
+                            <div
+                                class="bg-primary text-primary-foreground rounded-full shadow-md h-6 w-6 flex items-center justify-center shrink-0">
                                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                                        clip-rule="evenodd" />
                                 </svg>
                             </div>
                             @endif
@@ -175,8 +213,9 @@
                 </div>
                 @endif
 
+
                 <!-- 4. Rincian Harga -->
-                @if($unit_id && $waktu_mulai && $waktu_selesai)
+                @if(!empty($selected_unit_ids) && $waktu_mulai && $waktu_selesai)
                 <div class="bg-primary/5 rounded-xl p-6 border border-primary/20">
                     <h3 class="font-bold text-lg mb-4 text-foreground">Rincian Tagihan Kalkulasi Otomatis</h3>
                     <div class="space-y-2 text-sm">
@@ -219,22 +258,37 @@
 
                 <!-- 5. Data Diri -->
                 <div>
-                    <h2 class="text-xl font-semibold mb-4">{{ ($unit_id && $waktu_mulai && $waktu_selesai) ? '4' : '3'
+                    <h2 class="text-xl font-semibold mb-4">{{ (!empty($selected_unit_ids) && $waktu_mulai &&
+                        $waktu_selesai) ? '4' : '3'
                         }}. Data Diri Penyewa</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium leading-none">NIK (Nomor Induk Kependudukan)</label>
-                            <input type="text" wire:model="nik" inputmode="numeric"
-                                oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                            @error('nik') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            <div class="mt-2 flex shadow-sm rounded-md h-10 w-full">
+                                <input type="text" wire:model.blur="nik" inputmode="numeric"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                    class="flex h-10 w-full rounded-l-md border border-input bg-transparent px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
+                                    placeholder="">
+                                <button type="button" wire:click="checkNik"
+                                    class="inline-flex items-center justify-center rounded-r-md border border-l-0 border-input bg-muted px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted/80 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ring transition-colors shrink-0 whitespace-nowrap">
+                                    <span wire:loading.remove wire:target="checkNik">Cek NIK</span>
+                                    <span wire:loading wire:target="checkNik">Mengecek...</span>
+                                </button>
+                            </div>
+                            @error('nik') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
+                            @if($nikFoundMessage)
+                                <span class="text-xs {{ $nikFoundType === 'success' ? 'text-green-600 font-bold' : 'text-amber-600 font-medium' }} block mt-1">
+                                    {{ $nikFoundMessage }}
+                                </span>
+                            @endif
                         </div>
                         <div>
                             <label class="text-sm font-medium leading-none">Nama Lengkap Sesuai KTP</label>
                             <input type="text" wire:model="nama"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
-                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                {{ $isNikVerified ? 'readonly' : '' }}
+                                class="mt-2 flex h-10 w-full rounded-md border border-input {{ $isNikVerified ? 'opacity-70 bg-muted/50 cursor-not-allowed' : 'bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 placeholder=" ">
                             @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
@@ -242,7 +296,8 @@
                             <label class="text-sm font-medium leading-none">Nomor Telepon / WhatsApp</label>
                             <input type="text" wire:model="no_wa" inputmode="numeric"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                {{ $isNikVerified ? 'readonly' : '' }}
+                                class="mt-2 flex h-10 w-full rounded-md border border-input {{ $isNikVerified ? 'opacity-70 bg-muted/50 cursor-not-allowed' : 'bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             @error('no_wa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div class="sm:col-span-2">
@@ -250,7 +305,8 @@
                             <textarea wire:model="alamat" rows="3"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
-                                class="mt-2 flex w-full rounded-md border border-input bg-transparent px-3 py-2 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                {{ $isNikVerified ? 'readonly' : '' }}
+                                class="mt-2 flex w-full rounded-md border border-input {{ $isNikVerified ? 'opacity-70 bg-muted/50 cursor-not-allowed' : 'bg-transparent' }} px-3 py-2 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 placeholder=""></textarea>
                             @error('alamat') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>

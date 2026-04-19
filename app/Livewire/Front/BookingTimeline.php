@@ -7,20 +7,26 @@ use Livewire\Component;
 
 class BookingTimeline extends Component
 {
-    public $timeframe = 30; // Default to 30 days
+    public $timeframe = 14; // Default to 14 days
 
     public function render()
     {
-        $startDate = \Carbon\Carbon::today();
-        $totalDays = (int) $this->timeframe; 
-        $endDate = $startDate->copy()->addDays($totalDays - 1)->endOfDay();
+        if ($this->timeframe === 'month') {
+            $startDate = \Carbon\Carbon::now()->startOfMonth();
+            $endDate = \Carbon\Carbon::now()->endOfMonth();
+            $totalDays = $startDate->diffInDays($endDate) + 1;
+        } else {
+            $startDate = \Carbon\Carbon::today();
+            $totalDays = (int) $this->timeframe; 
+            $endDate = $startDate->copy()->addDays($totalDays - 1)->endOfDay();
+        }
         
         $dates = [];
         for ($i = 0; $i < $totalDays; $i++) {
             $dates[] = $startDate->copy()->addDays($i);
         }
 
-        $units = \App\Models\Unit::where('is_active', true)->with(['rentals' => function ($q) use ($startDate, $endDate) {
+        $units = \App\Models\Unit::query()->with('category')->where('is_active', true)->with(['rentals' => function ($q) use ($startDate, $endDate) {
             $q->whereIn('status', ['paid', 'pending', 'completed'])
               ->where('waktu_mulai', '<=', $endDate)
               ->where('waktu_selesai', '>=', $startDate);

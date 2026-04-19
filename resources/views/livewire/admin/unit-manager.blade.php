@@ -27,8 +27,9 @@
                 <div class="flex gap-2 w-full sm:w-auto">
                     <select wire:model.live="filterKategori" class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                         <option value="">Semua Kategori</option>
-                        <option value="iphone">iPhone</option>
-                        <option value="gear">Gear/Alat</option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endforeach
                     </select>
                     <select wire:model.live="filterStatus" class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                         <option value="">Semua Status</option>
@@ -60,9 +61,11 @@
                                 <td class="px-3 sm:px-6 py-3 sm:py-4 align-middle">
                                     <div class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'line-through text-muted-foreground' : '' }}">
                                         {{ $unit->seri }}
-                                        <x-ui.badge variant="{{ $unit->kategori === 'gear' ? 'purple' : 'blue' }}" class="ml-1 text-[10px] uppercase font-medium">
-                                            {{ $unit->kategori === 'gear' ? 'Alat' : 'Ponsel' }}
+                                        @if($unit->category)
+                                        <x-ui.badge variant="{{ str_contains(strtolower($unit->category->slug), 'iphone') ? 'blue' : 'purple' }}" class="ml-1 text-[10px] uppercase font-medium">
+                                            {{ $unit->category->name }}
                                         </x-ui.badge>
+                                        @endif
                                     </div>
                                     @if($unit->imei)
                                         <div class="text-xs text-muted-foreground">{{ $unit->imei }}</div>
@@ -76,13 +79,23 @@
                                     </div>
                                 </td>
                                 <td class="hidden sm:table-cell px-6 py-4 align-middle">
-                                    @if($unit->kategori === 'iphone')
+                                    @if($unit->category && str_contains(strtolower($unit->category->slug), 'iphone'))
                                         <div class="text-sm">{{ $unit->warna }} - {{ $unit->memori }}</div>
                                     @else
-                                        <div class="text-sm text-muted-foreground italic">Non-spesifikasi ponsel</div>
+                                        @if($unit->specs && count($unit->specs) > 0)
+                                            <div class="space-y-0.5">
+                                                @foreach($unit->specs as $key => $val)
+                                                    @if($val)
+                                                    <div class="text-[11px]"><span class="font-semibold text-muted-foreground uppercase text-[9px]">{{ $key }}:</span> {{ $val }}</div>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <div class="text-sm text-muted-foreground italic truncate">Umum</div>
+                                        @endif
                                     @endif
                                     @if($unit->kondisi)
-                                        <div class="text-[11px] text-muted-foreground mt-0.5">{{ $unit->kondisi }}</div>
+                                        <div class="text-[10px] text-muted-foreground mt-1 border-t border-border pt-1 italic opacity-70">{{ $unit->kondisi }}</div>
                                     @endif
                                 </td>
                                 <td class="hidden sm:table-cell px-6 py-4 align-middle">
@@ -135,22 +148,26 @@
                 <div class="relative w-full max-w-lg rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8">
                     <h2 class="text-lg font-semibold">{{ $isEditing ? 'Edit Item Sewa' : 'Tambah Item Sewa Baru' }}</h2>
                     <form wire:submit="save" class="mt-6 space-y-4">
+                        @php
+                            $selectedCat = $categories->find($category_id);
+                            $isIphone = $selectedCat && str_contains(strtolower($selectedCat->slug), 'iphone');
+                        @endphp
                         <div>
                             <label class="text-sm font-medium leading-none">Kategori Item</label>
-                            <select wire:model.live="kategori" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                <option value="iphone">iPhone (Ponsel)</option>
-                                <option value="gear">Alat / Aksesoris (Lainnya)</option>
+                            <select wire:model.live="category_id" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                @endforeach
                             </select>
-                            @error('kategori') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="grid grid-cols-1 @if($kategori === 'iphone') sm:grid-cols-2 @endif gap-4">
+                            @error('category_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        <div class="grid grid-cols-1 @if($isIphone) sm:grid-cols-2 @endif gap-4">
                             <div>
-                                <label class="text-sm font-medium leading-none">{{ $kategori === 'iphone' ? 'Seri iPhone' : 'Nama Barang' }}</label>
-                                <input type="text" wire:model="seri" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="{{ $kategori === 'iphone' ? 'iPhone 15 Pro Max' : 'Tripod Takara / Powerbank' }}">
+                                <label class="text-sm font-medium leading-none">{{ $isIphone ? 'Seri iPhone' : 'Nama Barang' }}</label>
+                                <input type="text" wire:model="seri" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="{{ $isIphone ? 'iPhone 15 Pro Max' : 'Tripod Takara / Powerbank' }}">
                                 @error('seri') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
-                            @if($kategori === 'iphone')
+                            @if($isIphone)
                             <div>
                                 <label class="text-sm font-medium leading-none">IMEI</label>
                                 <input type="text" wire:model="imei" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -158,8 +175,8 @@
                             </div>
                             @endif
                         </div>
-
-                        @if($kategori === 'iphone')
+ 
+                        @if($isIphone)
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-sm font-medium leading-none">Memori / Kapasitas</label>
@@ -178,6 +195,21 @@
                             <label class="text-sm font-medium leading-none">Kondisi</label>
                             <input type="text" wire:model="kondisi" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Mulus, BH 98%">
                         </div>
+
+                        <!-- Dynamic Specs Sections -->
+                        @if($selectedCat && $selectedCat->custom_fields && count($selectedCat->custom_fields) > 0)
+                        <div class="pt-4 border-t border-border mt-4">
+                            <label class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 block">Spesifikasi Khusus {{ $selectedCat->name }}</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                @foreach($selectedCat->custom_fields as $fieldName)
+                                <div>
+                                    <label class="text-sm font-medium leading-none">{{ $fieldName }}</label>
+                                    <input type="text" wire:model="specs.{{ $fieldName }}" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Masukkan {{ strtolower($fieldName) }}">
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>

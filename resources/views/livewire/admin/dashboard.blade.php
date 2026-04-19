@@ -262,8 +262,12 @@
                     $diffText = ($h > 0 ? $h . ' jam ' : '') . ($m > 0 ? $m . ' menit' : ($h == 0 ? '0 menit' : ''));
                     @endphp
                     <tr class="hover:bg-muted/30">
-                        <td class="px-4 py-3 font-medium text-foreground">{{ $rental->unit ? $rental->unit->seri :
-                            'Terhapus' }}</td>
+                        <td class="px-4 py-3 font-medium text-foreground">
+                            @foreach($rental->units as $u)
+                                {{ $u->seri }}{{ !$loop->last ? ', ' : '' }}
+                            @endforeach
+                            @if($rental->units->isEmpty()) Terhapus @endif
+                        </td>
                         <td class="px-4 py-3">
                             <span class="font-medium text-foreground">{{ $rental->nama }}</span><br>
                             <span class="text-[10px] text-muted-foreground">{{ $rental->no_wa }}</span>

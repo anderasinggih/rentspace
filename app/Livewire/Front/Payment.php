@@ -10,9 +10,11 @@ class Payment extends Component
     public $rental;
     public $metode_pembayaran = 'qris';
 
-    public function mount($id)
+    public function mount($booking_code)
     {
-        $this->rental = Rental::with('unit')->findOrFail($id);
+        $this->rental = Rental::with('units')
+            ->where('booking_code', $booking_code)
+            ->firstOrFail();
     }
 
     public function finish()
@@ -21,7 +23,7 @@ class Payment extends Component
             'metode_pembayaran' => $this->metode_pembayaran
         ]);
 
-        return redirect()->route('public.success', $this->rental->id);
+        return redirect()->route('public.success', $this->rental->booking_code);
     }
 
     public function render()

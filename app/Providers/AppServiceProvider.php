@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Fix for shared hosting where public folder is htdocs or root
+        if (app()->environment('production')) {
+            $this->app->bind('path.public', function () {
+                return base_path();
+            });
+        }
     }
 }

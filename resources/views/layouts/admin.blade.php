@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'Dashboard Admin' }} - {{ config('app.name', 'RentSpace') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script>

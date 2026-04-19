@@ -9,6 +9,8 @@ class Transactions extends Component
 {
     public $search = '';
     public $filterStatus = '';
+    public $dateStart = '';
+    public $dateEnd = '';
 
     // Edit & Completion Properties
     public $isEditingTrx = false;
@@ -28,15 +30,26 @@ class Transactions extends Component
     // Inspect Modal
     public $inspectTrxId = null;
     public $inspectTrx = null;
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
 
     protected $queryString = [
         'search' => ['except' => ''],
         'filterStatus' => ['except' => ''],
+        'dateStart' => ['except' => ''],
+        'dateEnd' => ['except' => ''],
+        'sortField' => ['except' => 'created_at'],
+        'sortDirection' => ['except' => 'desc'],
     ];
 
-    public function updatingSearch()
+    public function sortBy($field)
     {
-        $this->resetPage();
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
     }
 
     public function markAsPaid($id)
@@ -145,7 +158,7 @@ class Transactions extends Component
     public function openInspect($id)
     {
         $this->inspectTrxId = $id;
-        $this->inspectTrx = Rental::with('unit')->find($id);
+        $this->inspectTrx = Rental::with('units')->find($id);
     }
 
     public function closeInspect()
@@ -203,10 +216,10 @@ class Transactions extends Component
         $grandTotal = $this->edit_subtotal - $this->edit_diskon + $this->edit_denda + $this->edit_denda_kerusakan + $trx->kode_unik_pembayaran;
 
         $trx->update([
-            'nama' => $this->edit_nama,
+            'nama' => strtoupper($this->edit_nama),
             'nik' => $this->edit_nik,
             'no_wa' => $this->edit_no_wa,
-            'alamat' => $this->edit_alamat,
+            'alamat' => strtoupper($this->edit_alamat),
             'waktu_mulai' => $this->edit_waktu_mulai,
             'waktu_selesai' => $this->edit_waktu_selesai,
             'subtotal_harga' => $this->edit_subtotal,
@@ -225,7 +238,23 @@ class Transactions extends Component
 
     public function exportCsv()
     {
-        $transactions = Rental::with('unit')->orderBy('created_at', 'desc')->get();
+        $transactions = Rental::with('units')
+            ->when($this->search, function ($q) {
+                $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
+                ->orWhere('id', 'like', '%' . $this->search . '%')
+                ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
+            })
+            ->when($this->filterStatus, function ($q) {
+                $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
+            })
+            ->when($this->dateStart, function ($q) {
+                $q->whereDate('created_at', '>=', $this->dateStart);
+            })
+            ->when($this->dateEnd, function ($q) {
+                $q->whereDate('created_at', '<=', $this->dateEnd);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         $headers = [
             "Content-type" => "text/csv",
@@ -237,23 +266,57 @@ class Transactions extends Component
 
         $callback = function () use ($transactions) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID Transaksi', 'Tgl Mulai', 'Tgl Selesai', 'Penyewa', 'WA', 'Unit', 'Subtotal', 'Diskon', 'Denda Telat', 'Denda Kerusakan', 'Grand Total', 'Metode', 'Status']);
+            fputcsv($file, [
+                'ID Transaksi', 
+                'NIK',
+                'Nama Penyewa', 
+                'Alamat',
+                'No WhatsApp', 
+                'Unit', 
+                'Tgl Mulai', 
+                'Tgl Selesai', 
+                'Subtotal', 
+                'Diskon', 
+                'Promo Applied',
+                'Hari Bonus',
+                'Jam Bonus',
+                'Kode Unik',
+                'Grand Total', 
+                'Metode Bayar Trx', 
+                'Denda Telat', 
+                'Denda Kerusakan', 
+                'Metode Bayar Denda',
+                'Catatan Kerusakan',
+                'Status',
+                'Tgl Selesai Aktual',
+                'Tgl Dibuat'
+            ]);
 
             foreach ($transactions as $trx) {
                 fputcsv($file, [
                     'INV-' . str_pad($trx->id, 5, '0', STR_PAD_LEFT),
-                    $trx->waktu_mulai->format('Y-m-d H:i'),
-                    $trx->waktu_selesai->format('Y-m-d H:i'),
-                    $trx->nama,
+                    $trx->nik,
+                    strtoupper($trx->nama),
+                    strtoupper($trx->alamat),
                     $trx->no_wa,
-                    $trx->unit->seri ?? '-',
+                    $trx->units->pluck('seri')->implode(', ') ?: ($trx->unit->seri ?? '-'),
+                    $trx->waktu_mulai->format('d/m/Y H:i'),
+                    $trx->waktu_selesai->format('d/m/Y H:i'),
                     $trx->subtotal_harga,
                     $trx->potongan_diskon,
-                    $trx->denda,
-                    $trx->denda_kerusakan,
+                    $trx->applied_promo_name ?? '-',
+                    $trx->hari_bonus,
+                    $trx->jam_bonus,
+                    $trx->kode_unik_pembayaran,
                     $trx->grand_total,
                     $trx->metode_pembayaran,
-                    $trx->status
+                    $trx->denda,
+                    $trx->denda_kerusakan,
+                    $trx->denda_payment_method ?? '-',
+                    $trx->catatan_kerusakan ?? '-',
+                    $trx->status,
+                    $trx->completed_at ? $trx->completed_at->format('d/m/Y H:i') : '-',
+                    $trx->created_at->format('d/m/Y H:i')
                 ]);
             }
             fclose($file);
@@ -264,7 +327,7 @@ class Transactions extends Component
 
     public function render()
     {
-        $query = Rental::with('unit')
+        $query = Rental::with('units')
             ->when($this->search, function ($q) {
             $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
             ->orWhere('id', 'like', '%' . $this->search . '%')
@@ -273,7 +336,13 @@ class Transactions extends Component
             ->when($this->filterStatus, function ($q) {
             $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
         })
-            ->latest()
+            ->when($this->dateStart, function ($q) {
+            $q->whereDate('created_at', '>=', $this->dateStart);
+        })
+            ->when($this->dateEnd, function ($q) {
+            $q->whereDate('created_at', '<=', $this->dateEnd);
+        })
+            ->orderBy($this->sortField, $this->sortDirection)
             ->get();
 
         return view('livewire.admin.transactions', [

@@ -14,7 +14,7 @@ class Settings extends Component
     public $hero_photo;
     public $qris;
     public $hero;
-    
+
     public $users = [];
     public $name = '', $email = '', $password = '', $role = 'admin';
 
@@ -23,7 +23,7 @@ class Settings extends Component
     public $payment_methods = ['qris' => true, 'cash' => true, 'transfer' => false];
     public $about_faq_items = [];
     public $social_ig_url = '', $social_ig_name = '', $social_tiktok_url = '', $social_tiktok_name = '';
-    
+
     public $importFile;
 
     public function mount()
@@ -62,7 +62,8 @@ class Settings extends Component
 
     public function createUser()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
 
         $this->validate([
             'name' => 'required',
@@ -85,7 +86,8 @@ class Settings extends Component
 
     public function deleteUser($id)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
 
         if (\App\Models\User::count() > 1 && auth()->id() != $id) {
             \App\Models\User::findOrFail($id)->delete();
@@ -134,10 +136,11 @@ class Settings extends Component
 
     public function saveFaqSettings()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
 
         \App\Models\Setting::updateOrCreate(
-            ['key' => 'about_faq_items'], 
+            ['key' => 'about_faq_items'],
             ['value' => json_encode($this->about_faq_items)]
         );
 
@@ -146,7 +149,8 @@ class Settings extends Component
 
     public function saveHero()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
 
         $this->validate([
             'hero_photo' => 'required|image|max:3072|mimes:jpg,jpeg,png,webp',
@@ -154,12 +158,17 @@ class Settings extends Component
 
         $filename = 'hero_' . time() . '.' . $this->hero_photo->getClientOriginalExtension();
 
-        if (!file_exists(public_path('uploads'))) {
-            mkdir(public_path('uploads'), 0777, true);
+        // Menggunakan DOCUMENT_ROOT untuk langsung mengarah ke 'htdocs' di InfinityFree
+        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/uploads';
+
+        // Buat folder jika belum ada (0755 lebih disarankan untuk keamanan hosting)
+        if (!file_exists($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
         }
 
-        // Use standard PHP copy as it's more reliable across different volumes
-        copy($this->hero_photo->getRealPath(), public_path('uploads/' . $filename));
+        // Pindahkan file foto dari direktori temporary Livewire ke htdocs/uploads
+        $destination = $uploadPath . '/' . $filename;
+        file_put_contents($destination, file_get_contents($this->hero_photo->getRealPath()));
 
         \App\Models\Setting::updateOrCreate(
             ['key' => 'hero'],
@@ -171,9 +180,39 @@ class Settings extends Component
         session()->flash('hero_message', '1:1 Foto Beranda berhasil diperbarui!');
     }
 
+    public function saveQris()
+    {
+        $this->validate([
+            'qris_photo' => 'required|image|max:2048', // 2MB Max
+        ]);
+
+        $filename = 'qris_' . time() . '.' . $this->qris_photo->getClientOriginalExtension();
+
+        // Menggunakan DOCUMENT_ROOT untuk langsung mengarah ke 'htdocs' di InfinityFree
+        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/uploads';
+
+        // Buat folder jika belum ada
+        if (!file_exists($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+
+        // Pindahkan file foto dari direktori temporary Livewire ke htdocs/uploads
+        $destination = $uploadPath . '/' . $filename;
+        file_put_contents($destination, file_get_contents($this->qris_photo->getRealPath()));
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'qris'],
+            ['value' => $filename]
+        );
+
+        $this->qris = $filename;
+
+        session()->flash('message', 'QRIS Photo successfully updated.');
+    }
     public function exportData()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
 
         $data = [
             'version' => '1.0',
@@ -186,7 +225,7 @@ class Settings extends Component
         ];
 
         $filename = 'backup_rentspace_' . now()->format('Y-m-d_H-i-s') . '.json';
-        
+
         return response()->streamDownload(function () use ($data) {
             echo json_encode($data, JSON_PRETTY_PRINT);
         }, $filename);
@@ -194,7 +233,8 @@ class Settings extends Component
 
     public function importData()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (auth()->user()->role !== 'admin')
+            return;
 
         $this->validate([
             'importFile' => 'required|mimes:json|max:10240', // 10MB Max
@@ -211,7 +251,7 @@ class Settings extends Component
 
             // Disable foreign keys for SQLite outside the transaction
             \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = OFF;');
-            
+
             try {
                 \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
                     if (isset($data['settings'])) {
@@ -263,30 +303,6 @@ class Settings extends Component
         }
     }
 
-    public function saveQris()
-    {
-        $this->validate([
-            'qris_photo' => 'required|image|max:2048', // 2MB Max
-        ]);
-
-        $filename = 'qris_' . time() . '.' . $this->qris_photo->getClientOriginalExtension();
-
-        if (!file_exists(public_path('uploads'))) {
-            mkdir(public_path('uploads'), 0777, true);
-        }
-
-        // Use standard PHP copy as it's more reliable across different volumes
-        copy($this->qris_photo->getRealPath(), public_path('uploads/' . $filename));
-
-        \App\Models\Setting::updateOrCreate(
-            ['key' => 'qris'],
-            ['value' => $filename]
-        );
-
-        $this->qris = $filename;
-        
-        session()->flash('message', 'QRIS Photo successfully updated.');
-    }
 
     public function render()
     {

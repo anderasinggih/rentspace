@@ -11,7 +11,7 @@
             localStorage.theme = 'light';
         }
     }
-}" class="bg-background border-b border-border sticky top-0 z-50 shadow-sm">
+}" class="bg-background/10 sticky backdrop-blur-sm top-0 z-50 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <!-- Left side Navigation -->
@@ -32,6 +32,12 @@
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Manajemen Unit
                     </a>
+                    @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.categories') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.categories') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Kategori
+                    </a>
+                    @endif
                     <a href="{{ route('admin.promo') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Promo & Diskon
@@ -128,6 +134,11 @@
         <a href="{{ route('admin.units') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Manajemen
             Unit</a>
+        @if(auth()->user()->role === 'admin')
+        <a href="{{ route('admin.categories') }}" wire:navigate
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.categories') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Manajemen
+            Kategori</a>
+        @endif
         <a href="{{ route('admin.promo') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Promo
             & Diskon</a>

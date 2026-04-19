@@ -137,18 +137,22 @@ class Dashboard extends Component
             ->limit(5)
             ->get();
 
-        // Unit performance with Rented Hours calculation
-        $topUnits = Rental::with(['unit' => function($q) { $q->withTrashed(); }])
-            ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
-            ->whereBetween('created_at', [$start, $end])
+        // Unit performance with Rented Hours calculation using RentalItem pivot
+        $topUnits = \App\Models\RentalItem::query()
+            ->whereHas('rental', function($q) use ($start, $end) {
+                $q->where(fn($q2) => $q2->where('status', 'completed')->orWhere('status', 'paid'))
+                  ->whereBetween('created_at', [$start, $end]);
+            })
+            ->with(['unit' => function($q) { $q->withTrashed(); }, 'rental'])
             ->get()
             ->groupBy('unit_id')
             ->map(function($group) {
                 $unit = $group->first()->unit;
                 $rent_count = $group->count();
-                $revenue = $group->sum('grand_total');
-                $hours = $group->sum(function($r) {
-                    return abs(\Carbon\Carbon::parse($r->waktu_selesai)->diffInHours(\Carbon\Carbon::parse($r->waktu_mulai)));
+                $revenue = $group->sum('price_snapshot');
+                $hours = $group->sum(function($item) {
+                    $r = $item->rental;
+                    return abs(Carbon::parse($r->waktu_selesai)->diffInHours(Carbon::parse($r->waktu_mulai)));
                 });
                 return (object)[
                     'unit' => $unit,
@@ -174,7 +178,7 @@ class Dashboard extends Component
         $chartRevenue = $chartInfo['revenue'];
         $chartTransactions = $chartInfo['transactions'];
 
-        $activeRentals = Rental::with(['unit' => function($q) { $q->withTrashed(); }])
+        $activeRentals = Rental::with(['units' => function($q) { $q->withTrashed(); }])
             ->whereIn('status', ['paid', 'pending'])
             ->where(fn($q) => $q->where('waktu_mulai', '<=', now()))
             ->where(fn($q) => $q->where('waktu_selesai', '>=', now()))

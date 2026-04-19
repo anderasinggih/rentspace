@@ -15,4 +15,11 @@ export default defineConfig({
             ignored: ['**/storage/framework/views/**'],
         },
     },
+    build: {
+        rollupOptions: {
+            output: {
+                assetFileNames: 'assets/[name][extname]',
+            },
+        },
+    },
 });

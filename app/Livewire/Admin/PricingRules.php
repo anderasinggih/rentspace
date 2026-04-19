@@ -8,15 +8,15 @@ use Livewire\Component;
 
 class PricingRules extends Component
 {
-    public $rule_id, $nama_promo, $tipe = 'diskon_persen', $value, $syarat_minimal_durasi, $syarat_tipe_durasi = 'jam';
+    public $rule_id, $nama_promo, $kode_promo, $tipe = 'diskon_persen', $value, $syarat_minimal_durasi, $syarat_tipe_durasi = 'jam';
     public $start_date, $end_date;
-    public $is_active = true;
+    public $is_active = true, $is_hidden = false, $can_stack = false;
     public $isEditing = false;
     public $showModal = false;
 
     public function create()
     {
-        $this->reset(['rule_id', 'nama_promo', 'value', 'syarat_minimal_durasi', 'start_date', 'end_date', 'isEditing']);
+        $this->reset(['rule_id', 'nama_promo', 'kode_promo', 'value', 'syarat_minimal_durasi', 'start_date', 'end_date', 'isEditing', 'is_hidden', 'can_stack']);
         $this->tipe = 'diskon_persen';
         $this->syarat_tipe_durasi = 'jam';
         $this->is_active = true;
@@ -28,6 +28,7 @@ class PricingRules extends Component
         $rule = PricingRule::withTrashed()->findOrFail($id);
         $this->rule_id = $rule->id;
         $this->nama_promo = $rule->nama_promo;
+        $this->kode_promo = $rule->kode_promo;
         $this->tipe = $rule->tipe;
         $this->value = $rule->value;
         $this->syarat_minimal_durasi = $rule->syarat_minimal_durasi;
@@ -35,6 +36,8 @@ class PricingRules extends Component
         $this->start_date = $rule->start_date;
         $this->end_date = $rule->end_date;
         $this->is_active = $rule->is_active;
+        $this->is_hidden = (bool)$rule->is_hidden;
+        $this->can_stack = (bool)$rule->can_stack;
         $this->isEditing = true;
         $this->showModal = true;
     }
@@ -44,6 +47,7 @@ class PricingRules extends Component
         $rule = PricingRule::withTrashed()->findOrFail($id);
         $this->reset(['rule_id', 'isEditing']);
         $this->nama_promo = $rule->nama_promo . ' (Copy)';
+        $this->kode_promo = $rule->kode_promo ? $rule->kode_promo . '-COPY' : null;
         $this->tipe = $rule->tipe;
         $this->value = $rule->value;
         $this->syarat_minimal_durasi = $rule->syarat_minimal_durasi;
@@ -51,6 +55,8 @@ class PricingRules extends Component
         $this->start_date = $rule->start_date;
         $this->end_date = $rule->end_date;
         $this->is_active = true;
+        $this->is_hidden = (bool)$rule->is_hidden;
+        $this->can_stack = (bool)$rule->can_stack;
         $this->showModal = true;
     }
 
@@ -58,6 +64,7 @@ class PricingRules extends Component
     {
         $this->validate([
             'nama_promo' => 'required|string',
+            'kode_promo' => 'nullable|string|unique:pricing_rules,kode_promo,'.$this->rule_id,
             'tipe' => 'required|string|in:diskon_persen,hari_gratis,fix_price,diskon_nominal,jam_gratis,cashback',
             'value' => 'required|numeric',
             'syarat_minimal_durasi' => 'nullable|numeric',
@@ -70,6 +77,7 @@ class PricingRules extends Component
             ['id' => $this->rule_id],
             [
                 'nama_promo' => $this->nama_promo,
+                'kode_promo' => $this->kode_promo ?: null,
                 'tipe' => $this->tipe,
                 'value' => $this->value,
                 'syarat_minimal_durasi' => $this->syarat_minimal_durasi,
@@ -77,6 +85,8 @@ class PricingRules extends Component
                 'start_date' => $this->start_date ?: null,
                 'end_date' => $this->end_date ?: null,
                 'is_active' => $this->is_active,
+                'is_hidden' => $this->is_hidden,
+                'can_stack' => $this->can_stack,
                 'deleted_at' => null, // Restore if it was soft deleted
             ]
         );

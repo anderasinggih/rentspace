@@ -42,14 +42,30 @@
                         placeholder="Cari nama, invoice, atau WA...">
                 </div>
 
-                <select wire:model.live="filterStatus"
-                    class="h-9 w-full sm:w-[180px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                    <option value="">Semua Status</option>
-                    <option value="pending">⏳ Pending</option>
-                    <option value="paid">💳 Lunas</option>
-                    <option value="completed">✅ Selesai</option>
-                    <option value="cancelled">❌ Batal</option>
-                </select>
+                <div class="hidden sm:flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-end">
+                    <div class="w-full sm:w-auto">
+                        <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Dari</label>
+                        <input type="date" wire:model.live="dateStart"
+                            class="h-9 w-full sm:w-[140px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Sampai</label>
+                        <input type="date" wire:model.live="dateEnd"
+                            class="h-9 w-full sm:w-[140px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    </div>
+                </div>
+
+                <div class="w-full sm:w-auto">
+                    <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Status</label>
+                    <select wire:model.live="filterStatus"
+                        class="h-9 w-full sm:w-[180px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        <option value="">Semua Status</option>
+                        <option value="pending">⏳ Pending</option>
+                        <option value="paid">💳 Lunas</option>
+                        <option value="completed">✅ Selesai</option>
+                        <option value="cancelled">❌ Batal</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -61,23 +77,68 @@
                             <thead>
                                 <tr class="bg-muted/50">
                                     <th scope="col"
-                                        class="py-3 pl-3 pr-3 text-left text-xs sm:text-sm font-semibold text-foreground sm:pl-6">
-                                        Invoice & Customer</th>
+                                        class="py-3 pl-3 pr-3 text-left text-xs sm:text-sm font-semibold text-foreground sm:pl-6 cursor-pointer hover:bg-muted transition-colors"
+                                        wire:click="sortBy('id')">
+                                        <div class="flex items-center gap-1">
+                                            Invoice & Customer
+                                            @if($sortField === 'id')
+                                                <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
+                                            @endif
+                                        </div>
+                                    </th>
+                                    <th scope="col"
+                                        class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
+                                        wire:click="sortBy('created_at')">
+                                        <div class="flex items-center gap-1">
+                                            Tgl Transaksi
+                                            @if($sortField === 'created_at')
+                                                <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
+                                            @endif
+                                        </div>
+                                    </th>
                                     <th scope="col"
                                         class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">
                                         Unit Sewa</th>
                                     <th scope="col"
-                                        class="hidden md:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">
-                                        Jadwal Sewa</th>
+                                        class="hidden md:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
+                                        wire:click="sortBy('waktu_mulai')">
+                                        <div class="flex items-center gap-1">
+                                            Jadwal Sewa
+                                            @if($sortField === 'waktu_mulai')
+                                                <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
+                                            @endif
+                                        </div>
+                                    </th>
                                     <th scope="col"
-                                        class="hidden md:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">
-                                        Subtotal</th>
+                                        class="hidden md:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
+                                        wire:click="sortBy('subtotal_harga')">
+                                        <div class="flex items-center gap-1">
+                                            Subtotal
+                                            @if($sortField === 'subtotal_harga')
+                                                <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
+                                            @endif
+                                        </div>
+                                    </th>
                                     <th scope="col"
-                                        class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-bold text-primary">
-                                        Tagihan Akhir</th>
+                                        class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-bold text-primary cursor-pointer hover:bg-muted transition-colors"
+                                        wire:click="sortBy('grand_total')">
+                                        <div class="flex items-center gap-1">
+                                            Tagihan Akhir
+                                            @if($sortField === 'grand_total')
+                                                <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
+                                            @endif
+                                        </div>
+                                    </th>
                                     <th scope="col"
-                                        class="px-3 py-3 text-left text-xs sm:text-sm font-semibold text-foreground">
-                                        Status</th>
+                                        class="px-3 py-3 text-left text-xs sm:text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
+                                        wire:click="sortBy('status')">
+                                        <div class="flex items-center gap-1">
+                                            Status
+                                            @if($sortField === 'status')
+                                                <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
+                                            @endif
+                                        </div>
+                                    </th>
                                     <th scope="col" class="relative py-3 pl-3 pr-2 sm:pr-6"><span
                                             class="sr-only">Aksi</span></th>
                                 </tr>
@@ -93,10 +154,19 @@
                                                 target="_blank" class="text-primary hover:underline">{{ $trx->no_wa
                                                 }}</a></div>
                                     </td>
+                                    <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-xs text-muted-foreground">
+                                        {{ $trx->created_at->format('d M Y') }}<br/>
+                                        <span class="opacity-70">{{ $trx->created_at->format('H:i') }} WIB</span>
+                                    </td>
                                     <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-muted-foreground">
-                                        <span class="font-medium text-foreground">{{ $trx->unit->seri ?? 'Unit Terhapus'
-                                            }}</span><br />
-                                        <span class="text-xs">{{ $trx->unit->imei ?? '-' }}</span>
+                                        <div class="flex flex-col gap-0.5">
+                                            @foreach($trx->units as $u)
+                                                <span class="font-medium text-foreground text-xs">{{ $u->seri }}</span>
+                                            @endforeach
+                                            @if($trx->units->isEmpty() && $trx->unit)
+                                                <span class="font-medium text-foreground text-xs">{{ $trx->unit->seri }}</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td
                                         class="hidden md:table-cell whitespace-nowrap px-3 py-4 text-muted-foreground text-xs">
@@ -196,7 +266,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="py-10 text-center text-sm text-muted-foreground">Belum ada
+                                    <td colspan="8" class="py-10 text-center text-sm text-muted-foreground">Belum ada
                                         transaksi penyewaan yang masuk.</td>
                                 </tr>
                                 @endforelse
@@ -545,10 +615,22 @@
                                 <div>
                                     <p class="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">Unit Yang
                                         Disewa</p>
-                                    <p class="text-sm font-bold text-foreground">{{ $inspectTrx->unit->seri ?? 'N/A' }}
-                                    </p>
-                                    <p class="text-[11px] text-muted-foreground">IMEI/SN: {{ $inspectTrx->unit->warna ??
-                                        '-' }}</p>
+                                    <div class="space-y-2 mt-1">
+                                        @forelse($inspectTrx->units as $unit)
+                                        <div class="p-2 rounded bg-muted/50 border border-border/50">
+                                            <p class="text-sm font-bold text-foreground">{{ $unit->seri }}</p>
+                                            <p class="text-[10px] text-muted-foreground">Price: Rp {{ number_format($unit->pivot->price_snapshot ?? 0, 0, ',', '.') }}</p>
+                                        </div>
+                                        @empty
+                                        @if($inspectTrx->unit)
+                                        <div class="p-2 rounded bg-muted/50 border border-border/50">
+                                            <p class="text-sm font-bold text-foreground">{{ $inspectTrx->unit->seri }}</p>
+                                        </div>
+                                        @else
+                                        <p class="text-sm font-bold text-foreground">N/A</p>
+                                        @endif
+                                        @endforelse
+                                    </div>
                                 </div>
                                 <div>
                                     <p class="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">Jadwal Mulai
