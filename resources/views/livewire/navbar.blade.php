@@ -40,6 +40,10 @@
                     class="text-sm font-medium transition-colors {{ request()->routeIs('public.about') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
                     Tentang & FAQ
                 </a>
+                <a href="{{ route('affiliate.login') }}" wire:navigate
+                    class="text-sm font-medium transition-colors {{ request()->routeIs('affiliate.*') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
+                    Affiliate
+                </a>
             </div>
         </div>
 
@@ -107,6 +111,9 @@
         <a href="{{ route('public.about') }}" wire:navigate
             class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.about') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
             Tentang & FAQ</a>
+        <a href="{{ route('affiliate.login') }}" wire:navigate
+            class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('affiliate.*') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
+            Affiliate Center</a>
         <div class="h-px bg-border my-1"></div>
         <a href="{{ route('public.booking') }}" wire:navigate
             class="flex items-center justify-center rounded-xl bg-foreground text-background text-sm font-semibold px-4 py-3 hover:bg-foreground/90 transition-all mt-2">

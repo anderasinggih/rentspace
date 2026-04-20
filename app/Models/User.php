@@ -47,4 +47,44 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the affiliator profile for this user.
+     */
+    public function affiliateProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(AffiliatorProfile::class);
+    }
+
+    /**
+     * Backward compatibility or alias for affiliatorProfile
+     */
+    public function affiliatorProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(AffiliatorProfile::class);
+    }
+
+    /**
+     * Get commissions earned by this user (as affiliator).
+     */
+    public function commissions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AffiliateCommission::class, 'affiliator_id');
+    }
+
+    /**
+     * Get payouts requested by this user (as affiliator).
+     */
+    public function payouts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AffiliatePayout::class, 'affiliator_id');
+    }
+
+    /**
+     * Get rentals associated with this user's referral code.
+     */
+    public function affiliateRentals(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Rental::class, 'affiliator_id');
+    }
 }

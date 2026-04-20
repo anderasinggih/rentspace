@@ -26,11 +26,11 @@
                 <div class="hidden md:flex items-center space-x-1">
                     <a href="{{ route('admin.dashboard') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
-                        Analisis Dashboard
+                        Dashboard
                     </a>
                     <a href="{{ route('admin.units') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
-                        Manajemen Unit
+                        Unit
                     </a>
                     @if(auth()->user()->role === 'admin')
                     <a href="{{ route('admin.categories') }}" wire:navigate
@@ -40,13 +40,17 @@
                     @endif
                     <a href="{{ route('admin.promo') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
-                        Promo & Diskon
+                        Promo
                     </a>
                     <a href="{{ route('admin.transactions') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
-                        Mutasi Transaksi
+                        Transaksi
                     </a>
                     @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.affiliate') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Affiliate
+                    </a>
                     <a href="{{ route('admin.settings') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Pengaturan
@@ -129,26 +133,22 @@
 
         <div class="text-xs font-semibold uppercase text-muted-foreground mb-2">Menu Utama</div>
         <a href="{{ route('admin.dashboard') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Analisis
-            Dashboard</a>
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Dashboard</a>
         <a href="{{ route('admin.units') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Manajemen
-            Unit</a>
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Unit</a>
         @if(auth()->user()->role === 'admin')
         <a href="{{ route('admin.categories') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.categories') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Manajemen
-            Kategori</a>
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.categories') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Kategori</a>
         @endif
         <a href="{{ route('admin.promo') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Promo
-            & Diskon</a>
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Promo</a>
         <a href="{{ route('admin.transactions') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Mutasi
-            Transaksi</a>
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Transaksi</a>
         @if(auth()->user()->role === 'admin')
+        <a href="{{ route('admin.affiliate') }}" wire:navigate
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Affiliate</a>
         <a href="{{ route('admin.settings') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pengaturan
-            Web</a>
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pengaturan</a>
         @endif
 
         <div class="h-px bg-border my-4"></div>

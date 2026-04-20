@@ -100,19 +100,25 @@
                     Omset (Periode)</h3>
                 <p class="text-lg md:text-xl font-bold text-foreground">Rp {{ number_format($periodRevenue, 0, ',', '.')
                     }}</p>
-                <div class="mt-2">{!! gainBadge($gainRevenue, $gainAbsRevenue) !!}</div>
+                <div class="mt-2 flex items-center gap-2">
+                    {!! gainBadge($gainRevenue, $gainAbsRevenue) !!}
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-900 shadow-sm">
+                        Net: Rp {{ number_format($periodNetRevenue/1000, 0, ',', '.') }}k
+                    </span>
+                </div>
+            </div>
+            <div class="bg-muted/40 rounded-xl border border-border p-4 flex flex-col justify-between border-l-4 border-l-red-500/50">
+                <h3 class="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">
+                    Komisi Affiliator</h3>
+                <p class="text-lg md:text-xl font-bold text-red-500">Rp {{ number_format($periodCommissions, 0, ',', '.')
+                    }}</p>
+                <div class="mt-2 text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Potongan Omset</div>
             </div>
             <div class="bg-muted/40 rounded-xl border border-border p-4 flex flex-col justify-between">
                 <h3 class="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">
                     Diskon Keluar</h3>
-                <p class="text-lg md:text-xl font-bold text-red-500">-Rp {{ number_format($periodDiscounts, 0, ',', '.')
+                <p class="text-lg md:text-xl font-bold text-foreground">Rp {{ number_format($periodDiscounts, 0, ',', '.')
                     }}</p>
-            </div>
-            <div class="bg-muted/40 rounded-xl border border-border p-4 flex flex-col justify-between">
-                <h3 class="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">
-                    Rata-rata Transaksi</h3>
-                <p class="text-lg md:text-xl font-bold text-foreground">Rp {{ $periodRentals > 0 ?
-                    number_format($periodRevenue/$periodRentals, 0, ',', '.') : 0 }}</p>
             </div>
         </div>
     </div>
@@ -230,6 +236,46 @@
                 </table>
             </div>
         </div>
+
+        <!-- Analisis Performa Affiliator -->
+        <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm flex flex-col lg:col-span-2">
+            <div class="p-4 border-b border-border">
+                <h2 class="text-sm font-semibold leading-none tracking-tight text-primary">Top Performa Affiliator</h2>
+                <p class="text-[11px] text-muted-foreground mt-1">Berdasarkan komisi yang dihasilkan di periode terpilih</p>
+            </div>
+            <div class="overflow-x-auto w-full">
+                <table class="w-full text-xs text-left whitespace-nowrap">
+                    <thead class="bg-muted/50 text-muted-foreground">
+                        <tr>
+                            <th class="px-4 py-2 font-medium">Nama Affiliator</th>
+                            <th class="px-4 py-2 font-medium text-center">Referral Closing</th>
+                            <th class="px-4 py-2 font-medium text-right">Total Komisi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        @forelse($topAffiliates as $ta)
+                        <tr class="hover:bg-muted/30">
+                            <td class="px-4 py-3 text-foreground font-medium">
+                                <div class="flex items-center gap-2">
+                                    <div class="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary border border-primary/20">
+                                        {{ substr($ta->affiliator->name ?? 'A', 0, 1) }}
+                                    </div>
+                                    {{ $ta->affiliator->name ?? 'N/A' }}
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-center font-bold text-foreground">{{ $ta->total_trx }}x</td>
+                            <td class="px-4 py-3 text-right font-black text-red-500">Rp {{
+                                number_format($ta->total_commission, 0, ',', '.') }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="3" class="px-4 py-8 text-center text-muted-foreground text-[10px]">Belum ada aktivitas affiliator di periode ini.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- Active Rentals Right Now -->
@@ -321,10 +367,13 @@
 
         // ── 1. REVENUE AREA CHART ──────────────────────────────────────────────
         var revChart = new ApexCharts(document.querySelector("#revenueChart"), {
-            series: [{ name: 'Pendapatan', data: @json($chartRevenue) }],
+            series: [
+                { name: 'Omset Kotor', data: @json($chartRevenue) },
+                { name: 'Omset Bersih', data: @json($chartNetRevenue) }
+            ],
             chart: { type: 'area', height: 220, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
             dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 2, colors: ['#6366f1'] },
+            stroke: { curve: 'smooth', width: 2, colors: ['#6366f1', '#10b981'] },
             xaxis: {
                 categories: @json($chartCategories),
                 tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
@@ -355,12 +404,18 @@
             fill: {
                 type: 'gradient',
                 gradient: {
-                    shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0.01, stops: [0, 100],
-                    colorStops: [{ offset: 0, color: '#6366f1', opacity: 0.3 }, { offset: 100, color: '#6366f1', opacity: 0 }]
+                    shadeIntensity: 1, opacityFrom: 0.2, opacityTo: 0.01, stops: [0, 100],
+                    colorStops: [
+                        { offset: 0, color: '#6366f1', opacity: 0.2 },
+                        { offset: 100, color: '#6366f1', opacity: 0 },
+                        { offset: 0, color: '#10b981', opacity: 0.1 },
+                        { offset: 100, color: '#10b981', opacity: 0 }
+                    ]
                 }
             },
+            colors: ['#6366f1', '#10b981'],
             theme: { mode: colors.isDark ? 'dark' : 'light' },
-            tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } }
+            tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } }
         });
         revChart.render();
 
@@ -423,7 +478,10 @@
         Livewire.on('chartDataUpdated', (data) => {
             const d = Array.isArray(data) ? data[0] : data;
             revChart.updateOptions({ xaxis: { categories: d.categories } });
-            revChart.updateSeries([{ name: 'Pendapatan', data: d.revenue }]);
+            revChart.updateSeries([
+                { name: 'Omset Kotor', data: d.revenue },
+                { name: 'Omset Bersih', data: d.netRevenue }
+            ]);
             trxChart.updateOptions({ xaxis: { categories: d.categories } });
             trxChart.updateSeries([{ name: 'Jml Sewa', data: d.transactions }]);
         });

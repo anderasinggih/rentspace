@@ -28,9 +28,9 @@
 </head>
 
 <body class="bg-background text-foreground antialiased font-sans flex flex-col min-h-screen">
-    @unless (request()->routeIs('public.booking'))
+    @Unless ($hideNavbar ?? false)
         <livewire:navbar />
-    @endunless
+    @endUnless
     <main class="flex-1 w-full flex flex-col">
         {{ $slot }}
     </main>

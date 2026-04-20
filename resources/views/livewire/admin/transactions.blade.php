@@ -123,7 +123,7 @@
                                         class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-bold text-primary cursor-pointer hover:bg-muted transition-colors"
                                         wire:click="sortBy('grand_total')">
                                         <div class="flex items-center gap-1">
-                                            Tagihan Akhir
+                                            Tagihan & Profit
                                             @if($sortField === 'grand_total')
                                                 <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
                                             @endif
@@ -139,14 +139,15 @@
                                             @endif
                                         </div>
                                     </th>
+
                                     <th scope="col" class="relative py-3 pl-3 pr-2 sm:pr-6"><span
                                             class="sr-only">Aksi</span></th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-border text-sm">
+                            <tbody class="divide-y divide-border text-[11px]">
                                 @forelse ($transactions as $trx)
                                 <tr>
-                                    <td class="whitespace-nowrap py-2 sm:py-4 pl-3 pr-3 text-xs sm:text-sm sm:pl-6">
+                                    <td class="whitespace-nowrap py-2 sm:py-4 pl-3 pr-3 text-xs sm:pl-6">
                                         <div class="font-medium text-foreground">INV-{{ str_pad($trx->id, 5, '0',
                                             STR_PAD_LEFT) }}</div>
                                         <div class="text-muted-foreground mt-0.5 sm:mt-1">{{ $trx->nama }} <br /> <a
@@ -182,6 +183,15 @@
                                     <td
                                         class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm font-bold text-primary">
                                         Rp {{ number_format($trx->grand_total, 0, ',', '.') }}<br />
+                                        @php
+                                            $trxCommission = $trx->commissions->sum('amount');
+                                            $trxNet = $trx->grand_total - $trxCommission;
+                                        @endphp
+                                        @if($trxCommission > 0)
+                                            <div class="text-[10px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                                                Net: Rp {{ number_format($trxNet, 0, ',', '.') }}
+                                            </div>
+                                        @endif
                                         <div class="mt-1 flex flex-wrap gap-1">
                                             <span
                                                 class="inline-flex rounded border bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200/50 dark:border-purple-900/50 px-1.5 font-mono text-[10px] sm:text-xs font-semibold uppercase">
@@ -191,24 +201,6 @@
                                                 class="inline-flex rounded border bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50 px-1.5 font-mono text-[10px] sm:text-xs font-semibold uppercase">
                                                 {{ $trx->metode_pembayaran }}
                                             </span>
-                                            @if($trx->denda > 0)
-                                            <span
-                                                class="inline-flex rounded border bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200/50 dark:border-amber-900/50 px-1.5 font-mono text-[10px] sm:text-xs font-semibold uppercase">
-                                                +Late: {{ number_format($trx->denda/1000, 0) }}k
-                                            </span>
-                                            @endif
-                                            @if($trx->denda_kerusakan > 0)
-                                            <span
-                                                class="inline-flex rounded border bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200/50 dark:border-red-900/50 px-1.5 font-mono text-[10px] sm:text-xs font-semibold uppercase">
-                                                +Dmg: {{ number_format($trx->denda_kerusakan/1000, 0) }}k
-                                            </span>
-                                            @if($trx->catatan_kerusakan)
-                                            <div
-                                                class="w-full text-[10px] text-red-600 dark:text-red-400 italic mt-0.5">
-                                                Note: {{ $trx->catatan_kerusakan }}
-                                            </div>
-                                            @endif
-                                            @endif
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-2 sm:px-3 py-2 sm:py-4">
@@ -222,6 +214,7 @@
                                         <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Batal</x-ui.badge>
                                         @endif
                                     </td>
+
                                     <td class="relative whitespace-nowrap py-2 sm:py-4 pl-2 pr-2 sm:pr-6 text-right">
                                         <div class="flex flex-col gap-1 sm:gap-2 items-end">
                                             @if($trx->status === 'pending')
@@ -709,6 +702,35 @@
                                         <td class="py-4 px-4 text-right text-lg font-black text-primary">Rp {{
                                             number_format($inspectTrx->grand_total, 0, ',', '.') }}</td>
                                     </tr>
+                                    @php
+                                        $commAmount = $inspectTrx->commissions->sum('amount');
+                                        $isEstimation = false;
+                                        if ($commAmount <= 0 && $inspectTrx->affiliate_code && $inspectTrx->affiliator?->affiliateProfile) {
+                                            $rate = $inspectTrx->affiliator->affiliateProfile->commission_rate ?? 0;
+                                            $commAmount = $inspectTrx->subtotal_harga * ($rate / 100);
+                                            $isEstimation = true;
+                                        }
+                                        $netAmount = $inspectTrx->grand_total - $commAmount;
+                                    @endphp
+                                    @if($commAmount > 0)
+                                    <tr class="bg-red-500/5">
+                                        <td class="py-2.5 px-4 text-[13px]">
+                                            <div class="flex items-center gap-1.5 text-wrap">
+                                                <span class="text-red-600 font-bold whitespace-nowrap">Komisi Affiliator</span>
+                                                <span class="text-[10px] font-black bg-primary/10 text-primary border border-primary/20 px-1 rounded uppercase">{{ $inspectTrx->affiliate_code }}</span>
+                                                @if($isEstimation)
+                                                    <span class="text-[9px] font-bold bg-amber-100 text-amber-700 px-1 rounded">Estimasi</span>
+                                                @endif
+                                            </div>
+                                            <p class="text-[10px] text-muted-foreground mt-0.5">Partner: {{ $inspectTrx->affiliator->name ?? 'N/A' }}</p>
+                                        </td>
+                                        <td class="py-2.5 px-4 text-right font-bold text-red-600">- Rp {{ number_format($commAmount, 0, ',', '.') }}</td>
+                                    </tr>
+                                    <tr class="bg-emerald-500/10">
+                                        <td class="py-3 px-4 font-bold text-emerald-700 dark:text-emerald-400 text-[13px]">Omset Bersih (Net)</td>
+                                        <td class="py-3 px-4 text-right text-base font-black text-emerald-700 dark:text-emerald-400">Rp {{ number_format($netAmount, 0, ',', '.') }}</td>
+                                    </tr>
+                                    @endif
                                 </tbody>
                             </table>
                         </div>

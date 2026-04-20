@@ -29,6 +29,26 @@ class BookingForm extends Component
     public $applied_promo_label = '';
     public $hari_bonus = 0; // extra days added by hari_gratis promo
     public $jam_bonus = 0;  // extra hours added by jam_gratis promo
+    public $referral_code = '';
+    public $promoManuallyChanged = false;
+
+    public function mount($unit_id = null)
+    {
+        // 1. Handle auto-selection of unit from URL (if still using specific links)
+        if ($unit_id) {
+            $this->selected_unit_ids = [(int)$unit_id];
+            $this->checkAvailability();
+        }
+
+        // 2. Handle auto-apply of referral from Cookie or Session
+        $ref = request()->cookie('affiliate_ref') ?? session('affiliate_ref');
+        
+        if ($ref) {
+            $this->referral_code = $ref;
+            $this->loadAvailablePromos();
+            $this->calculatePrice();
+        }
+    }
 
     public function updated($propertyName)
     {
@@ -36,6 +56,8 @@ class BookingForm extends Component
             $this->nikFoundMessage = null;
             $this->nikFoundType = null;
             $this->isNikVerified = false;
+            $this->loadAvailablePromos();
+            $this->calculatePrice();
         }
         if ($propertyName === 'nama') {
             $this->nama = strtoupper($this->nama);
@@ -49,6 +71,7 @@ class BookingForm extends Component
             $this->loadAvailablePromos();
         }
         if ($propertyName === 'selected_promo_ids') {
+            $this->promoManuallyChanged = true;
             $this->validateStacking();
             $this->calculatePrice();
         }
@@ -56,6 +79,10 @@ class BookingForm extends Component
             $this->loadAvailablePromos();
         }
         if (in_array($propertyName, ['waktu_mulai', 'waktu_selesai'])) {
+            $this->calculatePrice();
+        }
+        if ($propertyName === 'referral_code') {
+            $this->loadAvailablePromos();
             $this->calculatePrice();
         }
     }
@@ -116,8 +143,34 @@ class BookingForm extends Component
             ->get();
 
         $this->available_promos = $rules->filter(function ($rule) {
-            // If hidden, only show if code matches OR it's already selected
+            // Check if it's an affiliate-only promo
+            if ($rule->is_affiliate_only) {
+                $isAffiliateAuth = auth()->check() && auth()->user()->role === 'affiliator';
+                $isAffiliateNik = !empty($this->nik) && \App\Models\AffiliatorProfile::where('nik', $this->nik)->where('status', 'approved')->exists();
+                
+                if (!$isAffiliateAuth && !$isAffiliateNik) return false;
+            }
+
+            // Check if it requires a referral code
+            if ($rule->requires_referral) {
+                if (empty($this->referral_code)) return false;
+            }
+
+            // Existing logic for affiliate_code specific promos
+            if ($rule->affiliate_code) {
+                $refMatch = $this->referral_code && strtoupper(trim($this->referral_code)) === strtoupper(trim($rule->affiliate_code));
+                return $refMatch;
+            }
+
+            // If hidden, only show if:
+            // 1. It's tied to an affiliate/referral constraint (handled above)
+            // 2. OR code matches
+            // 3. OR it's already selected
             if ($rule->is_hidden) {
+                if ($rule->requires_referral || $rule->is_affiliate_only || $rule->affiliate_code) {
+                    // These are allowed if the previous checks passed
+                    return true;
+                }
                 $codeMatch = $this->promo_code_input && strtoupper(trim($this->promo_code_input)) === strtoupper(trim($rule->kode_promo));
                 $isSelected = in_array($rule->id, $this->selected_promo_ids);
                 return $codeMatch || $isSelected;
@@ -126,6 +179,13 @@ class BookingForm extends Component
         })->map(function ($rule) use ($days, $diffInHours) {
             $durasiTerkonversi = $rule->syarat_tipe_durasi === 'hari' ? $days : $diffInHours;
             $is_eligible = !$rule->syarat_minimal_durasi || $durasiTerkonversi >= $rule->syarat_minimal_durasi;
+
+            // Auto-select if it's an affiliate-specific promo and eligible (only if user hasn't manually changed promos)
+            $isAffiliatePromo = $rule->affiliate_code || $rule->requires_referral || $rule->is_affiliate_only;
+            if ($isAffiliatePromo && $is_eligible && !in_array($rule->id, $this->selected_promo_ids) && !$this->promoManuallyChanged) {
+                $this->selected_promo_ids[] = $rule->id;
+                $this->validateStacking(); // Ensure we don't break stacking rules
+            }
 
             return array_merge($rule->toArray(), [
                 'is_eligible' => $is_eligible
@@ -154,27 +214,48 @@ class BookingForm extends Component
         }
     }
 
-    public function applyPromoCode()
+    public function checkCode()
     {
-        $this->loadAvailablePromos();
+        if (empty($this->promo_code_input)) {
+            $this->addError('promo_code_input', 'Silakan masukkan kode terlebih dahulu.');
+            return;
+        }
 
-        // Find if any code-matched promo was found
+        $input = strtoupper(trim($this->promo_code_input));
         $found = false;
+        $message = '';
+
+        // 1. Check if it's a Referral Code
+        $affiliate = \App\Models\AffiliatorProfile::where('referral_code', $input)
+            ->where('status', 'approved')
+            ->first();
+
+        if ($affiliate) {
+            $this->referral_code = $input;
+            $this->loadAvailablePromos();
+            $this->calculatePrice();
+            $found = true;
+            $message = 'Kode Referral Aktif!';
+        }
+
+        // 2. Check if it's a Promo Code (Voucher)
+        $this->loadAvailablePromos();
         foreach ($this->available_promos as $p) {
-            if ($p['is_hidden'] && strtoupper(trim($this->promo_code_input)) === strtoupper(trim($p['kode_promo']))) {
+            if (isset($p['kode_promo']) && strtoupper(trim($p['kode_promo'])) === $input) {
                 if ($p['is_eligible'] && !in_array($p['id'], $this->selected_promo_ids)) {
                     $this->selected_promo_ids[] = $p['id'];
+                    $this->validateStacking();
+                    $this->calculatePrice();
                     $found = true;
+                    $message = 'Kode Promo Berhasil!';
                 }
             }
         }
 
         if ($found) {
-            $this->validateStacking();
-            $this->calculatePrice();
-            session()->flash('promo_message', 'Kode promo berhasil digunakan!');
+            session()->flash('promo_message', $message);
         } else {
-            $this->addError('promo_code_input', 'Kode promo tidak valid atau syarat durasi belum terpenuhi.');
+            $this->addError('promo_code_input', 'Kode tidak ditemukan atau syarat belum terpenuhi.');
         }
     }
 
@@ -303,7 +384,9 @@ class BookingForm extends Component
             'jam_bonus' => $this->jam_bonus,
             'kode_unik_pembayaran' => $this->kode_unik,
             'grand_total' => $this->grand_total,
-            'status' => 'pending'
+            'status' => 'pending',
+            'affiliate_code' => $this->referral_code ?: null,
+            'affiliator_id' => $this->referral_code ? (\App\Models\AffiliatorProfile::where('referral_code', strtoupper($this->referral_code))->first()->user_id ?? null) : null,
         ]);
 
         // Record ownership in session

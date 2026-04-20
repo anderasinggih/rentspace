@@ -1,4 +1,4 @@
-<div class="py-12 px-4 sm:px-6 lg:px-8 bg-muted/20 min-h-[calc(100vh-4rem)]">
+<div class="py-1 px-4 sm:px-6 lg:px-8 bg-muted/20 min-h-[calc(100vh-4rem)]">
 
     <div class="max-w-3xl mx-auto">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -116,22 +116,28 @@
                     <h2 class="text-xl font-semibold mb-4">3. Pilih Promo <span
                             class="text-sm font-normal text-muted-foreground">(Opsional)</span></h2>
                     
-                    <!-- Promo Code Input -->
+                    <!-- Promo & Referral Input -->
                     <div class="mb-6">
-                        <label class="text-sm font-medium leading-none mb-2 block">Punya kode promo? Masukkan di sini:</label>
+                        <label class="text-sm font-medium leading-none mb-2 block text-foreground">Punya Kode Promo atau Referral? <span class="text-xs text-muted-foreground">(Opsional)</span></label>
                         <div class="flex gap-2">
                             <input type="text" wire:model="promo_code_input" 
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring uppercase"
-                                placeholder="CONTOH: PROMOHEBOH">
-                            <button type="button" wire:click="applyPromoCode" 
-                                class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 text-sm font-medium shadow-sm transition-colors shrink-0">
-                                <span wire:loading.remove wire:target="applyPromoCode">Gunakan</span>
-                                <span wire:loading wire:target="applyPromoCode">...</span>
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring uppercase text-sm font-bold placeholder:font-normal placeholder:text-[11px] placeholder:tracking-normal"
+                                placeholder="MISAL: PROMO10 atau AN565">
+                            <button type="button" wire:click="checkCode" 
+                                class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 text-sm font-bold shadow-sm transition-colors shrink-0">
+                                <span wire:loading.remove wire:target="checkCode">Apply</span>
+                                <span wire:loading wire:target="checkCode">...</span>
                             </button>
                         </div>
                         @error('promo_code_input') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
                         @if (session()->has('promo_message'))
                             <span class="text-xs text-green-600 font-bold block mt-1">{{ session('promo_message') }}</span>
+                        @endif
+                        @if($referral_code)
+                            <div class="mt-2 flex items-center gap-1 text-[10px] uppercase font-bold text-sky-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Referral: {{ $referral_code }} Aktif
+                            </div>
                         @endif
                     </div>
 
@@ -212,6 +218,7 @@
                     @endif
                 </div>
                 @endif
+
 
 
                 <!-- 4. Rincian Harga -->

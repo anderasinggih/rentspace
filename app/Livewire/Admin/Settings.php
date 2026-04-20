@@ -23,6 +23,7 @@ class Settings extends Component
     public $payment_methods = ['qris' => true, 'cash' => true, 'transfer' => false];
     public $about_faq_items = [];
     public $social_ig_url = '', $social_ig_name = '', $social_tiktok_url = '', $social_tiktok_name = '';
+    public $min_payout = 50000;
 
     public $importFile;
 
@@ -48,6 +49,7 @@ class Settings extends Component
 
         $this->qris = \App\Models\Setting::getVal('qris', 'default.jpg');
         $this->hero = \App\Models\Setting::getVal('hero', 'default.jpg');
+        $this->min_payout = \App\Models\Setting::getVal('min_payout', 50000);
 
         $this->social_ig_url = \App\Models\Setting::getVal('social_ig_url', '');
         $this->social_ig_name = \App\Models\Setting::getVal('social_ig_name', '');
@@ -114,6 +116,7 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa'], ['value' => $this->admin_wa]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_address'], ['value' => $this->admin_address]);
         \App\Models\Setting::updateOrCreate(['key' => 'terms_conditions'], ['value' => $this->terms_conditions]);
+        \App\Models\Setting::updateOrCreate(['key' => 'min_payout'], ['value' => $this->min_payout]);
         \App\Models\Setting::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
         \App\Models\Setting::updateOrCreate(['key' => 'social_ig_url'], ['value' => $this->social_ig_url]);
         \App\Models\Setting::updateOrCreate(['key' => 'social_ig_name'], ['value' => $this->social_ig_name]);

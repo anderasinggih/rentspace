@@ -19,6 +19,32 @@ class DatabaseSeeder extends Seeder
             [
                 'name'     => 'Administrator',
                 'password' => Hash::make('password'),
+                'role'     => 'admin',
+            ]
+        );
+
+        // Affiliate user
+        $affiliate = User::updateOrCreate(
+            ['email' => 'mas@affiliate.com'],
+            [
+                'name'     => 'Mas Affiliate',
+                'password' => Hash::make('password'),
+                'role'     => 'affiliator',
+            ]
+        );
+
+        $affiliateProfile = \App\Models\AffiliatorProfile::updateOrCreate(
+            ['user_id' => $affiliate->id],
+            [
+                'nik' => '3312012345670001',
+                'no_hp' => '081223344556',
+                'alamat' => 'Sokanegara, Purwokerto Timur',
+                'bank_name' => 'BCA',
+                'bank_account_number' => '1234567890',
+                'bank_account_name' => 'Mas Affiliate',
+                'commission_rate' => 10,
+                'status' => 'approved',
+                'referral_code' => \App\Models\AffiliatorProfile::generateCode('Mas Affiliate'),
             ]
         );
 
@@ -73,7 +99,7 @@ class DatabaseSeeder extends Seeder
                 $status = ($j >= $count - 2 && $from === '2026-04-01') ? 'pending'
                         : ($j >= $count - 3 && $from === '2026-04-01' ? 'paid' : 'completed');
 
-                Rental::create([
+                $rental = Rental::create([
                     'unit_id'              => $unitId,
                     'nik'                  => '3312' . str_pad(rand(1, 999999999999), 12, '0', STR_PAD_LEFT),
                     'nama'                 => $names[array_rand($names)],
@@ -89,7 +115,19 @@ class DatabaseSeeder extends Seeder
                     'metode_pembayaran'    => $method,
                     'created_at'           => $startTime,
                     'updated_at'           => $startTime,
+                    'affiliator_id'        => ($i % 5 === 0) ? $affiliate->id : null, // Every 5th rental is referred
+                    'affiliate_code'       => ($i % 5 === 0) ? $affiliateProfile->referral_code : null,
                 ]);
+
+                if ($rental->affiliator_id && $status === 'completed') {
+                    \App\Models\AffiliateCommission::create([
+                        'affiliator_id' => $rental->affiliator_id,
+                        'rental_id' => $rental->id,
+                        'amount' => $rental->subtotal_harga * 0.1,
+                        'status' => 'earned',
+                        'created_at' => $startTime,
+                    ]);
+                }
 
                 $i++;
             }

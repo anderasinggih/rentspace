@@ -59,6 +59,7 @@ class Transactions extends Component
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'pending') {
             $rental->update(['status' => 'paid']);
+            $this->calculateAffiliateCommission($rental);
         }
     }
 
@@ -127,6 +128,7 @@ class Transactions extends Component
                     'denda_payment_method' => ($this->dendaAmount > 0 || $this->dendaKerusakanAmount > 0) ? $this->dendaMethod : null,
                     'completed_at' => now(),
                 ]);
+                $this->calculateAffiliateCommission($rental);
             }
         }
 
@@ -145,6 +147,38 @@ class Transactions extends Component
                 'denda_payment_method' => null,
                 'completed_at' => now(),
             ]);
+            $this->calculateAffiliateCommission($rental);
+        }
+    }
+
+    private function calculateAffiliateCommission($rental)
+    {
+        if ($rental->affiliator_id) {
+            // Prevent double crediting
+            $exists = \App\Models\AffiliateCommission::where('rental_id', $rental->id)->exists();
+            if ($exists) {
+                return;
+            }
+
+            $profile = \App\Models\AffiliatorProfile::where('user_id', $rental->affiliator_id)->first();
+            if ($profile && $profile->status === 'approved') {
+                // Commission is usually based on subtotal_harga (the rental price excluding Unique Code/Denda)
+                $amount = $rental->subtotal_harga * ($profile->commission_rate / 100);
+                
+                \App\Models\AffiliateCommission::create([
+                    'affiliator_id' => $rental->affiliator_id,
+                    'rental_id' => $rental->id,
+                    'amount' => $amount,
+                    'status' => 'earned'
+                ]);
+
+                // Absolute Recalculation (The Ultimate Fix)
+                $totalEarned = \App\Models\AffiliateCommission::where('affiliator_id', $rental->affiliator_id)->sum('amount');
+                $totalWithdrawn = \App\Models\AffiliatePayout::where('affiliator_id', $rental->affiliator_id)->sum('amount');
+                
+                $profile->balance = $totalEarned - $totalWithdrawn;
+                $profile->save();
+            }
         }
     }
 
@@ -158,7 +192,7 @@ class Transactions extends Component
     public function openInspect($id)
     {
         $this->inspectTrxId = $id;
-        $this->inspectTrx = Rental::with('units')->find($id);
+        $this->inspectTrx = Rental::with(['units', 'affiliator.affiliateProfile', 'commissions'])->find($id);
     }
 
     public function closeInspect()
@@ -282,6 +316,10 @@ class Transactions extends Component
                 'Jam Bonus',
                 'Kode Unik',
                 'Grand Total', 
+                'Ref Code',
+                'Affiliator',
+                'Komisi Affiliator',
+                'Profit (Net)',
                 'Metode Bayar Trx', 
                 'Denda Telat', 
                 'Denda Kerusakan', 
@@ -293,6 +331,9 @@ class Transactions extends Component
             ]);
 
             foreach ($transactions as $trx) {
+                $commission = $trx->commissions->sum('amount');
+                $netProfit = $trx->grand_total - $commission;
+                
                 fputcsv($file, [
                     'INV-' . str_pad($trx->id, 5, '0', STR_PAD_LEFT),
                     $trx->nik,
@@ -309,6 +350,10 @@ class Transactions extends Component
                     $trx->jam_bonus,
                     $trx->kode_unik_pembayaran,
                     $trx->grand_total,
+                    $trx->affiliate_code ?? '-',
+                    $trx->affiliator->name ?? '-',
+                    $commission,
+                    $netProfit,
                     $trx->metode_pembayaran,
                     $trx->denda,
                     $trx->denda_kerusakan,
@@ -327,7 +372,7 @@ class Transactions extends Component
 
     public function render()
     {
-        $query = Rental::with('units')
+        $query = Rental::with(['units', 'affiliator', 'commissions'])
             ->when($this->search, function ($q) {
             $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
             ->orWhere('id', 'like', '%' . $this->search . '%')

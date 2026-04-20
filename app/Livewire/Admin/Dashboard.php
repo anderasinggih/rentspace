@@ -55,15 +55,20 @@ class Dashboard extends Component
             ->orderBy('date_val')
             ->get()
             ->keyBy('date_val');
+
+        $commissionDataObj = \App\Models\AffiliateCommission::selectRaw('DATE(created_at) as date_val, SUM(amount) as total_commission')
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('date_val')
+            ->get()
+            ->keyBy('date_val');
             
         $chartCategories = [];
         $revenueSeries = [];
+        $netRevenueSeries = [];
         $trxSeries = [];
 
-        // Determine step size if range is huge (avoiding 1000s of columns)
         $diffDays = $start->diffInDays($end);
         if ($diffDays > 90) {
-            // Group by Month if > 90 days
             $chartDataObj = Rental::selectRaw('strftime("%Y-%m", created_at) as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
                 ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
                 ->whereBetween('created_at', [$start, $end])
@@ -72,27 +77,43 @@ class Dashboard extends Component
                 ->get()
                 ->keyBy('val');
 
+            $commissionDataObj = \App\Models\AffiliateCommission::selectRaw('strftime("%Y-%m", created_at) as val, SUM(amount) as total_commission')
+                ->whereBetween('created_at', [$start, $end])
+                ->groupBy('val')
+                ->get()
+                ->keyBy('val');
+
             $cursor = $start->copy()->startOfMonth();
             while ($cursor <= $end->copy()->endOfMonth()) {
                 $format = $cursor->format('Y-m');
                 $chartCategories[] = $cursor->format('M Y');
-                $revenueSeries[] = isset($chartDataObj[$format]) ? (int) $chartDataObj[$format]->revenue : 0;
+                $rev = isset($chartDataObj[$format]) ? (int) $chartDataObj[$format]->revenue : 0;
+                $comm = isset($commissionDataObj[$format]) ? (int) $commissionDataObj[$format]->total_commission : 0;
+                $revenueSeries[] = $rev;
+                $netRevenueSeries[] = $rev - $comm;
                 $trxSeries[] = isset($chartDataObj[$format]) ? (int) $chartDataObj[$format]->trx_count : 0;
                 $cursor->addMonth();
             }
         } else {
-            // Generate Daily
             $cursor = $start->copy();
             for ($i = 0; $i <= $diffDays; $i++) {
                 $formattedSQLDate = $cursor->format('Y-m-d');
                 $chartCategories[] = $cursor->format('d M');
-                $revenueSeries[] = isset($chartDataObj[$formattedSQLDate]) ? (int) $chartDataObj[$formattedSQLDate]->revenue : 0;
+                $rev = isset($chartDataObj[$formattedSQLDate]) ? (int) $chartDataObj[$formattedSQLDate]->revenue : 0;
+                $comm = isset($commissionDataObj[$formattedSQLDate]) ? (int) $commissionDataObj[$formattedSQLDate]->total_commission : 0;
+                $revenueSeries[] = $rev;
+                $netRevenueSeries[] = $rev - $comm;
                 $trxSeries[] = isset($chartDataObj[$formattedSQLDate]) ? (int) $chartDataObj[$formattedSQLDate]->trx_count : 0;
                 $cursor->addDay();
             }
         }
         
-        return ['categories' => $chartCategories, 'revenue' => $revenueSeries, 'transactions' => $trxSeries];
+        return [
+            'categories' => $chartCategories, 
+            'revenue' => $revenueSeries, 
+            'netRevenue' => $netRevenueSeries,
+            'transactions' => $trxSeries
+        ];
     }
 
     public function render()
@@ -115,6 +136,11 @@ class Dashboard extends Component
         $periodRevenue = Rental::where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
                             ->whereBetween('created_at', [$start, $end])->sum('grand_total');
         $periodDiscounts = Rental::whereBetween('created_at', [$start, $end])->sum('potongan_diskon');
+        
+        // Affiliate Metrics
+        $periodCommissions = \App\Models\AffiliateCommission::whereBetween('created_at', [$start, $end])->sum('amount');
+        $periodNetRevenue = $periodRevenue - $periodCommissions;
+
         $todayRevenue = Rental::where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
                             ->whereDate('created_at', Carbon::today())->sum('grand_total');
         $todayRentals = Rental::whereDate('created_at', Carbon::today())->count();
@@ -123,10 +149,13 @@ class Dashboard extends Component
         $prevRentals = Rental::whereBetween('created_at', [$prevStart, $prevEnd])->count();
         $prevRevenue = Rental::where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
                             ->whereBetween('created_at', [$prevStart, $prevEnd])->sum('grand_total');
+        $prevCommissions = \App\Models\AffiliateCommission::whereBetween('created_at', [$prevStart, $prevEnd])->sum('amount');
+        $prevNetRevenue = $prevRevenue - $prevCommissions;
 
         $gainRentals = $prevRentals > 0 ? round((($periodRentals - $prevRentals) / $prevRentals) * 100, 1) : null;
         $gainRevenue = $prevRevenue > 0 ? round((($periodRevenue - $prevRevenue) / $prevRevenue) * 100, 1) : null;
         $gainAbsRevenue = $periodRevenue - $prevRevenue;
+        $gainNetRevenue = $prevNetRevenue > 0 ? round((($periodNetRevenue - $prevNetRevenue) / $prevNetRevenue) * 100, 1) : null;
 
         // Leaderboards scoped by date to reflect trends
         $topTenants = Rental::selectRaw('nik, nama, no_wa, COUNT(id) as total_rentals, SUM(grand_total) as total_spent')
@@ -134,6 +163,15 @@ class Dashboard extends Component
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('nik', 'nama', 'no_wa')
             ->orderByDesc('total_spent')
+            ->limit(5)
+            ->get();
+
+        // Affiliate Leaderboard
+        $topAffiliates = \App\Models\AffiliateCommission::selectRaw('affiliator_id, SUM(amount) as total_commission, COUNT(rental_id) as total_trx')
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('affiliator_id')
+            ->with('affiliator')
+            ->orderByDesc('total_commission')
             ->limit(5)
             ->get();
 
@@ -176,6 +214,7 @@ class Dashboard extends Component
         $chartInfo = $this->getChartData();
         $chartCategories = $chartInfo['categories'];
         $chartRevenue = $chartInfo['revenue'];
+        $chartNetRevenue = $chartInfo['netRevenue'];
         $chartTransactions = $chartInfo['transactions'];
 
         $activeRentals = Rental::with(['units' => function($q) { $q->withTrashed(); }])
@@ -187,9 +226,10 @@ class Dashboard extends Component
         return view('livewire.admin.dashboard', compact(
             'totalUnits', 'activeUnits', 'pendingRentals',
             'periodRentals', 'periodRevenue', 'periodDiscounts', 'todayRevenue', 'todayRentals',
-            'gainRentals', 'gainRevenue', 'gainAbsRevenue',
-            'activeRentals', 'topTenants', 'topUnits',
-            'chartCategories', 'chartRevenue', 'chartTransactions',
+            'periodCommissions', 'periodNetRevenue',
+            'gainRentals', 'gainRevenue', 'gainAbsRevenue', 'gainNetRevenue',
+            'activeRentals', 'topTenants', 'topUnits', 'topAffiliates',
+            'chartCategories', 'chartRevenue', 'chartNetRevenue', 'chartTransactions',
             'paymentLabels', 'paymentCounts'
         ))->layout('layouts.admin');
     }

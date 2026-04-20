@@ -250,6 +250,12 @@
                             menyelesaikan transaksi.</p>
                     </div>
                     <div>
+                        <label class="block text-sm font-medium mb-1">Minimal Penarikan Komisi Affiliate (Rp)</label>
+                        <input type="number" wire:model="min_payout"
+                            class="h-9 w-48 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        <p class="text-xs text-muted-foreground mt-1">Jumlah minimum saldo komisi yang harus dimiliki mitra sebelum mereka dapat mengajukan penarikan dana.</p>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium mb-1">Nomor WhatsApp Pelayanan Admin (format
                             628...)</label>
                         <input type="text" wire:model="admin_wa"

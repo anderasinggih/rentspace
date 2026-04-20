@@ -84,6 +84,7 @@
                                         <span class="italic opacity-50">—</span>
                                         @endif
                                     </td>
+
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
                                         <div class="flex flex-col items-start gap-1">
                                             @if($isDeleted)
@@ -102,6 +103,12 @@
                                                 @endif
                                                 @if($rule->can_stack)
                                                 <x-ui.badge variant="sky" class="text-[9px] uppercase px-1">Stackable</x-ui.badge>
+                                                @endif
+                                                @if($rule->is_affiliate_only)
+                                                <x-ui.badge variant="zinc" class="text-[9px] uppercase px-1 border-primary/30 text-primary">Affiliate Only</x-ui.badge>
+                                                @endif
+                                                @if($rule->requires_referral)
+                                                <x-ui.badge variant="zinc" class="text-[9px] uppercase px-1 border-sky-300 text-sky-600">Ref Required</x-ui.badge>
                                                 @endif
                                             </div>
                                         </div>
@@ -151,18 +158,18 @@
                     <h2 class="text-lg font-semibold">{{ $isEditing ? 'Edit Rule' : 'Tambah Rule / Promo Baru' }}</h2>
                     <form wire:submit="save" class="mt-6 space-y-4">
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-sm font-medium leading-none">Nama Promo / Rule</label>
+                            <div class="col-span-1">
+                                <label class="text-sm font-medium leading-none">Nama Promo</label>
                                 <input type="text" wire:model="nama_promo"
                                     class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                    placeholder="Diskon Lebaran 35%">
+                                    placeholder="Diskon Lebaran">
                                 @error('nama_promo') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
-                            <div>
-                                <label class="text-sm font-medium leading-none">Kode Promo (Opsional)</label>
+                            <div class="col-span-1">
+                                <label class="text-sm font-medium leading-none">Kode Promo (Voucher)</label>
                                 <input type="text" wire:model="kode_promo"
                                     class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                    placeholder="LEBARAN2026">
+                                    placeholder="COBACOBA">
                                 @error('kode_promo') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -223,20 +230,33 @@
                             </div>
                         </div>
 
+                        <div class="grid grid-cols-2 gap-4 py-3 border-y border-border mt-2">
+                            <div class="flex items-center space-x-2" wire:key="aff-only-toggle">
+                                <input type="checkbox" id="is_affiliate_only_rule" wire:model="is_affiliate_only"
+                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer">
+                                <label for="is_affiliate_only_rule" class="text-[11px] font-medium text-primary cursor-pointer leading-none">Khusus Affiliator</label>
+                            </div>
+                            <div class="flex items-center space-x-2" wire:key="req-ref-toggle">
+                                <input type="checkbox" id="requires_referral_rule" wire:model="requires_referral"
+                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer">
+                                <label for="requires_referral_rule" class="text-[11px] font-medium text-sky-600 cursor-pointer leading-none">Wajib Kode Referral</label>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-3 gap-2 mt-2">
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" id="is_active_rule" wire:model="is_active"
-                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                            <div class="flex items-center space-x-2" wire:key="active-toggle">
+                                <input type="checkbox" id="is_active_rule" wire:model.live="is_active"
+                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer">
                                 <label for="is_active_rule" class="text-xs font-medium leading-none cursor-pointer">Rule Aktif</label>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" id="is_hidden_rule" wire:model="is_hidden"
-                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                            <div class="flex items-center space-x-2" wire:key="hidden-toggle">
+                                <input type="checkbox" id="is_hidden_rule" wire:model.live="is_hidden"
+                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer">
                                 <label for="is_hidden_rule" class="text-xs font-medium leading-none cursor-pointer">Sembunyikan</label>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" id="can_stack_rule" wire:model="can_stack"
-                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                            <div class="flex items-center space-x-2" wire:key="stack-toggle">
+                                <input type="checkbox" id="can_stack_rule" wire:model.live="can_stack"
+                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer">
                                 <label for="can_stack_rule" class="text-xs font-medium leading-none cursor-pointer">Stackable</label>
                             </div>
                         </div>
