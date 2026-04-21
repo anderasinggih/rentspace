@@ -485,7 +485,8 @@ class BookingForm extends Component
             $this->nama = $lastRental->nama;
             $this->no_wa = $lastRental->no_wa;
             $this->alamat = $lastRental->alamat;
-            $this->nikFoundMessage = 'Data ditemukan! Form otomatis terisi.';
+            $firstName = explode(' ', $this->nama)[0];
+            $this->nikFoundMessage = "Halo {$firstName}, data Anda berhasil ditemukan!";
             $this->nikFoundType = 'success';
             $this->isNikVerified = true;
         } else {
@@ -497,7 +498,15 @@ class BookingForm extends Component
 
     public function render()
     {
-        $unitPrices = \App\Models\Unit::all()->mapWithKeys(fn($u) => [$u->id => ['day' => (int)$u->harga_per_hari, 'hour' => (int)$u->harga_per_jam]]);
+        $unitPrices = \App\Models\Unit::all()->mapWithKeys(fn($u) => [
+            $u->id => [
+                'day' => (int)$u->harga_per_hari, 
+                'hour' => (int)$u->harga_per_jam,
+                'seri' => $u->seri,
+                'warna' => $u->warna,
+                'memori' => $u->memori
+            ]
+        ]);
 
         return view('livewire.front.booking-form', [
             'unitPricesJson' => $unitPrices->toJson()

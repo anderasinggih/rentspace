@@ -304,13 +304,30 @@
 
                                 <!-- Action Buttons -->
                                 @if($order->status == 'pending')
-                                    <a href="{{ route('public.payment', $order->booking_code) }}" wire:navigate
-                                        class=" mt-4 mb-4 flex items-center justify-center gap-2 w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
-                                        </svg>
-                                        Lanjutkan Pembayaran
-                                    </a>
+                                    <div class="mt-4 mb-4 space-y-2">
+                                        @if(session()->has('success_cancel'))
+                                            <div class="bg-emerald-500/10 text-emerald-600 text-[10px] p-2 rounded text-center">
+                                                {{ session('success_cancel') }}
+                                            </div>
+                                        @endif
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button wire:click="cancelOrder('{{ $order->booking_code }}')" 
+                                                wire:confirm="Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan."
+                                                class="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-red-600 text-white text-[10px] sm:text-xs font-bold hover:bg-red-700 transition-all shadow-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                                                </svg>
+                                                Batalkan
+                                            </button>
+                                            <a href="{{ route('public.payment', $order->booking_code) }}" wire:navigate
+                                                class="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold hover:bg-primary/90 transition-all shadow-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
+                                                </svg>
+                                                Bayar
+                                            </a>
+                                        </div>
+                                    </div>
                                 @endif
                             </div>
                         </div>

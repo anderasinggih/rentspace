@@ -74,6 +74,16 @@ class CheckOrder extends Component
         $this->reset(['nik', 'no_wa', 'orders']);
     }
 
+    public function cancelOrder($booking_code)
+    {
+        $order = Rental::where('booking_code', $booking_code)->first();
+        if ($order && $order->status === 'pending') {
+            $order->update(['status' => 'cancelled']);
+            $this->search();
+            session()->flash('success_cancel', 'Pesanan berhasil dibatalkan.');
+        }
+    }
+
     public function render()
     {
         return view('livewire.front.check-order');

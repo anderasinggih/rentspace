@@ -20,7 +20,7 @@ use App\Livewire\Affiliate\Dashboard as AffiliateDashboard;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('public.home');
 
 // Auth Routes
 Route::get('/login', Login::class)->name('login');

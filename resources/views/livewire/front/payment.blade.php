@@ -2,6 +2,20 @@
 
     <div class="max-w-2xl mx-auto">
         <div class="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-8 text-center">
+            
+            <!-- Progress Bar -->
+            <div class="mb-8 border-b border-border pb-4 text-left">
+                <div class="flex items-center justify-between text-[10px] sm:text-xs font-medium mb-2 px-1">
+                    <span class="text-primary font-bold">Pilih Unit</span>
+                    <span class="text-primary font-bold">Data & Promo</span>
+                    <span class="text-primary font-bold">Konfirmasi</span>
+                    <span class="text-primary font-bold">Pembayaran</span>
+                </div>
+                <div class="h-2 bg-muted rounded-full overflow-hidden">
+                    <div class="h-full bg-primary transition-all duration-500 rounded-full w-full"></div>
+                </div>
+            </div>
+
             <h1 class="text-xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-1 sm:mb-4">Selesaikan
                 Pembayaran</h1>
             <p class="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-8">Tagihan untuk unit
@@ -129,6 +143,16 @@
                     {{ $metode_pembayaran === 'qris' ? 'Saya Sudah Transfer QRIS' : ($metode_pembayaran === 'transfer' ? 'Konfirmasi Transfer Bank' : 'Selesaikan Pesanan Tunai') }}
                 </span>
             </button>
+
+            <!-- Cancellation Option -->
+            <div class="mt-8 pt-6 border-t border-border">
+                <p class="text-[10px] text-muted-foreground mb-2">Ingin membatalkan pesanan ini?</p>
+                <button wire:click="cancelBooking" 
+                    wire:confirm="Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan."
+                    class="mt-2 w-full inline-flex items-center justify-center rounded-md bg-red-600 text-white shadow hover:bg-red-700 h-10 sm:h-12 px-8 font-bold text-base sm:text-lg transition-opacity">
+                    Batalkan Pesanan
+                </button>
+            </div>
         </div>
     </div>
 </div>

@@ -3,13 +3,25 @@
 
         <!-- Header -->
         <div class="p-5 text-center border-b border-border/50 bg-muted/20">
-            <div
-                class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 mb-3">
-                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-            </div>
-            <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Berhasil!</h1>
+            @if($rental->status === 'cancelled')
+                <div
+                    class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 mb-3">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round" />
+                        <line x1="15" y1="9" x2="9" y2="15" stroke-linecap="round" stroke-linejoin="round" />
+                        <line x1="9" y1="9" x2="15" y2="15" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Dibatalkan</h1>
+            @else
+                <div
+                    class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 mb-3">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Berhasil!</h1>
+            @endif
             <p class="text-xs text-muted-foreground mt-1">ID Pesanan: #{{ str_pad($rental->id, 5, '0', STR_PAD_LEFT) }}
                 &bull; {{ $rental->nama }}</p>
             <p class="text-[10px] text-muted-foreground mt-1 opacity-70">
@@ -74,24 +86,32 @@
             </div>
 
             @if($isOwner)
-                <!-- Warning -->
-                <div
-                    class="flex items-start gap-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 p-3 rounded-lg text-xs">
-                    <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8v4m0 4h.01" />
-                    </svg>
-                    <p>Wajib <span class="font-bold underline">SCREENSHOT</span> halaman ini sebagai bukti pesanan Anda.</p>
-                </div>
+                @if($rental->status !== 'cancelled')
+                    <!-- Warning -->
+                    <div
+                        class="flex items-start gap-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 p-3 rounded-lg text-xs">
+                        <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 8v4m0 4h.01" />
+                        </svg>
+                        <p>Wajib <span class="font-bold underline">SCREENSHOT</span> halaman ini sebagai bukti pesanan Anda.</p>
+                    </div>
+                @endif
 
                 <!-- Actions -->
                 <div class="space-y-2 pt-2">
-                    <a href="{{ $waUrl }}" target="_blank"
-                        class="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold transition-all shadow-sm group mb-3">
-                        <span>Konfirmasi Pesanan</span>
-
-                    </a>
+                    @if($rental->status === 'cancelled')
+                        <a href="{{ route('public.booking') }}" wire:navigate
+                            class="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold transition-all shadow-sm group mb-3">
+                            <span>Sewa Unit Lain</span>
+                        </a>
+                    @else
+                        <a href="{{ $waUrl }}" target="_blank"
+                            class="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold transition-all shadow-sm group mb-3">
+                            <span>Konfirmasi Pesanan</span>
+                        </a>
+                    @endif
 
                     <div class="grid grid-cols-2 gap-2">
                         <a href="{{ route('public.check-order', ['nik' => $rental->nik, 'no_wa' => $rental->no_wa]) }}"

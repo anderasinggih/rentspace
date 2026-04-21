@@ -26,6 +26,16 @@ class Payment extends Component
         return redirect()->route('public.success', $this->rental->booking_code);
     }
 
+    public function cancelBooking()
+    {
+        $this->rental->update([
+            'status' => 'cancelled'
+        ]);
+
+        session()->flash('message', 'Pesanan Anda telah dibatalkan.');
+        return redirect()->route('public.success', $this->rental->booking_code);
+    }
+
     public function render()
     {
         return view('livewire.front.payment')->layout('layouts.app');
