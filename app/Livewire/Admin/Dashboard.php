@@ -15,6 +15,10 @@ class Dashboard extends Component
 
     public function mount()
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403);
+        }
+
         $this->startDate = Carbon::now()->subDays(29)->format('Y-m-d');
         $this->endDate = Carbon::now()->format('Y-m-d');
     }

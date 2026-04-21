@@ -31,6 +31,14 @@ class BookingForm extends Component
     public $jam_bonus = 0;  // extra hours added by jam_gratis promo
     public $referral_code = '';
     public $promoManuallyChanged = false;
+    public $unit_search = '';
+    public $selected_category_id = null;
+    public $schedule_available_unit_ids = [];
+    public $categories_list = [];
+    
+    // Internal cache for the request lifecycle
+    protected $all_pricing_rules = null;
+    protected $fetched_selected_units = null;
 
     public function mount($unit_id = null)
     {
@@ -42,12 +50,15 @@ class BookingForm extends Component
 
         // 2. Handle auto-apply of referral from Cookie or Session
         $ref = request()->cookie('affiliate_ref') ?? session('affiliate_ref');
-        
+
         if ($ref) {
             $this->referral_code = $ref;
             $this->loadAvailablePromos();
             $this->calculatePrice();
         }
+
+        // 3. Pre-load categories
+        $this->categories_list = \App\Models\Category::all();
     }
 
     public function updated($propertyName)
@@ -66,11 +77,19 @@ class BookingForm extends Component
             $this->alamat = strtoupper($this->alamat);
         }
 
-        if (in_array($propertyName, ['waktu_mulai', 'waktu_selesai', 'selected_unit_ids'])) {
+        if (in_array($propertyName, ['waktu_mulai', 'waktu_selesai'])) {
             $this->checkAvailability();
             $this->loadAvailablePromos();
         }
+
+        if ($propertyName === 'selected_unit_ids') {
+            $this->loadAvailablePromos();
+            $this->calculatePrice();
+        }
         if ($propertyName === 'selected_promo_ids') {
+            if (!is_array($this->selected_promo_ids)) {
+                $this->selected_promo_ids = [];
+            }
             $this->promoManuallyChanged = true;
             $this->validateStacking();
             $this->calculatePrice();
@@ -84,6 +103,9 @@ class BookingForm extends Component
         if ($propertyName === 'referral_code') {
             $this->loadAvailablePromos();
             $this->calculatePrice();
+        }
+        if (in_array($propertyName, ['selected_category_id', 'unit_search'])) {
+            $this->checkAvailability();
         }
     }
 
@@ -101,7 +123,8 @@ class BookingForm extends Component
             return;
         }
 
-        $this->available_units = Unit::query()->with('category')->where('is_active', true)
+        // 1. Get ALL units available for this schedule (Regardless of category/search)
+        $this->schedule_available_unit_ids = Unit::query()->where('is_active', true)
             ->whereDoesntHave('rentals', function ($query) use ($start, $end) {
                 $query->whereIn('status', ['pending', 'paid'])
                     ->where(function ($q) use ($start, $end) {
@@ -112,10 +135,26 @@ class BookingForm extends Component
                                     ->where('waktu_selesai', '>=', $end);
                             });
                     });
-            })->get();
+            })->pluck('id')->toArray();
 
-        // Remove units that are no longer available
-        $this->selected_unit_ids = array_intersect($this->selected_unit_ids, $this->available_units->pluck('id')->toArray());
+        // 2. Apply UI Filters (Category & Search) to the available units displayed to the user
+        $this->available_units = Unit::query()->with('category')
+            ->whereIn('id', $this->schedule_available_unit_ids)
+            ->when($this->selected_category_id, function ($q) {
+                $q->where('category_id', $this->selected_category_id);
+            })
+            ->when($this->unit_search, function ($q) {
+                $q->where(function ($qq) {
+                    $qq->where('seri', 'like', '%' . $this->unit_search . '%')
+                        ->orWhere('warna', 'like', '%' . $this->unit_search . '%')
+                        ->orWhere('memori', 'like', '%' . $this->unit_search . '%');
+                });
+            })
+            ->get();
+
+        // 3. Keep selected_unit_ids only if they are still available for the schedule 
+        // (This allows persistent selection across category switches)
+        $this->selected_unit_ids = array_intersect($this->selected_unit_ids, $this->schedule_available_unit_ids);
 
         $this->calculatePrice();
     }
@@ -133,14 +172,19 @@ class BookingForm extends Component
         $days = floor($diffInHours / 24);
 
         $now = Carbon::now();
-        $rules = PricingRule::where('is_active', true)
-            ->where(function ($q) use ($now) {
-                $q->whereNull('start_date')->orWhere('start_date', '<=', $now->format('Y-m-d'));
-            })
-            ->where(function ($q) use ($now) {
-                $q->whereNull('end_date')->orWhere('end_date', '>=', $now->format('Y-m-d'));
-            })
-            ->get();
+        
+        if ($this->all_pricing_rules === null) {
+            $this->all_pricing_rules = PricingRule::where('is_active', true)
+                ->where(function ($q) use ($now) {
+                    $q->whereNull('start_date')->orWhere('start_date', '<=', $now->format('Y-m-d'));
+                })
+                ->where(function ($q) use ($now) {
+                    $q->whereNull('end_date')->orWhere('end_date', '>=', $now->format('Y-m-d'));
+                })
+                ->get();
+        }
+
+        $rules = $this->all_pricing_rules;
 
         $this->available_promos = $rules->filter(function ($rule) {
             // Check if it's an affiliate-only promo
@@ -199,7 +243,12 @@ class BookingForm extends Component
             return;
 
         $lastSelectedId = end($this->selected_promo_ids);
-        $lastSelectedRule = PricingRule::find($lastSelectedId);
+
+        if ($this->all_pricing_rules === null) {
+            $this->loadAvailablePromos();
+        }
+        
+        $lastSelectedRule = $this->all_pricing_rules->firstWhere('id', $lastSelectedId);
 
         if (!$lastSelectedRule)
             return;
@@ -209,8 +258,11 @@ class BookingForm extends Component
             $this->selected_promo_ids = [$lastSelectedId];
         } else {
             // If the newly selected one IS stackable, remove any existing non-stackable ones
-            $rules = PricingRule::whereIn('id', $this->selected_promo_ids)->get();
-            $this->selected_promo_ids = $rules->filter(fn($r) => $r->can_stack)->pluck('id')->toArray();
+            $this->selected_promo_ids = collect($this->selected_promo_ids)
+                ->filter(function($id) {
+                    $r = $this->all_pricing_rules->firstWhere('id', $id);
+                    return $r && $r->can_stack;
+                })->toArray();
         }
     }
 
@@ -269,7 +321,10 @@ class BookingForm extends Component
             return;
         }
 
-        $units = Unit::whereIn('id', $this->selected_unit_ids)->get();
+        if ($this->fetched_selected_units === null) {
+            $this->fetched_selected_units = Unit::whereIn('id', $this->selected_unit_ids)->get();
+        }
+        $units = $this->fetched_selected_units;
 
         $start = Carbon::parse($this->waktu_mulai);
         $end = Carbon::parse($this->waktu_selesai);
@@ -289,7 +344,10 @@ class BookingForm extends Component
         $this->applied_promo_label = '';
 
         if (!empty($this->selected_promo_ids)) {
-            $rules = PricingRule::whereIn('id', $this->selected_promo_ids)->where('is_active', true)->get();
+            if ($this->all_pricing_rules === null) {
+                $this->loadAvailablePromos();
+            }
+            $rules = collect($this->all_pricing_rules)->whereIn('id', $this->selected_promo_ids);
             $labels = [];
 
             foreach ($rules as $rule) {
@@ -405,6 +463,8 @@ class BookingForm extends Component
             ]);
         }
 
+        $this->dispatch('booking-submitted');
+
         return redirect()->route('public.payment', $rental->booking_code);
     }
 
@@ -437,6 +497,10 @@ class BookingForm extends Component
 
     public function render()
     {
-        return view('livewire.front.booking-form')->layout('layouts.app');
+        $unitPrices = \App\Models\Unit::all()->mapWithKeys(fn($u) => [$u->id => ['day' => (int)$u->harga_per_hari, 'hour' => (int)$u->harga_per_jam]]);
+
+        return view('livewire.front.booking-form', [
+            'unitPricesJson' => $unitPrices->toJson()
+        ])->layout('layouts.app');
     }
 }

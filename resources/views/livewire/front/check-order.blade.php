@@ -202,7 +202,7 @@
                                 </div>
 
                                 @if($order->status === 'pending')
-                                    <a href="{{ route('public.payment', $order->id) }}" wire:navigate
+                                    <a href="{{ route('public.payment', $order->booking_code) }}" wire:navigate
                                         @click.stop
                                         class="hidden sm:flex items-center gap-1.5 h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-sm shrink-0">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -304,8 +304,8 @@
 
                                 <!-- Action Buttons -->
                                 @if($order->status == 'pending')
-                                    <a href="{{ route('public.payment', $order->id) }}" wire:navigate
-                                        class=" mt-4 flex items-center justify-center gap-2 w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm">
+                                    <a href="{{ route('public.payment', $order->booking_code) }}" wire:navigate
+                                        class=" mt-4 mb-4 flex items-center justify-center gap-2 w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                             <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
                                         </svg>

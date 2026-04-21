@@ -135,19 +135,20 @@
                                 </button>
                             </div>
                             
-                            {{-- Plain Copy Link --}}
-                            <div class="mt-1 flex items-center gap-2 group">
-                                <span class="text-[11px] font-mono text-muted-foreground/60 truncate">
-                                    {{ url('/?ref=' . (auth()->user()->affiliateProfile->referral_code ?? '')) }}
-                                </span>
+                            <div class="mt-4 flex items-center gap-2">
+                                <div class="flex-1 px-3 py-2 bg-muted/30 border border-border rounded-lg truncate">
+                                    <span class="text-[11px] font-mono text-muted-foreground">
+                                        {{ url('/?ref=' . (auth()->user()->affiliateProfile->referral_code ?? '')) }}
+                                    </span>
+                                </div>
                                 <button onclick="navigator.clipboard.writeText('{{ url('/?ref=' . (auth()->user()->affiliateProfile->referral_code ?? '')) }}'); alert('Link disalin!')" 
-                                    class="text-[9px] font-bold text-primary/80 hover:text-primary flex items-center gap-1 transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                                    <span>Salin</span>
+                                    class="inline-flex items-center justify-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground text-xs font-bold shadow hover:bg-primary/90 transition-all active:scale-95 whitespace-nowrap">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                    Salin
                                 </button>
                             </div>
 
-                            <p class="text-xs text-muted-foreground mt-3 leading-relaxed">Gunakan kode ini atau link untuk komisi <strong>{{ auth()->user()->affiliateProfile->commission_rate }}%</strong> setiap transaksi.</p>
+                            <p class="text-xs text-muted-foreground mt-6 leading-relaxed">Gunakan kode ini atau link untuk komisi <strong>{{ auth()->user()->affiliateProfile->commission_rate }}%</strong> setiap transaksi.</p>
                         </div>
                     </div>
                 </div>
@@ -196,21 +197,21 @@
 
         @if($tab !== 'payout_request')
             <div class="mt-6">
-                <div class="flex items-center gap-1 p-1 bg-muted rounded-lg w-fit border border-border mb-6 mx-auto">
+                <div class="flex items-center gap-1 p-1 bg-muted rounded-xl w-full border border-border mb-6">
                     <button @click="activeTab = 'overview'" :class="activeTab === 'overview' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-                        class="px-4 py-1.5 text-[11px] font-bold rounded-md transition-all">
+                        class="flex-1 px-4 py-2 text-[11px] font-bold rounded-lg transition-all text-center">
                         Aktivitas
                     </button>
                     <button @click="activeTab = 'payouts'" :class="activeTab === 'payouts' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-                        class="px-4 py-1.5 text-[11px] font-bold rounded-md transition-all">
+                        class="flex-1 px-4 py-2 text-[11px] font-bold rounded-lg transition-all text-center">
                         Payout
                     </button>
                     <button @click="activeTab = 'promos'" :class="activeTab === 'promos' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-                        class="px-4 py-1.5 text-[11px] font-bold rounded-md transition-all">
+                        class="flex-1 px-4 py-2 text-[11px] font-bold rounded-lg transition-all text-center">
                         Promo
                     </button>
                     <button @click="activeTab = 'profile'" :class="activeTab === 'profile' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-                        class="px-4 py-1.5 text-[11px] font-bold rounded-md transition-all">
+                        class="flex-1 px-4 py-2 text-[11px] font-bold rounded-lg transition-all text-center">
                         Settings
                     </button>
                 </div>
@@ -232,7 +233,7 @@
                                     @forelse(auth()->user()->affiliateRentals()->latest()->take(15)->get() as $rental)
                                         <tr class="hover:bg-muted/10 transition-colors">
                                             <td class="px-4 py-2">
-                                                <p class="text-[11px] font-medium text-foreground">#{{ $rental->booking_code ?? $rental->id }}</p>
+                                                <p class="text-[11px] font-medium text-foreground">{{ $rental->nama }}</p>
                                                 <p class="text-[9px] text-muted-foreground">{{ $rental->created_at->format('d M Y, H:i') }}</p>
                                             </td>
                                             <td class="px-4 py-2">
@@ -265,7 +266,9 @@
                             <table class="w-full text-left">
                                 <thead class="bg-muted/50 border-b border-border">
                                     <tr class="text-[9px] font-bold text-muted-foreground uppercase opacity-70">
-                                        <th class="px-4 py-2">REF / Tgl</th>
+                                        <th class="px-4 py-2">REF</th>
+                                        <th class="px-4 py-2">Tgl Pengajuan</th>
+                                        <th class="px-4 py-2">Tgl Bayar</th>
                                         <th class="px-4 py-2">Nominal</th>
                                         <th class="px-4 py-2 text-right">Status</th>
                                     </tr>
@@ -273,9 +276,14 @@
                                 <tbody class="divide-y divide-border">
                                     @forelse($payoutHistory as $payout)
                                         <tr class="hover:bg-muted/10">
-                                            <td class="px-4 py-2">
-                                                <p class="text-[11px] font-medium text-foreground">PAY-{{ $payout->id }}</p>
-                                                <p class="text-[9px] text-muted-foreground">{{ $payout->created_at->format('d/m/Y') }}</p>
+                                            <td class="px-4 py-2 text-[11px] font-medium text-foreground">PAY-{{ $payout->id }}</td>
+                                            <td class="px-4 py-2 text-[9px] text-muted-foreground">{{ $payout->created_at->format('d/m/Y') }}</td>
+                                            <td class="px-4 py-2 text-[9px] text-muted-foreground">
+                                                @if($payout->status === 'processed')
+                                                    {{ $payout->updated_at->format('d/m/Y') }}
+                                                @else
+                                                    -
+                                                @endif
                                             </td>
                                             <td class="px-4 py-2 text-[11px] font-medium">Rp {{ number_format($payout->amount, 0, ',', '.') }}</td>
                                             <td class="px-4 py-2 text-right">
@@ -292,7 +300,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="px-4 py-8 text-center text-muted-foreground text-[10px] font-medium">Belum ada payout.</td>
+                                            <td colspan="5" class="px-4 py-8 text-center text-muted-foreground text-[10px] font-medium">Belum ada payout.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

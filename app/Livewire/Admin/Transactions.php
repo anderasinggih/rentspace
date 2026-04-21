@@ -109,6 +109,8 @@ class Transactions extends Component
 
     public function confirmDenda()
     {
+        if (auth()->user()->role !== 'admin') return;
+
         $this->validate([
             'dendaAmount' => 'required|numeric|min:0',
             'dendaKerusakanAmount' => 'required|numeric|min:0',
@@ -272,6 +274,8 @@ class Transactions extends Component
 
     public function exportCsv()
     {
+        if (auth()->user()->role !== 'admin') return;
+
         $transactions = Rental::with('units')
             ->when($this->search, function ($q) {
                 $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')

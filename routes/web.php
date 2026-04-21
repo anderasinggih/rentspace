@@ -28,13 +28,17 @@ Route::get('/login', Login::class)->name('login');
 // Admin Routes protected by Authentication
 Route::middleware('auth')->group(function () {
     Route::redirect('/admin', '/admin/dashboard');
-    Route::get('/admin/dashboard', Dashboard::class)->name('admin.dashboard');
-    Route::get('/admin/units', UnitManager::class)->name('admin.units');
-    Route::get('/admin/categories', CategoryManager::class)->name('admin.categories');
-    Route::get('/admin/promo', PricingRules::class)->name('admin.promo');
-    Route::get('/admin/transactions', Transactions::class)->name('admin.transactions');
-    Route::get('/admin/settings', Settings::class)->name('admin.settings');
-    Route::get('/admin/affiliate', AffiliateManager::class)->name('admin.affiliate');
+    
+    // Strictly Admin Management
+    Route::middleware('admin')->group(function () {
+        Route::get('/admin/dashboard', Dashboard::class)->name('admin.dashboard');
+        Route::get('/admin/units', UnitManager::class)->name('admin.units');
+        Route::get('/admin/categories', CategoryManager::class)->name('admin.categories');
+        Route::get('/admin/promo', PricingRules::class)->name('admin.promo');
+        Route::get('/admin/transactions', Transactions::class)->name('admin.transactions');
+        Route::get('/admin/settings', Settings::class)->name('admin.settings');
+        Route::get('/admin/affiliate', AffiliateManager::class)->name('admin.affiliate');
+    });
     
     // Affiliate Dashboard
     Route::get('/affiliate/dashboard', AffiliateDashboard::class)->name('affiliate.dashboard');

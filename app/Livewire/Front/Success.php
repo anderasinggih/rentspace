@@ -30,7 +30,7 @@ class Success extends Component
 
     public function validateOrder()
     {
-        if (!auth()->check()) return;
+        if (!auth()->check() || auth()->user()->role !== 'admin') return;
         
         $this->rental->update(['status' => 'paid']);
         $this->rental = $this->rental->fresh();
@@ -39,7 +39,7 @@ class Success extends Component
 
     public function cancelOrder()
     {
-        if (!auth()->check()) return;
+        if (!auth()->check() || auth()->user()->role !== 'admin') return;
 
         $this->rental->update(['status' => 'cancelled']);
         $this->rental = $this->rental->fresh();

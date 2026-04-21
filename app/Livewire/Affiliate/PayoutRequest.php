@@ -31,8 +31,15 @@ class PayoutRequest extends Component
 
     public function mount()
     {
-        if (Auth::user()->role !== 'affiliator') {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'affiliator') {
             return redirect()->route('admin.dashboard');
+        }
+
+        $profile = $user->affiliateProfile;
+        if (!$profile || $profile->status !== 'approved') {
+            session()->flash('error', 'Akun Anda belum disetujui untuk melakukan penarikan.');
+            return redirect()->route('affiliate.dashboard');
         }
     }
 

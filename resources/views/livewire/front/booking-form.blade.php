@@ -1,4 +1,4 @@
-<div class="py-1 px-4 sm:px-6 lg:px-8 bg-muted/20 min-h-[calc(100vh-4rem)]">
+<div class="py-1 px-4 sm:px-6 lg:px-8 bg-background min-h-[calc(100vh-4rem)]">
 
     <div class="max-w-3xl mx-auto">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -22,7 +22,7 @@
             </a>
         </div>
 
-        <div class="bg-background rounded-2xl shadow-sm border border-border p-6 sm:p-8">
+        <div x-data="bookingForm()" class="bg-background rounded-2xl shadow-sm border border-border p-6 sm:p-8">
             <form wire:submit.prevent="submit" class="space-y-8">
 
                 <!-- 1. Jadwal Sewa -->
@@ -45,69 +45,153 @@
                 </div>
 
                 <!-- 2. Pilihan Unit -->
-                <div>
-                    <h2 class="text-xl font-semibold mb-4">2. Pilih Unit Tersedia</h2>
-                    @if($waktu_mulai && $waktu_selesai)
-                    @if(count($available_units) > 0)
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        @foreach($available_units as $unit)
-                        @php
-                        $isSelected = in_array($unit->id, $selected_unit_ids);
-                        @endphp
-                        <label
-                            class="relative flex cursor-pointer rounded-lg border-2 p-4 shadow-sm transition-all focus:outline-none {{ $isSelected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-primary/30' }}">
-                            <input type="checkbox" wire:model.live="selected_unit_ids" value="{{ $unit->id }}"
-                                class="sr-only">
-
-                            <span class="flex flex-1 items-start justify-between gap-3">
-                                <span class="flex flex-col">
-                                    <span class="block font-bold text-foreground">
-                                        {{ $unit->seri }}
-                                        @if($unit->category)
-                                        <span
-                                            class="ml-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{{
-                                            $unit->category->name }}</span>
-                                        @endif
-                                    </span>
-                                    @if($unit->warna || $unit->memori)
-                                    <span class="mt-1 flex items-center text-xs text-muted-foreground">{{ $unit->warna
-                                        }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}</span>
-                                    @endif
-                                    <div class="mt-2 flex items-baseline gap-1">
-                                        <span class="text-[10px] font-bold text-primary">Rp</span>
-                                        <span class="text-sm font-bold text-primary">{{
-                                            number_format($unit->harga_per_hari,0,',','.') }}</span>
-                                        <span class="text-[10px] text-muted-foreground">/hari</span>
-                                    </div>
-                                </span>
-
-                                @if($isSelected)
-                                <div
-                                    class="shrink-0 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm border-2 border-background">
-                                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
-                                            clip-rule="evenodd" />
-                                    </svg>
+                <div class="space-y-6">
+                    <div class="flex flex-col gap-4">
+                        <h2 class="text-xl font-bold tracking-tight">2. Pilih Unit Tersedia</h2>
+                        
+                        @if($waktu_mulai && $waktu_selesai)
+                        <!-- Filter & Search Bar -->
+                        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                            {{-- Categories Dropdown --}}
+                            <div class="w-full sm:w-auto relative">
+                                <select wire:model.live="selected_category_id" 
+                                    class="appearance-none block w-full sm:w-48 pl-3 pr-10 py-2 text-xs border border-border rounded-lg bg-background focus:ring-1 focus:ring-primary outline-none transition-all font-bold shadow-sm">
+                                    <option value="">Semua Kategori</option>
+                                    @foreach($categories_list as $cat)
+                                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                                 </div>
-                                @endif
-                            </span>
-                        </label>
-                        @endforeach
+                            </div>
+
+                            {{-- Search field --}}
+                            <div class="relative w-full sm:w-64">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                </span>
+                                <input type="text" wire:model.live.debounce.500ms="unit_search" 
+                                    placeholder="Cari seri, warna..." 
+                                    class="block w-full pl-9 pr-3 py-2 text-xs border border-border rounded-lg bg-background focus:ring-1 focus:ring-primary outline-none transition-all shadow-sm">
+                            </div>
+                        </div>
+
+
+
+                        {{-- RESULT LIST --}}
+                        <div class="space-y-4 relative">
+                            <!-- Global Loader for availability check -->
+                            <div wire:loading wire:target="checkAvailability, selected_category_id, unit_search, waktu_mulai, waktu_selesai" 
+                                class="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-30 flex items-center justify-center rounded-xl">
+                                <div class="flex flex-col items-center gap-2">
+                                    <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                    <span class="text-[10px] font-bold text-primary uppercase tracking-widest">Memperbarui Unit...</span>
+                                </div>
+                            </div>
+
+                            @if(count($available_units) > 0)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                @foreach($available_units as $unit)
+                                @php
+                                $isSelected = in_array($unit->id, $selected_unit_ids);
+                                @endphp
+                                <label
+                                    x-bind:class="selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}') ? 'border-primary ring-1 ring-primary bg-primary/[0.02]' : 'border-border bg-background hover:border-primary/50'"
+                                    class="group relative flex cursor-pointer rounded-xl border p-4 shadow-sm transition-all focus:outline-none">
+                                    <input type="checkbox" wire:model.live="selected_unit_ids" value="{{ $unit->id }}"
+                                        class="sr-only">
+
+                                    <span class="flex flex-1 items-start justify-between gap-3">
+                                        <span class="flex flex-col">
+                                            <span class="block font-bold text-sm text-foreground group-hover:text-primary transition-colors">
+                                                {{ $unit->seri }}
+                                                @if($unit->category)
+                                                <span class="ml-1 text-[9px] uppercase font-black px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                                    {{ $unit->category->name }}
+                                                </span>
+                                                @endif
+                                            </span>
+                                            <span class="mt-1 flex items-center text-[10px] text-muted-foreground font-medium">
+                                                {{ $unit->warna }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}
+                                            </span>
+                                            <div class="mt-2.5 flex items-baseline gap-1">
+                                                <span class="text-[10px] font-bold text-primary">Rp</span>
+                                                <span class="text-sm font-black text-primary">{{ number_format($unit->harga_per_hari,0,',','.') }}</span>
+                                                <span class="text-[10px] text-muted-foreground font-medium">/hari</span>
+                                            </div>
+                                        </span>
+
+                                        <template x-if="selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}')">
+                                            <div class="shrink-0 w-6 h-6 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-md border-2 border-background animate-in zoom-in-50 duration-200">
+                                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        </template>
+                                        <template x-if="!(selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}'))">
+                                            <div class="shrink-0 w-6 h-6 rounded-full border-2 border-border group-hover:border-primary/50 transition-colors"></div>
+                                        </template>
+                                    </span>
+                                </label>
+                                @endforeach
+                            </div>
+                            @else
+                            <div class="p-8 text-center bg-muted/20 border border-dashed border-border rounded-2xl">
+                                <p class="text-xs text-muted-foreground font-medium">Tidak ada unit yang sesuai dengan filter Anda.</p>
+                                <button type="button" wire:click="$set('unit_search', ''); $set('selected_category_id', null);" class="text-[10px] text-primary font-bold mt-2 hover:underline">Hapus Semua Filter</button>
+                            </div>
+                            @endif
+                        </div>
+
+                        {{-- KERANJANG SEWA (Cart List) --}}
+                        @if(count($selected_unit_ids) > 0)
+                        <div class="animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div class="flex items-center justify-between mb-3 px-1 mt-6">
+                                <h3 class="text-xs font-bold text-primary flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                                    Keranjang Sewa ({{ count($selected_unit_ids) }})
+                                </h3>
+                            </div>
+                            <div class="bg-card border-2 border-primary/20 rounded-xl overflow-hidden shadow-sm relative">
+                                <!-- Loader for Price/Cart updates -->
+                                <div wire:loading wire:target="calculatePrice, selected_unit_ids" 
+                                    class="absolute inset-0 bg-background/60 backdrop-blur-[1px] z-30 flex items-center justify-center">
+                                    <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+
+                                <div class="divide-y divide-border/50">
+                                    @php 
+                                        $selectedUnits = $available_units->whereIn('id', $selected_unit_ids);
+                                    @endphp
+                                    @foreach($selectedUnits as $sUnit)
+                                    <div class="flex items-center justify-between p-3 bg-primary/5">
+                                        <div class="flex items-center gap-3">
+                                            <div class="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-[11px] font-bold text-foreground">{{ $sUnit->seri }} <span class="text-[9px] text-muted-foreground font-normal ml-1">{{ $sUnit->warna }} • {{ $sUnit->memori }}</span></p>
+                                                <p class="text-[9px] font-bold text-primary">Rp {{ number_format($sUnit->harga_per_hari, 0, ',', '.') }}<span class="text-muted-foreground font-normal">/hari</span></p>
+                                            </div>
+                                        </div>
+                                        <button type="button" wire:click="$set('selected_unit_ids', {{ collect($selected_unit_ids)->filter(fn($id) => $id != $sUnit->id)->values()->toJson() }})"
+                                            class="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                        </button>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                        @else
+                        <div class="p-6 bg-muted/30 border border-border border-dashed rounded-2xl text-muted-foreground text-xs text-center flex flex-col items-center gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-40 text-primary"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                            Pilih jadwal sewa terlebih dahulu untuk melihat unit yang tersedia.
+                        </div>
+                        @endif
                     </div>
-                    @error('selected_unit_ids') <span class="text-xs text-red-500 block mt-2">{{ $message }}</span>
-                    @enderror
-                    @else
-                    <div class="p-4 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
-                        Menyesal sekali, tidak ada unit yang tersedia untuk rentang waktu yang dipilih. Silakan coba
-                        waktu lain.
-                    </div>
-                    @endif
-                    @else
-                    <div class="p-4 bg-muted border border-border rounded-md text-muted-foreground text-sm">
-                        Silakan isi Tanggal & Jam mulai serta selesai terlebih dahulu untuk mengecek ketersediaan.
-                    </div>
-                    @endif
                 </div>
 
                 <!-- 3. Pilih Promo (optional) -->
@@ -146,7 +230,7 @@
                         @foreach($available_promos as $promo)
                         @php
                         $isEligible = $promo['is_eligible'] ?? true;
-                        $isSelected = in_array($promo['id'], $selected_promo_ids);
+                        $isSelected = in_array($promo['id'], (array)($selected_promo_ids ?? []));
                         @endphp
                         <label
                             class="relative flex {{ $isEligible ? 'cursor-pointer hover:border-primary/50' : 'cursor-not-allowed opacity-50 grayscale bg-muted/20 border-border/50 shadow-inner' }} rounded-lg border-2 p-4 shadow-sm transition-all {{ $isEligible && $isSelected ? 'border-primary bg-primary/10' : 'border-border bg-background' }}">
@@ -221,14 +305,22 @@
 
 
 
-                <!-- 4. Rincian Harga -->
                 @if(!empty($selected_unit_ids) && $waktu_mulai && $waktu_selesai)
-                <div class="bg-primary/5 rounded-xl p-6 border border-primary/20">
+                <div class="bg-primary/5 rounded-xl p-6 border border-primary/20 relative overflow-hidden">
+                    <!-- Price Loader Overlay -->
+                    <div wire:loading wire:target="calculatePrice, selected_unit_ids, selected_promo_ids" 
+                        class="absolute inset-0 bg-primary/5 backdrop-blur-[1px] z-30 flex items-center justify-center">
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-[10px] font-bold text-primary uppercase">Menghitung...</span>
+                        </div>
+                    </div>
+
                     <h3 class="font-bold text-lg mb-4 text-foreground">Rincian Tagihan Kalkulasi Otomatis</h3>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-muted-foreground">Subtotal Sewa</span>
-                            <span class="font-medium">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                            <span class="font-medium" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal)">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
                         </div>
                         @if($potongan_diskon > 0)
                         <div class="flex justify-between text-green-600">
@@ -347,11 +439,114 @@
                     @error('agree') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <button type="submit"
-                    class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-8.5 font-bold text-lg">
-                    Sewa & Lanjut Pembayaran
+                <button type="submit" wire:loading.attr="disabled"
+                    class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-8.5 font-bold text-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all">
+                    <span wire:loading.remove wire:target="submit">Sewa & Lanjut Pembayaran</span>
+                    <div wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
+                        <span class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
+                        <span>Memproses...</span>
+                    </div>
                 </button>
             </form>
         </div>
     </div>
 </div>
+
+@script
+<script>
+    Alpine.data('bookingForm', () => ({
+        selectedIds: @entangle('selected_unit_ids'),
+        unitPrices: {!! $unitPricesJson !!},
+        get subtotal() {
+            let total = 0;
+            const startStr = $wire.waktu_mulai;
+            const endStr = $wire.waktu_selesai;
+            if (!startStr || !endStr) return 0;
+            
+            const start = new Date(startStr);
+            const end = new Date(endStr);
+            if (isNaN(start) || isNaN(end) || end <= start) return 0;
+            
+            const diffInMs = end - start;
+            const diffInHours = Math.max(1, Math.floor(diffInMs / (1000 * 60 * 60)));
+            const days = Math.floor(diffInHours / 24);
+            const remainingHours = diffInHours % 24;
+
+            const selected = this.selectedIds || [];
+            selected.forEach(id => {
+                const price = this.unitPrices[id];
+                if (price) {
+                    total += (days * price.day) + (remainingHours * price.hour);
+                }
+            });
+            return total;
+        }
+    }));
+
+    document.addEventListener('livewire:initialized', () => {
+        const storageKey = 'rentspace_booking_draft';
+        let isSubmitting = false;
+
+        // 1. Auto-Restore from LocalStorage
+        const savedDraft = localStorage.getItem(storageKey);
+        if (savedDraft) {
+            try {
+                const data = JSON.parse(savedDraft);
+                Object.keys(data).forEach(key => {
+                    if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
+                        $wire.set(key, data[key]);
+                    }
+                });
+                console.log('Draft pemesanan berhasil dipulihkan.');
+            } catch (e) {
+                console.error('Gagal memulihkan draft', e);
+            }
+        }
+
+        // 2. Auto-Save to LocalStorage on component updates
+        // We'll hook into Alpine's $watch or just a general update listener
+        Livewire.on('component-updated', () => {
+            if (!isSubmitting) saveToStorage();
+        });
+
+        // Also save on any input change to be safe
+        function saveToStorage() {
+            const fields = [
+                'nik', 'nama', 'alamat', 'no_wa', 
+                'waktu_mulai', 'waktu_selesai', 
+                'selected_unit_ids', 'selected_category_id'
+            ];
+            const data = {};
+            fields.forEach(field => {
+                data[field] = $wire.get(field);
+            });
+            localStorage.setItem(storageKey, JSON.stringify(data));
+        }
+
+        // periodic save as fallback
+        setInterval(() => {
+            if (!isSubmitting) saveToStorage();
+        }, 5000);
+
+        // 3. Unsaved Changes Warning
+        window.addEventListener('beforeunload', (e) => {
+            if (isSubmitting) return;
+
+            const hasUnits = $wire.get('selected_unit_ids').length > 0;
+            const hasData = $wire.get('nik') || $wire.get('nama');
+
+            if (hasUnits || hasData) {
+                saveToStorage();
+                e.preventDefault();
+                e.returnValue = ''; // Standard browser prompt
+            }
+        });
+
+        // 4. Cleanup on success
+        $wire.on('booking-submitted', () => {
+            isSubmitting = true;
+            localStorage.removeItem(storageKey);
+        });
+    });
+</script>
+@endscript

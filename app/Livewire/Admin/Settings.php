@@ -16,7 +16,18 @@ class Settings extends Component
     public $hero;
 
     public $users = [];
+    public $editingUserId = null;
+    public $isEditMode = false;
     public $name = '', $email = '', $password = '', $role = 'admin';
+    public $is_also_affiliate = false;
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
+    public $activeTab = 'akun';
+
+    // Affiliator Profile Fields
+    public $affiliate_no_hp = '', $affiliate_nik = '', $affiliate_alamat = '';
+    public $affiliate_referral_code = '', $affiliate_commission_rate = 10;
+    public $affiliate_bank_name = '', $affiliate_bank_account_number = '', $affiliate_bank_account_name = '';
 
     public $home_title = '', $home_description = '', $late_tolerance_minutes = 60;
     public $admin_wa = '', $admin_address = '', $terms_conditions = '';
@@ -24,6 +35,8 @@ class Settings extends Component
     public $about_faq_items = [];
     public $social_ig_url = '', $social_ig_name = '', $social_tiktok_url = '', $social_tiktok_name = '';
     public $min_payout = 50000;
+    public $is_maintenance = false;
+    public $maintenance_message = 'Kami akan segera kembali!';
 
     public $importFile;
 
@@ -55,11 +68,25 @@ class Settings extends Component
         $this->social_ig_name = \App\Models\Setting::getVal('social_ig_name', '');
         $this->social_tiktok_url = \App\Models\Setting::getVal('social_tiktok_url', '');
         $this->social_tiktok_name = \App\Models\Setting::getVal('social_tiktok_name', '');
+
+        $this->is_maintenance = \App\Models\Setting::getVal('is_maintenance', '0') == '1';
+        $this->maintenance_message = \App\Models\Setting::getVal('maintenance_message', 'Kami akan segera kembali! Saat ini sistem sedang dalam pemeliharaan rutin untuk meningkatkan layanan kami.');
     }
 
     public function loadUsers()
     {
-        $this->users = \App\Models\User::all();
+        $this->users = \App\Models\User::orderBy($this->sortField, $this->sortDirection)->get();
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+        $this->loadUsers();
     }
 
     public function createUser()
@@ -68,22 +95,137 @@ class Settings extends Component
             return;
 
         $this->validate([
-            'name' => 'required',
+            'name' => 'required|min:2',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:4',
-            'role' => 'required|in:admin,viewer'
+            'role' => 'required|in:admin,viewer,affiliator'
         ]);
 
-        \App\Models\User::create([
+        $user = \App\Models\User::create([
             'name' => $this->name,
             'email' => $this->email,
             'password' => \Illuminate\Support\Facades\Hash::make($this->password),
             'role' => $this->role
         ]);
 
+        // If role is affiliator, ensure profile is created
+        if ($this->role === 'affiliator') {
+            \App\Models\AffiliatorProfile::create([
+                'user_id' => $user->id,
+                'referral_code' => \App\Models\AffiliatorProfile::generateCode($user->name),
+                'commission_rate' => 10,
+                'status' => 'approved'
+            ]);
+        }
+
         $this->reset(['name', 'email', 'password', 'role']);
         $this->loadUsers();
-        session()->flash('user_message', 'Akun Admin berhasil ditambahkan');
+        session()->flash('user_message', 'Akun berhasil ditambahkan');
+    }
+
+    public function editUser($id)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        
+        $user = \App\Models\User::findOrFail($id);
+        $this->editingUserId = $id;
+        $this->isEditMode = true;
+        
+        $this->name = $user->name;
+        $this->email = $user->email;
+        $this->role = $user->role;
+        $this->password = ''; // Clear password field
+
+        // Load Affiliate Profile if exists
+        $profile = $user->affiliateProfile;
+        if ($profile) {
+            $this->is_also_affiliate = true;
+            $this->affiliate_no_hp = $profile->no_hp;
+            $this->affiliate_nik = $profile->nik;
+            $this->affiliate_alamat = $profile->alamat;
+            $this->affiliate_referral_code = $profile->referral_code;
+            $this->affiliate_commission_rate = $profile->commission_rate;
+            $this->affiliate_bank_name = $profile->bank_name;
+            $this->affiliate_bank_account_number = $profile->bank_account_number;
+            $this->affiliate_bank_account_name = $profile->bank_account_name;
+        } else {
+            $this->is_also_affiliate = ($this->role === 'affiliator');
+            $this->resetAffiliateFields();
+        }
+    }
+
+    private function resetAffiliateFields()
+    {
+        $this->reset([
+            'affiliate_no_hp', 'affiliate_nik', 'affiliate_alamat',
+            'affiliate_referral_code', 'affiliate_commission_rate',
+            'affiliate_bank_name', 'affiliate_bank_account_number', 'affiliate_bank_account_name'
+        ]);
+        $this->affiliate_commission_rate = 10;
+    }
+
+    public function updateUser()
+    {
+        if (auth()->user()->role !== 'admin' || !$this->editingUserId) return;
+
+        $rules = [
+            'name' => 'required|min:2',
+            'email' => 'required|email|unique:users,email,' . $this->editingUserId,
+            'role' => 'required|in:admin,viewer,affiliator',
+            'password' => 'nullable|min:4'
+        ];
+
+        if ($this->role === 'affiliator' || $this->is_also_affiliate) {
+            $rules['affiliate_no_hp'] = 'required';
+            $rules['affiliate_referral_code'] = 'required|alpha_num|unique:affiliator_profiles,referral_code,' . $this->editingUserId . ',user_id';
+            $rules['affiliate_commission_rate'] = 'required|numeric|min:0|max:100';
+        }
+
+        $this->validate($rules);
+
+        $user = \App\Models\User::findOrFail($this->editingUserId);
+        $user->name = $this->name;
+        $user->email = $this->email;
+        $user->role = $this->role;
+
+        if ($this->password) {
+            $user->password = \Illuminate\Support\Facades\Hash::make($this->password);
+        }
+
+        $user->save();
+
+        // Sync Affiliate Profile
+        if ($this->role === 'affiliator' || $this->is_also_affiliate) {
+            \App\Models\AffiliatorProfile::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'no_hp' => $this->affiliate_no_hp,
+                    'nik' => $this->affiliate_nik,
+                    'alamat' => $this->affiliate_alamat,
+                    'referral_code' => strtoupper($this->affiliate_referral_code),
+                    'commission_rate' => $this->affiliate_commission_rate,
+                    'bank_name' => $this->affiliate_bank_name,
+                    'bank_account_number' => $this->affiliate_bank_account_number,
+                    'bank_account_name' => $this->affiliate_bank_account_name,
+                    'status' => 'approved' // Set approved by default if created by admin
+                ]
+            );
+        } else {
+            // Optional: Delete profile if no longer an affiliate?
+            // Decided to keep it but user can deactivate in separate logic.
+        }
+
+        $this->cancelEdit();
+        $this->loadUsers();
+        session()->flash('user_message', 'Akun berhasil diperbarui.');
+    }
+
+    public function cancelEdit()
+    {
+        $this->reset(['editingUserId', 'isEditMode', 'name', 'email', 'password', 'role', 'is_also_affiliate']);
+        $this->resetAffiliateFields();
+        $this->role = 'admin';
+        $this->resetValidation();
     }
 
     public function deleteUser($id)
@@ -124,6 +266,17 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'social_tiktok_name'], ['value' => $this->social_tiktok_name]);
 
         session()->flash('general_message', 'Pengaturan Umum berhasil disimpan.');
+    }
+
+    public function updatedIsMaintenance($value)
+    {
+        \App\Models\Setting::updateOrCreate(['key' => 'is_maintenance'], ['value' => $value ? '1' : '0']);
+        session()->flash('general_message', 'Mode Pemeliharaan ' . ($value ? 'AKTIF' : 'NON-AKTIF'));
+    }
+
+    public function updatedMaintenanceMessage($value)
+    {
+        \App\Models\Setting::updateOrCreate(['key' => 'maintenance_message'], ['value' => $value]);
     }
 
     public function addFaq()

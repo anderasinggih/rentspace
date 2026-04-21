@@ -107,7 +107,7 @@
                 </div>
             @endif
 
-            @auth
+            @if(auth()->check() && auth()->user()->role === 'admin')
                 <div class="pt-4 border-t border-border/50 mt-4 space-y-3">
                     <div class="flex items-center justify-between">
                         <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Admin Panel</p>
@@ -140,7 +140,7 @@
                         @endif
                     </div>
                 </div>
-            @endauth
+            @endif
 
             <!-- Footer -->
             <p class="text-[10px] text-muted-foreground text-center pt-4 opacity-50">

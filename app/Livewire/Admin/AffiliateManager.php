@@ -71,6 +71,8 @@ class AffiliateManager extends Component
 
     public function approve($id)
     {
+        if (auth()->user()->role !== 'admin') return;
+
         $profile = AffiliatorProfile::with('user')->findOrFail($id);
         
         // Generate referral code if empty
@@ -88,6 +90,8 @@ class AffiliateManager extends Component
 
     public function reject($id)
     {
+        if (auth()->user()->role !== 'admin') return;
+
         $profile = AffiliatorProfile::findOrFail($id);
         $profile->update([
             'status' => 'rejected',
@@ -112,6 +116,8 @@ class AffiliateManager extends Component
 
     public function deactivate()
     {
+        if (auth()->user()->role !== 'admin') return;
+
         $this->validate([
             'status_note' => 'required|min:3'
         ], [
@@ -138,6 +144,8 @@ class AffiliateManager extends Component
 
     public function saveCommission()
     {
+        if (auth()->user()->role !== 'admin') return;
+
         $profile = AffiliatorProfile::findOrFail($this->editingAffiliatorId);
         $profile->update(['commission_rate' => $this->commission_rate]);
         $this->editingAffiliatorId = null;
@@ -146,6 +154,8 @@ class AffiliateManager extends Component
 
     public function syncPartnerBalance($id)
     {
+        if (auth()->user()->role !== 'admin') return;
+
         $profile = AffiliatorProfile::findOrFail($id);
         $user = $profile->user;
 
@@ -175,6 +185,8 @@ class AffiliateManager extends Component
 
     public function processPayout($id)
     {
+        if (auth()->user()->role !== 'admin') return;
+
         $payout = AffiliatePayout::findOrFail($id);
         $payout->update([
             'status' => 'processed',
@@ -195,6 +207,8 @@ class AffiliateManager extends Component
 
     public function rejectPayout($id)
     {
+        if (auth()->user()->role !== 'admin') return;
+
         $payout = AffiliatePayout::findOrFail($id);
         $payout->update([
             'status' => 'rejected',
@@ -210,6 +224,21 @@ class AffiliateManager extends Component
 
         $this->payoutActionSuccess = true;
         session()->flash('success', 'Payout ditolak dan saldo telah dikembalikan.');
+    }
+
+    public function deletePayout($id)
+    {
+        $payout = AffiliatePayout::findOrFail($id);
+        $affiliatorId = $payout->affiliator_id;
+        $profileId = $payout->affiliator->affiliateProfile->id ?? null;
+
+        $payout->delete();
+
+        if ($profileId) {
+            $this->syncPartnerBalance($profileId);
+        }
+
+        session()->flash('success', 'Data payout berhasil dihapus.');
     }
 
     public function getWaNotificationLink($payout)

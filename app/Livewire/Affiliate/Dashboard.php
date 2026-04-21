@@ -40,11 +40,19 @@ class Dashboard extends Component
     public function mount()
     {
         $user = Auth::user();
-        if (!$user || $user->role !== 'affiliator') {
-            return redirect()->route('admin.dashboard');
+        if (!$user || ($user->role !== 'affiliator' && $user->role !== 'admin')) {
+            return redirect()->route('affiliate.login');
         }
 
         $profile = $user->affiliateProfile;
+        
+        // If no profile exists, even admins can't see the affiliate stats
+        if (!$profile) {
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard')->with('error', 'Anda belum memiliki profil affiliator.');
+            }
+            return redirect()->route('affiliate.login');
+        }
         $this->name = $user->name;
         $this->email = $user->email;
 

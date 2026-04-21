@@ -24,6 +24,9 @@ class Register extends Component
     public function mount()
     {
         if (Auth::check()) {
+            if (Auth::user()->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
             return redirect()->route('affiliate.dashboard');
         }
     }
