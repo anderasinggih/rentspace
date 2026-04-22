@@ -125,7 +125,7 @@ class DatabaseSeeder extends Seeder
             DB::table('rental_items')->insert([
                 'rental_id' => $rental->id,
                 'unit_id' => $unitId,
-                'price_per_unit' => $rental->subtotal_harga, // Simplified for seeder
+                'price_snapshot' => $rental->subtotal_harga, // Corrected column name
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
