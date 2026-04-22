@@ -28,6 +28,8 @@
 </head>
 
 <body class="bg-background text-foreground antialiased font-sans flex flex-col min-h-screen">
+    <livewire:front.global-announcement placement="top" />
+
     @Unless ($hideNavbar ?? false)
         <livewire:navbar />
     @endUnless

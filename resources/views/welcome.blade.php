@@ -12,6 +12,7 @@
 </head>
 
 <body class="font-sans antialiased min-h-screen bg-background text-foreground flex flex-col">
+    <livewire:front.global-announcement />
 
     <!-- Navbar Publik Baru yang identik dengan Admin Navbar -->
     <livewire:navbar />
@@ -167,6 +168,9 @@
                         HUBUNGI ADMIN
                     </a>
                 </div>
+
+                <!-- Hero Placement Announcement -->
+                <livewire:front.global-announcement placement="hero" />
             </div>
         </section>
 

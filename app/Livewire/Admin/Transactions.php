@@ -310,6 +310,7 @@ class Transactions extends Component
             ->when($this->search, function ($q) {
                 $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
                 ->orWhere('id', 'like', '%' . $this->search . '%')
+                ->orWhere('booking_code', 'like', '%' . $this->search . '%')
                 ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
             })
             ->when($this->filterStatus, function ($q) {
@@ -336,6 +337,7 @@ class Transactions extends Component
             $file = fopen('php://output', 'w');
             fputcsv($file, [
                 'ID Transaksi', 
+                'Payment Code (Booking)',
                 'NIK',
                 'Nama Penyewa', 
                 'Alamat',
@@ -370,6 +372,7 @@ class Transactions extends Component
                 
                 fputcsv($file, [
                     'INV-' . str_pad($trx->id, 5, '0', STR_PAD_LEFT),
+                    $trx->booking_code,
                     $trx->nik,
                     strtoupper($trx->nama),
                     strtoupper($trx->alamat),
@@ -410,6 +413,7 @@ class Transactions extends Component
             ->when($this->search, function ($q) {
             $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
             ->orWhere('id', 'like', '%' . $this->search . '%')
+            ->orWhere('booking_code', 'like', '%' . $this->search . '%')
             ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
         })
             ->when($this->filterStatus, function ($q) {

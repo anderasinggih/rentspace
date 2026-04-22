@@ -27,6 +27,8 @@
     <!-- Admin Sticky Top Navbar Navigation -->
     <livewire:admin.admin-navbar />
 
+    <livewire:admin.command-palette />
+
     <!-- Main Content Area -->
     <main class="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {{ $slot }}

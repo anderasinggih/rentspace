@@ -18,6 +18,13 @@ class UnitManager extends Component
     public $search = '';
     public $filterKategori = '';
     public $filterStatus = '';
+    public $activeTab = 'units'; // 'units' or 'categories'
+
+    // Category Management State
+    public $cat_id, $cat_name, $cat_slug, $cat_icon;
+    public $cat_fields = [];
+    public $showCatModal = false;
+    public $isEditingCat = false;
 
     public function create()
     {
@@ -102,11 +109,103 @@ class UnitManager extends Component
         Unit::withTrashed()->find($id)->restore();
     }
 
+    // --- Category Management Methods ---
+    public function setTab($tab)
+    {
+        $this->activeTab = $tab;
+        $this->search = '';
+    }
+
+    public function updatedCatName($value)
+    {
+        if (!$this->isEditingCat) {
+            $this->cat_slug = \Illuminate\Support\Str::slug($value);
+        }
+    }
+
+    public function createCat()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->reset(['cat_id', 'cat_name', 'cat_slug', 'cat_icon', 'cat_fields', 'isEditingCat']);
+        $this->showCatModal = true;
+    }
+
+    public function editCat($id)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $category = \App\Models\Category::findOrFail($id);
+        $this->cat_id = $category->id;
+        $this->cat_name = $category->name;
+        $this->cat_slug = $category->slug;
+        $this->cat_icon = $category->icon;
+        $this->cat_fields = $category->custom_fields ?? [];
+        $this->isEditingCat = true;
+        $this->showCatModal = true;
+    }
+
+    public function addCatField()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->cat_fields[] = '';
+    }
+
+    public function removeCatField($index)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        unset($this->cat_fields[$index]);
+        $this->cat_fields = array_values($this->cat_fields);
+    }
+
+    public function saveCat()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->validate([
+            'cat_name' => 'required|string|max:255',
+            'cat_slug' => 'required|string|max:255|unique:categories,slug,' . $this->cat_id,
+            'cat_icon' => 'nullable|string|max:255',
+            'cat_fields.*' => 'nullable|string|max:255',
+        ]);
+
+        $fields = array_values(array_filter($this->cat_fields, fn($f) => !empty($f)));
+
+        \App\Models\Category::updateOrCreate(
+            ['id' => $this->cat_id],
+            [
+                'name' => $this->cat_name,
+                'slug' => $this->cat_slug,
+                'icon' => $this->cat_icon,
+                'custom_fields' => $fields,
+            ]
+        );
+
+        $this->showCatModal = false;
+        session()->flash('message', 'Kategori berhasil disimpan.');
+    }
+
+    public function deleteCat($id)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $exists = Unit::where('category_id', $id)->exists();
+        if ($exists) {
+            session()->flash('error', 'Tidak bisa menghapus kategori yang masih memiliki unit.');
+            return;
+        }
+
+        \App\Models\Category::findOrFail($id)->delete();
+        session()->flash('message', 'Kategori berhasil dihapus.');
+    }
+
     public function render()
     {
-        $query = Unit::withTrashed()
+        $categoriesQuery = \App\Models\Category::orderBy('name');
+        
+        if ($this->activeTab === 'categories' && $this->search) {
+            $categoriesQuery->where('name', 'like', '%' . $this->search . '%');
+        }
+
+        $unitsQuery = Unit::withTrashed()
             ->with('category')
-            ->when($this->search, fn($q) => $q->where('seri', 'like', '%' . $this->search . '%')
+            ->when($this->search && $this->activeTab === 'units', fn($q) => $q->where('seri', 'like', '%' . $this->search . '%')
                 ->orWhere('imei', 'like', '%' . $this->search . '%')
                 ->orWhere('warna', 'like', '%' . $this->search . '%'))
             ->when($this->filterKategori, fn($q) => $q->where('category_id', $this->filterKategori))
@@ -122,8 +221,9 @@ class UnitManager extends Component
             ->orderBy('is_active', 'desc');
 
         return view('livewire.admin.unit-manager', [
-            'units' => $query->get(),
-            'categories' => \App\Models\Category::orderBy('name')->get()
+            'units' => $unitsQuery->get(),
+            'categories' => $categoriesQuery->get(),
+            'all_categories' => \App\Models\Category::orderBy('name')->get() // For the dropdowns
         ])->layout('layouts.admin');
     }
 }

@@ -2,12 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Admin\UnitManager;
-use App\Livewire\Admin\CategoryManager;
 use App\Livewire\Admin\PricingRules;
 use App\Livewire\Admin\Transactions;
 use App\Livewire\Admin\Settings;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\AffiliateManager;
+use App\Livewire\Admin\CustomerManager;
 use App\Livewire\Front\BookingTimeline;
 use App\Livewire\Front\BookingForm;
 use App\Livewire\Front\Payment;
@@ -35,10 +35,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware('admin')->group(function () {
         Route::get('/admin/dashboard', Dashboard::class)->name('admin.dashboard');
         Route::get('/admin/units', UnitManager::class)->name('admin.units');
-        Route::get('/admin/categories', CategoryManager::class)->name('admin.categories');
+        Route::get('/admin/campaign', \App\Livewire\Admin\AnnouncementManager::class)->name('admin.campaign');
         Route::get('/admin/promo', PricingRules::class)->name('admin.promo');
         Route::get('/admin/transactions', Transactions::class)->name('admin.transactions');
         Route::get('/admin/monitoring', \App\Livewire\Admin\Monitoring::class)->name('admin.monitoring');
+        Route::get('/admin/customers', CustomerManager::class)->name('admin.customers');
         Route::get('/admin/settings', Settings::class)->name('admin.settings');
         Route::get('/admin/affiliate', AffiliateManager::class)->name('admin.affiliate');
     });

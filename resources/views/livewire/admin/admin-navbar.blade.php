@@ -32,12 +32,6 @@
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Unit
                     </a>
-                    @if(auth()->user()->role === 'admin')
-                    <a href="{{ route('admin.categories') }}" wire:navigate
-                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.categories') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
-                        Kategori
-                    </a>
-                    @endif
                     <a href="{{ route('admin.promo') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Promo
@@ -49,6 +43,10 @@
                     <a href="{{ route('admin.monitoring') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Monitoring
+                    </a>
+                    <a href="{{ route('admin.customers') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Pelanggan
                     </a>
                     @if(auth()->user()->role === 'admin')
                     <a href="{{ route('admin.affiliate') }}" wire:navigate
@@ -140,16 +138,14 @@
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Dashboard</a>
         <a href="{{ route('admin.units') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Unit</a>
-        @if(auth()->user()->role === 'admin')
-        <a href="{{ route('admin.categories') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.categories') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Kategori</a>
-        @endif
         <a href="{{ route('admin.promo') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Promo</a>
         <a href="{{ route('admin.transactions') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Transaksi</a>
         <a href="{{ route('admin.monitoring') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Monitoring</a>
+        <a href="{{ route('admin.customers') }}" wire:navigate
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pelanggan</a>
         @if(auth()->user()->role === 'admin')
         <a href="{{ route('admin.affiliate') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Affiliate</a>

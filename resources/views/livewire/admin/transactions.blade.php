@@ -149,15 +149,13 @@
                                                                 <tr wire:click="openInspect({{ $trx->id }})"
                                                                     class="cursor-pointer hover:bg-muted/40 transition-colors group/row">
                                                                     <td class="whitespace-nowrap py-1.5 pl-3 pr-3 text-xs sm:pl-6">
-                                                                        <div class="font-medium text-foreground">INV-{{ str_pad(
-                                        $trx->id,
-                                        5,
-                                        '0',
-                                        STR_PAD_LEFT
-                                    ) }}</div>
-                                                                        <div class="text-muted-foreground mt-0.5 sm:mt-1">{{ $trx->nama }} <br /> <a
+                                                                        <div class="flex flex-col gap-1">
+                                                                            <div class="font-semibold text-foreground">INV-{{ str_pad($trx->id, 5, '0', STR_PAD_LEFT) }}</div>
+                                                                            <div class="font-mono text-[10px] text-muted-foreground uppercase opacity-80">{{ $trx->booking_code }}</div>
+                                                                        </div>
+                                                                        <div class="text-muted-foreground mt-1">{{ $trx->nama }} <br /> <a
                                                                                 href="https://wa.me/{{ preg_replace('/^0/', '62', $trx->no_wa) }}"
-                                                                                target="_blank" wire:click.stop class="text-primary hover:underline">{{ $trx->no_wa
+                                                                                target="_blank" wire:click.stop class="text-primary hover:underline font-medium">{{ $trx->no_wa
                                                                                                                 }}</a></div>
                                                                     </td>
                                                                     <td
@@ -632,7 +630,9 @@
                 <div
                     class="bg-background rounded-xl shadow-2xl w-full max-w-2xl border border-border flex flex-col max-h-[90vh]">
                     <div class="p-4 border-b border-border flex items-center justify-between">
-                        <h3 class="text-lg font-bold">Edit Transaksi INV-{{ str_pad($editTrxId, 5, '0', STR_PAD_LEFT) }}
+                        <h3 class="text-lg font-bold flex flex-col">
+                            <span>Edit Transaksi INV-{{ str_pad($editTrxId, 5, '0', STR_PAD_LEFT) }}</span>
+                            <span class="text-xs font-mono text-muted-foreground uppercase leading-none mt-1">Payment Code: {{ \App\Models\Rental::find($editTrxId)?->booking_code }}</span>
                         </h3>
                         <button wire:click="closeEditModal" class="text-muted-foreground hover:text-foreground">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
