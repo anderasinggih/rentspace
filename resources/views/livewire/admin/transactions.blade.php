@@ -420,6 +420,14 @@
                                                                                                                                         <x-ui.button wire:click="openDendaModal({{ $inspectTrx->id }})" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Selesaikan Sewa</x-ui.button>
                                                                                                                                     @endif
                                                                                                                                     <x-ui.button wire:click="editTrx({{ $inspectTrx->id }})" variant="outline" size="sm">Edit Transaksi</x-ui.button>
+                                                                                                                                    
+                                                                                                                                    {{-- New Invoice Button --}}
+                                                                                                                                    <a href="{{ route('public.success', $inspectTrx->booking_code) }}" target="_blank"
+                                                                                                                                       class="inline-flex items-center gap-2 px-6 py-2 rounded-md bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/80 transition-colors shadow-sm">
+                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                                                                                                                                        Invoice
+                                                                                                                                    </a>
+
                                                                                                                                     <button wire:click="deleteRow({{ $inspectTrx->id }})"
                                                                                                                                         wire:confirm="Hapus transaksi ini secara permanen?"
                                                                                                                                         class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
