@@ -483,10 +483,34 @@
                                 class="block p-5 bg-background shadow-sm border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all group">
                                 <div class="flex items-start gap-4">
                                     <div class="flex-1">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <h3 class="font-bold text-foreground text-sm">{{ $promo->nama_promo }}</h3>
-                                            <x-ui.badge variant="green" class="uppercase tracking-tight text-[10px]">Promo
-                                                Aktif</x-ui.badge>
+                                        <div class="flex items-start justify-between mb-3">
+                                            <h3 class="font-bold text-foreground text-sm flex-1 mr-4 line-clamp-1 truncate">{{ $promo->nama_promo }}</h3>
+                                            <div class="flex flex-col items-end gap-1.5 shrink-0">
+                                                <x-ui.badge variant="green" class="uppercase tracking-tight text-[10px] px-2 py-0.5">Promo Aktif</x-ui.badge>
+                                                
+                                                @if($promo->end_date)
+                                                    <div x-data="{
+                                                        timeLeft: '',
+                                                        endTime: new Date('{{ $promo->end_date }} 23:59:59').getTime(),
+                                                        update() {
+                                                            const now = new Date().getTime();
+                                                            const diff = this.endTime - now;
+                                                            if (diff <= 0) { this.timeLeft = 'SELESAI'; return; }
+                                                            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                            const s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                            if (d > 0) {
+                                                                this.timeLeft = d + 'd ' + h + 'h ' + m + 'm ' + s + 's';
+                                                            } else {
+                                                                this.timeLeft = h + 'h ' + m + 'm ' + s + 's';
+                                                            }
+                                                        }
+                                                    }" x-init="update(); setInterval(() => update(), 1000)"
+                                                    class="bg-zinc-900 dark:bg-zinc-800 text-white px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-tighter"
+                                                    x-text="timeLeft"></div>
+                                                @endif
+                                            </div>
                                         </div>
                                         @php
                                             $durasi = $promo->syarat_minimal_durasi . ' ' . ucfirst($promo->syarat_tipe_durasi);
@@ -513,13 +537,10 @@
                                             <span class="font-semibold text-primary/90 block mt-1">{{ $promoText }}</span>
                                         </p>
                                         @if($promo->start_date || $promo->end_date)
-                                                            <div class="text-[10px] text-primary/70 font-medium">
-                                                                Berlaku: {{ $promo->start_date ?
-                                            \Carbon\Carbon::parse($promo->start_date)->format('d M') : 'Sekarang' }}
-                                                                s/d
-                                                                {{ $promo->end_date ? \Carbon\Carbon::parse($promo->end_date)->format('d M y') :
-                                            'Selesai' }}
-                                                            </div>
+                                            <div class="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 mt-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                                {{ $promo->start_date ? \Carbon\Carbon::parse($promo->start_date)->format('d M') : 'Sekarang' }} - {{ $promo->end_date ? \Carbon\Carbon::parse($promo->end_date)->format('d M y') : 'Selesai' }}
+                                            </div>
                                         @endif
                                     </div>
                                 </div>

@@ -347,159 +347,166 @@
     </div>
 </div>
 
+@script
 <script>
-    document.addEventListener('livewire:initialized', () => {
-        if (typeof ApexCharts === 'undefined') return;
+    if (typeof ApexCharts !== 'undefined') {
+        const initCharts = () => {
+            const chartDom = document.querySelector("#revenueChart");
+            if (!chartDom) return; // Not on dashboard or not ready
 
-        function getChartColors() {
-            const isDark = document.documentElement.classList.contains('dark');
-            const style = getComputedStyle(document.documentElement);
-            const resolve = (v) => `hsl(${style.getPropertyValue(v).trim()})`;
-            return {
-                isDark,
-                textColor: isDark ? '#a1a1aa' : '#71717a',
-                borderColor: isDark ? '#27272a' : '#e4e4e7',
-                tooltipTheme: isDark ? 'dark' : 'light',
-            };
-        }
+            function getChartColors() {
+                const isDark = document.documentElement.classList.contains('dark');
+                const style = getComputedStyle(document.documentElement);
+                const resolve = (v) => `hsl(${style.getPropertyValue(v).trim()})`;
+                return {
+                    isDark,
+                    textColor: isDark ? '#a1a1aa' : '#71717a',
+                    borderColor: isDark ? '#27272a' : '#e4e4e7',
+                    tooltipTheme: isDark ? 'dark' : 'light',
+                };
+            }
 
-        let colors = getChartColors();
+            let colors = getChartColors();
 
-        // ── 1. REVENUE AREA CHART ──────────────────────────────────────────────
-        var revChart = new ApexCharts(document.querySelector("#revenueChart"), {
-            series: [
-                { name: 'Omset Kotor', data: @json($chartRevenue) },
-                { name: 'Omset Bersih', data: @json($chartNetRevenue) }
-            ],
-            chart: { type: 'area', height: 220, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
-            dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 2, colors: ['#6366f1', '#10b981'] },
-            xaxis: {
-                categories: @json($chartCategories),
-                tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
-                labels: { 
-                    hideOverlappingLabels: true,
-                    rotate: -45,
-                    rotateAlways: false,
-                    minHeight: 30,
-                    style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
-                },
-                tickAmount: window.innerWidth < 640 ? 3 : 6
-            },
-            yaxis: {
-                labels: {
-                    formatter: (val) => {
-                        if (val >= 1000000) return (val / 1000000).toFixed(1).replace('.', ',') + ' jt';
-                        if (val >= 1000) return (val / 1000).toFixed(0) + ' rb';
-                        return val;
+            // ── 1. REVENUE AREA CHART ──────────────────────────────────────────────
+            var revChart = new ApexCharts(document.querySelector("#revenueChart"), {
+                series: [
+                    { name: 'Omset Kotor', data: @json($chartRevenue) },
+                    { name: 'Omset Bersih', data: @json($chartNetRevenue) }
+                ],
+                chart: { type: 'area', height: 220, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
+                dataLabels: { enabled: false },
+                stroke: { curve: 'smooth', width: 2, colors: ['#6366f1', '#10b981'] },
+                xaxis: {
+                    categories: @json($chartCategories),
+                    tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
+                    labels: { 
+                        hideOverlappingLabels: true,
+                        rotate: -45,
+                        rotateAlways: false,
+                        minHeight: 30,
+                        style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
                     },
-                    style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '10px' }
-                }
-            },
-            grid: {
-                borderColor: colors.borderColor, strokeDashArray: 0,
-                yaxis: { lines: { show: true } }, xaxis: { lines: { show: false } },
-                padding: { top: 0, right: 0, bottom: 0, left: 20 }
-            },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1, opacityFrom: 0.2, opacityTo: 0.01, stops: [0, 100],
-                    colorStops: [
-                        { offset: 0, color: '#6366f1', opacity: 0.2 },
-                        { offset: 100, color: '#6366f1', opacity: 0 },
-                        { offset: 0, color: '#10b981', opacity: 0.1 },
-                        { offset: 100, color: '#10b981', opacity: 0 }
-                    ]
-                }
-            },
-            colors: ['#6366f1', '#10b981'],
-            theme: { mode: colors.isDark ? 'dark' : 'light' },
-            tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } }
-        });
-        revChart.render();
-
-        // ── 2. TRANSACTIONS BAR CHART ──────────────────────────────────────────
-        var trxChart = new ApexCharts(document.querySelector("#transactionsChart"), {
-            series: [{ name: 'Jml Sewa', data: @json($chartTransactions) }],
-            chart: { type: 'bar', height: 220, fontFamily: 'inherit', toolbar: { show: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
-            plotOptions: { bar: { borderRadius: 4, columnWidth: '40%' } },
-            dataLabels: { enabled: false },
-            colors: ['#10b981'],
-            xaxis: {
-                categories: @json($chartCategories),
-                tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
-                labels: { 
-                    hideOverlappingLabels: true,
-                    rotate: -45,
-                    rotateAlways: false,
-                    minHeight: 30,
-                    style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
+                    tickAmount: window.innerWidth < 640 ? 3 : 6
                 },
-                tickAmount: window.innerWidth < 640 ? 3 : 6 // Density reduction
-            },
-            yaxis: {
-                labels: {
-                    formatter: (val) => Math.round(val),
-                    style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '10px' }
-                }
-            },
-            grid: {
-                borderColor: colors.borderColor,
-                yaxis: { lines: { show: true } }, xaxis: { lines: { show: false } },
-                padding: { top: 0, right: 0, bottom: 0, left: 10 }
-            },
-            theme: { mode: colors.isDark ? 'dark' : 'light' },
-            tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => val + " Orders" }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } }
-        });
-        trxChart.render();
-
-        // ── 3. PAYMENT METHOD DONUT CHART ─────────────────────────────────────
-        var donutChart = new ApexCharts(document.querySelector("#paymentDonutChart"), {
-            series: @json($paymentCounts),
-            labels: @json($paymentLabels),
-            chart: { type: 'donut', height: 220, fontFamily: 'inherit', background: 'transparent' },
-            colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-            dataLabels: { enabled: true, style: { fontSize: '11px', fontFamily: 'inherit', colors: [colors.isDark ? '#fff' : '#111'] } },
-            legend: { 
-                position: 'bottom', 
-                fontSize: '10px', 
-                fontFamily: 'inherit', 
-                labels: { colors: colors.textColor },
-                itemMargin: { horizontal: 8, vertical: 4 }
-            },
-            plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: 'Total', color: colors.textColor, fontSize: '14px', fontWeight: 600, fontFamily: 'inherit' } } } } },
-            theme: { mode: colors.isDark ? 'dark' : 'light' },
-            tooltip: { theme: colors.tooltipTheme, style: { fontSize: '11px', fontFamily: 'inherit' } }
-        });
-        donutChart.render();
-
-        // ── Livewire data updates ──────────────────────────────────────────────
-        Livewire.on('chartDataUpdated', (data) => {
-            const d = Array.isArray(data) ? data[0] : data;
-            revChart.updateOptions({ xaxis: { categories: d.categories } });
-            revChart.updateSeries([
-                { name: 'Omset Kotor', data: d.revenue },
-                { name: 'Omset Bersih', data: d.netRevenue }
-            ]);
-            trxChart.updateOptions({ xaxis: { categories: d.categories } });
-            trxChart.updateSeries([{ name: 'Jml Sewa', data: d.transactions }]);
-        });
-
-        // ── Theme toggle observer ─────────────────────────────────────────────
-        const observer = new MutationObserver(() => {
-            const c = getChartColors();
-            const xStyle = { labels: { style: { colors: c.textColor, fontFamily: 'inherit', fontSize: '10px' } } };
-            const yStyle = { labels: { style: { colors: c.textColor, fontFamily: 'inherit', fontSize: '10px' } } };
-            const mode = { mode: c.isDark ? 'dark' : 'light' };
-            revChart.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: xStyle, yaxis: yStyle, grid: { borderColor: c.borderColor } });
-            trxChart.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: xStyle, yaxis: yStyle, grid: { borderColor: c.borderColor } });
-            donutChart.updateOptions({
-                theme: mode, tooltip: { theme: c.tooltipTheme }, legend: { labels: { colors: c.textColor } },
-                plotOptions: { pie: { donut: { labels: { total: { color: c.textColor } } } } },
-                dataLabels: { style: { colors: [c.isDark ? '#fff' : '#111'] } }
+                yaxis: {
+                    labels: {
+                        formatter: (val) => {
+                            if (val >= 1000000) return (val / 1000000).toFixed(1).replace('.', ',') + ' jt';
+                            if (val >= 1000) return (val / 1000).toFixed(0) + ' rb';
+                            return val;
+                        },
+                        style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '10px' }
+                    }
+                },
+                grid: {
+                    borderColor: colors.borderColor, strokeDashArray: 0,
+                    yaxis: { lines: { show: true } }, xaxis: { lines: { show: false } },
+                    padding: { top: 0, right: 0, bottom: 0, left: 20 }
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1, opacityFrom: 0.2, opacityTo: 0.01, stops: [0, 100],
+                        colorStops: [
+                            { offset: 0, color: '#6366f1', opacity: 0.2 },
+                            { offset: 100, color: '#6366f1', opacity: 0 },
+                            { offset: 0, color: '#10b981', opacity: 0.1 },
+                            { offset: 100, color: '#10b981', opacity: 0 }
+                        ]
+                    }
+                },
+                colors: ['#6366f1', '#10b981'],
+                theme: { mode: colors.isDark ? 'dark' : 'light' },
+                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } }
             });
-        });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    });
+            revChart.render();
+
+            // ── 2. TRANSACTIONS BAR CHART ──────────────────────────────────────────
+            var trxChart = new ApexCharts(document.querySelector("#transactionsChart"), {
+                series: [{ name: 'Jml Sewa', data: @json($chartTransactions) }],
+                chart: { type: 'bar', height: 220, fontFamily: 'inherit', toolbar: { show: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
+                plotOptions: { bar: { borderRadius: 4, columnWidth: '40%' } },
+                dataLabels: { enabled: false },
+                colors: ['#10b981'],
+                xaxis: {
+                    categories: @json($chartCategories),
+                    tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
+                    labels: { 
+                        hideOverlappingLabels: true,
+                        rotate: -45,
+                        rotateAlways: false,
+                        minHeight: 30,
+                        style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
+                    },
+                    tickAmount: window.innerWidth < 640 ? 3 : 6 // Density reduction
+                },
+                yaxis: {
+                    labels: {
+                        formatter: (val) => Math.round(val),
+                        style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '10px' }
+                    }
+                },
+                grid: {
+                    borderColor: colors.borderColor,
+                    yaxis: { lines: { show: true } }, xaxis: { lines: { show: false } },
+                    padding: { top: 0, right: 0, bottom: 0, left: 10 }
+                },
+                theme: { mode: colors.isDark ? 'dark' : 'light' },
+                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => val + " Orders" }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } }
+            });
+            trxChart.render();
+
+            // ── 3. PAYMENT METHOD DONUT CHART ─────────────────────────────────────
+            var donutChart = new ApexCharts(document.querySelector("#paymentDonutChart"), {
+                series: @json($paymentCounts),
+                labels: @json($paymentLabels),
+                chart: { type: 'donut', height: 220, fontFamily: 'inherit', background: 'transparent' },
+                colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                dataLabels: { enabled: true, style: { fontSize: '11px', fontFamily: 'inherit', colors: [colors.isDark ? '#fff' : '#111'] } },
+                legend: { 
+                    position: 'bottom', 
+                    fontSize: '10px', 
+                    fontFamily: 'inherit', 
+                    labels: { colors: colors.textColor },
+                    itemMargin: { horizontal: 8, vertical: 4 }
+                },
+                plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: 'Total', color: colors.textColor, fontSize: '14px', fontWeight: 600, fontFamily: 'inherit' } } } } },
+                theme: { mode: colors.isDark ? 'dark' : 'light' },
+                tooltip: { theme: colors.tooltipTheme, style: { fontSize: '11px', fontFamily: 'inherit' } }
+            });
+            donutChart.render();
+
+            // ── Livewire data updates ──────────────────────────────────────────────
+            Livewire.on('chartDataUpdated', (data) => {
+                const d = Array.isArray(data) ? data[0] : data;
+                revChart.updateOptions({ xaxis: { categories: d.categories } });
+                revChart.updateSeries([
+                    { name: 'Omset Kotor', data: d.revenue },
+                    { name: 'Omset Bersih', data: d.netRevenue }
+                ]);
+                trxChart.updateOptions({ xaxis: { categories: d.categories } });
+                trxChart.updateSeries([{ name: 'Jml Sewa', data: d.transactions }]);
+            });
+
+            // ── Theme toggle observer ─────────────────────────────────────────────
+            const observer = new MutationObserver(() => {
+                const c = getChartColors();
+                const xStyle = { labels: { style: { colors: c.textColor, fontFamily: 'inherit', fontSize: '10px' } } };
+                const yStyle = { labels: { style: { colors: c.textColor, fontFamily: 'inherit', fontSize: '10px' } } };
+                const mode = { mode: c.isDark ? 'dark' : 'light' };
+                revChart.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: xStyle, yaxis: yStyle, grid: { borderColor: c.borderColor } });
+                trxChart.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: xStyle, yaxis: yStyle, grid: { borderColor: c.borderColor } });
+                donutChart.updateOptions({
+                    theme: mode, tooltip: { theme: c.tooltipTheme }, legend: { labels: { colors: c.textColor } },
+                    plotOptions: { pie: { donut: { labels: { total: { color: c.textColor } } } } },
+                    dataLabels: { style: { colors: [c.isDark ? '#fff' : '#111'] } }
+                });
+            });
+            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        };
+        
+        initCharts();
+    }
 </script>
+@endscript
