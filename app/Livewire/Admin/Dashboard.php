@@ -228,18 +228,12 @@ class Dashboard extends Component
             ->where(fn($q) => $q->where('waktu_selesai', '>=', now()))
             ->get();
 
-        $latestPending = Rental::with(['units' => function($q) { $q->withTrashed(); }])
-            ->where('status', 'pending')
-            ->latest()
-            ->limit(5)
-            ->get();
-
         return view('livewire.admin.dashboard', compact(
             'totalUnits', 'activeUnits', 'pendingRentals', 'pendingRevenue',
             'periodRentals', 'periodRevenue', 'periodDiscounts', 'todayRevenue', 'todayRentals',
             'periodCommissions', 'periodNetRevenue',
             'gainRentals', 'gainRevenue', 'gainAbsRevenue', 'gainNetRevenue',
-            'activeRentals', 'latestPending', 'topTenants', 'topUnits', 'topAffiliates',
+            'activeRentals', 'topTenants', 'topUnits', 'topAffiliates',
             'chartCategories', 'chartRevenue', 'chartNetRevenue', 'chartTransactions',
             'paymentLabels', 'paymentCounts'
         ))->layout('layouts.admin');
