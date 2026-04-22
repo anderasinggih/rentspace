@@ -35,6 +35,7 @@
             <!-- Row 1: Primary Filters -->
             <div class="flex flex-col sm:flex-row items-end gap-4 md:gap-6">
                 <!-- Category Dropdown -->
+                <div class="w-full sm:w-[200px]">
                     <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider">Filter Kategori</label>
                     <div class="relative">
                         <select wire:model.live="filterCategoryId" 
@@ -48,8 +49,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                     </div>
-
-
+                </div>
                 <!-- Timeframe Dropdown (Only relevant for Timeline, but keeping it) -->
                 <div class="w-full sm:w-[180px] hidden sm:block">
                     <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider">Rentang Waktu</label>
