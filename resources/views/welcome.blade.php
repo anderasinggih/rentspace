@@ -73,63 +73,63 @@
                         $selesaiHeroTimestamp = $closestActiveRental->waktu_selesai->timestamp * 1000;
                     @endphp
                     <div x-data="{
-                                countdown: '',
-                                status: 'green',
-                                endTime: {{ $selesaiHeroTimestamp }},
-                                tick() {
-                                    const now = Date.now();
-                                    const diff = Math.floor((this.endTime - now) / 1000);
-                                    if (diff <= 0) { 
-                                        this.countdown = 'Selesai'; 
-                                        this.status = 'red';
-                                        return; 
-                                    }
+                                    countdown: '',
+                                    status: 'green',
+                                    endTime: {{ $selesaiHeroTimestamp }},
+                                    tick() {
+                                        const now = Date.now();
+                                        const diff = Math.floor((this.endTime - now) / 1000);
+                                        if (diff <= 0) { 
+                                            this.countdown = 'Selesai'; 
+                                            this.status = 'red';
+                                            return; 
+                                        }
 
-                                    const hoursTotal = diff / 3600;
-                                    if (hoursTotal < 3) {
-                                        this.status = 'red';
-                                    } else if (hoursTotal < 6) {
-                                        this.status = 'amber';
-                                    } else {
-                                        this.status = 'green';
-                                    }
+                                        const hoursTotal = diff / 3600;
+                                        if (hoursTotal < 3) {
+                                            this.status = 'red';
+                                        } else if (hoursTotal < 6) {
+                                            this.status = 'amber';
+                                        } else {
+                                            this.status = 'green';
+                                        }
 
-                                    const h = Math.floor(hoursTotal);
-                                    const m = Math.floor((diff % 3600) / 60);
-                                    const s = diff % 60;
+                                        const h = Math.floor(hoursTotal);
+                                        const m = Math.floor((diff % 3600) / 60);
+                                        const s = diff % 60;
 
-                                    if(h > 0) {
-                                        this.countdown = h + 'j ' + m + 'm ' + s + 'd';
-                                    } else {
-                                        this.countdown = m + 'm ' + s + 'd';
+                                        if(h > 0) {
+                                            this.countdown = h + 'j ' + m + 'm ' + s + 'd';
+                                        } else {
+                                            this.countdown = m + 'm ' + s + 'd';
+                                        }
                                     }
-                                }
-                            }" x-init="tick(); setInterval(() => tick(), 1000)"
+                                }" x-init="tick(); setInterval(() => tick(), 1000)"
                         class="mb-8 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <span
                             class="text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5 backdrop-blur-md px-3 py-1 rounded-full border transition-colors duration-500"
                             :class="{
-                                      'bg-emerald-500/20 border-emerald-500/30 text-emerald-300': status === 'green',
-                                      'bg-amber-500/20 border-amber-500/30 text-amber-300': status === 'amber',
-                                      'bg-red-500/20 border-red-500/40 text-red-200': status === 'red'
-                                  }">
+                                          'bg-emerald-500/20 border-emerald-500/30 text-emerald-300': status === 'green',
+                                          'bg-amber-500/20 border-amber-500/30 text-amber-300': status === 'amber',
+                                          'bg-red-500/20 border-red-500/40 text-red-200': status === 'red'
+                                      }">
                             <span
                                 class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse transition-colors duration-500"
                                 :class="{
-                                          'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]': status === 'green',
-                                          'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]': status === 'amber',
-                                          'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.9)]': status === 'red'
-                                      }"></span>
+                                              'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]': status === 'green',
+                                              'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]': status === 'amber',
+                                              'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.9)]': status === 'red'
+                                          }"></span>
                             <span
                                 x-text="status === 'red' ? 'HAMPIR HABIS - SEGERA KEMBALIKAN!' : 'Sisa Waktu Pengembalian'"></span>
                         </span>
                         <div x-text="countdown"
                             class="text-5xl sm:text-7xl lg:text-8xl font-black font-mono tracking-tighter transition-all duration-500"
                             :class="{
-                                      'text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.5)]': status === 'green',
-                                      'text-amber-400 drop-shadow-[0_0_25px_rgba(251,191,36,0.6)]': status === 'amber',
-                                      'text-red-500 drop-shadow-[0_0_30px_rgba(248,113,113,0.8)] animate-pulse': status === 'red'
-                                 }"></div>
+                                          'text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.5)]': status === 'green',
+                                          'text-amber-400 drop-shadow-[0_0_25px_rgba(251,191,36,0.6)]': status === 'amber',
+                                          'text-red-500 drop-shadow-[0_0_30px_rgba(248,113,113,0.8)] animate-pulse': status === 'red'
+                                     }"></div>
                     </div>
                 @endif
                 <div
@@ -157,11 +157,11 @@
                         class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all border border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 hover:scale-[1.03] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
                         @php
                             $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                                                    stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0">
-                                                                                    <path
-                                                                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                                                                </svg>';
+                                                                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                                                                                stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0">
+                                                                                                                <path
+                                                                                                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                                                                            </svg>';
                         @endphp
                         {!! $whatsappIcon !!}
                         HUBUNGI ADMIN
@@ -297,52 +297,50 @@
                     $selesaiTimestamp = $closestActiveRental->waktu_selesai->timestamp * 1000;
                 @endphp
                 <div x-data="{
-                            visible: false,
-                            countdown: '',
-                            status: 'green',
-                            endTime: {{ $selesaiTimestamp }},
-                            tick() {
-                                const now = Date.now();
-                                const diff = Math.floor((this.endTime - now) / 1000);
-                                if (diff <= 0) { 
-                                    this.countdown = 'Selesai'; 
-                                    this.status = 'red';
-                                    return; 
-                                }
+                                visible: false,
+                                countdown: '',
+                                status: 'green',
+                                endTime: {{ $selesaiTimestamp }},
+                                tick() {
+                                    const now = Date.now();
+                                    const diff = Math.floor((this.endTime - now) / 1000);
+                                    if (diff <= 0) { 
+                                        this.countdown = 'Selesai'; 
+                                        this.status = 'red';
+                                        return; 
+                                    }
 
-                                const hoursTotal = diff / 3600;
-                                if (hoursTotal < 3) {
-                                    this.status = 'red';
-                                } else if (hoursTotal < 6) {
-                                    this.status = 'amber';
-                                } else {
-                                    this.status = 'green';
-                                }
+                                    const hoursTotal = diff / 3600;
+                                    if (hoursTotal < 3) {
+                                        this.status = 'red';
+                                    } else if (hoursTotal < 6) {
+                                        this.status = 'amber';
+                                    } else {
+                                        this.status = 'green';
+                                    }
 
-                                const h = Math.floor(hoursTotal);
-                                const m = Math.floor((diff % 3600) / 60);
-                                const s = diff % 60;
+                                    const h = Math.floor(hoursTotal);
+                                    const m = Math.floor((diff % 3600) / 60);
+                                    const s = diff % 60;
 
-                                if(h > 0) {
-                                    this.countdown = h + 'j ' + m + 'm ' + s + 'd';
-                                } else {
-                                    this.countdown = m + 'm ' + s + 'd';
+                                    if(h > 0) {
+                                        this.countdown = h + 'j ' + m + 'm ' + s + 'd';
+                                    } else {
+                                        this.countdown = m + 'm ' + s + 'd';
+                                    }
                                 }
-                            }
-                        }" x-init="tick(); setInterval(() => tick(), 1000)"
-                    x-intersect.once="visible = true"
-                    :class="[
-                        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16',
-                        status === 'red' ? 'border-red-500/30 bg-red-500/5' : ''
-                    ]"
+                            }" x-init="tick(); setInterval(() => tick(), 1000)" x-intersect.once="visible = true" :class="[
+                            visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16',
+                            status === 'red' ? 'border-red-500/30 bg-red-500/5' : ''
+                        ]"
                     class="mb-8 rounded-2xl border border-border bg-card shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 relative overflow-hidden transition-all duration-1000 ease-out">
                     <div class="flex items-center gap-3 shrink-0 relative z-10 w-full sm:w-auto">
                         <div class="flex h-10 w-10 items-center justify-center rounded-full shrink-0 relative border transition-colors duration-500"
                             :class="{
-                                     'bg-emerald-500/10 border-emerald-500/20': status === 'green',
-                                     'bg-amber-500/10 border-amber-500/20': status === 'amber',
-                                     'bg-red-500/10 border-red-500/30': status === 'red'
-                                 }">
+                                         'bg-emerald-500/10 border-emerald-500/20': status === 'green',
+                                         'bg-amber-500/10 border-amber-500/20': status === 'amber',
+                                         'bg-red-500/10 border-red-500/30': status === 'red'
+                                     }">
                             <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full animate-ping"
                                 :class="{ 'bg-emerald-500': status === 'green', 'bg-amber-500': status === 'amber', 'bg-red-500': status === 'red' }"></span>
                             <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border"
@@ -389,9 +387,9 @@
                         <a href="{{ route('public.check-order') }}" wire:navigate
                             class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl border border-input text-xs font-bold px-5 py-2.5 transition-all shadow-sm shrink-0 whitespace-nowrap"
                             :class="{
-                                    'bg-background hover:bg-muted text-foreground': status !== 'red',
-                                    'bg-red-500 border-red-500 text-white hover:bg-red-600 shadow-red-500/20': status === 'red'
-                                }">
+                                        'bg-background hover:bg-muted text-foreground': status !== 'red',
+                                        'bg-red-500 border-red-500 text-white hover:bg-red-600 shadow-red-500/20': status === 'red'
+                                    }">
                             Rincian Sewa
                         </a>
                     </div>
@@ -484,31 +482,34 @@
                                 <div class="flex items-start gap-4">
                                     <div class="flex-1">
                                         <div class="flex items-start justify-between mb-3">
-                                            <h3 class="font-bold text-foreground text-sm flex-1 mr-4 line-clamp-1 truncate">{{ $promo->nama_promo }}</h3>
+                                            <h3 class="font-bold text-foreground text-sm flex-1 mr-4 line-clamp-1 truncate">
+                                                {{ $promo->nama_promo }}</h3>
                                             <div class="flex flex-col items-end gap-1.5 shrink-0">
-                                                <x-ui.badge variant="green" class="uppercase tracking-tight text-[10px] px-2 py-0.5">Promo Aktif</x-ui.badge>
-                                                
+                                                <x-ui.badge variant="green"
+                                                    class="uppercase tracking-tight text-[10px] px-2 py-0.5">Promo
+                                                    Aktif</x-ui.badge>
+
                                                 @if($promo->end_date)
                                                     <div x-data="{
-                                                        timeLeft: '',
-                                                        endTime: new Date('{{ $promo->end_date }} 23:59:59').getTime(),
-                                                        update() {
-                                                            const now = new Date().getTime();
-                                                            const diff = this.endTime - now;
-                                                            if (diff <= 0) { this.timeLeft = 'SELESAI'; return; }
-                                                            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                            const s = Math.floor((diff % (1000 * 60)) / 1000);
-                                                            if (d > 0) {
-                                                                this.timeLeft = d + 'd ' + h + 'h ' + m + 'm ' + s + 's';
-                                                            } else {
-                                                                this.timeLeft = h + 'h ' + m + 'm ' + s + 's';
-                                                            }
-                                                        }
-                                                    }" x-init="update(); setInterval(() => update(), 1000)"
-                                                    class="bg-zinc-900 dark:bg-zinc-800 text-white px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-tighter"
-                                                    x-text="timeLeft"></div>
+                                                                    timeLeft: '',
+                                                                    endTime: new Date('{{ $promo->end_date }} 23:59:59').getTime(),
+                                                                    update() {
+                                                                        const now = new Date().getTime();
+                                                                        const diff = this.endTime - now;
+                                                                        if (diff <= 0) { this.timeLeft = 'SELESAI'; return; }
+                                                                        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                                        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                        const s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                                        if (d > 0) {
+                                                                            this.timeLeft = d + 'd ' + h + 'h ' + m + 'm ' + s + 's';
+                                                                        } else {
+                                                                            this.timeLeft = h + 'h ' + m + 'm ' + s + 's';
+                                                                        }
+                                                                    }
+                                                                }" x-init="update(); setInterval(() => update(), 1000)"
+                                                        class="bg-zinc-900 dark:bg-zinc-800 text-white px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-tighter"
+                                                        x-text="timeLeft"></div>
                                                 @endif
                                             </div>
                                         </div>
@@ -525,10 +526,10 @@
                                                     number_format($promo->value, 0, ',', '.');
                                             elseif ($promo->tipe === 'hari_gratis')
                                                 $promoText = "Gratis " . $promo->value . "
-                                                                                                            Hari";
+                                                                                                                                                Hari";
                                             elseif ($promo->tipe === 'jam_gratis')
                                                 $promoText = "Gratis " . $promo->value . "
-                                                                                                            Jam";
+                                                                                                                                                Jam";
                                             elseif ($promo->tipe === 'cashback')
                                                 $promoText = "Cashback Rp " .
                                                     number_format($promo->value, 0, ',', '.');
@@ -537,9 +538,19 @@
                                             <span class="font-semibold text-primary/90 block mt-1">{{ $promoText }}</span>
                                         </p>
                                         @if($promo->start_date || $promo->end_date)
-                                            <div class="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 mt-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                                                {{ $promo->start_date ? \Carbon\Carbon::parse($promo->start_date)->format('d M') : 'Sekarang' }} - {{ $promo->end_date ? \Carbon\Carbon::parse($promo->end_date)->format('d M y') : 'Selesai' }}
+                                            <div
+                                                class="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 mt-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round" class="opacity-50">
+                                                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                                                    <line x1="16" x2="16" y1="2" y2="6" />
+                                                    <line x1="8" x2="8" y1="2" y2="6" />
+                                                    <line x1="3" x2="21" y1="10" y2="10" />
+                                                </svg>
+                                                {{ $promo->start_date ? \Carbon\Carbon::parse($promo->start_date)->format('d M') : 'Sekarang' }}
+                                                -
+                                                {{ $promo->end_date ? \Carbon\Carbon::parse($promo->end_date)->format('d M y') : 'Selesai' }}
                                             </div>
                                         @endif
                                     </div>
@@ -575,7 +586,7 @@
                 <div class="space-y-16">
                     @foreach($categorizedUnits as $categoryName => $units)
                         @php $category = $units->first()->category; @endphp
-                        <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                        <div x-data="{ expanded: false, visible: false }" x-intersect.once="visible = true"
                             :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'"
                             class="transition-all duration-1000 ease-out">
                             <div class="flex items-center gap-4 mb-6 mt-6">
@@ -594,66 +605,71 @@
 
                             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                 @foreach($units as $unit)
-                                                    <div
-                                                        class="group relative bg-background border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
-                                                        <!-- Subtle background decoration -->
-                                                        <div
-                                                            class="absolute -right-4 -top-4 w-12 h-12 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors">
-                                                        </div>
+                                    @php 
+                                        $isIphone = $unit->category && str_contains(strtolower($unit->category->slug), 'iphone');
+                                    @endphp
+                                    <div
+                                        :class="{ 'hidden sm:flex': !expanded && {{ $loop->index }} >= 4, 'flex': expanded || {{ $loop->index }} < 4 }"
+                                        class="group relative bg-background border border-border rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex-col justify-between overflow-hidden">
+                                        <!-- Subtle background decoration -->
+                                        <div
+                                            class="absolute -right-4 -top-4 w-12 h-12 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors">
+                                        </div>
 
-                                                        <div class="relative">
-
-                                                            <h4
-                                                                class="font-bold text-foreground text-sm group-hover:text-primary transition-colors leading-tight mb-1">
-                                                                {{ $unit->seri }}
-                                                            </h4>
-                                                            <div class="mt-1 space-y-0.5">
-                                                                @if(
-                                                                                                $unit->category && str_contains(
-                                                                                                    strtolower($unit->category->slug),
-                                                                                                    'iphone'
-                                                                                                )
-                                                                                            )
-                                                                                            <p class="text-xs text-muted-foreground">{{ $unit->warna }} · {{
-                                                                    $unit->memori }}</p>
-                                                                @elseif($unit->specs)
-                                                                    <div class="flex flex-wrap gap-x-1.5 gap-y-0.5 mt-1">
-                                                                        @foreach($unit->specs as $key => $val)
-                                                                            @if($val)
-                                                                                <span
-                                                                                    class="text-[10px] bg-secondary/50 px-1.5 py-0.5 rounded text-secondary-foreground"><span
-                                                                                        class="font-bold opacity-70">{{ $key }}:</span> {{ $val
-                                                                                                                            }}</span>
-                                                                            @endif
-                                                                        @endforeach
-                                                                    </div>
-                                                                @endif
-                                                                @if($unit->kondisi)
-                                                                    <p class="text-[10px] text-muted-foreground italic mt-1">{{ $unit->kondisi
-                                                                                                        }}</p>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="mt-4 pt-3 border-t border-border/50">
-                                                            <div class="flex items-center justify-between">
-                                                                <div class="flex flex-col">
-                                                                    <span class="text-[9px] text-muted-foreground uppercase font-medium">Sewa
-                                                                        / Hari</span>
-                                                                    <div class="flex items-baseline gap-0.5">
-                                                                        <span class="text-[10px] font-bold text-foreground">Rp</span>
-                                                                        <span class="text-sm font-black text-foreground">{{
-                                    number_format($unit->harga_per_hari, 0, ',', '.') }}</span>
-                                                                    </div>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
+                                        <div class="relative">
+                                            <h4
+                                                class="font-bold text-foreground text-sm group-hover:text-primary transition-colors leading-tight mb-1">
+                                                {{ $unit->seri }}
+                                            </h4>
+                                            <div class="mt-1 space-y-0.5">
+                                                @if($isIphone)
+                                                    <p class="text-xs text-muted-foreground">{{ $unit->warna }} · {{ $unit->memori }}</p>
+                                                @elseif($unit->specs)
+                                                    <div class="flex flex-wrap gap-x-1.5 gap-y-0.5 mt-1">
+                                                        @foreach($unit->specs as $key => $val)
+                                                            @if($val)
+                                                                <span
+                                                                    class="text-[10px] bg-secondary/50 px-1.5 py-0.5 rounded text-secondary-foreground"><span
+                                                                        class="font-bold opacity-70">{{ $key }}:</span> {{ $val }}</span>
+                                                            @endif
+                                                        @endforeach
                                                     </div>
+                                                @endif
+                                                
+                                                @if($unit->kondisi && !$isIphone)
+                                                    <p class="text-[10px] text-muted-foreground italic mt-0.5 line-clamp-1">{{ $unit->kondisi }}</p>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-3 pt-2 border-t border-border/50">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex flex-col">
+                                                    <span class="text-[9px] text-muted-foreground uppercase font-medium leading-none mb-1">Sewa / Hari</span>
+                                                    <div class="flex items-baseline gap-0.5">
+                                                        <span class="text-[10px] font-bold text-foreground">Rp</span>
+                                                        <span class="text-sm font-black text-foreground">{{ number_format($unit->harga_per_hari, 0, ',', '.') }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 @endforeach
                             </div>
-                        </div>
+
+                            @if($units->count() > 4)
+                                <div class="mt-6 flex justify-center sm:hidden">
+                                    <button @click="expanded = !expanded" 
+                                        class="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-2 px-6 rounded-full border border-border bg-muted/20">
+                                        <span x-text="expanded ? 'Sembunyikan' : 'Lihat Lebih Lengkap (+' + {{ $units->count() - 4 }} + ')'"></span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{ 'rotate-180': expanded }">
+                                            <path d="m6 9 6 6 6-6"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            @endif
                     @endforeach
+                </div>
                 </div>
             </div>
         </div>
