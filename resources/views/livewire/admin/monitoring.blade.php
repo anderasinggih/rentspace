@@ -84,39 +84,40 @@
                     </div>
                 @endif
             </div>
+            
+            <!-- Row 2: View Controls (Zoom) -->
+            <div class="flex flex-wrap items-center gap-4 sm:gap-8 pt-4 border-t border-border/50">
+                <!-- Day Width Slider -->
+                <div class="flex-1 min-w-[180px] flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[9px] font-bold text-muted-foreground/70 tracking-wider">Zoom Timeline</label>
+                        <span class="text-[9px] font-bold text-primary" x-text="dayWidth + 'px'"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" min="40" max="300" x-model="dayWidth" 
+                            class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="hidden md:block h-8 w-px bg-border/20"></div>
+
+                <!-- Unit Width Slider -->
+                <div class="flex-1 min-w-[180px] flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[9px] font-bold text-muted-foreground/70 tracking-wider">Lebar Kolom Unit</label>
+                        <span class="text-[9px] font-bold text-primary" x-text="unitWidth + 'px'"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" min="130" max="400" x-model="unitWidth" 
+                            class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
+                    </div>
+                </div>
+            </div>
 
         </div>
 
         <!-- MAIN MONITORING GRID (Hidden on mobile) -->
         <div class="hidden sm:block overflow-x-auto hide-scrollbar rounded-2xl border border-border bg-background shadow-2xl relative">
-                <!-- Inner Zoom Controls inside the timeline panel -->
-                <div class="hidden sm:flex flex-wrap items-center justify-between gap-6 bg-background rounded-b-none rounded-2xl p-3 md:p-4 border-b border-border shadow-sm w-full top-0 sticky z-[70]">
-                    <!-- Day Width Slider -->
-                    <div class="flex-1 min-w-[140px] flex flex-col gap-2">
-                        <div class="flex items-center justify-between">
-                            <label class="text-[8px] font-bold text-muted-foreground tracking-widest">Timeline Zoom</label>
-                            <span class="text-[8px] font-bold text-primary" x-text="dayWidth + 'px'"></span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <input type="range" min="40" max="300" x-model="dayWidth" 
-                                class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
-                        </div>
-                    </div>
-
-                    <div class="hidden md:block h-8 w-px bg-border/60"></div>
-
-                    <!-- Unit Width Slider -->
-                    <div class="flex-1 min-w-[140px] flex flex-col gap-2">
-                        <div class="flex items-center justify-between">
-                            <label class="text-[8px] font-bold text-muted-foreground tracking-widest">Unit Area Width</label>
-                            <span class="text-[8px] font-bold text-primary" x-text="unitWidth + 'px'"></span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <input type="range" min="130" max="400" x-model="unitWidth" 
-                                class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
-                        </div>
-                    </div>
-                </div>
 
                 <div class="m-grid-wrapper relative bg-background">
                     
@@ -355,7 +356,7 @@
                                                     <h3 class="font-bold text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-sm truncate tracking-tight">{{ $rental->units->pluck('seri')->join(', ') }}</h3>
                                                 </div>
                                                 <div class="flex items-center gap-1.5 mt-1">
-                                                    <span class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', $rental->nama)[0] }}</span>
+                                                    <span class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', trim($rental->nama))[0] }}</span>
                                                     <span class="hidden sm:inline-block h-1 w-1 rounded-full bg-border"></span>
                                                     <span class="text-[10px] sm:text-xs text-muted-foreground truncate">
                                                         {{ $rental->waktu_mulai->format('H:i') }} - {{ $rental->waktu_selesai->format('H:i') }}
@@ -508,7 +509,7 @@
                                                     <h3 class="font-bold text-amber-600 dark:text-amber-400 text-[10px] sm:text-sm truncate tracking-tight">{{ $rental->units->pluck('seri')->join(', ') }}</h3>
                                                 </div>
                                                 <div class="flex items-center gap-1.5 mt-1">
-                                                    <span class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', $rental->nama)[0] }}</span>
+                                                    <span class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', trim($rental->nama))[0] }}</span>
                                                     <span class="hidden sm:inline-block h-1 w-1 rounded-full bg-border"></span>
                                                     <span class="text-[10px] sm:text-xs text-muted-foreground truncate">
                                                         {{ $rental->waktu_mulai->format('d M, H:i') }}

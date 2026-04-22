@@ -11,7 +11,7 @@
             localStorage.theme = 'light';
         }
     }
-}" class="bg-background/10 sticky backdrop-blur-sm top-0 z-50 shadow-sm">
+}" class="bg-background/10 sticky backdrop-blur-sm top-0 z-[100] shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <!-- Left side Navigation -->
