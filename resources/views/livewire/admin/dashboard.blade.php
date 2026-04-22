@@ -25,6 +25,7 @@
                 </h3>
                 <p class="text-xl md:text-2xl font-bold text-amber-500">{{ $pendingRentals }} <span
                         class="text-xs font-normal text-muted-foreground">Order</span></p>
+                <p class="text-[10px] font-bold text-muted-foreground mt-1">Total: Rp {{ number_format($pendingRevenue/1000, 0, ',', '.') }}k</p>
             </div>
             <div
                 class="bg-background rounded-xl border border-border p-4 shadow-sm flex flex-col justify-between border-l-4 border-l-emerald-500">
@@ -41,6 +42,49 @@
             </div>
         </div>
     </div>
+
+    <!-- Pending Payment List (Actionable) -->
+    @if($latestPending->count() > 0)
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-3 border-b border-border pb-2">
+            <h2 class="text-sm font-semibold text-amber-600 flex items-center gap-2">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                Menunggu Validasi Pembayaran
+            </h2>
+            <a href="{{ route('admin.transactions', ['filterStatus' => 'pending']) }}" class="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-widest">Lihat Semua</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            @foreach($latestPending as $lp)
+            <div class="bg-background rounded-xl border border-amber-200/50 dark:border-amber-900/30 p-3 shadow-sm hover:shadow-md transition-all group border-l-4 border-l-amber-500">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">INV-{{ str_pad($lp->id, 5, '0', STR_PAD_LEFT) }}</p>
+                        <h4 class="text-sm font-bold text-foreground truncate max-w-[150px]">{{ $lp->nama }}</h4>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-black text-amber-600">Rp {{ number_format($lp->grand_total, 0, ',', '.') }}</p>
+                        <p class="text-[9px] text-muted-foreground font-medium">{{ $lp->created_at->diffForHumans() }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between mt-3">
+                    <div class="flex flex-wrap gap-1">
+                        @foreach($lp->units->take(2) as $u)
+                        <span class="px-1.5 py-0.5 rounded bg-muted text-[9px] font-medium text-muted-foreground uppercase border border-border/50">{{ $u->seri }}</span>
+                        @endforeach
+                    </div>
+                    <a href="{{ route('admin.transactions', ['search' => 'INV-'.str_pad($lp->id, 5, '0', STR_PAD_LEFT)]) }}" 
+                        class="h-7 px-3 flex items-center justify-center rounded-lg bg-amber-500 text-white text-[10px] font-bold hover:bg-amber-600 transition-colors shadow-sm shadow-amber-500/20">
+                        Detail
+                    </a>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 
     <!-- Scoped Period Metrics -->
     <div>

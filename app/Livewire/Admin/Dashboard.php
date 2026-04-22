@@ -134,6 +134,7 @@ class Dashboard extends Component
         $totalUnits = Unit::withTrashed()->count();
         $activeUnits = Unit::where(fn($q) => $q->where('is_active', true))->count();
         $pendingRentals = Rental::where(fn($q) => $q->where('status', 'pending'))->count();
+        $pendingRevenue = Rental::where('status', 'pending')->sum('grand_total');
 
         // Period Metrics
         $periodRentals = Rental::whereBetween('created_at', [$start, $end])->count();
@@ -227,12 +228,18 @@ class Dashboard extends Component
             ->where(fn($q) => $q->where('waktu_selesai', '>=', now()))
             ->get();
 
+        $latestPending = Rental::with(['units' => function($q) { $q->withTrashed(); }])
+            ->where('status', 'pending')
+            ->latest()
+            ->limit(5)
+            ->get();
+
         return view('livewire.admin.dashboard', compact(
-            'totalUnits', 'activeUnits', 'pendingRentals',
+            'totalUnits', 'activeUnits', 'pendingRentals', 'pendingRevenue',
             'periodRentals', 'periodRevenue', 'periodDiscounts', 'todayRevenue', 'todayRentals',
             'periodCommissions', 'periodNetRevenue',
             'gainRentals', 'gainRevenue', 'gainAbsRevenue', 'gainNetRevenue',
-            'activeRentals', 'topTenants', 'topUnits', 'topAffiliates',
+            'activeRentals', 'latestPending', 'topTenants', 'topUnits', 'topAffiliates',
             'chartCategories', 'chartRevenue', 'chartNetRevenue', 'chartTransactions',
             'paymentLabels', 'paymentCounts'
         ))->layout('layouts.admin');
