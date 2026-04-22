@@ -2,135 +2,142 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
+use App\Models\PricingRule;
 use App\Models\Rental;
+use App\Models\Setting;
 use App\Models\Unit;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Admin user
-        User::updateOrCreate(
-            ['email' => 'admin@rentspace.com'],
-            [
-                'name'     => 'Administrator',
+        // 0. Disable Foreign Keys
+        Schema::disableForeignKeyConstraints();
+
+        // 1. Truncate Tables
+        User::truncate();
+        Category::truncate();
+        Unit::truncate();
+        PricingRule::truncate();
+        Rental::truncate();
+        Setting::truncate();
+        DB::table('rental_items')->truncate();
+        DB::table('affiliator_profiles')->truncate();
+        DB::table('affiliate_commissions')->truncate();
+        DB::table('affiliate_payouts')->truncate();
+
+        // 2. Define Categories (Derived from JSON units)
+        Category::create(['id' => 1, 'name' => 'iPhone', 'slug' => 'iphone', 'icon' => 'smartphone']);
+        Category::create(['id' => 3, 'name' => 'Aksesoris', 'slug' => 'aksesoris', 'icon' => 'headphones']);
+
+        // 3. User Data
+        $userData = [
+            ["id"=> 1, "name"=> "Administrator", "email"=> "admin@rentspace.com", "role"=> "admin", "created_at"=> "2026-04-14 11:13:29"],
+            ["id"=> 2, "name"=> "SINGGIH", "email"=> "singgih@gmail.com", "role"=> "admin", "created_at"=> "2026-04-15 06:19:05"],
+            ["id"=> 3, "name"=> "RYAN CEO", "email"=> "ceoryan@gmail.com", "role"=> "viewer", "created_at"=> "2026-04-15 06:20:04"],
+            ["id"=> 6, "name"=> "WILDA NASHUHA DWIMULYANTI", "email"=> "wildanashuha@gmail.com", "role"=> "affiliator", "created_at"=> "2026-04-21 08:19:08"]
+        ];
+
+        foreach ($userData as $u) {
+            User::create([
+                'id' => $u['id'],
+                'name' => $u['name'],
+                'email' => $u['email'],
+                'role' => $u['role'],
                 'password' => Hash::make('password'),
-                'role'     => 'admin',
-            ]
-        );
-
-        // Affiliate user
-        $affiliate = User::updateOrCreate(
-            ['email' => 'mas@affiliate.com'],
-            [
-                'name'     => 'Mas Affiliate',
-                'password' => Hash::make('password'),
-                'role'     => 'affiliator',
-            ]
-        );
-
-        $affiliateProfile = \App\Models\AffiliatorProfile::updateOrCreate(
-            ['user_id' => $affiliate->id],
-            [
-                'nik' => '3312012345670001',
-                'no_hp' => '081223344556',
-                'alamat' => 'Sokanegara, Purwokerto Timur',
-                'bank_name' => 'BCA',
-                'bank_account_number' => '1234567890',
-                'bank_account_name' => 'Mas Affiliate',
-                'commission_rate' => 10,
-                'status' => 'approved',
-                'referral_code' => \App\Models\AffiliatorProfile::generateCode('Mas Affiliate'),
-            ]
-        );
-
-        // Units (skip if already seeded)
-        if (Unit::count() === 0) {
-            $units = [
-                ['seri' => 'iPhone 15 Pro Max', 'imei' => '351234567890001', 'warna' => 'Natural Titanium', 'memori' => '256 GB', 'kondisi' => 'Mulus, BH 97%', 'harga_per_jam' => 25000, 'harga_per_hari' => 150000, 'is_active' => true],
-                ['seri' => 'iPhone 15 Pro',     'imei' => '351234567890002', 'warna' => 'Blue Titanium',    'memori' => '128 GB', 'kondisi' => 'Mulus, BH 95%', 'harga_per_jam' => 20000, 'harga_per_hari' => 120000, 'is_active' => true],
-                ['seri' => 'iPhone 14 Pro Max', 'imei' => '351234567890003', 'warna' => 'Space Black',      'memori' => '256 GB', 'kondisi' => 'Scratch kecil, BH 91%', 'harga_per_jam' => 18000, 'harga_per_hari' => 100000, 'is_active' => true],
-                ['seri' => 'iPhone 14',         'imei' => '351234567890004', 'warna' => 'Midnight',         'memori' => '128 GB', 'kondisi' => 'Baik, BH 90%',     'harga_per_jam' => 15000, 'harga_per_hari' => 80000,  'is_active' => true],
-            ];
-            foreach ($units as $u) {
-                Unit::create($u);
+                'created_at' => $u['created_at'],
+                'updated_at' => $u['created_at']
+            ]);
+            
+            // Create profile for affiliator
+            if ($u['role'] === 'affiliator') {
+                \App\Models\AffiliatorProfile::create([
+                    'user_id' => $u['id'],
+                    'status' => 'approved',
+                    'referral_code' => 'WI516', // From JSON rentals (WI516)
+                    'nik' => '3303116010070001',
+                    'no_hp' => '085645121183',
+                    'alamat' => 'CILONGOK,CIPETE',
+                    'bank_name' => 'BCA',
+                    'bank_account_number' => '12345678',
+                    'bank_account_name' => $u['name'],
+                    'commission_rate' => 10
+                ]);
             }
         }
 
-        $unitIds = Unit::pluck('id')->toArray();
-        if (empty($unitIds)) return;
-
-        $names   = ['Budi Santoso', 'Siti Rahayu', 'Andi Wijaya', 'Dewi Lestari', 'Rudi Hermawan', 'Ani Suryani', 'Hendra Kusuma', 'Maya Putri', 'Dian Permata', 'Fajar Nugroho'];
-        $methods = ['qris', 'cash', 'qris', 'transfer', 'cash', 'qris'];
-
-        // Generate realistic transactions from Jan 2026 to Apr 2026
-        // More in recent months, creating a natural growth curve
-        $batches = [
-            // [start_date, end_date, count]
-            ['2026-01-01', '2026-01-31', 18],  // Jan
-            ['2026-02-01', '2026-02-28', 22],  // Feb
-            ['2026-03-01', '2026-03-31', 30],  // Mar
-            ['2026-04-01', '2026-04-11', 12],  // Apr (partial)
+        // 4. Units Data
+        $unitsData = [
+            ["id"=> 5, "category_id"=> 1, "seri"=> "iPhone XR", "imei"=> "-", "memori"=> "64 GB", "warna"=> "WHITE", "kondisi"=> "MULUS", "specs"=> [], "harga_per_jam"=> 3000.00, "harga_per_hari"=> 70000.00, "is_active"=> true, "created_at"=> "2026-04-15 13:34:59"],
+            ["id"=> 6, "category_id"=> 1, "seri"=> "iPhone 11", "imei"=> "29", "memori"=> "64 GB", "warna"=> "WHITE", "kondisi"=> "MULUS", "specs"=> [], "harga_per_jam"=> 3400.00, "harga_per_hari"=> 80000.00, "is_active"=> true, "created_at"=> "2026-04-15 13:36:34"],
+            ["id"=> 7, "category_id"=> 1, "seri"=> "iPhone 11 Pro", "imei"=> "837", "memori"=> "64 GB", "warna"=> "BLACK", "kondisi"=> "MULUS", "specs"=> [], "harga_per_jam"=> 3700.00, "harga_per_hari"=> 88000.00, "is_active"=> true, "created_at"=> "2026-04-15 13:37:25"],
+            ["id"=> 8, "category_id"=> 1, "seri"=> "iPhone 12", "imei"=> "938", "memori"=> "64 GB", "warna"=> "WHITE", "kondisi"=> "MULUS", "specs"=> [], "harga_per_jam"=> 3750.00, "harga_per_hari"=> 90000.00, "is_active"=> true, "created_at"=> "2026-04-15 13:38:21"],
+            ["id"=> 9, "category_id"=> 1, "seri"=> "iPhone 13", "imei"=> "98", "memori"=> "128 GB", "warna"=> "PINK", "kondisi"=> "MULUS", "specs"=> [], "harga_per_jam"=> 5300.00, "harga_per_hari"=> 125000.00, "is_active"=> true, "created_at"=> "2026-04-15 13:39:13"],
+            ["id"=> 10, "category_id"=> 1, "seri"=> "iPhone 14", "imei"=> "93", "memori"=> "128 GB", "warna"=> "PURPLE", "kondisi"=> "MULUS", "specs"=> [], "harga_per_jam"=> 5900.00, "harga_per_hari"=> 140000.00, "is_active"=> true, "created_at"=> "2026-04-15 13:40:01"],
+            ["id"=> 11, "category_id"=> 1, "seri"=> "iPhone 15", "imei"=> "09", "memori"=> "128 GB", "warna"=> "PINK", "kondisi"=> "MULUS", "specs"=> [], "harga_per_jam"=> 8000.00, "harga_per_hari"=> 190000.00, "is_active"=> true, "created_at"=> "2026-04-15 13:41:00"],
+            ["id"=> 13, "category_id"=> 1, "seri"=> "iPhone XR", "imei"=> "1231", "memori"=> "64 GB", "warna"=> "White", "kondisi"=> "MULUS", "specs"=> [], "harga_per_jam"=> 3000.00, "harga_per_hari"=> 70000.00, "is_active"=> true, "created_at"=> "2026-04-19 14:29:36"]
         ];
 
-        $i = 0;
-        foreach ($batches as [$from, $to, $count]) {
-            $start = Carbon::parse($from);
-            $end   = Carbon::parse($to);
-            $days  = $start->diffInDays($end);
+        foreach ($unitsData as $ud) {
+            Unit::create($ud);
+        }
 
-            for ($j = 0; $j < $count; $j++) {
-                $daysOffset = rand(0, $days);
-                $hours      = rand(2, 8);
-                $startTime  = (clone $start)->addDays($daysOffset)->setHour(rand(8, 19))->setMinute(0)->setSecond(0);
-                $endTime    = (clone $startTime)->addHours($hours);
-                $unitId     = $unitIds[array_rand($unitIds)];
-                $unit       = Unit::find($unitId);
-                $subtotal   = $unit->harga_per_jam * $hours;
-                $kode       = rand(100, 999);
-                $grand      = $subtotal + $kode;
-                $method     = $methods[array_rand($methods)];
+        // 5. Pricing Rules Data
+        $pricingData = [
+            ["id"=> 1, "nama_promo"=> "APRIL HEMAT", "tipe"=> "hari_gratis", "value"=> 1.00, "syarat_minimal_durasi"=> 24, "syarat_tipe_durasi"=> "jam", "is_active"=> true, "start_date"=> "2026-04-01", "end_date"=> "2026-04-30"],
+            ["id"=> 2, "nama_promo"=> "1 MINGGU DISKON 15%", "tipe"=> "diskon_persen", "value"=> 15.00, "syarat_minimal_durasi"=> 7, "syarat_tipe_durasi"=> "hari", "is_active"=> true, "start_date"=> "2026-04-01", "end_date"=> "2026-05-31"],
+            ["id"=> 4, "nama_promo"=> "DISKON 5%", "kode_promo"=> "DISKON2026", "is_hidden"=> true, "tipe"=> "diskon_persen", "value"=> 5.00, "syarat_minimal_durasi"=> 12, "syarat_tipe_durasi"=> "jam", "is_active"=> true]
+        ];
 
-                // Last ~10% per batch are pending/paid, rest completed
-                $status = ($j >= $count - 2 && $from === '2026-04-01') ? 'pending'
-                        : ($j >= $count - 3 && $from === '2026-04-01' ? 'paid' : 'completed');
+        foreach ($pricingData as $pd) {
+            PricingRule::create($pd);
+        }
 
-                $rental = Rental::create([
-                    'unit_id'              => $unitId,
-                    'nik'                  => '3312' . str_pad(rand(1, 999999999999), 12, '0', STR_PAD_LEFT),
-                    'nama'                 => $names[array_rand($names)],
-                    'alamat'               => 'Jl. Contoh No. ' . rand(1, 99) . ', Purwokerto',
-                    'no_wa'                => '08' . rand(100000000, 999999999),
-                    'waktu_mulai'          => $startTime,
-                    'waktu_selesai'        => $endTime,
-                    'subtotal_harga'       => $subtotal,
-                    'potongan_diskon'      => 0,
-                    'kode_unik_pembayaran' => $kode,
-                    'grand_total'          => $grand,
-                    'status'               => $status,
-                    'metode_pembayaran'    => $method,
-                    'created_at'           => $startTime,
-                    'updated_at'           => $startTime,
-                    'affiliator_id'        => ($i % 5 === 0) ? $affiliate->id : null, // Every 5th rental is referred
-                    'affiliate_code'       => ($i % 5 === 0) ? $affiliateProfile->referral_code : null,
-                ]);
+        // 6. Rentals Data
+        $rentalsData = [
+            ["id"=> 84, "unit_id"=> 7, "nik"=> "3308201812960004", "nama"=> "THOBA MUSTOFA", "alamat"=> "PASIR MUNCANG", "no_wa"=> "087837032444", "waktu_mulai"=> "2026-04-15 07:00:00", "waktu_selesai"=> "2026-04-17 07:00:00", "subtotal_harga"=> 95000.00, "potongan_diskon"=> 15000.00, "applied_promo_name"=> "APRIL HEMAT", "hari_bonus"=> 1, "kode_unik_pembayaran"=> 483, "grand_total"=> 80483.00, "status"=> "completed", "metode_pembayaran"=> "qris"],
+            ["id"=> 87, "unit_id"=> 7, "nik"=> "3308201812960004", "nama"=> "THOBA MUSTOFA", "alamat"=> "GANG 3 RT 03 PASIRMUNCANG...", "no_wa"=> "087837032444", "waktu_mulai"=> "2026-04-17 06:15:00", "waktu_selesai"=> "2026-04-20 06:15:00", "subtotal_harga"=> 176000.00, "potongan_diskon"=> 0.00, "applied_promo_name"=> "APRIL HEMAT", "hari_bonus"=> 1, "kode_unik_pembayaran"=> 368, "grand_total"=> 176368.00, "status"=> "completed", "metode_pembayaran"=> "qris"],
+            ["id"=> 90, "unit_id"=> 8, "nik"=> "3302146511080004", "nama"=> "NOVANZA CALISTA PUTRI ", "alamat"=> "PURWOKERTO SELATAN...", "no_wa"=> "088983032475", "waktu_mulai"=> "2026-04-18 09:00:00", "waktu_selesai"=> "2026-04-20 09:00:00", "subtotal_harga"=> 90000.00, "potongan_diskon"=> 10000.00, "applied_promo_name"=> "APRIL HEMAT", "hari_bonus"=> 1, "kode_unik_pembayaran"=> 387, "grand_total"=> 80387.00, "status"=> "completed", "metode_pembayaran"=> "qris"],
+            ["id"=> 98, "unit_id"=> 6, "nik"=> "3302174903080001", "nama"=> "WILDA NASHUHA DWI MULYANTI", "alamat"=> "CILONGOKCIPETE", "no_wa"=> "081945951871", "waktu_mulai"=> "2026-05-01 07:30:00", "waktu_selesai"=> "2026-05-03 07:30:00", "subtotal_harga"=> 80000.00, "potongan_diskon"=> 0.00, "applied_promo_name"=> "APRIL HEMAT", "hari_bonus"=> 1, "kode_unik_pembayaran"=> 862, "grand_total"=> 80862.00, "status"=> "pending", "metode_pembayaran"=> "qris"],
+            ["id"=> 99, "unit_id"=> 5, "nik"=> "3302146511080004", "nama"=> "NOVANZA CALISTA PUTRI", "alamat"=> "PURWOKERTO SELATAN...", "no_wa"=> "088983032475", "waktu_mulai"=> "2026-04-27 07:00:00", "waktu_selesai"=> "2026-04-30 07:00:00", "subtotal_harga"=> 140000.00, "potongan_diskon"=> 0.00, "applied_promo_name"=> "APRIL HEMAT", "hari_bonus"=> 1, "kode_unik_pembayaran"=> 819, "grand_total"=> 140819.00, "status"=> "cancelled", "metode_pembayaran"=> "qris"],
+            ["id"=> 114, "unit_id"=> 7, "nik"=> "3308201812960004", "nama"=> "THOBA MUSTOFA", "alamat"=> "GANG 3 RT 03 PASIRMUNCANG...", "no_wa"=> "087837032444", "waktu_mulai"=> "2026-04-20 04:03:00", "waktu_selesai"=> "2026-04-22 04:03:00", "subtotal_harga"=> 88000.00, "potongan_diskon"=> 0.00, "applied_promo_name"=> "APRIL HEMAT", "hari_bonus"=> 1, "kode_unik_pembayaran"=> 362, "grand_total"=> 88362.00, "status"=> "paid", "metode_pembayaran"=> "qris", "booking_code" => "RFTHVUSXRKL5"],
+            ["id"=> 122, "unit_id"=> 6, "nik"=> "3303116010070001", "nama"=> "SITI TANZILURROHMAH ", "alamat"=> "CILONGOK,CIPETE", "no_wa"=> "085645121183", "waktu_mulai"=> "2026-04-30 07:00:00", "waktu_selesai"=> "2026-05-02 07:00:00", "subtotal_harga"=> 80000.00, "potongan_diskon"=> 0.00, "applied_promo_name"=> "APRIL HEMAT", "hari_bonus"=> 1, "kode_unik_pembayaran"=> 411, "grand_total"=> 80411.00, "status"=> "pending", "metode_pembayaran"=> "qris", "affiliator_id" => 6, "affiliate_code" => "WI516", "booking_code" => "KEULR7RSTNLJ"]
+        ];
 
-                if ($rental->affiliator_id && $status === 'completed') {
-                    \App\Models\AffiliateCommission::create([
-                        'affiliator_id' => $rental->affiliator_id,
-                        'rental_id' => $rental->id,
-                        'amount' => $rental->subtotal_harga * 0.1,
-                        'status' => 'earned',
-                        'created_at' => $startTime,
-                    ]);
-                }
+        foreach ($rentalsData as $rd) {
+            Rental::create($rd);
+        }
 
-                $i++;
-            }
+        // 7. Settings Data
+        $settingsData = [
+            ["key"=> "qris", "value"=> "qris_1776795721.jpeg"],
+            ["key"=> "hero", "value"=> "hero_1776258696.jpg"],
+            ["key"=> "home_title", "value"=> "Sewa Mudah, Cepat, dan Aman"],
+            ["key"=> "home_description", "value"=> "Pilih sesuai kebutuhan Anda. Bebas atur jadwal sewa, harga bersahabat, tanpa syarat ribet!"],
+            ["key"=> "late_tolerance_minutes", "value"=> "60"],
+            ["key"=> "admin_wa", "value"=> "62881082411878"],
+            ["key"=> "admin_address", "value"=> "Jl. BP Pereng, Pereng, Sokanegara..."],
+            ["key"=> "payment_methods", "value"=> "{\"qris\":true,\"cash\":true,\"transfer\":false}"]
+        ];
+
+        foreach ($settingsData as $sd) {
+            Setting::updateOrCreate(['key' => $sd['key']], ['value' => $sd['value']]);
+        }
+
+        // 8. Re-enable Foreign Keys
+        Schema::enableForeignKeyConstraints();
+        
+        // 9. Reset Sequence (Postgres only)
+        if (config('database.default') === 'pgsql') {
+            DB::select("SELECT setval('users_id_seq', (SELECT MAX(id) FROM users))");
+            DB::select("SELECT setval('units_id_seq', (SELECT MAX(id) FROM units))");
+            DB::select("SELECT setval('rentals_id_seq', (SELECT MAX(id) FROM rentals))");
         }
     }
 }
