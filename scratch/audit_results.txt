@@ -1,0 +1,350 @@
+Token        | Line  | Depth | Parent
+--------------------------------------------------
+<div         | 1     | 1     | Root
+<div         | 32    | 2     | <div
+<div         | 34    | 3     | <div
+<div         | 36    | 4     | <div
+<div         | 39    | 5     | <div
+@foreach     | 43    | 6     | <div
+@endforeach  | 45    | 6     | Closes @foreach from 43
+<div         | 47    | 6     | <div
+</div>       | 49    | 6     | Closes <div from 47
+</div>       | 50    | 5     | Closes <div from 39
+</div>       | 51    | 4     | Closes <div from 36
+<div         | 54    | 4     | <div
+<div         | 56    | 5     | <div
+<div         | 66    | 6     | <div
+</div>       | 68    | 6     | Closes <div from 66
+</div>       | 69    | 5     | Closes <div from 56
+</div>       | 70    | 4     | Closes <div from 54
+@if          | 72    | 4     | <div
+<div         | 73    | 5     | @if
+<div         | 74    | 6     | <div
+</div>       | 78    | 6     | Closes <div from 74
+<div         | 79    | 6     | <div
+</div>       | 83    | 6     | Closes <div from 79
+</div>       | 84    | 5     | Closes <div from 73
+@endif       | 85    | 4     | Closes @if from 72
+</div>       | 86    | 3     | Closes <div from 34
+<div         | 89    | 3     | <div
+<div         | 91    | 4     | <div
+<div         | 92    | 5     | <div
+</div>       | 95    | 5     | Closes <div from 92
+<div         | 96    | 5     | <div
+</div>       | 99    | 5     | Closes <div from 96
+</div>       | 100   | 4     | Closes <div from 91
+<div         | 102   | 4     | <div
+</div>       | 102   | 4     | Closes <div from 102
+<div         | 105   | 4     | <div
+<div         | 106   | 5     | <div
+</div>       | 109   | 5     | Closes <div from 106
+<div         | 110   | 5     | <div
+</div>       | 113   | 5     | Closes <div from 110
+</div>       | 114   | 4     | Closes <div from 105
+</div>       | 115   | 3     | Closes <div from 89
+</div>       | 116   | 2     | Closes <div from 32
+<div         | 119   | 2     | <div
+<div         | 120   | 3     | <div
+<div         | 123   | 4     | <div
+<div         | 125   | 5     | <div
+<div         | 126   | 6     | <div
+</div>       | 128   | 6     | Closes <div from 126
+<div         | 129   | 6     | <div
+@foreach     | 139   | 7     | <div
+<div         | 140   | 8     | @foreach
+</div>       | 143   | 8     | Closes <div from 140
+@endforeach  | 144   | 7     | Closes @foreach from 139
+</div>       | 145   | 6     | Closes <div from 129
+</div>       | 146   | 5     | Closes <div from 125
+<div         | 149   | 5     | <div
+<div         | 150   | 6     | <div
+</div>       | 152   | 6     | Closes <div from 150
+<div         | 153   | 6     | <div
+@foreach     | 154   | 7     | <div
+<div         | 155   | 8     | @foreach
+<div         | 156   | 9     | <div
+</div>       | 158   | 9     | Closes <div from 156
+<div         | 159   | 9     | <div
+</div>       | 161   | 9     | Closes <div from 159
+</div>       | 162   | 8     | Closes <div from 155
+@endforeach  | 163   | 7     | Closes @foreach from 154
+</div>       | 164   | 6     | Closes <div from 153
+</div>       | 165   | 5     | Closes <div from 149
+</div>       | 166   | 4     | Closes <div from 123
+<div         | 169   | 4     | <div
+@foreach     | 170   | 5     | <div
+<div         | 171   | 6     | @foreach
+<div         | 173   | 7     | <div
+<div         | 174   | 8     | <div
+</div>       | 174   | 8     | Closes <div from 174
+<div         | 175   | 8     | <div
+<div         | 176   | 9     | <div
+</div>       | 178   | 9     | Closes <div from 176
+<div         | 179   | 9     | <div
+</div>       | 182   | 9     | Closes <div from 179
+</div>       | 183   | 8     | Closes <div from 175
+</div>       | 184   | 7     | Closes <div from 173
+<div         | 187   | 7     | <div
+<div         | 189   | 8     | <div
+@foreach     | 190   | 9     | <div
+<div         | 191   | 10    | @foreach
+</div>       | 191   | 10    | Closes <div from 191
+@endforeach  | 192   | 9     | Closes @foreach from 190
+</div>       | 193   | 8     | Closes <div from 189
+@foreach     | 196   | 8     | <div
+<div         | 231   | 9     | @foreach
+<div         | 254   | 10    | <div
+<div         | 255   | 11    | <div
+<div         | 256   | 12    | <div
+</div>       | 256   | 12    | Closes <div from 256
+<div         | 257   | 12    | <div
+@if          | 261   | 13    | <div
+@endif       | 266   | 13    | Closes @if from 261
+</div>       | 267   | 12    | Closes <div from 257
+</div>       | 268   | 11    | Closes <div from 255
+<div         | 271   | 11    | <div
+<div         | 272   | 12    | <div
+</div>       | 276   | 12    | Closes <div from 272
+@if          | 277   | 12    | <div
+@endif       | 281   | 12    | Closes @if from 277
+</div>       | 282   | 11    | Closes <div from 271
+</div>       | 283   | 10    | Closes <div from 254
+</div>       | 284   | 9     | Closes <div from 231
+@endforeach  | 285   | 8     | Closes @foreach from 196
+</div>       | 286   | 7     | Closes <div from 187
+</div>       | 287   | 6     | Closes <div from 171
+@endforeach  | 288   | 5     | Closes @foreach from 170
+</div>       | 289   | 4     | Closes <div from 169
+</div>       | 290   | 3     | Closes <div from 120
+</div>       | 291   | 2     | Closes <div from 119
+<div         | 294   | 2     | <div
+<div         | 295   | 3     | <div
+<div         | 296   | 4     | <div
+</div>       | 296   | 4     | Closes <div from 296
+</div>       | 298   | 3     | Closes <div from 295
+<div         | 299   | 3     | <div
+<div         | 300   | 4     | <div
+</div>       | 300   | 4     | Closes <div from 300
+</div>       | 302   | 3     | Closes <div from 299
+<div         | 303   | 3     | <div
+<div         | 304   | 4     | <div
+</div>       | 304   | 4     | Closes <div from 304
+</div>       | 306   | 3     | Closes <div from 303
+</div>       | 307   | 2     | Closes <div from 294
+<div         | 310   | 2     | <div
+<div         | 313   | 3     | <div
+<div         | 314   | 4     | <div
+<div         | 315   | 5     | <div
+<div         | 316   | 6     | <div
+</div>       | 318   | 6     | Closes <div from 316
+<div         | 319   | 6     | <div
+</div>       | 322   | 6     | Closes <div from 319
+</div>       | 323   | 5     | Closes <div from 315
+<div         | 324   | 5     | <div
+</div>       | 330   | 5     | Closes <div from 324
+</div>       | 331   | 4     | Closes <div from 314
+@if          | 333   | 4     | <div
+<div         | 334   | 5     | @if
+@foreach     | 335   | 6     | <div
+<div         | 336   | 7     | @foreach
+<div         | 341   | 8     | <div
+<div         | 342   | 9     | <div
+<div         | 343   | 10    | <div
+@foreach     | 344   | 11    | <div
+<div         | 345   | 12    | @foreach
+</div>       | 349   | 12    | Closes <div from 345
+@endforeach  | 350   | 11    | Closes @foreach from 344
+</div>       | 351   | 10    | Closes <div from 343
+<div         | 352   | 10    | <div
+</div>       | 354   | 10    | Closes <div from 352
+<div         | 355   | 10    | <div
+</div>       | 361   | 10    | Closes <div from 355
+</div>       | 362   | 9     | Closes <div from 342
+<div         | 364   | 9     | <div
+<div         | 366   | 10    | <div
+</div>       | 381   | 10    | Closes <div from 366
+<div         | 382   | 10    | <div
+</div>       | 385   | 10    | Closes <div from 382
+</div>       | 386   | 9     | Closes <div from 364
+</div>       | 387   | 8     | Closes <div from 341
+<div         | 390   | 8     | <div
+<div         | 391   | 9     | <div
+<div         | 392   | 10    | <div
+<div         | 394   | 11    | <div
+<div         | 395   | 12    | <div
+</div>       | 398   | 12    | Closes <div from 395
+<div         | 399   | 12    | <div
+</div>       | 402   | 12    | Closes <div from 399
+<div         | 403   | 12    | <div
+</div>       | 408   | 12    | Closes <div from 403
+</div>       | 409   | 11    | Closes <div from 394
+</div>       | 410   | 10    | Closes <div from 392
+<div         | 412   | 10    | <div
+<div         | 414   | 11    | <div
+<div         | 415   | 12    | <div
+<div         | 416   | 13    | <div
+</div>       | 416   | 13    | Closes <div from 416
+<div         | 417   | 13    | <div
+</div>       | 420   | 13    | Closes <div from 417
+</div>       | 421   | 12    | Closes <div from 415
+<div         | 422   | 12    | <div
+<div         | 423   | 13    | <div
+</div>       | 423   | 13    | Closes <div from 423
+<div         | 424   | 13    | <div
+</div>       | 427   | 13    | Closes <div from 424
+</div>       | 428   | 12    | Closes <div from 422
+</div>       | 429   | 11    | Closes <div from 414
+</div>       | 430   | 10    | Closes <div from 412
+<div         | 432   | 10    | <div
+<div         | 434   | 11    | <div
+<div         | 435   | 12    | <div
+<div         | 436   | 13    | <div
+</div>       | 439   | 13    | Closes <div from 436
+@if          | 440   | 13    | <div
+<div         | 441   | 14    | @if
+</div>       | 444   | 14    | Closes <div from 441
+@endif       | 445   | 13    | Closes @if from 440
+<div         | 446   | 13    | <div
+</div>       | 446   | 13    | Closes <div from 446
+<div         | 447   | 13    | <div
+</div>       | 450   | 13    | Closes <div from 447
+</div>       | 451   | 12    | Closes <div from 435
+</div>       | 452   | 11    | Closes <div from 434
+<div         | 453   | 11    | <div
+</div>       | 455   | 11    | Closes <div from 453
+</div>       | 456   | 10    | Closes <div from 432
+</div>       | 457   | 9     | Closes <div from 391
+</div>       | 458   | 8     | Closes <div from 390
+</div>       | 459   | 7     | Closes <div from 336
+@endforeach  | 460   | 6     | Closes @foreach from 335
+</div>       | 461   | 5     | Closes <div from 334
+<div         | 463   | 5     | @if
+</div>       | 465   | 5     | Closes <div from 463
+@endif       | 466   | 4     | Closes @if from 333
+</div>       | 467   | 3     | Closes <div from 313
+<div         | 470   | 3     | <div
+<div         | 471   | 4     | <div
+<div         | 472   | 5     | <div
+<div         | 473   | 6     | <div
+</div>       | 475   | 6     | Closes <div from 473
+<div         | 476   | 6     | <div
+</div>       | 479   | 6     | Closes <div from 476
+</div>       | 480   | 5     | Closes <div from 472
+<div         | 481   | 5     | <div
+</div>       | 483   | 5     | Closes <div from 481
+</div>       | 484   | 4     | Closes <div from 471
+@if          | 485   | 4     | <div
+<div         | 486   | 5     | @if
+@foreach     | 487   | 6     | <div
+<div         | 488   | 7     | @foreach
+<div         | 493   | 8     | <div
+<div         | 494   | 9     | <div
+<div         | 495   | 10    | <div
+@foreach     | 496   | 11    | <div
+<div         | 497   | 12    | @foreach
+</div>       | 501   | 12    | Closes <div from 497
+@endforeach  | 502   | 11    | Closes @foreach from 496
+</div>       | 503   | 10    | Closes <div from 495
+<div         | 504   | 10    | <div
+<div         | 505   | 11    | <div
+</div>       | 507   | 11    | Closes <div from 505
+<div         | 508   | 11    | <div
+</div>       | 513   | 11    | Closes <div from 508
+</div>       | 514   | 10    | Closes <div from 504
+<div         | 516   | 10    | <div
+<div         | 518   | 11    | <div
+</div>       | 534   | 11    | Closes <div from 518
+<div         | 535   | 11    | <div
+</div>       | 538   | 11    | Closes <div from 535
+</div>       | 539   | 10    | Closes <div from 516
+</div>       | 540   | 9     | Closes <div from 494
+<div         | 542   | 9     | <div
+<div         | 543   | 10    | <div
+<div         | 544   | 11    | <div
+<div         | 546   | 12    | <div
+<div         | 548   | 13    | <div
+</div>       | 550   | 13    | Closes <div from 548
+</div>       | 551   | 12    | Closes <div from 546
+</div>       | 552   | 11    | Closes <div from 544
+<div         | 553   | 11    | <div
+</div>       | 557   | 11    | Closes <div from 553
+<div         | 558   | 11    | <div
+</div>       | 561   | 11    | Closes <div from 558
+</div>       | 562   | 10    | Closes <div from 543
+</div>       | 563   | 9     | Closes <div from 542
+</div>       | 564   | 8     | Closes <div from 493
+@endforeach  | 565   | 7     | Closes <div from 488
+</div>       | 566   | 6     | Closes @foreach from 487
+<div         | 568   | 6     | <div
+</div>       | 570   | 6     | Closes <div from 568
+@endif       | 571   | 5     | Closes <div from 486
+</div>       | 572   | 4     | Closes @if from 485
+</div>       | 574   | 3     | Closes <div from 470
+</div>       | 575   | 2     | Closes <div from 310
+<div         | 578   | 2     | <div
+<div         | 588   | 3     | <div
+</div>       | 588   | 3     | Closes <div from 588
+<div         | 590   | 3     | <div
+@if          | 595   | 4     | <div
+<div         | 598   | 5     | @if
+<div         | 599   | 6     | <div
+</div>       | 602   | 6     | Closes <div from 599
+</div>       | 606   | 5     | Closes <div from 598
+<div         | 608   | 5     | @if
+<div         | 610   | 6     | <div
+<div         | 611   | 7     | <div
+<div         | 613   | 8     | <div
+@if          | 614   | 9     | <div
+@endif       | 618   | 9     | Closes @if from 614
+</div>       | 619   | 8     | Closes <div from 613
+</div>       | 620   | 7     | Closes <div from 611
+<div         | 621   | 7     | <div
+</div>       | 624   | 7     | Closes <div from 621
+</div>       | 625   | 6     | Closes <div from 610
+<div         | 628   | 6     | <div
+<div         | 630   | 7     | <div
+<div         | 632   | 8     | <div
+<div         | 633   | 9     | <div
+</div>       | 636   | 9     | Closes <div from 633
+<div         | 637   | 9     | <div
+</div>       | 640   | 9     | Closes <div from 637
+<div         | 641   | 9     | <div
+</div>       | 644   | 9     | Closes <div from 641
+</div>       | 645   | 8     | Closes <div from 632
+</div>       | 646   | 7     | Closes <div from 630
+<div         | 649   | 7     | <div
+<div         | 651   | 8     | <div
+<div         | 652   | 9     | <div
+<div         | 654   | 10    | <div
+@foreach     | 655   | 11    | <div
+<div         | 656   | 12    | @foreach
+</div>       | 659   | 12    | Closes <div from 656
+@endforeach  | 660   | 11    | Closes @foreach from 655
+</div>       | 661   | 10    | Closes <div from 654
+</div>       | 662   | 9     | Closes <div from 652
+<div         | 663   | 9     | <div
+</div>       | 666   | 9     | Closes <div from 663
+<div         | 667   | 9     | <div
+</div>       | 670   | 9     | Closes <div from 667
+</div>       | 671   | 8     | Closes <div from 651
+</div>       | 672   | 7     | Closes <div from 649
+</div>       | 673   | 6     | Closes <div from 628
+<div         | 676   | 6     | <div
+<div         | 678   | 7     | <div
+@if          | 685   | 8     | <div
+@endif       | 690   | 8     | Closes @if from 685
+@if          | 695   | 8     | <div
+@endif       | 700   | 8     | Closes @if from 695
+</div>       | 707   | 7     | Closes <div from 678
+</div>       | 708   | 6     | Closes <div from 676
+</div>       | 709   | 5     | Closes <div from 608
+<div         | 712   | 5     | @if
+</div>       | 717   | 5     | Closes <div from 712
+<div         | 719   | 5     | @if
+<div         | 720   | 6     | <div
+</div>       | 720   | 6     | Closes <div from 720
+</div>       | 722   | 5     | Closes <div from 719
+@endif       | 723   | 4     | Closes @if from 595
+</div>       | 724   | 3     | Closes <div from 590
+</div>       | 725   | 2     | Closes <div from 578
+</div>       | 726   | 1     | Closes <div from 1

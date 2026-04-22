@@ -148,6 +148,8 @@
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Promo</a>
         <a href="{{ route('admin.transactions') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Transaksi</a>
+        <a href="{{ route('admin.monitoring') }}" wire:navigate
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Monitoring</a>
         @if(auth()->user()->role === 'admin')
         <a href="{{ route('admin.affiliate') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Affiliate</a>

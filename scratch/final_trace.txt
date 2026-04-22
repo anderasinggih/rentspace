@@ -1,0 +1,356 @@
+Line  | Token        | Stack Depth  | Top of Stack
+------------------------------------------------------------
+1     | <div         | 1            | <div
+32    | <div         | 2            | <div
+34    | <div         | 3            | <div
+36    | <div         | 4            | <div
+39    | <div         | 5            | <div
+43    | @foreach     | 6            | @foreach
+45    | @endforeach  | 5            | Closed @foreach from 43
+47    | <div         | 6            | <div
+49    | </div        | 5            | Closed <div from 47
+50    | </div        | 4            | Closed <div from 39
+54    | <div         | 5            | <div
+56    | <div         | 6            | <div
+66    | <div         | 7            | <div
+68    | </div        | 6            | Closed <div from 66
+69    | </div        | 5            | Closed <div from 56
+70    | </div        | 4            | Closed <div from 54
+72    | @if          | 5            | @if
+73    | <div         | 6            | <div
+74    | <div         | 7            | <div
+78    | </div        | 6            | Closed <div from 74
+79    | <div         | 7            | <div
+83    | </div        | 6            | Closed <div from 79
+84    | </div        | 5            | Closed <div from 73
+85    | @endif       | 4            | Closed @if from 72
+86    | </div        | 3            | Closed <div from 36
+88    | </div        | 2            | Closed <div from 34
+91    | <div         | 3            | <div
+93    | <div         | 4            | <div
+95    | <div         | 5            | <div
+96    | <div         | 6            | <div
+99    | </div        | 5            | Closed <div from 96
+100   | <div         | 6            | <div
+103   | </div        | 5            | Closed <div from 100
+104   | </div        | 4            | Closed <div from 95
+106   | <div         | 5            | <div
+106   | </div        | 4            | Closed <div from 106
+109   | <div         | 5            | <div
+110   | <div         | 6            | <div
+113   | </div        | 5            | Closed <div from 110
+114   | <div         | 6            | <div
+117   | </div        | 5            | Closed <div from 114
+118   | </div        | 4            | Closed <div from 109
+119   | </div        | 3            | Closed <div from 93
+121   | <div         | 4            | <div
+124   | <div         | 5            | <div
+126   | <div         | 6            | <div
+127   | <div         | 7            | <div
+129   | </div        | 6            | Closed <div from 127
+130   | <div         | 7            | <div
+140   | @foreach     | 8            | @foreach
+141   | <div         | 9            | <div
+144   | </div        | 8            | Closed <div from 141
+145   | @endforeach  | 7            | Closed @foreach from 140
+146   | </div        | 6            | Closed <div from 130
+147   | </div        | 5            | Closed <div from 126
+150   | <div         | 6            | <div
+151   | <div         | 7            | <div
+153   | </div        | 6            | Closed <div from 151
+154   | <div         | 7            | <div
+155   | @foreach     | 8            | @foreach
+156   | <div         | 9            | <div
+157   | <div         | 10           | <div
+159   | </div        | 9            | Closed <div from 157
+160   | <div         | 10           | <div
+162   | </div        | 9            | Closed <div from 160
+163   | </div        | 8            | Closed <div from 156
+164   | @endforeach  | 7            | Closed @foreach from 155
+165   | </div        | 6            | Closed <div from 154
+166   | </div        | 5            | Closed <div from 150
+167   | </div        | 4            | Closed <div from 124
+170   | <div         | 5            | <div
+171   | @foreach     | 6            | @foreach
+172   | <div         | 7            | <div
+174   | <div         | 8            | <div
+175   | <div         | 9            | <div
+175   | </div        | 8            | Closed <div from 175
+176   | <div         | 9            | <div
+177   | <div         | 10           | <div
+179   | </div        | 9            | Closed <div from 177
+180   | <div         | 10           | <div
+183   | </div        | 9            | Closed <div from 180
+184   | </div        | 8            | Closed <div from 176
+185   | </div        | 7            | Closed <div from 174
+188   | <div         | 8            | <div
+190   | <div         | 9            | <div
+191   | @foreach     | 10           | @foreach
+192   | <div         | 11           | <div
+192   | </div        | 10           | Closed <div from 192
+193   | @endforeach  | 9            | Closed @foreach from 191
+194   | </div        | 8            | Closed <div from 190
+197   | @foreach     | 9            | @foreach
+232   | <div         | 10           | <div
+255   | <div         | 11           | <div
+256   | <div         | 12           | <div
+257   | <div         | 13           | <div
+257   | </div        | 12           | Closed <div from 257
+258   | <div         | 13           | <div
+262   | @if          | 14           | @if
+267   | @endif       | 13           | Closed @if from 262
+268   | </div        | 12           | Closed <div from 258
+269   | </div        | 11           | Closed <div from 256
+272   | <div         | 12           | <div
+273   | <div         | 13           | <div
+277   | </div        | 12           | Closed <div from 273
+278   | @if          | 13           | @if
+282   | @endif       | 12           | Closed @if from 278
+283   | </div        | 11           | Closed <div from 272
+284   | </div        | 10           | Closed <div from 255
+285   | </div        | 9            | Closed <div from 232
+286   | @endforeach  | 8            | Closed @foreach from 197
+287   | </div        | 7            | Closed <div from 188
+288   | </div        | 6            | Closed <div from 172
+289   | @endforeach  | 5            | Closed @foreach from 171
+290   | </div        | 4            | Closed <div from 170
+291   | </div        | 3            | Closed <div from 121
+292   | </div        | 2            | Closed <div from 91
+295   | <div         | 3            | <div
+296   | <div         | 4            | <div
+297   | <div         | 5            | <div
+297   | </div        | 4            | Closed <div from 297
+299   | </div        | 3            | Closed <div from 296
+300   | <div         | 4            | <div
+301   | <div         | 5            | <div
+301   | </div        | 4            | Closed <div from 301
+303   | </div        | 3            | Closed <div from 300
+304   | <div         | 4            | <div
+305   | <div         | 5            | <div
+305   | </div        | 4            | Closed <div from 305
+307   | </div        | 3            | Closed <div from 304
+308   | </div        | 2            | Closed <div from 295
+311   | <div         | 3            | <div
+314   | <div         | 4            | <div
+315   | <div         | 5            | <div
+316   | <div         | 6            | <div
+317   | <div         | 7            | <div
+319   | </div        | 6            | Closed <div from 317
+320   | <div         | 7            | <div
+323   | </div        | 6            | Closed <div from 320
+324   | </div        | 5            | Closed <div from 316
+325   | <div         | 6            | <div
+331   | </div        | 5            | Closed <div from 325
+332   | </div        | 4            | Closed <div from 315
+334   | @if          | 5            | @if
+335   | <div         | 6            | <div
+336   | @foreach     | 7            | @foreach
+337   | <div         | 8            | <div
+342   | <div         | 9            | <div
+343   | <div         | 10           | <div
+344   | <div         | 11           | <div
+345   | @foreach     | 12           | @foreach
+346   | <div         | 13           | <div
+350   | </div        | 12           | Closed <div from 346
+351   | @endforeach  | 11           | Closed @foreach from 345
+352   | </div        | 10           | Closed <div from 344
+353   | <div         | 11           | <div
+354   | <div         | 12           | <div
+356   | </div        | 11           | Closed <div from 354
+357   | <div         | 12           | <div
+363   | </div        | 11           | Closed <div from 357
+364   | </div        | 10           | Closed <div from 353
+365   | </div        | 9            | Closed <div from 343
+367   | <div         | 10           | <div
+369   | <div         | 11           | <div
+384   | </div        | 10           | Closed <div from 369
+385   | <div         | 11           | <div
+388   | </div        | 10           | Closed <div from 385
+389   | </div        | 9            | Closed <div from 367
+390   | </div        | 8            | Closed <div from 342
+393   | <div         | 9            | <div
+394   | <div         | 10           | <div
+395   | <div         | 11           | <div
+397   | <div         | 12           | <div
+398   | <div         | 13           | <div
+401   | </div        | 12           | Closed <div from 398
+402   | <div         | 13           | <div
+405   | </div        | 12           | Closed <div from 402
+406   | <div         | 13           | <div
+411   | </div        | 12           | Closed <div from 406
+412   | </div        | 11           | Closed <div from 397
+413   | </div        | 10           | Closed <div from 395
+415   | <div         | 11           | <div
+417   | <div         | 12           | <div
+418   | <div         | 13           | <div
+419   | <div         | 14           | <div
+419   | </div        | 13           | Closed <div from 419
+420   | <div         | 14           | <div
+423   | </div        | 13           | Closed <div from 420
+424   | </div        | 12           | Closed <div from 418
+425   | <div         | 13           | <div
+426   | <div         | 14           | <div
+426   | </div        | 13           | Closed <div from 426
+427   | <div         | 14           | <div
+430   | </div        | 13           | Closed <div from 427
+431   | </div        | 12           | Closed <div from 425
+432   | </div        | 11           | Closed <div from 417
+433   | </div        | 10           | Closed <div from 415
+435   | <div         | 11           | <div
+437   | <div         | 12           | <div
+438   | <div         | 13           | <div
+439   | <div         | 14           | <div
+442   | </div        | 13           | Closed <div from 439
+443   | @if          | 14           | @if
+444   | <div         | 15           | <div
+447   | </div        | 14           | Closed <div from 444
+448   | @endif       | 13           | Closed @if from 443
+449   | <div         | 14           | <div
+449   | </div        | 13           | Closed <div from 449
+450   | <div         | 14           | <div
+453   | </div        | 13           | Closed <div from 450
+454   | </div        | 12           | Closed <div from 438
+455   | </div        | 11           | Closed <div from 437
+456   | </div        | 10           | Closed <div from 435
+457   | </div        | 9            | Closed <div from 394
+458   | </div        | 8            | Closed <div from 393
+459   | </div        | 7            | Closed <div from 337
+461   | @endforeach  | 6            | Closed @foreach from 336
+463   | </div        | 5            | Closed <div from 335
+464   | @else        | 5            | @if
+465   | <div         | 6            | <div
+467   | </div        | 5            | Closed <div from 465
+468   | @endif       | 4            | Closed @if from 334
+469   | </div        | 3            | Closed <div from 314
+472   | <div         | 4            | <div
+473   | <div         | 5            | <div
+474   | <div         | 6            | <div
+475   | <div         | 7            | <div
+477   | </div        | 6            | Closed <div from 475
+478   | <div         | 7            | <div
+481   | </div        | 6            | Closed <div from 478
+482   | </div        | 5            | Closed <div from 474
+483   | <div         | 6            | <div
+485   | </div        | 5            | Closed <div from 483
+486   | </div        | 4            | Closed <div from 473
+487   | @if          | 5            | @if
+488   | <div         | 6            | <div
+489   | @foreach     | 7            | @foreach
+490   | <div         | 8            | <div
+495   | <div         | 9            | <div
+496   | <div         | 10           | <div
+497   | <div         | 11           | <div
+498   | @foreach     | 12           | @foreach
+499   | <div         | 13           | <div
+503   | </div        | 12           | Closed <div from 499
+504   | @endforeach  | 11           | Closed @foreach from 498
+505   | </div        | 10           | Closed <div from 497
+506   | <div         | 11           | <div
+507   | <div         | 12           | <div
+509   | </div        | 11           | Closed <div from 507
+510   | <div         | 12           | <div
+516   | </div        | 11           | Closed <div from 510
+517   | </div        | 10           | Closed <div from 506
+518   | </div        | 9            | Closed <div from 496
+520   | <div         | 10           | <div
+522   | <div         | 11           | <div
+538   | </div        | 10           | Closed <div from 522
+539   | <div         | 11           | <div
+542   | </div        | 10           | Closed <div from 539
+543   | </div        | 9            | Closed <div from 520
+544   | </div        | 8            | Closed <div from 495
+546   | <div         | 9            | <div
+547   | <div         | 10           | <div
+548   | <div         | 11           | <div
+550   | <div         | 12           | <div
+552   | <div         | 13           | <div
+554   | </div        | 12           | Closed <div from 552
+555   | </div        | 11           | Closed <div from 550
+556   | </div        | 10           | Closed <div from 548
+557   | <div         | 11           | <div
+561   | </div        | 10           | Closed <div from 557
+562   | <div         | 11           | <div
+565   | </div        | 10           | Closed <div from 562
+566   | </div        | 9            | Closed <div from 547
+567   | </div        | 8            | Closed <div from 546
+568   | </div        | 7            | Closed <div from 490
+570   | @endforeach  | 6            | Closed @foreach from 489
+571   | </div        | 5            | Closed <div from 488
+572   | @else        | 5            | @if
+573   | <div         | 6            | <div
+575   | </div        | 5            | Closed <div from 573
+576   | @endif       | 4            | Closed @if from 487
+577   | </div        | 3            | Closed <div from 472
+579   | </div        | 2            | Closed <div from 311
+580   | </div        | 1            | Closed <div from 32
+583   | <div         | 2            | <div
+593   | <div         | 3            | <div
+593   | </div        | 2            | Closed <div from 593
+595   | <div         | 3            | <div
+600   | @if          | 4            | @if
+603   | <div         | 5            | <div
+604   | <div         | 6            | <div
+607   | </div        | 5            | Closed <div from 604
+611   | </div        | 4            | Closed <div from 603
+613   | <div         | 5            | <div
+615   | <div         | 6            | <div
+616   | <div         | 7            | <div
+618   | <div         | 8            | <div
+619   | @if          | 9            | @if
+620   | @elseif      | 9            | @if
+621   | @elseif      | 9            | @if
+622   | @else        | 9            | @if
+623   | @endif       | 8            | Closed @if from 619
+624   | </div        | 7            | Closed <div from 618
+625   | </div        | 6            | Closed <div from 616
+626   | <div         | 7            | <div
+629   | </div        | 6            | Closed <div from 626
+630   | </div        | 5            | Closed <div from 615
+633   | <div         | 6            | <div
+635   | <div         | 7            | <div
+637   | <div         | 8            | <div
+638   | <div         | 9            | <div
+641   | </div        | 8            | Closed <div from 638
+642   | <div         | 9            | <div
+645   | </div        | 8            | Closed <div from 642
+646   | <div         | 9            | <div
+649   | </div        | 8            | Closed <div from 646
+650   | </div        | 7            | Closed <div from 637
+651   | </div        | 6            | Closed <div from 635
+654   | <div         | 7            | <div
+656   | <div         | 8            | <div
+657   | <div         | 9            | <div
+659   | <div         | 10           | <div
+660   | @foreach     | 11           | @foreach
+661   | <div         | 12           | <div
+664   | </div        | 11           | Closed <div from 661
+665   | @endforeach  | 10           | Closed @foreach from 660
+666   | </div        | 9            | Closed <div from 659
+667   | </div        | 8            | Closed <div from 657
+668   | <div         | 9            | <div
+671   | </div        | 8            | Closed <div from 668
+672   | <div         | 9            | <div
+675   | </div        | 8            | Closed <div from 672
+676   | </div        | 7            | Closed <div from 656
+677   | </div        | 6            | Closed <div from 654
+678   | </div        | 5            | Closed <div from 633
+681   | <div         | 6            | <div
+683   | <div         | 7            | <div
+690   | @if          | 8            | @if
+695   | @endif       | 7            | Closed @if from 690
+700   | @if          | 8            | @if
+705   | @endif       | 7            | Closed @if from 700
+712   | </div        | 6            | Closed <div from 683
+713   | </div        | 5            | Closed <div from 681
+714   | </div        | 4            | Closed <div from 613
+717   | <div         | 5            | <div
+722   | </div        | 4            | Closed <div from 717
+723   | @else        | 4            | @if
+724   | <div         | 5            | <div
+725   | <div         | 6            | <div
+725   | </div        | 5            | Closed <div from 725
+727   | </div        | 4            | Closed <div from 724
+728   | @endif       | 3            | Closed @if from 600
+729   | </div        | 2            | Closed <div from 595
+730   | </div        | 1            | Closed <div from 583
+731   | </div        | 0            | Closed <div from 1

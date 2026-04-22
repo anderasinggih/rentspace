@@ -90,13 +90,39 @@ class Monitoring extends Component
         $units = $unitsQuery->orderBy('category_id')->get();
         $categories = \App\Models\Category::orderBy('name')->get();
 
+        // 3. Fetch Currently Rented Units (Active Now)
+        $activeRentals = Rental::with('units')
+            ->where('status', 'paid')
+            ->where('waktu_mulai', '<=', now())
+            ->where('waktu_selesai', '>=', now())
+            ->latest()
+            ->get();
+
+        // 4. Fetch Upcoming Rentals (Booked for Future)
+        $upcomingRentals = Rental::with('units')
+            ->whereIn('status', ['paid', 'pending'])
+            ->where('waktu_mulai', '>', now())
+            ->orderBy('waktu_mulai', 'asc')
+            ->get();
+
+        // 5. Fetch Available Units (Not currently rented)
+        $activeUnitIds = $activeRentals->flatMap(fn($r) => $r->units->pluck('id'))->unique();
+        $availableUnits = Unit::with('category')
+            ->whereNotIn('id', $activeUnitIds)
+            ->when($this->filterCategoryId, fn($q) => $q->where('category_id', $this->filterCategoryId))
+            ->orderBy('category_id')
+            ->get();
+
         return view('livewire.admin.monitoring', [
             'units' => $units,
             'categories' => $categories,
             'dates' => $dates,
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'totalDays' => $totalDays
+            'totalDays' => $totalDays,
+            'activeRentals' => $activeRentals,
+            'upcomingRentals' => $upcomingRentals,
+            'availableUnits' => $availableUnits
         ])->layout('layouts.admin');
     }
 }
