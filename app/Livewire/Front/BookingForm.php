@@ -245,46 +245,58 @@ class BookingForm extends Component
 
         // 3. Filter and Map
         $this->available_promos = $rules->filter(function ($rule) use ($isEligibleForAffiliatePromos) {
-            // Check if it's an affiliate-only promo
-            if ($rule->is_affiliate_only && !$isEligibleForAffiliatePromos) {
-                return false;
-            }
+            if ($rule->is_affiliate_only && !$isEligibleForAffiliatePromos) return false;
+            if ($rule->requires_referral && empty($this->referral_code)) return false;
 
-            // Check if it requires a referral code
-            if ($rule->requires_referral && empty($this->referral_code)) {
-                return false;
-            }
-
-            // Existing logic for affiliate_code specific promos
             if ($rule->affiliate_code) {
-                $refMatch = $this->referral_code && strtoupper(trim($this->referral_code)) === strtoupper(trim($rule->affiliate_code));
-                return $refMatch;
+                return $this->referral_code && strtoupper(trim($this->referral_code)) === strtoupper(trim($rule->affiliate_code));
             }
 
-            // If hidden, only show if matched by code or already selected
             if ($rule->is_hidden) {
-                if ($rule->requires_referral || $rule->is_affiliate_only || $rule->affiliate_code) {
-                    // Allowed if previous checks passed
-                    return true;
-                }
+                if ($rule->requires_referral || $rule->is_affiliate_only || $rule->affiliate_code) return true;
                 $codeMatch = $this->promo_code_input && strtoupper(trim($this->promo_code_input)) === strtoupper(trim($rule->kode_promo));
-                $isSelected = in_array($rule->id, $this->selected_promo_ids);
-                return $codeMatch || $isSelected;
+                return $codeMatch || in_array($rule->id, $this->selected_promo_ids);
             }
             return true;
-        })->map(function ($rule) use ($days, $diffInHours) {
+        })->map(function ($rule) use ($days, $diffInHours, $start, $end) {
             $durasiTerkonversi = $rule->syarat_tipe_durasi === 'hari' ? $days : $diffInHours;
             $is_eligible = !$rule->syarat_minimal_durasi || $durasiTerkonversi >= $rule->syarat_minimal_durasi;
+            $ineligible_reason = null;
 
-            // Auto-select if it's an affiliate-specific promo and eligible (only if user hasn't manually changed promos)
+            // Check for Bonus Time Clash if units are already selected
+            if ($is_eligible && ($rule->tipe === 'hari_gratis' || $rule->tipe === 'jam_gratis') && !empty($this->selected_unit_ids)) {
+                $h = $rule->tipe === 'hari_gratis' ? (int)$rule->value : 0;
+                $j = $rule->tipe === 'jam_gratis' ? (int)$rule->value : 0;
+                $effectiveEnd = $end->copy()->addDays($h)->addHours($j);
+
+                $conflict = Unit::whereIn('id', $this->selected_unit_ids)
+                    ->whereHas('rentals', function ($q) use ($end, $effectiveEnd) {
+                        $q->whereIn('status', ['pending', 'paid'])
+                          ->where(function ($qq) use ($end, $effectiveEnd) {
+                              $qq->whereBetween('waktu_mulai', [$end, $effectiveEnd])
+                                 ->orWhereBetween('waktu_selesai', [$end, $effectiveEnd])
+                                 ->orWhere(function ($qq2) use ($end, $effectiveEnd) {
+                                     $qq2->where('waktu_mulai', '<=', $end)
+                                         ->where('waktu_selesai', '>=', $effectiveEnd);
+                                 });
+                          });
+                    })->exists();
+
+                if ($conflict) {
+                    $is_eligible = false;
+                    $ineligible_reason = 'Bentrok jadwal di waktu bonus';
+                }
+            }
+
+            // Auto-select if it's an affiliate-specific promo and eligible (no clash)
             $isAffiliatePromo = $rule->affiliate_code || $rule->requires_referral || $rule->is_affiliate_only;
             if ($isAffiliatePromo && $is_eligible && !in_array($rule->id, $this->selected_promo_ids) && !$this->promoManuallyChanged) {
                 $this->selected_promo_ids[] = $rule->id;
-                // Note: avoiding validateStacking here to prevent recursion during map
             }
 
             return array_merge($rule->toArray(), [
-                'is_eligible' => $is_eligible
+                'is_eligible' => $is_eligible,
+                'ineligible_reason' => $ineligible_reason
             ]);
         })->values()->toArray();
     }
