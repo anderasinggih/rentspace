@@ -60,8 +60,13 @@ class Success extends Component
                 "*Nama:* {$this->rental->nama}\n" .
                 "*Unit:* {$units}\n" .
                 "*Waktu Sewa:* {$mulai} s/d {$selesai}\n" .
-                "*Total Bayar:* Rp {$total}\n\n" .
-                "Link Detail: {$link}\n\n" .
+                "*Total Bayar:* Rp {$total}\n";
+
+        if ($this->rental->affiliate_code) {
+            $text .= "*Ref:* {$this->rental->affiliate_code}\n";
+        }
+
+        $text .= "\nLink Detail: {$link}\n\n" .
                 "Mohon bantuannya untuk diproses. Terima kasih!";
 
         return "https://wa.me/{$this->admin_wa}?text=" . urlencode($text);

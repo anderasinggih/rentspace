@@ -23,7 +23,11 @@
                 <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Berhasil!</h1>
             @endif
             <p class="text-xs text-muted-foreground mt-1">ID Pesanan: #{{ str_pad($rental->id, 5, '0', STR_PAD_LEFT) }}
-                &bull; {{ $rental->nama }}</p>
+                &bull; {{ $rental->nama }}
+                @if($rental->affiliate_code)
+                &bull; <span class="text-primary font-bold">Ref: {{ $rental->affiliate_code }}</span>
+                @endif
+            </p>
             <p class="text-[10px] text-muted-foreground mt-1 opacity-70">
                 {{ $rental->created_at->translatedFormat('d F Y, H:i') }} WIB
             </p>
