@@ -10,11 +10,8 @@ class PricingRule extends Model
     use SoftDeletes;
     protected $guarded = ['id'];
 
-    protected $casts = [
-        'is_affiliate_only' => 'boolean',
-        'requires_referral' => 'boolean',
-        'is_active' => 'boolean',
-        'is_hidden' => 'boolean',
-        'can_stack' => 'boolean',
-    ];
+    public function rentals()
+    {
+        return $this->hasMany(Rental::class, 'applied_promo_id');
+    }
 }

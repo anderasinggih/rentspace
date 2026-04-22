@@ -32,6 +32,8 @@
                                         Kode Promo</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
                                         Status</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
+                                        Kuota</th>
                                     <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span
                                             class="sr-only">Aksi</span></th>
                                 </tr>
@@ -111,6 +113,19 @@
                                                 <x-ui.badge variant="zinc" class="text-[9px] uppercase px-1 border-sky-300 text-sky-600">Ref Required</x-ui.badge>
                                                 @endif
                                             </div>
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
+                                        <div class="flex flex-col items-start gap-1">
+                                            @if($rule->usage_limit)
+                                                @if($rule->rentals_count >= $rule->usage_limit)
+                                                    <x-ui.badge variant="red" class="text-[10px] font-bold">FULL</x-ui.badge>
+                                                @endif
+                                                <p class="text-xs font-bold text-foreground">{{ $rule->rentals_count }} / {{ $rule->usage_limit }}</p>
+                                                <p class="text-[9px] text-muted-foreground tracking-tighter uppercase">Terpakai</p>
+                                            @else
+                                                <p class="text-xs text-muted-foreground italic">Unlimited</p>
+                                            @endif
                                         </div>
                                     </td>
                                     <td
@@ -228,6 +243,21 @@
                                     <option value="hari">Hari</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div class="mt-4 p-4 rounded-xl bg-muted/50 border border-border">
+                            <label class="text-sm font-bold text-foreground">Kuota Penggunaan Promo</label>
+                            <div class="mt-2 flex items-center gap-3">
+                                <div class="flex-1">
+                                    <input type="number" wire:model="usage_limit"
+                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        placeholder="Kosongkan untuk unlimited">
+                                </div>
+                                <div class="text-xs text-muted-foreground bg-background px-3 py-2 rounded-md border border-border">
+                                    Total kuota tersedia untuk dipakai seluruh pelanggan.
+                                </div>
+                            </div>
+                            @error('usage_limit') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 py-3 border-y border-border mt-2">

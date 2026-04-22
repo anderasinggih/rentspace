@@ -230,7 +230,7 @@ class BookingForm extends Component
 
         // 1. Fetch rules (Cached for 10 minutes)
         if ($this->all_pricing_rules === null) {
-            $this->all_pricing_rules = \Illuminate\Support\Facades\Cache::remember('active_pricing_rules', 600, function () use ($now) {
+            $this->all_pricing_rules = \Illuminate\Support\Facades\Cache::remember('active_pricing_rules_v2', 600, function () use ($now) {
                 return PricingRule::where('is_active', true)
                     ->where(function ($q) use ($now) {
                         $q->whereNull('start_date')->orWhere('start_date', '<=', $now->format('Y-m-d'));
@@ -238,6 +238,9 @@ class BookingForm extends Component
                     ->where(function ($q) use ($now) {
                         $q->whereNull('end_date')->orWhere('end_date', '>=', $now->format('Y-m-d'));
                     })
+                    ->withCount(['rentals' => function($q) {
+                        $q->where('status', '!=', 'cancelled');
+                    }])
                     ->get();
             });
         }
@@ -298,6 +301,14 @@ class BookingForm extends Component
                 if ($conflict) {
                     $is_eligible = false;
                     $ineligible_reason = 'Bentrok dengan jadwal lain';
+                }
+            }
+
+            // Check Quota Limit
+            if ($is_eligible && $rule->usage_limit !== null) {
+                if ($rule->rentals_count >= $rule->usage_limit) {
+                    $is_eligible = false;
+                    $ineligible_reason = 'Kuota promo sudah habis';
                 }
             }
 
@@ -515,6 +526,7 @@ class BookingForm extends Component
             'subtotal_harga' => $this->subtotal,
             'potongan_diskon' => $this->potongan_diskon,
             'applied_promo_name' => $this->applied_promo_label ?: null,
+            'applied_promo_id' => !empty($this->selected_promo_ids) ? $this->selected_promo_ids[0] : null, // Store primary promo ID
             'hari_bonus' => $this->hari_bonus,
             'jam_bonus' => $this->jam_bonus,
             'kode_unik_pembayaran' => $this->kode_unik,

@@ -25,7 +25,7 @@
                 </div>
 
                 <!-- STEP 1: Jadwal & Unit -->
-                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8">
+                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-16 sm:pb-0">
                     <!-- 1. Jadwal Sewa -->
                     <div>
                         <div class="flex items-center justify-between gap-4 mb-4">
@@ -252,7 +252,7 @@
                 </div> <!-- END STEP 1 -->
 
                 <!-- STEP 2: Data Diri & Promo -->
-                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8">
+                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-16 sm:pb-0">
 <!-- 5. Data Diri -->
                 <div>
                     <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">{{ (!empty($selected_unit_ids) && $waktu_mulai &&
@@ -394,6 +394,15 @@
                                         <br /><span
                                             class="text-[9px] text-red-500 font-black uppercase tracking-tighter">⚠️
                                             {{ $promo['ineligible_reason'] ?? 'TIDAK MEMENUHI SYARAT DURASI' }}</span>
+                                        @endif
+
+                                        @if(isset($promo['usage_limit']) && $promo['usage_limit'] !== null)
+                                        <div class="mt-1 flex items-center gap-1.5">
+                                            <div class="h-1 w-16 bg-muted rounded-full overflow-hidden">
+                                                <div class="h-full bg-primary" style="width: {{ min(100, ($promo['rentals_count'] / $promo['usage_limit']) * 100) }}%"></div>
+                                            </div>
+                                            <span class="text-[9px] font-bold text-muted-foreground uppercase">Sisa Kuota: {{ max(0, $promo['usage_limit'] - $promo['rentals_count']) }}</span>
+                                        </div>
                                         @endif
                                     </span>
                                 </span>

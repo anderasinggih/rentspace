@@ -8,7 +8,7 @@ use Livewire\Component;
 
 class PricingRules extends Component
 {
-    public $rule_id, $nama_promo, $kode_promo, $affiliate_code, $tipe = 'diskon_persen', $value, $syarat_minimal_durasi, $syarat_tipe_durasi = 'jam';
+    public $rule_id, $nama_promo, $kode_promo, $affiliate_code, $tipe = 'diskon_persen', $value, $syarat_minimal_durasi, $syarat_tipe_durasi = 'jam', $usage_limit;
     public $start_date, $end_date;
     public $is_active = true, $is_hidden = false, $can_stack = false;
     public $is_affiliate_only = false, $requires_referral = false;
@@ -18,7 +18,7 @@ class PricingRules extends Component
     public function create()
     {
         if (auth()->user()->role !== 'admin') return;
-        $this->reset(['rule_id', 'nama_promo', 'kode_promo', 'affiliate_code', 'value', 'syarat_minimal_durasi', 'start_date', 'end_date', 'isEditing', 'is_hidden', 'can_stack', 'is_affiliate_only', 'requires_referral']);
+        $this->reset(['rule_id', 'nama_promo', 'kode_promo', 'affiliate_code', 'value', 'syarat_minimal_durasi', 'usage_limit', 'start_date', 'end_date', 'isEditing', 'is_hidden', 'can_stack', 'is_affiliate_only', 'requires_referral']);
         $this->tipe = 'diskon_persen';
         $this->syarat_tipe_durasi = 'jam';
         $this->is_active = true;
@@ -37,6 +37,7 @@ class PricingRules extends Component
         $this->value = $rule->value;
         $this->syarat_minimal_durasi = $rule->syarat_minimal_durasi;
         $this->syarat_tipe_durasi = $rule->syarat_tipe_durasi;
+        $this->usage_limit = $rule->usage_limit;
         $this->start_date = $rule->start_date;
         $this->end_date = $rule->end_date;
         $this->is_active = $rule->is_active;
@@ -60,6 +61,7 @@ class PricingRules extends Component
         $this->value = $rule->value;
         $this->syarat_minimal_durasi = $rule->syarat_minimal_durasi;
         $this->syarat_tipe_durasi = $rule->syarat_tipe_durasi;
+        $this->usage_limit = $rule->usage_limit;
         $this->start_date = $rule->start_date;
         $this->end_date = $rule->end_date;
         $this->is_active = true;
@@ -80,6 +82,7 @@ class PricingRules extends Component
             'value' => 'required|numeric',
             'syarat_minimal_durasi' => 'nullable|numeric',
             'syarat_tipe_durasi' => 'required|string|in:jam,hari',
+            'usage_limit' => 'nullable|numeric|min:0',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
@@ -93,6 +96,7 @@ class PricingRules extends Component
                 'value' => $this->value,
                 'syarat_minimal_durasi' => $this->syarat_minimal_durasi,
                 'syarat_tipe_durasi' => $this->syarat_tipe_durasi,
+                'usage_limit' => $this->usage_limit ?: null,
                 'start_date' => $this->start_date ?: null,
                 'end_date' => $this->end_date ?: null,
                 'is_active' => $this->is_active,
@@ -127,7 +131,12 @@ class PricingRules extends Component
     public function render()
     {
         return view('livewire.admin.pricing-rules', [
-            'rules' => PricingRule::withTrashed()->latest()->get()
+            'rules' => PricingRule::withTrashed()
+                ->withCount(['rentals' => function($q) {
+                    $q->where('status', '!=', 'cancelled');
+                }])
+                ->latest()
+                ->get()
         ])->layout('layouts.admin');
     }
 }
