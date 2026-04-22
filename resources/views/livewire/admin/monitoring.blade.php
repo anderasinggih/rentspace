@@ -27,19 +27,92 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        @keyframes now-heartbeat {
+            0%, 100% { opacity: 0.6; box-shadow: 0 0 4px rgba(59, 130, 246, 0.3); }
+            50% { opacity: 1; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
+        }
+
+        .animate-now-heartbeat {
+            animation: now-heartbeat 2s ease-in-out infinite;
+        }
     </style>
 
     <div class="max-w-[98vw] mx-auto px-2 sm:px-4 pt-4 sm:pt-6">
+        <!-- Mini Summary Stats -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Card 1: Active Rentals -->
+            <div class="bg-background rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 transition-all hover:shadow-md group">
+                <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Aktif Disewa</p>
+                    <h3 class="text-lg sm:text-2xl font-black text-foreground truncate">{{ count($activeRentals) }}</h3>
+                </div>
+            </div>
+
+            <!-- Card 2: Units Ready -->
+            <div class="bg-background rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 transition-all hover:shadow-md group">
+                <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 3v18"/><path d="m14 10 2 2-2 2"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Unit Ready</p>
+                    <h3 class="text-lg sm:text-2xl font-black text-foreground truncate">{{ count($availableUnits) }}</h3>
+                </div>
+            </div>
+
+            <!-- Card 3: Pending Confirmation -->
+            <div class="bg-background rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 transition-all hover:shadow-md group">
+                <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Booking Pending</p>
+                    <h3 class="text-lg sm:text-2xl font-black text-foreground truncate">{{ $pendingCount }}</h3>
+                </div>
+            </div>
+
+            <!-- Card 4: Ending Soon -->
+            <div class="bg-background rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 transition-all hover:shadow-md group">
+                <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600 shrink-0 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a10 10 0 1 0 20 0 10 10 0 1 0-20 0Z"/><path d="M12 9v4l3 2"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Segera Berakhir</p>
+                    <h3 class="text-lg sm:text-2xl font-black text-foreground truncate">{{ $endingSoonCount }}</h3>
+                </div>
+            </div>
+        </div>
+
         <!-- Filter Bar -->
         <div class="hidden sm:flex flex-col gap-4 sm:gap-6 mb-6 sm:mb-8 bg-muted/20 p-4 sm:p-6 rounded-2xl border border-border w-full">
             <!-- Row 1: Primary Filters -->
             <div class="flex flex-col sm:flex-row items-end gap-4 md:gap-6">
+                <!-- Search Bar -->
+                <div class="flex-1 w-full min-w-0 sm:min-w-[250px]">
+                    <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider uppercase">Cari Transaksi / Unit</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-muted-foreground transition-colors group-focus-within:text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round opacity-60"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        </div>
+                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari nama, WA, atau seri unit..." 
+                            class="w-full h-10 pl-11 pr-4 bg-background border border-border rounded-xl text-xs font-bold shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/40">
+                        @if($search)
+                            <button wire:click="$set('search', '')" class="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-rose-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Category Dropdown -->
-                <div class="w-full sm:w-[200px]">
-                    <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider">Filter Kategori</label>
+                <div class="w-full sm:w-[200px] flex-shrink-0">
+                    <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider uppercase">Kategori</label>
                     <div class="relative">
                         <select wire:model.live="filterCategoryId" 
-                            class="w-full h-10 pl-3 pr-10 bg-background border border-border rounded-xl text-xs font-bold shadow-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer">
+                            class="w-full h-10 pl-3 pr-10 bg-background border border-border rounded-xl text-xs font-bold shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none cursor-pointer">
                             <option value="">Semua Kategori</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
@@ -70,16 +143,24 @@
                 </div>
 
                 @if($timeframe === 'custom')
-                    <div class="hidden sm:flex items-center gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
-                        <div class="w-[120px]">
-                            <label class="text-[9px] font-bold text-muted-foreground/60 ml-1 mb-1 block">Dari</label>
+                    <div class="hidden sm:flex items-end gap-2 animate-in fade-in slide-in-from-left-4 duration-300">
+                        <div class="w-[130px]">
+                            <label class="text-[9px] font-bold text-muted-foreground/60 ml-1 mb-1 block uppercase tracking-tighter">Dari</label>
                             <input type="date" wire:model.live="customStartDate" 
-                                class="w-full h-9 px-3 bg-background border border-border rounded-lg text-xs font-bold outline-none focus:border-primary">
+                                class="w-full h-10 px-3 bg-background border border-border rounded-xl text-[11px] font-bold outline-none focus:border-primary shadow-sm">
                         </div>
-                        <div class="w-[120px]">
-                            <label class="text-[9px] font-bold text-muted-foreground/60 ml-1 mb-1 block">Sampai</label>
+                        <div class="w-[130px]">
+                            <label class="text-[9px] font-bold text-muted-foreground/60 ml-1 mb-1 block uppercase tracking-tighter">Sampai</label>
                             <input type="date" wire:model.live="customEndDate" 
-                                class="w-full h-9 px-3 bg-background border border-border rounded-lg text-xs font-bold outline-none focus:border-primary">
+                                class="w-full h-10 px-3 bg-background border border-border rounded-xl text-[11px] font-bold outline-none focus:border-primary shadow-sm">
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button wire:click="previousPage" class="h-10 w-10 flex items-center justify-center rounded-xl bg-background border border-border hover:bg-muted hover:text-primary transition-all shadow-sm group" title="Kembali">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-active:scale-90 transition-transform"><path d="m15 18-6-6 6-6"/></svg>
+                            </button>
+                            <button wire:click="nextPage" class="h-10 w-10 flex items-center justify-center rounded-xl bg-background border border-border hover:bg-muted hover:text-primary transition-all shadow-sm group" title="Lanjut">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-active:scale-90 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
                         </div>
                     </div>
                 @endif
@@ -120,6 +201,22 @@
         <div class="hidden sm:block overflow-x-auto hide-scrollbar rounded-2xl border border-border bg-background shadow-2xl relative">
 
                 <div class="m-grid-wrapper relative bg-background">
+                    @php
+                        $now = now();
+                        $isNowInRange = $now->between($startDate->copy()->startOfDay(), $endDate->copy()->endOfDay());
+                        $nowOffsetSeconds = $startDate->copy()->startOfDay()->diffInSeconds($now, false);
+                        $nowLeft = ($nowOffsetSeconds / 86400); 
+                    @endphp
+
+                    @if($isNowInRange)
+                        {{-- Minimalist Now Indicator Line --}}
+                        <div class="absolute top-0 bottom-0 w-px bg-blue-500 z-[39] pointer-events-none transition-all duration-500 animate-now-heartbeat"
+                             style="left: calc(var(--admin-unit-width) + ({{ $nowLeft }} * var(--admin-day-width)));">
+                            
+                            {{-- Minimalist Top Dot --}}
+                            <div class="absolute top-[32px] left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)] border-2 border-white dark:border-slate-900 z-10"></div>
+                        </div>
+                    @endif
                     
                     <!-- HEADER DATES -->
                     <div class="flex flex-col border-b border-border bg-muted/10 sticky top-0 z-50 backdrop-blur-md">
@@ -217,16 +314,16 @@
                                             $duration = max($duration, 0.01);
                                             
                                             $statusStyle = match($rental->status) {
-                                                'paid' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.08)]',
+                                                'paid' => 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.08)]',
                                                 'pending' => 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-[0_4px_12px_rgba(245,158,11,0.08)]',
-                                                'completed' => 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.08)]',
+                                                'completed' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.08)]',
                                                 default => 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20',
                                             };
                                             
                                             $dotColor = match($rental->status) {
-                                                'paid' => 'bg-emerald-500',
+                                                'paid' => 'bg-blue-500',
                                                 'pending' => 'bg-amber-500',
-                                                'completed' => 'bg-blue-500',
+                                                'completed' => 'bg-emerald-500',
                                                 default => 'bg-slate-500',
                                             };
                                         @endphp
@@ -292,19 +389,18 @@
                 </div>
             </div>
 
-            <!-- MONITORING LEGEND (Timeline Only) -->
             <div class="mt-10 hidden sm:flex flex-wrap items-center justify-center gap-12 bg-muted/5 p-5 rounded-2xl border border-border dark:border-white/5 shadow-inner">
                 <div class="flex items-center gap-3">
-                    <div class="w-3.5 h-3.5 rounded bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]"></div>
-                    <span class="text-[9px] font-bold text-muted-foreground tracking-widest">Aktif / Sudah Bayar</span>
+                    <div class="w-3.5 h-3.5 rounded bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.3)]"></div>
+                    <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Aktif / Sudah Bayar</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="w-3.5 h-3.5 rounded bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)] animate-pulse"></div>
-                    <span class="text-[9px] font-bold text-muted-foreground tracking-widest">Antrean / Pending</span>
+                    <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Antrean / Pending</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="w-3.5 h-3.5 rounded bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.3)]"></div>
-                    <span class="text-[9px] font-bold text-muted-foreground tracking-widest">Kembali / Selesai</span>
+                    <div class="w-3.5 h-3.5 rounded bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]"></div>
+                    <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Selesai / Kembali</span>
                 </div>
             </div>
 
@@ -366,6 +462,14 @@
                                         </div>
 
                                         <div class="flex items-center gap-2 sm:gap-6">
+                                            <!-- WhatsApp Quick Action -->
+                                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}?text={{ urlencode('Halo ' . explode(' ', trim($rental->nama))[0] . ', kami dari RentSpace ingin mengonfirmasi status sewa unit ' . $rental->units->pluck('seri')->join(', ') . ' Anda. Apakah unit sudah siap untuk serah terima?') }}" 
+                                               target="_blank" @click.stop
+                                               class="hidden sm:flex h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 items-center justify-center border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                                               title="Hubungi via WhatsApp">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                            </a>
+
                                             <!-- Countdown Column -->
                                             <div class="text-right w-20 sm:w-32 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
                                                 x-data="{ 
@@ -381,10 +485,10 @@
                                                     }
                                                 }" x-init="update(); setInterval(() => update(), 60000)">
                                                 <p class="text-[7px] sm:text-[8px] font-black text-muted-foreground tracking-widest">Sisa</p>
-                                                <p x-text="timeLeft" class="text-[9px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono"></p>
+                                                <p x-text="timeLeft" class="text-[9px] sm:text-xs font-black text-blue-600 dark:text-blue-400 font-mono"></p>
                                             </div>
                                             <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-muted-foreground transition-transform duration-300"
-                                                :class="expanded ? 'rotate-180 bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : ''">
+                                                :class="expanded ? 'rotate-180 bg-blue-500/10 text-blue-500 border-blue-500/20' : ''">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                                             </div>
                                         </div>
@@ -519,6 +623,14 @@
                                         </div>
 
                                         <div class="flex items-center gap-2 sm:gap-6">
+                                            <!-- WhatsApp Quick Action -->
+                                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}?text={{ urlencode('Halo ' . explode(' ', trim($rental->nama))[0] . ', kami ingin mengonfirmasi pesanan sewa ' . $rental->units->pluck('seri')->join(', ') . ' Anda yang akan dimulai pada ' . $rental->waktu_mulai->format('d M, H:i') . '.') }}" 
+                                               target="_blank" @click.stop
+                                               class="hidden sm:flex h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 items-center justify-center border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                                               title="Hubungi via WhatsApp">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                            </a>
+
                                             <!-- Timeleft Column -->
                                             <div class="text-right w-24 sm:w-36 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
                                                 x-data="{ 
@@ -534,7 +646,7 @@
                                                         this.timeleft = d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`;
                                                     }
                                                 }" x-init="update(); setInterval(() => update(), 60000)">
-                                                <p class="text-[7px] sm:text-[8px] font-bold text-muted-foreground tracking-widest leading-none mb-1">Mulai</p>
+                                                <p class="text-[7px] sm:text-[8px] font-bold text-muted-foreground tracking-widest leading-none mb-1 text-center">Mulai</p>
                                                 <p x-text="timeleft" class="text-[9px] sm:text-sm font-bold text-amber-600 dark:text-amber-400 font-mono"></p>
                                             </div>
                                             <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-muted-foreground transition-transform duration-300"

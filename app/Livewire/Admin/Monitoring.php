@@ -13,6 +13,7 @@ class Monitoring extends Component
 {
     public $timeframe = '14'; 
     public $filterCategoryId = '';
+    public $search = '';
     public $customStartDate;
     public $customEndDate;
     public $selectedRentalId = null;
@@ -21,6 +22,22 @@ class Monitoring extends Component
     {
         $this->customStartDate = Carbon::today()->format('Y-m-d');
         $this->customEndDate = Carbon::today()->addDays(14)->format('Y-m-d');
+    }
+
+    public function nextPage()
+    {
+        $days = is_numeric($this->timeframe) ? (int)$this->timeframe : 30;
+        $this->customStartDate = Carbon::parse($this->customStartDate)->addDays($days)->format('Y-m-d');
+        $this->customEndDate = Carbon::parse($this->customEndDate)->addDays($days)->format('Y-m-d');
+        $this->timeframe = 'custom';
+    }
+
+    public function previousPage()
+    {
+        $days = is_numeric($this->timeframe) ? (int)$this->timeframe : 30;
+        $this->customStartDate = Carbon::parse($this->customStartDate)->subDays($days)->format('Y-m-d');
+        $this->customEndDate = Carbon::parse($this->customEndDate)->subDays($days)->format('Y-m-d');
+        $this->timeframe = 'custom';
     }
 
     public function selectRental($id)
@@ -80,38 +97,88 @@ class Monitoring extends Component
         $unitsQuery = Unit::query()->with(['category', 'rentals' => function ($q) use ($startDate, $endDate) {
             $q->whereIn('status', ['paid', 'pending', 'completed'])
               ->where('waktu_mulai', '<=', $endDate)
-              ->where('waktu_selesai', '>=', $startDate);
+              ->where('waktu_selesai', '>=', $startDate)
+              ->when($this->search, function($q) {
+                  $q->where(function($sq) {
+                      $sq->where('nama', 'like', '%'.$this->search.'%')
+                         ->orWhere('no_wa', 'like', '%'.$this->search.'%');
+                  });
+              });
         }]);
 
         if ($this->filterCategoryId) {
             $unitsQuery->where('category_id', $this->filterCategoryId);
         }
 
+        if ($this->search) {
+            $unitsQuery->where(function($q) {
+                $q->where('seri', 'like', '%'.$this->search.'%')
+                  ->orWhereHas('rentals', function($sq) {
+                      $sq->where('nama', 'like', '%'.$this->search.'%')
+                         ->orWhere('no_wa', 'like', '%'.$this->search.'%');
+                  });
+            });
+        }
+
         $units = $unitsQuery->orderBy('category_id')->get();
         $categories = \App\Models\Category::orderBy('name')->get();
 
         // 3. Fetch Currently Rented Units (Active Now)
-        $activeRentals = Rental::with('units')
+        $activeRentalsQuery = Rental::with('units')
             ->where('status', 'paid')
             ->where('waktu_mulai', '<=', now())
-            ->where('waktu_selesai', '>=', now())
-            ->latest()
-            ->get();
+            ->where('waktu_selesai', '>=', now());
+            
+        if ($this->search) {
+            $activeRentalsQuery->where(function($q) {
+                $q->where('nama', 'like', '%'.$this->search.'%')
+                  ->orWhere('no_wa', 'like', '%'.$this->search.'%')
+                  ->orWhereHas('units', fn($sq) => $sq->where('seri', 'like', '%'.$this->search.'%'));
+            });
+        }
+        
+        $activeRentals = $activeRentalsQuery->latest()->get();
 
         // 4. Fetch Upcoming Rentals (Booked for Future)
-        $upcomingRentals = Rental::with('units')
+        $upcomingRentalsQuery = Rental::with('units')
             ->whereIn('status', ['paid', 'pending'])
-            ->where('waktu_mulai', '>', now())
-            ->orderBy('waktu_mulai', 'asc')
-            ->get();
+            ->where('waktu_mulai', '>', now());
+
+        if ($this->search) {
+            $upcomingRentalsQuery->where(function($q) {
+                $q->where('nama', 'like', '%'.$this->search.'%')
+                  ->orWhere('no_wa', 'like', '%'.$this->search.'%')
+                  ->orWhereHas('units', fn($sq) => $sq->where('seri', 'like', '%'.$this->search.'%'));
+            });
+        }
+
+        $upcomingRentals = $upcomingRentalsQuery->orderBy('waktu_mulai', 'asc')->get();
 
         // 5. Fetch Available Units (Not currently rented)
-        $activeUnitIds = $activeRentals->flatMap(fn($r) => $r->units->pluck('id'))->unique();
-        $availableUnits = Unit::with('category')
+        $activeUnitIds = Rental::where('status', 'paid')
+            ->where('waktu_mulai', '<=', now())
+            ->where('waktu_selesai', '>=', now())
+            ->get()
+            ->flatMap(fn($r) => $r->units->pluck('id'))
+            ->unique();
+
+        $availableUnitsQuery = Unit::with('category')
             ->whereNotIn('id', $activeUnitIds)
-            ->when($this->filterCategoryId, fn($q) => $q->where('category_id', $this->filterCategoryId))
-            ->orderBy('category_id')
-            ->get();
+            ->when($this->filterCategoryId, fn($q) => $q->where('category_id', $this->filterCategoryId));
+
+        if ($this->search) {
+            $availableUnitsQuery->where('seri', 'like', '%'.$this->search.'%');
+        }
+
+        $availableUnits = $availableUnitsQuery->orderBy('category_id')->get();
+
+        // 6. Stats for Summary Cards
+        $endingSoonCount = Rental::where('status', 'paid')
+            ->where('waktu_selesai', '>', now())
+            ->where('waktu_selesai', '<=', now()->addHours(6))
+            ->count();
+            
+        $pendingCount = $upcomingRentals->where('status', 'pending')->count();
 
         return view('livewire.admin.monitoring', [
             'units' => $units,
@@ -122,7 +189,9 @@ class Monitoring extends Component
             'totalDays' => $totalDays,
             'activeRentals' => $activeRentals,
             'upcomingRentals' => $upcomingRentals,
-            'availableUnits' => $availableUnits
+            'availableUnits' => $availableUnits,
+            'endingSoonCount' => $endingSoonCount,
+            'pendingCount' => $pendingCount
         ])->layout('layouts.admin');
     }
 }
