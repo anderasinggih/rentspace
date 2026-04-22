@@ -2,7 +2,7 @@
 
     <div class="max-w-2xl mx-auto">
         <div class="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-8 text-center">
-            
+
             <!-- Progress Bar -->
             <div class="mb-8 border-b border-border pb-4 text-left">
                 <div class="flex items-center justify-center text-sm font-bold text-primary mb-3 px-1">
@@ -17,7 +17,8 @@
                 Pembayaran</h1>
             <p class="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-8">Tagihan untuk unit
                 <strong>{{ $rental->units->pluck('seri')->implode(', ') ?: ($rental->unit->seri ?? '-') }}</strong>.
-                Mohon transfer tepat hingga tiga digit terakhir agar pembayaran dapat dikenali sistem.</p>
+                Mohon transfer tepat hingga tiga digit terakhir agar pembayaran dapat dikenali sistem.
+            </p>
 
             <div
                 class="flex flex-col items-center justify-center p-4 sm:p-8 bg-muted/30 border border-border rounded-xl gap-3 sm:gap-0">
@@ -25,7 +26,7 @@
                 <!-- ButtonGroup-style Payment Toggle -->
                 @php
                     $enabledMethods = json_decode(\App\Models\Setting::getVal('payment_methods', json_encode(['qris' => true, 'cash' => true, 'transfer' => false])), true) ?: ['qris' => true, 'cash' => true];
-                    $methodLabels = ['qris' => 'QRIS', 'cash' => 'Bayar Tunai', 'transfer' => 'Transfer Bank'];
+                    $methodLabels = ['qris' => 'QRIS', 'cash' => 'Cash', 'transfer' => 'Transfer Bank'];
                     $activeMethods = array_keys(array_filter($enabledMethods));
                     $count = count($activeMethods);
                 @endphp
@@ -42,7 +43,7 @@
                             @endphp
                             <button wire:click="$set('metode_pembayaran', '{{ $method }}')"
                                 class="{{ $radius }} {{ $border }} h-8 sm:h-9 px-4 sm:px-5 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-                                    {{ $active ? 'bg-primary text-primary-foreground z-10' : 'bg-background text-foreground hover:bg-muted' }}">
+                                            {{ $active ? 'bg-primary text-primary-foreground z-10' : 'bg-background text-foreground hover:bg-muted' }}">
                                 {{ $methodLabels[$method] ?? strtoupper($method) }}
                             </button>
                         @endforeach
@@ -144,7 +145,7 @@
             <!-- Cancellation Option -->
             <div class="mt-8 pt-6 border-t border-border">
                 <p class="text-[10px] text-muted-foreground mb-2">Ingin membatalkan pesanan ini?</p>
-                <button wire:click="cancelBooking" 
+                <button wire:click="cancelBooking"
                     wire:confirm="Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan."
                     class="mt-2 w-full inline-flex items-center justify-center rounded-md bg-red-600 text-white shadow hover:bg-red-700 h-10 sm:h-12 px-8 font-bold text-base sm:text-lg transition-opacity">
                     Batalkan Pesanan
