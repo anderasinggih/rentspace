@@ -289,8 +289,21 @@
                                                                                     </x-ui.button>
                                                                                 @endif
                                                                             @endif
+                                                                            
+                                                                            {{-- Delete Transaction (Always visible to admin) --}}
+                                                                            @if(auth()->user()->role === 'admin')
+                                                                                <button wire:click.stop="deleteRow({{ $trx->id }})"
+                                                                                    wire:confirm="PERINGATAN: Menghapus transaksi akan menghapus seluruh data terkait (mutasi, komisi, dll) secara permanen. Lanjutkan?"
+                                                                                    class="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                                                                                    title="Hapus Transaksi">
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                                        <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                                                                                    </svg>
+                                                                                </button>
+                                                                            @endif
                                                                         </div>
                                                                     </td>
+                                                                </tr>
                                                                     {{-- Expanded Inspection Area (Dark Shadcn Minimalist) --}}
                                                                     @if($inspectTrxId === $trx->id && $inspectTrx)
                                                                         <tr
@@ -406,6 +419,14 @@
                                                                                                                                     <x-ui.button wire:click="openDendaModal({{ $inspectTrx->id }})" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Selesaikan Sewa</x-ui.button>
                                                                                                                                 @endif
                                                                                                                                 <x-ui.button wire:click="editTrx({{ $inspectTrx->id }})" variant="outline" size="sm">Edit Transaksi</x-ui.button>
+                                                                                                    <button wire:click="deleteRow({{ $inspectTrx->id }})"
+                                                                                                        wire:confirm="Hapus transaksi ini secara permanen?"
+                                                                                                        class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                                                                            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                                                                                        </svg>
+                                                                                                        Hapus Data
+                                                                                                    </button>
                                                                                                                             </div>
                                                                                                                             <button wire:click="closeInspect" class="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                                                                                                                                 Tutup Detail
