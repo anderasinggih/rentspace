@@ -158,11 +158,11 @@
                         class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all border border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 hover:scale-[1.03] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
                         @php
                             $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                                                                                stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0">
-                                                                                                                <path
-                                                                                                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                                                                                            </svg>';
+                                                                                                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                                                                                                            stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0">
+                                                                                                                                            <path
+                                                                                                                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                                                                                                        </svg>';
                         @endphp
                         {!! $whatsappIcon !!}
                         HUBUNGI ADMIN
@@ -631,7 +631,7 @@
                                                         @endforeach
                                                     </div>
                                                 @endif
-                                                
+
                                                 @if($unit->kondisi && !$isIphone)
                                                     <p class="text-[10px] text-muted-foreground italic mt-0.5 line-clamp-1">{{ $unit->kondisi }}</p>
                                                 @endif

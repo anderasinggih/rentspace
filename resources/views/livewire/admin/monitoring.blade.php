@@ -3,10 +3,12 @@
     dayWidth: 100,
     unitWidth: 180
 }" @open-rental-modal.window="modalOpen = true"
-:style="'--admin-day-width: ' + dayWidth + 'px; --admin-unit-width: ' + unitWidth + 'px;'">
+    :style="'--admin-day-width: ' + dayWidth + 'px; --admin-unit-width: ' + unitWidth + 'px;'">
     <style>
         .m-grid-wrapper {
-            width: calc(var(--admin-unit-width) + (var(--admin-day-width) * {{ count($dates) }}));
+            width: calc(var(--admin-unit-width) + (var(--admin-day-width) *
+                        {{ count($dates) }}
+                    ));
             min-width: 100%;
         }
 
@@ -23,111 +25,47 @@
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
+
         .hide-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-
-        @keyframes now-heartbeat {
-            0%, 100% { opacity: 0.6; box-shadow: 0 0 4px rgba(59, 130, 246, 0.3); }
-            50% { opacity: 1; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
-        }
-
-        .animate-now-heartbeat {
-            animation: now-heartbeat 2s ease-in-out infinite;
-        }
     </style>
 
     <div class="max-w-[98vw] mx-auto px-2 sm:px-4 pt-4 sm:pt-6">
-        <!-- Mini Summary Stats -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <!-- Card 1: Active Rentals -->
-            <div class="bg-background rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 transition-all hover:shadow-md group">
-                <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-110 transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Aktif Disewa</p>
-                    <h3 class="text-lg sm:text-2xl font-black text-foreground truncate">{{ count($activeRentals) }}</h3>
-                </div>
-            </div>
-
-            <!-- Card 2: Units Ready -->
-            <div class="bg-background rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 transition-all hover:shadow-md group">
-                <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-110 transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 3v18"/><path d="m14 10 2 2-2 2"/></svg>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Unit Ready</p>
-                    <h3 class="text-lg sm:text-2xl font-black text-foreground truncate">{{ count($availableUnits) }}</h3>
-                </div>
-            </div>
-
-            <!-- Card 3: Pending Confirmation -->
-            <div class="bg-background rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 transition-all hover:shadow-md group">
-                <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0 group-hover:scale-110 transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Booking Pending</p>
-                    <h3 class="text-lg sm:text-2xl font-black text-foreground truncate">{{ $pendingCount }}</h3>
-                </div>
-            </div>
-
-            <!-- Card 4: Ending Soon -->
-            <div class="bg-background rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 transition-all hover:shadow-md group">
-                <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600 shrink-0 group-hover:scale-110 transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a10 10 0 1 0 20 0 10 10 0 1 0-20 0Z"/><path d="M12 9v4l3 2"/></svg>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Segera Berakhir</p>
-                    <h3 class="text-lg sm:text-2xl font-black text-foreground truncate">{{ $endingSoonCount }}</h3>
-                </div>
-            </div>
-        </div>
-
         <!-- Filter Bar -->
-        <div class="hidden sm:flex flex-col gap-4 sm:gap-6 mb-6 sm:mb-8 bg-muted/20 p-4 sm:p-6 rounded-2xl border border-border w-full">
+        <div
+            class="hidden sm:flex flex-col gap-4 sm:gap-6 mb-6 sm:mb-8 bg-muted/20 p-4 sm:p-6 rounded-2xl border border-border w-full">
             <!-- Row 1: Primary Filters -->
             <div class="flex flex-col sm:flex-row items-end gap-4 md:gap-6">
-                <!-- Search Bar -->
-                <div class="flex-1 w-full min-w-0 sm:min-w-[250px]">
-                    <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider uppercase">Cari Transaksi / Unit</label>
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-muted-foreground transition-colors group-focus-within:text-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round opacity-60"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        </div>
-                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari nama, WA, atau seri unit..." 
-                            class="w-full h-10 pl-11 pr-4 bg-background border border-border rounded-xl text-xs font-bold shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/40">
-                        @if($search)
-                            <button wire:click="$set('search', '')" class="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-rose-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                            </button>
-                        @endif
-                    </div>
-                </div>
-
                 <!-- Category Dropdown -->
-                <div class="w-full sm:w-[200px] flex-shrink-0">
-                    <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider uppercase">Kategori</label>
+                <div class="w-full sm:w-[200px]">
+                    <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider">Filter
+                        Kategori</label>
                     <div class="relative">
-                        <select wire:model.live="filterCategoryId" 
-                            class="w-full h-10 pl-3 pr-10 bg-background border border-border rounded-xl text-xs font-bold shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none cursor-pointer">
+                        <select wire:model.live="filterCategoryId"
+                            class="w-full h-10 pl-3 pr-10 bg-background border border-border rounded-xl text-xs font-bold shadow-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer">
                             <option value="">Semua Kategori</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
                         </select>
-                        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-muted-foreground">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="m6 9 6 6 6-6"/></svg>
+                        <div
+                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-muted-foreground">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round" class="opacity-50">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
                         </div>
                     </div>
                 </div>
                 <!-- Timeframe Dropdown (Only relevant for Timeline, but keeping it) -->
                 <div class="w-full sm:w-[180px] hidden sm:block">
-                    <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider">Rentang Waktu</label>
+                    <label class="text-[9px] font-bold text-muted-foreground/70 ml-1 mb-2 block tracking-wider">Rentang
+                        Waktu</label>
                     <div class="relative">
-                        <select wire:model.live="timeframe" 
+                        <select wire:model.live="timeframe"
                             class="w-full h-10 pl-3 pr-10 bg-background border border-border rounded-xl text-xs font-bold shadow-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer">
                             <option value="7">7 Hari</option>
                             <option value="14">14 Hari</option>
@@ -136,46 +74,44 @@
                             <option value="all">Semua</option>
                             <option value="custom">Custom Range</option>
                         </select>
-                        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-muted-foreground">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="m6 9 6 6 6-6"/></svg>
+                        <div
+                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-muted-foreground">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round" class="opacity-50">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
                         </div>
                     </div>
                 </div>
 
                 @if($timeframe === 'custom')
-                    <div class="hidden sm:flex items-end gap-2 animate-in fade-in slide-in-from-left-4 duration-300">
-                        <div class="w-[130px]">
-                            <label class="text-[9px] font-bold text-muted-foreground/60 ml-1 mb-1 block uppercase tracking-tighter">Dari</label>
-                            <input type="date" wire:model.live="customStartDate" 
-                                class="w-full h-10 px-3 bg-background border border-border rounded-xl text-[11px] font-bold outline-none focus:border-primary shadow-sm">
+                    <div class="hidden sm:flex items-center gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
+                        <div class="w-[120px]">
+                            <label class="text-[9px] font-bold text-muted-foreground/60 ml-1 mb-1 block">Dari</label>
+                            <input type="date" wire:model.live="customStartDate"
+                                class="w-full h-9 px-3 bg-background border border-border rounded-lg text-xs font-bold outline-none focus:border-primary">
                         </div>
-                        <div class="w-[130px]">
-                            <label class="text-[9px] font-bold text-muted-foreground/60 ml-1 mb-1 block uppercase tracking-tighter">Sampai</label>
-                            <input type="date" wire:model.live="customEndDate" 
-                                class="w-full h-10 px-3 bg-background border border-border rounded-xl text-[11px] font-bold outline-none focus:border-primary shadow-sm">
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <button wire:click="previousPage" class="h-10 w-10 flex items-center justify-center rounded-xl bg-background border border-border hover:bg-muted hover:text-primary transition-all shadow-sm group" title="Kembali">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-active:scale-90 transition-transform"><path d="m15 18-6-6 6-6"/></svg>
-                            </button>
-                            <button wire:click="nextPage" class="h-10 w-10 flex items-center justify-center rounded-xl bg-background border border-border hover:bg-muted hover:text-primary transition-all shadow-sm group" title="Lanjut">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-active:scale-90 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
-                            </button>
+                        <div class="w-[120px]">
+                            <label class="text-[9px] font-bold text-muted-foreground/60 ml-1 mb-1 block">Sampai</label>
+                            <input type="date" wire:model.live="customEndDate"
+                                class="w-full h-9 px-3 bg-background border border-border rounded-lg text-xs font-bold outline-none focus:border-primary">
                         </div>
                     </div>
                 @endif
             </div>
-            
+
             <!-- Row 2: View Controls (Zoom) -->
             <div class="flex flex-wrap items-center gap-4 sm:gap-8 pt-4 border-t border-border/50">
                 <!-- Day Width Slider -->
                 <div class="flex-1 min-w-[180px] flex flex-col gap-2">
                     <div class="flex items-center justify-between">
-                        <label class="text-[9px] font-bold text-muted-foreground/70 tracking-wider">Zoom Timeline</label>
+                        <label class="text-[9px] font-bold text-muted-foreground/70 tracking-wider">Zoom
+                            Timeline</label>
                         <span class="text-[9px] font-bold text-primary" x-text="dayWidth + 'px'"></span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <input type="range" min="40" max="300" x-model="dayWidth" 
+                        <input type="range" min="40" max="300" x-model="dayWidth"
                             class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
                     </div>
                 </div>
@@ -185,11 +121,12 @@
                 <!-- Unit Width Slider -->
                 <div class="flex-1 min-w-[180px] flex flex-col gap-2">
                     <div class="flex items-center justify-between">
-                        <label class="text-[9px] font-bold text-muted-foreground/70 tracking-wider">Lebar Kolom Unit</label>
+                        <label class="text-[9px] font-bold text-muted-foreground/70 tracking-wider">Lebar Kolom
+                            Unit</label>
                         <span class="text-[9px] font-bold text-primary" x-text="unitWidth + 'px'"></span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <input type="range" min="130" max="400" x-model="unitWidth" 
+                        <input type="range" min="130" max="400" x-model="unitWidth"
                             class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
                     </div>
                 </div>
@@ -198,528 +135,620 @@
         </div>
 
         <!-- MAIN MONITORING GRID (Hidden on mobile) -->
-        <div class="hidden sm:block overflow-x-auto hide-scrollbar rounded-2xl border border-border bg-background shadow-2xl relative">
+        <div
+            class="hidden sm:block overflow-x-auto hide-scrollbar rounded-2xl border border-border bg-background shadow-2xl relative">
 
-                <div class="m-grid-wrapper relative bg-background">
-                    @php
-                        $now = now();
-                        $isNowInRange = $now->between($startDate->copy()->startOfDay(), $endDate->copy()->endOfDay());
-                        $nowOffsetSeconds = $startDate->copy()->startOfDay()->diffInSeconds($now, false);
-                        $nowLeft = ($nowOffsetSeconds / 86400); 
-                    @endphp
+            <div class="m-grid-wrapper relative bg-background">
 
-                    @if($isNowInRange)
-                        {{-- Minimalist Now Indicator Line --}}
-                        <div class="absolute top-0 bottom-0 w-px bg-blue-500 z-[39] pointer-events-none transition-all duration-500 animate-now-heartbeat"
-                             style="left: calc(var(--admin-unit-width) + ({{ $nowLeft }} * var(--admin-day-width)));">
-                            
-                            {{-- Minimalist Top Dot --}}
-                            <div class="absolute top-[32px] left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)] border-2 border-white dark:border-slate-900 z-10"></div>
+                <!-- HEADER DATES -->
+                <div class="flex flex-col border-b border-border bg-muted/10 sticky top-0 z-50 backdrop-blur-md">
+                    {{-- First Row: Month & Year --}}
+                    <div class="flex border-b border-border/30 overflow-visible">
+                        <div
+                            class="m-unit-col shrink-0 border-r border-border border-dashed bg-background sticky left-0 z-[61] h-8 flex items-center justify-center">
+                            <span class="font-black text-[8px] text-muted-foreground/30 px-3">Timeline</span>
                         </div>
-                    @endif
-                    
-                    <!-- HEADER DATES -->
-                    <div class="flex flex-col border-b border-border bg-muted/10 sticky top-0 z-50 backdrop-blur-md">
-                        {{-- First Row: Month & Year --}}
-                        <div class="flex border-b border-border/30 overflow-visible">
-                            <div class="m-unit-col shrink-0 border-r border-border border-dashed bg-background sticky left-0 z-[61] h-8 flex items-center justify-center">
-                                <span class="font-black text-[8px] text-muted-foreground/30 px-3">Timeline</span>
-                            </div>
-                            <div class="flex-1 flex pointer-events-none">
-                                @php
-                                    $currentMonth = null;
-                                    $monthGroups = [];
-                                    foreach($dates as $date) {
-                                        $mKey = $date->format('M Y');
-                                        if(!isset($monthGroups[$mKey])) $monthGroups[$mKey] = 0;
-                                        $monthGroups[$mKey]++;
-                                    }
-                                @endphp
-                                @foreach($monthGroups as $monthName => $count)
-                                    <div class="shrink-0 h-8 flex items-center justify-center border-r border-border/10 bg-muted/5 group/monthHeader"
-                                         style="width: calc(var(--admin-day-width) * {{ $count }});">
-                                        <span class="text-[9px] font-black text-primary/60 ">{{ $monthName }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Second Row: Day & Date --}}
-                        <div class="flex">
-                            <div class="m-unit-col shrink-0 p-5 border-r border-border border-dashed flex items-center justify-center bg-background sticky left-0 z-[60] shadow-[4px_0_15px_-5px_rgba(0,0,0,0.1)]">
-                                <span class="font-bold text-[10px]  text-primary/70">Fleet List</span>
-                            </div>
-                            <div class="flex-1 flex overflow-visible">
-                                @foreach($dates as $date)
-                                    <div class="m-day-col shrink-0 p-3 text-center border-r border-border/30 {{ $date->isToday() ? 'bg-primary/[0.08] shadow-[inset_0_0_15px_rgba(var(--primary),0.05)]' : '' }}">
-                                        <div class="text-[11px] font-bold text-foreground leading-none {{ $date->isToday() ? 'text-primary' : '' }}">
-                                            {{ $date->translatedFormat('D') }}
-                                        </div>
-                                        <div class="text-[9px] font-medium text-muted-foreground mt-1.5 text-center">
-                                            {{ $date->format('d/m') }}
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
+                        <div class="flex-1 flex pointer-events-none">
+                            @php
+                                $currentMonth = null;
+                                $monthGroups = [];
+                                foreach ($dates as $date) {
+                                    $mKey = $date->format('M Y');
+                                    if (!isset($monthGroups[$mKey]))
+                                        $monthGroups[$mKey] = 0;
+                                    $monthGroups[$mKey]++;
+                                }
+                            @endphp
+                            @foreach($monthGroups as $monthName => $count)
+                                <div class="shrink-0 h-8 flex items-center justify-center border-r border-border/10 bg-muted/5 group/monthHeader"
+                                    style="width: calc(var(--admin-day-width) * {{ $count }});">
+                                    <span class="text-[9px] font-black text-primary/60 ">{{ $monthName }}</span>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
 
-                    <!-- BODY CONTENT - Flat List -->
-                    <div class="flex flex-col relative divide-y divide-border/50">
-                        @foreach($units as $unit)
-                            <div class="flex min-h-[85px] group hover:bg-muted/[0.02] transition-colors relative border-b border-border/30 last:border-b-0">
-                                <!-- Unit Column (Sticky) -->
-                                <div class="m-unit-col shrink-0 p-4 md:p-5 border-r border-border border-dashed flex items-center gap-4 bg-background sticky left-0 z-40 transition-colors shadow-[4px_0_15px_-5px_rgba(0,0,0,0.08)]">
-                                    <div class="w-1.5 h-10 rounded-full bg-primary/10 group-hover:bg-primary transition-all duration-300"></div>
-                                    <div class="min-w-0">
-                                        <div class="font-bold text-[13px]  leading-tight truncate text-foreground group-hover:text-primary transition-colors">
-                                            {{ $unit->seri }}
-                                        </div>
-                                        <div class="flex items-center gap-2 mt-1.5 overflow-hidden">
-                                            <span class="text-[8px] px-1.5 py-0.5 rounded-md bg-muted font-black text-muted-foreground flex-shrink-0">{{ $unit->category->name ?? 'Fleet' }}</span>
-                                            <span class="text-[9px] font-medium text-muted-foreground/60 truncate">{{ $unit->warna }}</span>
-                                        </div>
+                    {{-- Second Row: Day & Date --}}
+                    <div class="flex">
+                        <div
+                            class="m-unit-col shrink-0 p-5 border-r border-border border-dashed flex items-center justify-center bg-background sticky left-0 z-[60] shadow-[4px_0_15px_-5px_rgba(0,0,0,0.1)]">
+                            <span class="font-bold text-[10px]  text-primary/70">Fleet List</span>
+                        </div>
+                        <div class="flex-1 flex overflow-visible">
+                            @foreach($dates as $date)
+                                <div
+                                    class="m-day-col shrink-0 p-3 text-center border-r border-border/30 {{ $date->isToday() ? 'bg-primary/[0.08] shadow-[inset_0_0_15px_rgba(var(--primary),0.05)]' : '' }}">
+                                    <div
+                                        class="text-[11px] font-bold text-foreground leading-none {{ $date->isToday() ? 'text-primary' : '' }}">
+                                        {{ $date->translatedFormat('D') }}
+                                    </div>
+                                    <div class="text-[9px] font-medium text-muted-foreground mt-1.5 text-center">
+                                        {{ $date->format('d/m') }}
                                     </div>
                                 </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
 
-                                <!-- Timeline Track -->
-                                <div class="flex-1 relative">
-                                    <!-- Background Grid Lines -->
-                                    <div class="absolute inset-0 flex pointer-events-none">
-                                        @foreach($dates as $date)
-                                            <div class="m-day-col h-full border-r border-border/10 {{ $date->isToday() ? 'bg-primary/[0.02]' : '' }}"></div>
-                                        @endforeach
+                <!-- BODY CONTENT - Flat List -->
+                <div class="flex flex-col relative divide-y divide-border/50">
+                    @foreach($units as $unit)
+                        <div
+                            class="flex min-h-[85px] group hover:bg-muted/[0.02] transition-colors relative border-b border-border/30 last:border-b-0">
+                            <!-- Unit Column (Sticky) -->
+                            <div
+                                class="m-unit-col shrink-0 p-4 md:p-5 border-r border-border border-dashed flex items-center gap-4 bg-background sticky left-0 z-40 transition-colors shadow-[4px_0_15px_-5px_rgba(0,0,0,0.08)]">
+                                <div
+                                    class="w-1.5 h-10 rounded-full bg-primary/10 group-hover:bg-primary transition-all duration-300">
+                                </div>
+                                <div class="min-w-0">
+                                    <div
+                                        class="font-bold text-[13px]  leading-tight truncate text-foreground group-hover:text-primary transition-colors">
+                                        {{ $unit->seri }}
                                     </div>
+                                    <div class="flex items-center gap-2 mt-1.5 overflow-hidden">
+                                        <span
+                                            class="text-[8px] px-1.5 py-0.5 rounded-md bg-muted font-black text-muted-foreground flex-shrink-0">{{ $unit->category->name ?? 'Fleet' }}</span>
+                                        <span
+                                            class="text-[9px] font-medium text-muted-foreground/60 truncate">{{ $unit->warna }}</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                                    <!-- Rental Bars Layer -->
-                                    @foreach($unit->rentals as $rental)
-                                        @php
-                                            $sDate = \Carbon\Carbon::parse($rental->waktu_mulai);
-                                            $eDate = \Carbon\Carbon::parse($rental->waktu_selesai);
-                                            $isOngoing = now()->between($sDate, $eDate) && in_array($rental->status, ['paid', 'completed']);
-                                            $isPaid = in_array($rental->status, ['paid', 'completed']);
-                                            
-                                            $viewStart = $dates[0]->startOfDay();
-                                            $viewEnd = end($dates)->endOfDay();
+                            <!-- Timeline Track -->
+                            <div class="flex-1 relative">
+                                <!-- Background Grid Lines -->
+                                <div class="absolute inset-0 flex pointer-events-none">
+                                    @foreach($dates as $date)
+                                        <div
+                                            class="m-day-col h-full border-r border-border/10 {{ $date->isToday() ? 'bg-primary/[0.02]' : '' }}">
+                                        </div>
+                                    @endforeach
+                                </div>
 
-                                            $effectiveStart = $sDate->lt($viewStart) ? $viewStart : $sDate;
-                                            $effectiveEnd = $eDate->gt($viewEnd) ? $viewEnd : $eDate;
+                                <!-- Rental Bars Layer -->
+                                @foreach($unit->rentals as $rental)
+                                    @php
+                                        $sDate = \Carbon\Carbon::parse($rental->waktu_mulai);
+                                        $eDate = \Carbon\Carbon::parse($rental->waktu_selesai);
+                                        $isOngoing = now()->between($sDate, $eDate) && in_array($rental->status, ['paid', 'completed']);
+                                        $isPaid = in_array($rental->status, ['paid', 'completed']);
 
-                                            if ($effectiveStart->gt($viewEnd) || $effectiveEnd->lt($viewStart)) continue;
+                                        $viewStart = $dates[0]->startOfDay();
+                                        $viewEnd = end($dates)->endOfDay();
 
-                                            $startIndex = $viewStart->diffInMinutes($effectiveStart) / 1440;
-                                            $duration = $effectiveStart->diffInMinutes($effectiveEnd) / 1440;
-                                            
-                                            // Ensure very short rentals are still visible
-                                            $duration = max($duration, 0.01);
-                                            
-                                            $statusStyle = match($rental->status) {
-                                                'paid' => 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.08)]',
-                                                'pending' => 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-[0_4px_12px_rgba(245,158,11,0.08)]',
-                                                'completed' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.08)]',
-                                                default => 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20',
-                                            };
-                                            
-                                            $dotColor = match($rental->status) {
-                                                'paid' => 'bg-blue-500',
-                                                'pending' => 'bg-amber-500',
-                                                'completed' => 'bg-emerald-500',
-                                                default => 'bg-slate-500',
-                                            };
-                                        @endphp
-                                        <div wire:click="selectRental({{ $rental->id }})"
-                                            class="absolute h-full top-0 px-[4.5px] py-[15px] z-30 group/bar cursor-pointer"
-                                            style="left: calc(var(--admin-day-width) * {{ $startIndex }}); width: calc(var(--admin-day-width) * {{ $duration }});"
-                                            x-data="{ 
-                                                timeLeft: '',
-                                                endTime: {{ $eDate->timestamp }},
-                                                isPaid: {{ $isPaid ? 'true' : 'false' }},
-                                                updateCountdown() {
-                                                    if (!this.isPaid) return;
-                                                    const now = Math.floor(Date.now() / 1000);
-                                                    const diff = this.endTime - now;
-                                                    if (diff <= 0) {
-                                                        this.timeLeft = 'Selesai';
-                                                        return;
-                                                    }
-                                                    const h = Math.floor(diff / 3600);
-                                                    const m = Math.floor((diff % 3600) / 60);
-                                                    const s = diff % 60;
-                                                    this.timeLeft = `${h}j ${m}m ${s}d`;
-                                                }
-                                            }" 
-                                            x-init="updateCountdown(); if(isPaid) setInterval(() => updateCountdown(), 1000)">
-                                            
-                                            <div class="w-full h-full rounded-xl {{ $statusStyle }} px-3.5 py-1.5 flex flex-col justify-center transition-all relative overflow-hidden group-hover/bar:border-primary group-hover/bar:shadow-2xl group-hover/bar:z-50 ring-1 ring-transparent hover:ring-primary/40">
-                                                <div class="flex items-center gap-2.5 overflow-hidden transition-all group-hover/bar:-translate-y-3">
-                                                    <div class="h-1.5 w-1.5 rounded-full {{ $dotColor }} {{ $rental->status == 'pending' ? 'animate-pulse' : '' }} shrink-0"></div>
-                                                    <div class="min-w-0">
-                                                        <span class="text-[10px] font-black truncate leading-none block">
-                                                            {{ $rental->nama }}
-                                                        </span>
-                                                        @if($isPaid)
-                                                            <span class="text-[8px] font-bold opacity-60 flex items-center gap-1 mt-0.5 group-hover/bar:opacity-0 transition-opacity">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                                                <span x-text="timeLeft"></span>
-                                                            </span>
-                                                        @endif
-                                                    </div>
+                                        $effectiveStart = $sDate->lt($viewStart) ? $viewStart : $sDate;
+                                        $effectiveEnd = $eDate->gt($viewEnd) ? $viewEnd : $eDate;
+
+                                        if ($effectiveStart->gt($viewEnd) || $effectiveEnd->lt($viewStart))
+                                            continue;
+
+                                        $startIndex = $viewStart->diffInMinutes($effectiveStart) / 1440;
+                                        $duration = $effectiveStart->diffInMinutes($effectiveEnd) / 1440;
+
+                                        // Ensure very short rentals are still visible
+                                        $duration = max($duration, 0.01);
+
+                                        $statusStyle = match ($rental->status) {
+                                            'paid' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.08)]',
+                                            'pending' => 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-[0_4px_12px_rgba(245,158,11,0.08)]',
+                                            'completed' => 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.08)]',
+                                            default => 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20',
+                                        };
+
+                                        $dotColor = match ($rental->status) {
+                                            'paid' => 'bg-emerald-500',
+                                            'pending' => 'bg-amber-500',
+                                            'completed' => 'bg-blue-500',
+                                            default => 'bg-slate-500',
+                                        };
+                                    @endphp
+                                    <div wire:click="selectRental({{ $rental->id }})"
+                                        class="absolute h-full top-0 px-[4.5px] py-[15px] z-30 group/bar cursor-pointer"
+                                        style="left: calc(var(--admin-day-width) * {{ $startIndex }}); width: calc(var(--admin-day-width) * {{ $duration }});"
+                                        x-data="{ 
+                                                        timeLeft: '',
+                                                        endTime: {{ $eDate->timestamp }},
+                                                        isPaid: {{ $isPaid ? 'true' : 'false' }},
+                                                        updateCountdown() {
+                                                            if (!this.isPaid) return;
+                                                            const now = Math.floor(Date.now() / 1000);
+                                                            const diff = this.endTime - now;
+                                                            if (diff <= 0) {
+                                                                this.timeLeft = 'Selesai';
+                                                                return;
+                                                            }
+                                                            const h = Math.floor(diff / 3600);
+                                                            const m = Math.floor((diff % 3600) / 60);
+                                                            const s = diff % 60;
+                                                            this.timeLeft = `${h}j ${m}m ${s}d`;
+                                                        }
+                                                    }"
+                                        x-init="updateCountdown(); if(isPaid) setInterval(() => updateCountdown(), 1000)">
+
+                                        <div
+                                            class="w-full h-full rounded-xl {{ $statusStyle }} px-3.5 py-1.5 flex flex-col justify-center transition-all relative overflow-hidden group-hover/bar:border-primary group-hover/bar:shadow-2xl group-hover/bar:z-50 ring-1 ring-transparent hover:ring-primary/40">
+                                            <div
+                                                class="flex items-center gap-2.5 overflow-hidden transition-all group-hover/bar:-translate-y-3">
+                                                <div
+                                                    class="h-1.5 w-1.5 rounded-full {{ $dotColor }} {{ $rental->status == 'pending' ? 'animate-pulse' : '' }} shrink-0">
                                                 </div>
-                                                
-                                                <!-- Detail on hover -->
-                                                <div class="absolute inset-x-0 bottom-2.5 opacity-0 group-hover/bar:opacity-100 transition-all translate-y-4 group-hover/bar:translate-y-0 flex flex-col items-center justify-center gap-1">
-                                                    <div class="flex items-center gap-2.5 text-[11px] font-black text-primary">
-                                                        <span>{{ $sDate->format('H:i') }}</span>
-                                                        <span class="opacity-30">→</span>
-                                                        <span>{{ $eDate->format('H:i') }}</span>
-                                                    </div>
+                                                <div class="min-w-0">
+                                                    <span class="text-[10px] font-black truncate leading-none block">
+                                                        {{ $rental->nama }}
+                                                    </span>
                                                     @if($isPaid)
-                                                        <span class="text-[8px] font-bold bg-primary/10 px-2 py-0.5 rounded-full text-primary flex items-center gap-1">
-                                                            Sisa: <span x-text="timeLeft"></span>
+                                                        <span
+                                                            class="text-[8px] font-bold opacity-60 flex items-center gap-1 mt-0.5 group-hover/bar:opacity-0 transition-opacity">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"
+                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                                <circle cx="12" cy="12" r="10" />
+                                                                <polyline points="12 6 12 12 16 14" />
+                                                            </svg>
+                                                            <span x-text="timeLeft"></span>
                                                         </span>
                                                     @endif
                                                 </div>
                                             </div>
+
+                                            <!-- Detail on hover -->
+                                            <div
+                                                class="absolute inset-x-0 bottom-2.5 opacity-0 group-hover/bar:opacity-100 transition-all translate-y-4 group-hover/bar:translate-y-0 flex flex-col items-center justify-center gap-1">
+                                                <div class="flex items-center gap-2.5 text-[11px] font-black text-primary">
+                                                    <span>{{ $sDate->format('H:i') }}</span>
+                                                    <span class="opacity-30">→</span>
+                                                    <span>{{ $eDate->format('H:i') }}</span>
+                                                </div>
+                                                @if($isPaid)
+                                                    <span
+                                                        class="text-[8px] font-bold bg-primary/10 px-2 py-0.5 rounded-full text-primary flex items-center gap-1">
+                                                        Sisa: <span x-text="timeLeft"></span>
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
-                                    @endforeach
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <!-- MONITORING LEGEND (Timeline Only) -->
+        <div
+            class="mt-10 hidden sm:flex flex-wrap items-center justify-center gap-12 bg-muted/5 p-5 rounded-2xl border border-border dark:border-white/5 shadow-inner">
+            <div class="flex items-center gap-3">
+                <div class="w-3.5 h-3.5 rounded bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]"></div>
+                <span class="text-[9px] font-bold text-muted-foreground tracking-widest">Aktif / Sudah Bayar</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-3.5 h-3.5 rounded bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)] animate-pulse">
+                </div>
+                <span class="text-[9px] font-bold text-muted-foreground tracking-widest">Antrean / Pending</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-3.5 h-3.5 rounded bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.3)]"></div>
+                <span class="text-[9px] font-bold text-muted-foreground tracking-widest">Kembali / Selesai</span>
+            </div>
+        </div>
+
+        <!-- STATUS CATEGORIES SECTION -->
+        <div class="mt-6 sm:mt-16 space-y-12 sm:space-y-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
+
+            <!-- 1. ACTIVE RENTALS SECTION -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between border-b border-border dark:border-white/10 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-base sm:text-xl font-black text-foreground tracking-tight leading-none">Unit
+                                Sedang Disewa</h2>
+                            <p class="text-[9px] sm:text-xs text-muted-foreground mt-1">Unit aktif yang sedang
+                                digunakan.</p>
+                        </div>
+                    </div>
+                    <div
+                        class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full shrink-0">
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span
+                            class="text-[9px] sm:text-[11px] font-black text-emerald-600 dark:text-emerald-400 tracking-wider">{{ $activeRentals->count() }}
+                            Aktif</span>
+                    </div>
+                </div>
+
+                @if($activeRentals->count() > 0)
+                    <div class="grid grid-cols-1 gap-4">
+                        @foreach($activeRentals as $rental)
+                            <div x-data="{ expanded: false }"
+                                class="bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-emerald-500/30"
+                                :class="expanded ? 'shadow-2xl ring-1 ring-emerald-500/20' : 'shadow-sm'">
+
+                                <!-- Accordion Header -->
+                                <div @click="expanded = !expanded"
+                                    class="p-3 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
+                                    <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                        <div class="flex -space-x-3 overflow-hidden shrink-0">
+                                            @foreach($rental->units as $u)
+                                                <div class="h-8 w-8 sm:h-12 sm:w-12 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm"
+                                                    title="{{ $u->seri }}">
+                                                    <span
+                                                        class="text-[7px] font-bold text-muted-foreground leading-none text-center px-0.5">
+                                                        {{ substr($u->seri, 0, 3) }}<br>{{ substr($u->seri, -2) }}
+                                                    </span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <div class="flex flex-col min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <h3
+                                                    class="font-bold text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-sm truncate tracking-tight">
+                                                    {{ $rental->units->pluck('seri')->join(', ') }}</h3>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 mt-1">
+                                                <span
+                                                    class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', trim($rental->nama))[0] }}</span>
+                                                <span class="hidden sm:inline-block h-1 w-1 rounded-full bg-border"></span>
+                                                <span class="text-[10px] sm:text-xs text-muted-foreground truncate">
+                                                    {{ $rental->waktu_mulai->format('H:i') }} -
+                                                    {{ $rental->waktu_selesai->format('H:i') }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 sm:gap-6">
+                                        <!-- Countdown Column -->
+                                        <div class="text-right w-20 sm:w-32 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
+                                            x-data="{ 
+                                                            timeLeft: '',
+                                                            endTime: {{ $rental->waktu_selesai->timestamp }},
+                                                            update() {
+                                                                const now = Math.floor(Date.now() / 1000);
+                                                                const diff = this.endTime - now;
+                                                                if (diff <= 0) { this.timeLeft = 'Selesai'; return; }
+                                                                const h = Math.floor(diff / 3600);
+                                                                const m = Math.floor((diff % 3600) / 60);
+                                                                this.timeLeft = `${h}j ${m}m`;
+                                                            }
+                                                        }" x-init="update(); setInterval(() => update(), 60000)">
+                                            <p
+                                                class="text-[7px] sm:text-[8px] font-black text-muted-foreground tracking-widest">
+                                                Sisa</p>
+                                            <p x-text="timeLeft"
+                                                class="text-[9px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                                            </p>
+                                        </div>
+                                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-muted-foreground transition-transform duration-300"
+                                            :class="expanded ? 'rotate-180 bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : ''">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <path d="m6 9 6 6 6-6" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Accordion content -->
+                                <div x-show="expanded" x-collapse class="bg-muted/20 border-t border-border">
+                                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        <div class="space-y-3">
+                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Informasi
+                                                Penyewa</h4>
+                                            <div class="space-y-2">
+                                                <div>
+                                                    <p class="text-[8px] font-bold text-muted-foreground opacity-70">Alamat
+                                                        Lengkap</p>
+                                                    <p
+                                                        class="text-[10px] sm:text-xs font-semibold text-foreground mt-0.5 leading-relaxed">
+                                                        {{ $rental->alamat ?: '-' }}</p>
+                                                </div>
+                                                <div>
+                                                    <p class="text-[8px] font-bold text-muted-foreground opacity-70">Identitas /
+                                                        NIK</p>
+                                                    <p class="text-[10px] sm:text-xs font-semibold text-foreground mt-0.5">
+                                                        {{ $rental->nik }}</p>
+                                                </div>
+                                                <div class="pt-2">
+                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white text-[11px] font-bold hover:bg-emerald-600 transition-colors shadow-sm">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                            <path
+                                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                        </svg>
+                                                        Hubungi via WhatsApp
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-3">
+                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Detail Waktu
+                                            </h4>
+                                            <div class="space-y-3">
+                                                <div class="flex items-start gap-3">
+                                                    <div class="h-8 w-1 bg-primary/20 rounded-full shrink-0"></div>
+                                                    <div>
+                                                        <p class="text-[8px] font-bold text-muted-foreground opacity-70">Waktu
+                                                            Mulai</p>
+                                                        <p class="text-[10px] font-bold text-foreground mt-0.5">
+                                                            {{ $rental->waktu_mulai->translatedFormat('d M Y, H:i') }} WIB</p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-start gap-3">
+                                                    <div class="h-8 w-1 bg-emerald-500/20 rounded-full shrink-0"></div>
+                                                    <div>
+                                                        <p class="text-[8px] font-bold text-muted-foreground opacity-70">Waktu
+                                                            Selesai</p>
+                                                        <p class="text-[10px] font-bold text-emerald-600 mt-0.5">
+                                                            {{ $rental->waktu_selesai->translatedFormat('d M Y, H:i') }} WIB</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-3">
+                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Ringkasan
+                                                Biaya</h4>
+                                            <div class="bg-background rounded-xl p-4 border border-border/50">
+                                                <div class="space-y-2">
+                                                    <div class="flex justify-between text-[11px]">
+                                                        <span class="text-muted-foreground">Harga Sewa</span>
+                                                        <span class="font-semibold">Rp
+                                                            {{ number_format($rental->subtotal_harga, 0, ',', '.') }}</span>
+                                                    </div>
+                                                    @if($rental->potongan_diskon > 0)
+                                                        <div class="flex justify-between text-[11px]">
+                                                            <span class="text-rose-500">Total Diskon</span>
+                                                            <span class="font-semibold text-rose-500">- Rp
+                                                                {{ number_format($rental->potongan_diskon, 0, ',', '.') }}</span>
+                                                        </div>
+                                                    @endif
+                                                    <div class="h-px bg-border my-2"></div>
+                                                    <div class="flex justify-between items-center pt-1">
+                                                        <span class="text-[9px] font-bold text-foreground">Grand Total</span>
+                                                        <span class="text-sm font-black text-primary">Rp
+                                                            {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+
+                        @endforeach
+
+                    </div>
+                @else
+                    <div
+                        class="py-12 bg-muted/5 border border-border border-dashed rounded-3xl flex flex-col items-center text-center">
+                        <p class="text-[10px] font-bold text-muted-foreground opacity-50 tracking-widest">Tidak Ada Unit
+                            Yang Sedang Disewa</p>
+                    </div>
+                @endif
+            </div>
+
+            <!-- 2. UPCOMING RENTALS SECTION -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between border-b border-border dark:border-white/10 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 dark:text-amber-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M8 2v4" />
+                                <path d="M16 2v4" />
+                                <rect width="18" height="18" x="3" y="4" rx="2" />
+                                <path d="M3 10h18" />
+                                <path d="m9 16 2 2 4-4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-base sm:text-xl font-black text-foreground tracking-tight leading-none">Unit
+                                Akan Disewa</h2>
+                            <p class="text-[9px] sm:text-xs text-muted-foreground mt-1">Reservasi yang akan dimulai
+                                segera.</p>
+                        </div>
+                    </div>
+                    <div
+                        class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-amber-500/10 border border-amber-500/20 rounded-full shrink-0">
+                        <span
+                            class="text-[9px] sm:text-[11px] font-black text-amber-600 dark:text-amber-400 tracking-wider">{{ $upcomingRentals->count() }}
+                            Antrean</span>
+                    </div>
+                </div>
+                @if($upcomingRentals->count() > 0)
+                    <div class="grid grid-cols-1 gap-4">
+                        @foreach($upcomingRentals as $rental)
+                            <div x-data="{ expanded: false }"
+                                class="bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-amber-500/30"
+                                :class="expanded ? 'shadow-2xl ring-1 ring-amber-500/20' : 'shadow-sm'">
+
+                                <!-- Accordion Header -->
+                                <div @click="expanded = !expanded"
+                                    class="p-3 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
+                                    <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                        <div class="flex -space-x-3 overflow-hidden shrink-0">
+                                            @foreach($rental->units as $u)
+                                                <div class="h-8 w-8 sm:h-12 sm:w-12 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm"
+                                                    title="{{ $u->seri }}">
+                                                    <span
+                                                        class="text-[7px] font-bold text-muted-foreground leading-none text-center px-0.5">
+                                                        {{ substr($u->seri, 0, 3) }}<br>{{ substr($u->seri, -2) }}
+                                                    </span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <div class="flex flex-col min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <h3
+                                                    class="font-bold text-amber-600 dark:text-amber-400 text-[10px] sm:text-sm truncate tracking-tight">
+                                                    {{ $rental->units->pluck('seri')->join(', ') }}</h3>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 mt-1">
+                                                <span
+                                                    class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', trim($rental->nama))[0] }}</span>
+                                                <span class="hidden sm:inline-block h-1 w-1 rounded-full bg-border"></span>
+                                                <span class="text-[10px] sm:text-xs text-muted-foreground truncate">
+                                                    {{ $rental->waktu_mulai->format('d M, H:i') }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 sm:gap-6">
+                                        <!-- Timeleft Column -->
+                                        <div class="text-right w-24 sm:w-36 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
+                                            x-data="{ 
+                                                            timeleft: '',
+                                                            startTime: {{ $rental->waktu_mulai->timestamp }},
+                                                            update() {
+                                                                const now = Math.floor(Date.now() / 1000);
+                                                                const diff = this.startTime - now;
+                                                                if (diff <= 0) { this.timeleft = 'Starts'; return; }
+                                                                const d = Math.floor(diff / 86400);
+                                                                const h = Math.floor((diff % 86400) / 3600);
+                                                                const m = Math.floor((diff % 3600) / 60);
+                                                                this.timeleft = d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`;
+                                                            }
+                                                        }" x-init="update(); setInterval(() => update(), 60000)">
+                                            <p
+                                                class="text-[7px] sm:text-[8px] font-bold text-muted-foreground tracking-widest leading-none mb-1">
+                                                Mulai</p>
+                                            <p x-text="timeleft"
+                                                class="text-[9px] sm:text-sm font-bold text-amber-600 dark:text-amber-400 font-mono">
+                                            </p>
+                                        </div>
+                                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-muted-foreground transition-transform duration-300"
+                                            :class="expanded ? 'rotate-180 bg-amber-500/10 text-amber-500 border-amber-500/20' : ''">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <path d="m6 9 6 6 6-6" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div x-show="expanded" x-collapse class="bg-muted/20 border-t border-border">
+                                    <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                                        <div class="space-y-3">
+                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Informasi
+                                                Penyewa</h4>
+                                            <div class="space-y-2">
+                                                <p class="text-[10px] sm:text-xs font-semibold text-foreground">
+                                                    {{ $rental->nik }}</p>
+                                                <div class="pt-1">
+                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[9px] sm:text-[11px] font-bold hover:bg-emerald-600 transition-colors shadow-sm">WhatsApp</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Jadwal Sewa
+                                            </h4>
+                                            <p class="text-[10px] font-bold text-foreground">Durasi:
+                                                {{ $rental->waktu_mulai->diffInHours($rental->waktu_selesai) }} Jam</p>
+                                            <p class="text-[10px] text-muted-foreground">
+                                                {{ $rental->waktu_mulai->format('d M, H:i') }} s/d
+                                                {{ $rental->waktu_selesai->format('d M, H:i') }}</p>
+                                        </div>
+                                        <div class="space-y-3 text-right">
+                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Pembayaran
+                                            </h4>
+                                            <span
+                                                class="inline-block px-2 py-1 bg-emerald-500/10 text-emerald-600 text-[9px] font-bold rounded-lg border border-emerald-500/20 tracking-widest">Paid
+                                                / Confirmed</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         @endforeach
                     </div>
-                </div>
-            </div>
-
-            <div class="mt-10 hidden sm:flex flex-wrap items-center justify-center gap-12 bg-muted/5 p-5 rounded-2xl border border-border dark:border-white/5 shadow-inner">
-                <div class="flex items-center gap-3">
-                    <div class="w-3.5 h-3.5 rounded bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.3)]"></div>
-                    <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Aktif / Sudah Bayar</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="w-3.5 h-3.5 rounded bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)] animate-pulse"></div>
-                    <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Antrean / Pending</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="w-3.5 h-3.5 rounded bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]"></div>
-                    <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Selesai / Kembali</span>
-                </div>
-            </div>
-
-            <!-- STATUS CATEGORIES SECTION -->
-            <div class="mt-6 sm:mt-16 space-y-12 sm:space-y-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
-                
-                <!-- 1. ACTIVE RENTALS SECTION -->
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between border-b border-border dark:border-white/10 pb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                            </div>
-                            <div>
-                                <h2 class="text-base sm:text-xl font-black text-foreground tracking-tight leading-none">Unit Sedang Disewa</h2>
-                                <p class="text-[9px] sm:text-xs text-muted-foreground mt-1">Unit aktif yang sedang digunakan.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full shrink-0">
-                            <span class="relative flex h-2 w-2">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span class="text-[9px] sm:text-[11px] font-black text-emerald-600 dark:text-emerald-400 tracking-wider">{{ $activeRentals->count() }} Aktif</span>
-                        </div>
+                @else
+                    <div
+                        class="py-12 bg-muted/5 border border-border border-dashed rounded-3xl flex flex-col items-center text-center">
+                        <p class="text-[10px] font-bold text-muted-foreground opacity-50 tracking-widest">Tidak Ada
+                            Reservasi Mendatang</p>
                     </div>
-
-                    @if($activeRentals->count() > 0)
-                        <div class="grid grid-cols-1 gap-4">
-                            @foreach($activeRentals as $rental)
-                                <div x-data="{ expanded: false }" 
-                                    class="bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-emerald-500/30"
-                                    :class="expanded ? 'shadow-2xl ring-1 ring-emerald-500/20' : 'shadow-sm'">
-                                    
-                                    <!-- Accordion Header -->
-                                    <div @click="expanded = !expanded" class="p-3 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
-                                        <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                            <div class="flex -space-x-3 overflow-hidden shrink-0">
-                                                @foreach($rental->units as $u)
-                                                    <div class="h-8 w-8 sm:h-12 sm:w-12 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm" title="{{ $u->seri }}">
-                                                        <span class="text-[7px] font-bold text-muted-foreground leading-none text-center px-0.5">
-                                                            {{ substr($u->seri, 0, 3) }}<br>{{ substr($u->seri, -2) }}
-                                                        </span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                            <div class="flex flex-col min-w-0">
-                                                <div class="flex items-center gap-1.5">
-                                                    <h3 class="font-bold text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-sm truncate tracking-tight">{{ $rental->units->pluck('seri')->join(', ') }}</h3>
-                                                </div>
-                                                <div class="flex items-center gap-1.5 mt-1">
-                                                    <span class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', trim($rental->nama))[0] }}</span>
-                                                    <span class="hidden sm:inline-block h-1 w-1 rounded-full bg-border"></span>
-                                                    <span class="text-[10px] sm:text-xs text-muted-foreground truncate">
-                                                        {{ $rental->waktu_mulai->format('H:i') }} - {{ $rental->waktu_selesai->format('H:i') }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="flex items-center gap-2 sm:gap-6">
-                                            <!-- WhatsApp Quick Action -->
-                                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}?text={{ urlencode('Halo ' . explode(' ', trim($rental->nama))[0] . ', kami dari RentSpace ingin mengonfirmasi status sewa unit ' . $rental->units->pluck('seri')->join(', ') . ' Anda. Apakah unit sudah siap untuk serah terima?') }}" 
-                                               target="_blank" @click.stop
-                                               class="hidden sm:flex h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 items-center justify-center border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
-                                               title="Hubungi via WhatsApp">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                                            </a>
-
-                                            <!-- Countdown Column -->
-                                            <div class="text-right w-20 sm:w-32 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
-                                                x-data="{ 
-                                                    timeLeft: '',
-                                                    endTime: {{ $rental->waktu_selesai->timestamp }},
-                                                    update() {
-                                                        const now = Math.floor(Date.now() / 1000);
-                                                        const diff = this.endTime - now;
-                                                        if (diff <= 0) { this.timeLeft = 'Selesai'; return; }
-                                                        const h = Math.floor(diff / 3600);
-                                                        const m = Math.floor((diff % 3600) / 60);
-                                                        this.timeLeft = `${h}j ${m}m`;
-                                                    }
-                                                }" x-init="update(); setInterval(() => update(), 60000)">
-                                                <p class="text-[7px] sm:text-[8px] font-black text-muted-foreground tracking-widest">Sisa</p>
-                                                <p x-text="timeLeft" class="text-[9px] sm:text-xs font-black text-blue-600 dark:text-blue-400 font-mono"></p>
-                                            </div>
-                                            <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-muted-foreground transition-transform duration-300"
-                                                :class="expanded ? 'rotate-180 bg-blue-500/10 text-blue-500 border-blue-500/20' : ''">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Accordion content -->
-                                    <div x-show="expanded" x-collapse class="bg-muted/20 border-t border-border">
-                                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                            <div class="space-y-3">
-                                                <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Informasi Penyewa</h4>
-                                                <div class="space-y-2">
-                                                    <div>
-                                                        <p class="text-[8px] font-bold text-muted-foreground opacity-70">Alamat Lengkap</p>
-                                                        <p class="text-[10px] sm:text-xs font-semibold text-foreground mt-0.5 leading-relaxed">{{ $rental->alamat ?: '-' }}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-[8px] font-bold text-muted-foreground opacity-70">Identitas / NIK</p>
-                                                        <p class="text-[10px] sm:text-xs font-semibold text-foreground mt-0.5">{{ $rental->nik }}</p>
-                                                    </div>
-                                                    <div class="pt-2">
-                                                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white text-[11px] font-bold hover:bg-emerald-600 transition-colors shadow-sm">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                                                            Hubungi via WhatsApp
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="space-y-3">
-                                                <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Detail Waktu</h4>
-                                                <div class="space-y-3">
-                                                    <div class="flex items-start gap-3">
-                                                        <div class="h-8 w-1 bg-primary/20 rounded-full shrink-0"></div>
-                                                        <div>
-                                                            <p class="text-[8px] font-bold text-muted-foreground opacity-70">Waktu Mulai</p>
-                                                            <p class="text-[10px] font-bold text-foreground mt-0.5">{{ $rental->waktu_mulai->translatedFormat('d M Y, H:i') }} WIB</p>
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex items-start gap-3">
-                                                        <div class="h-8 w-1 bg-emerald-500/20 rounded-full shrink-0"></div>
-                                                        <div>
-                                                            <p class="text-[8px] font-bold text-muted-foreground opacity-70">Waktu Selesai</p>
-                                                            <p class="text-[10px] font-bold text-emerald-600 mt-0.5">{{ $rental->waktu_selesai->translatedFormat('d M Y, H:i') }} WIB</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="space-y-3">
-                                                <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Ringkasan Biaya</h4>
-                                                <div class="bg-background rounded-xl p-4 border border-border/50">
-                                                    <div class="space-y-2">
-                                                        <div class="flex justify-between text-[11px]">
-                                                            <span class="text-muted-foreground">Harga Sewa</span>
-                                                            <span class="font-semibold">Rp {{ number_format($rental->subtotal_harga, 0, ',', '.') }}</span>
-                                                        </div>
-                                                        @if($rental->potongan_diskon > 0)
-                                                            <div class="flex justify-between text-[11px]">
-                                                                <span class="text-rose-500">Total Diskon</span>
-                                                                <span class="font-semibold text-rose-500">- Rp {{ number_format($rental->potongan_diskon, 0, ',', '.') }}</span>
-                                                            </div>
-                                                        @endif
-                                                        <div class="h-px bg-border my-2"></div>
-                                                        <div class="flex justify-between items-center pt-1">
-                                                            <span class="text-[9px] font-bold text-foreground">Grand Total</span>
-                                                            <span class="text-sm font-black text-primary">Rp {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            @endforeach
-
-                        </div>
-                    @else
-                        <div class="py-12 bg-muted/5 border border-border border-dashed rounded-3xl flex flex-col items-center text-center">
-                            <p class="text-[10px] font-bold text-muted-foreground opacity-50 tracking-widest">Tidak Ada Unit Yang Sedang Disewa</p>
-                        </div>
-                    @endif
-                </div>
-
-                <!-- 2. UPCOMING RENTALS SECTION -->
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between border-b border-border dark:border-white/10 pb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 dark:text-amber-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
-                            </div>
-                            <div>
-                                <h2 class="text-base sm:text-xl font-black text-foreground tracking-tight leading-none">Unit Akan Disewa</h2>
-                                <p class="text-[9px] sm:text-xs text-muted-foreground mt-1">Reservasi yang akan dimulai segera.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-amber-500/10 border border-amber-500/20 rounded-full shrink-0">
-                            <span class="text-[9px] sm:text-[11px] font-black text-amber-600 dark:text-amber-400 tracking-wider">{{ $upcomingRentals->count() }} Antrean</span>
-                        </div>
-                    </div>
-                    @if($upcomingRentals->count() > 0)
-                        <div class="grid grid-cols-1 gap-4">
-                            @foreach($upcomingRentals as $rental)
-                                <div x-data="{ expanded: false }" 
-                                    class="bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-amber-500/30"
-                                    :class="expanded ? 'shadow-2xl ring-1 ring-amber-500/20' : 'shadow-sm'">
-                                    
-                                    <!-- Accordion Header -->
-                                    <div @click="expanded = !expanded" class="p-3 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
-                                        <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                            <div class="flex -space-x-3 overflow-hidden shrink-0">
-                                                @foreach($rental->units as $u)
-                                                    <div class="h-8 w-8 sm:h-12 sm:w-12 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm" title="{{ $u->seri }}">
-                                                        <span class="text-[7px] font-bold text-muted-foreground leading-none text-center px-0.5">
-                                                            {{ substr($u->seri, 0, 3) }}<br>{{ substr($u->seri, -2) }}
-                                                        </span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                            <div class="flex flex-col min-w-0">
-                                                <div class="flex items-center gap-1.5">
-                                                    <h3 class="font-bold text-amber-600 dark:text-amber-400 text-[10px] sm:text-sm truncate tracking-tight">{{ $rental->units->pluck('seri')->join(', ') }}</h3>
-                                                </div>
-                                                <div class="flex items-center gap-1.5 mt-1">
-                                                    <span class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', trim($rental->nama))[0] }}</span>
-                                                    <span class="hidden sm:inline-block h-1 w-1 rounded-full bg-border"></span>
-                                                    <span class="text-[10px] sm:text-xs text-muted-foreground truncate">
-                                                        {{ $rental->waktu_mulai->format('d M, H:i') }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="flex items-center gap-2 sm:gap-6">
-                                            <!-- WhatsApp Quick Action -->
-                                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}?text={{ urlencode('Halo ' . explode(' ', trim($rental->nama))[0] . ', kami ingin mengonfirmasi pesanan sewa ' . $rental->units->pluck('seri')->join(', ') . ' Anda yang akan dimulai pada ' . $rental->waktu_mulai->format('d M, H:i') . '.') }}" 
-                                               target="_blank" @click.stop
-                                               class="hidden sm:flex h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 items-center justify-center border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
-                                               title="Hubungi via WhatsApp">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                                            </a>
-
-                                            <!-- Timeleft Column -->
-                                            <div class="text-right w-24 sm:w-36 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
-                                                x-data="{ 
-                                                    timeleft: '',
-                                                    startTime: {{ $rental->waktu_mulai->timestamp }},
-                                                    update() {
-                                                        const now = Math.floor(Date.now() / 1000);
-                                                        const diff = this.startTime - now;
-                                                        if (diff <= 0) { this.timeleft = 'Starts'; return; }
-                                                        const d = Math.floor(diff / 86400);
-                                                        const h = Math.floor((diff % 86400) / 3600);
-                                                        const m = Math.floor((diff % 3600) / 60);
-                                                        this.timeleft = d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`;
-                                                    }
-                                                }" x-init="update(); setInterval(() => update(), 60000)">
-                                                <p class="text-[7px] sm:text-[8px] font-bold text-muted-foreground tracking-widest leading-none mb-1 text-center">Mulai</p>
-                                                <p x-text="timeleft" class="text-[9px] sm:text-sm font-bold text-amber-600 dark:text-amber-400 font-mono"></p>
-                                            </div>
-                                            <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-muted-foreground transition-transform duration-300"
-                                                :class="expanded ? 'rotate-180 bg-amber-500/10 text-amber-500 border-amber-500/20' : ''">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div x-show="expanded" x-collapse class="bg-muted/20 border-t border-border">
-                                        <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                                            <div class="space-y-3">
-                                                <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Informasi Penyewa</h4>
-                                                <div class="space-y-2">
-                                                    <p class="text-[10px] sm:text-xs font-semibold text-foreground">{{ $rental->nik }}</p>
-                                                    <div class="pt-1">
-                                                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[9px] sm:text-[11px] font-bold hover:bg-emerald-600 transition-colors shadow-sm">WhatsApp</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="space-y-3">
-                                                <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Jadwal Sewa</h4>
-                                                <p class="text-[10px] font-bold text-foreground">Durasi: {{ $rental->waktu_mulai->diffInHours($rental->waktu_selesai) }} Jam</p>
-                                                <p class="text-[10px] text-muted-foreground">{{ $rental->waktu_mulai->format('d M, H:i') }} s/d {{ $rental->waktu_selesai->format('d M, H:i') }}</p>
-                                            </div>
-                                            <div class="space-y-3 text-right">
-                                                <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Pembayaran</h4>
-                                                <span class="inline-block px-2 py-1 bg-emerald-500/10 text-emerald-600 text-[9px] font-bold rounded-lg border border-emerald-500/20 tracking-widest">Paid / Confirmed</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="py-12 bg-muted/5 border border-border border-dashed rounded-3xl flex flex-col items-center text-center">
-                            <p class="text-[10px] font-bold text-muted-foreground opacity-50 tracking-widest">Tidak Ada Reservasi Mendatang</p>
-                        </div>
-                    @endif
-                </div>
-
-                </div>
+                @endif
             </div>
+
+        </div>
+    </div>
 
     <!-- Inspect Detail Modal -->
-    <div x-show="modalOpen" 
+    <div x-show="modalOpen"
         class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        x-cloak>
-        
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" x-cloak>
+
         <div class="fixed inset-0" @click="modalOpen = false"></div>
 
         <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-xl overflow-hidden animate-in zoom-in duration-200"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100">
-            
+
             @if($this->selectedRental)
                 @php $r = $this->selectedRental; @endphp
                 <!-- Header -->
                 <div class="p-6 border-b border-border flex justify-between items-start bg-muted/5">
                     <div>
                         <h3 class="text-lg font-bold  text-foreground">Detail Transaksi</h3>
-                        <p class="text-[11px] text-muted-foreground mt-0.5 italic opacity-70">INV-{{ str_pad($r->id, 5, '0', STR_PAD_LEFT) }} • {{ $r->created_at->format('d M Y') }}</p>
+                        <p class="text-[11px] text-muted-foreground mt-0.5 italic opacity-70">
+                            INV-{{ str_pad($r->id, 5, '0', STR_PAD_LEFT) }} • {{ $r->created_at->format('d M Y') }}</p>
                     </div>
-                    <button @click="modalOpen = false" class="rounded-md p-1.5 hover:bg-muted transition-colors border border-border bg-background">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    <button @click="modalOpen = false"
+                        class="rounded-md p-1.5 hover:bg-muted transition-colors border border-border bg-background">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                            class="text-muted-foreground">
+                            <path d="M18 6 6 18" />
+                            <path d="m6 6 12 12" />
+                        </svg>
                     </button>
                 </div>
 
@@ -729,10 +758,16 @@
                         <div class="space-y-1">
                             <p class="text-[9px] font-bold text-muted-foreground">Status Transaksi</p>
                             <div class="flex items-center gap-2">
-                                @if($r->status === 'pending') <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span> <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">Menunggu Pembayaran</span>
-                                @elseif($r->status === 'paid') <span class="h-2 w-2 rounded-full bg-blue-500"></span> <span class="text-xs font-semibold text-blue-600 dark:text-blue-400">Dibayar (Aktif)</span>
-                                @elseif($r->status === 'completed') <span class="h-2 w-2 rounded-full bg-green-500"></span> <span class="text-xs font-semibold text-green-600 dark:text-green-400">Selesai</span>
-                                @else <span class="h-2 w-2 rounded-full bg-red-500"></span> <span class="text-xs font-semibold text-red-600 dark:text-red-400">Dibatalkan</span>
+                                @if($r->status === 'pending') <span
+                                    class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span> <span
+                                    class="text-xs font-semibold text-amber-600 dark:text-amber-400">Menunggu
+                                    Pembayaran</span>
+                                @elseif($r->status === 'paid') <span class="h-2 w-2 rounded-full bg-blue-500"></span> <span
+                                    class="text-xs font-semibold text-blue-600 dark:text-blue-400">Dibayar (Aktif)</span>
+                                @elseif($r->status === 'completed') <span class="h-2 w-2 rounded-full bg-green-500"></span>
+                                    <span class="text-xs font-semibold text-green-600 dark:text-green-400">Selesai</span>
+                                @else <span class="h-2 w-2 rounded-full bg-red-500"></span> <span
+                                    class="text-xs font-semibold text-red-600 dark:text-red-400">Dibatalkan</span>
                                 @endif
                             </div>
                         </div>
@@ -754,7 +789,8 @@
                                 </div>
                                 <div>
                                     <p class="text-[9px] font-bold text-muted-foreground mb-0.5">Kontak WhatsApp</p>
-                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $r->no_wa) }}" target="_blank" class="text-sm font-bold text-primary hover:underline italic">{{ $r->no_wa }}</a>
+                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $r->no_wa) }}" target="_blank"
+                                        class="text-sm font-bold text-primary hover:underline italic">{{ $r->no_wa }}</a>
                                 </div>
                                 <div>
                                     <p class="text-[9px] font-bold text-muted-foreground mb-0.5">Identitas (NIK)</p>
@@ -780,11 +816,13 @@
                                 </div>
                                 <div>
                                     <p class="text-[9px] font-bold text-muted-foreground mb-0.5">Jadwal Mulai</p>
-                                    <p class="text-sm font-semibold text-foreground">{{ $r->waktu_mulai->format('d M Y, H:i') }}</p>
+                                    <p class="text-sm font-semibold text-foreground">
+                                        {{ $r->waktu_mulai->format('d M Y, H:i') }}</p>
                                 </div>
                                 <div>
                                     <p class="text-[9px] font-bold text-muted-foreground mb-0.5">Jadwal Selesai</p>
-                                    <p class="text-sm font-semibold text-foreground">{{ $r->waktu_selesai->format('d M Y, H:i') }}</p>
+                                    <p class="text-sm font-semibold text-foreground">
+                                        {{ $r->waktu_selesai->format('d M Y, H:i') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -798,27 +836,33 @@
                                 <tbody class="divide-y divide-border">
                                     <tr class="bg-muted/10">
                                         <td class="py-2.5 px-4 text-muted-foreground text-xs">Harga Dasar Sewa</td>
-                                        <td class="py-2.5 px-4 text-right font-medium text-xs">Rp {{ number_format($r->subtotal_harga, 0, ',', '.') }}</td>
+                                        <td class="py-2.5 px-4 text-right font-medium text-xs">Rp
+                                            {{ number_format($r->subtotal_harga, 0, ',', '.') }}</td>
                                     </tr>
                                     @if($r->potongan_diskon > 0)
                                         <tr>
-                                            <td class="py-2.5 px-4 text-red-500 font-medium text-xs">Potongan Diskon / Promo</td>
-                                            <td class="py-2.5 px-4 text-right font-medium text-red-500 text-xs">- Rp {{ number_format($r->potongan_diskon, 0, ',', '.') }}</td>
+                                            <td class="py-2.5 px-4 text-red-500 font-medium text-xs">Potongan Diskon / Promo
+                                            </td>
+                                            <td class="py-2.5 px-4 text-right font-medium text-red-500 text-xs">- Rp
+                                                {{ number_format($r->potongan_diskon, 0, ',', '.') }}</td>
                                         </tr>
                                     @endif
                                     <tr>
                                         <td class="py-2.5 px-4 text-muted-foreground text-xs">Kode Unik / Service Fee</td>
-                                        <td class="py-2.5 px-4 text-right font-medium text-xs">+ Rp {{ $r->kode_unik_pembayaran }}</td>
+                                        <td class="py-2.5 px-4 text-right font-medium text-xs">+ Rp
+                                            {{ $r->kode_unik_pembayaran }}</td>
                                     </tr>
                                     @if($r->denda > 0 || $r->denda_kerusakan > 0)
                                         <tr class="bg-amber-500/5">
                                             <td class="py-2.5 px-4 text-amber-600 font-bold text-xs">Total Denda</td>
-                                            <td class="py-2.5 px-4 text-right font-bold text-amber-600 text-xs">+ Rp {{ number_format($r->denda + $r->denda_kerusakan, 0, ',', '.') }}</td>
+                                            <td class="py-2.5 px-4 text-right font-bold text-amber-600 text-xs">+ Rp
+                                                {{ number_format($r->denda + $r->denda_kerusakan, 0, ',', '.') }}</td>
                                         </tr>
                                     @endif
                                     <tr class="bg-primary/5">
                                         <td class="py-4 px-4 font-bold text-foreground">TOTAL AKHIR</td>
-                                        <td class="py-4 px-4 text-right text-lg font-black text-primary">Rp {{ number_format($r->grand_total, 0, ',', '.') }}</td>
+                                        <td class="py-4 px-4 text-right text-lg font-black text-primary">Rp
+                                            {{ number_format($r->grand_total, 0, ',', '.') }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -828,15 +872,20 @@
 
                 <!-- Footer -->
                 <div class="p-6 border-t border-border flex justify-end gap-3 bg-muted/5">
-                    <a href="{{ route('admin.transactions') }}?search={{ $r->booking_code }}" wire:navigate 
-                        class="h-10 px-4 rounded-md border border-input bg-background flex items-center justify-center text-xs font-semibold hover:bg-muted transition-all">Riwayat Transaksi</a>
-                    <button @click="modalOpen = false" 
-                        class="h-10 px-8 rounded-md bg-primary text-primary-foreground shadow shadow-primary/20 flex items-center justify-center text-sm font-semibold hover:bg-primary/90 transition-all">Selesai Meninjau</button>
+                    <a href="{{ route('admin.transactions') }}?search={{ $r->booking_code }}" wire:navigate
+                        class="h-10 px-4 rounded-md border border-input bg-background flex items-center justify-center text-xs font-semibold hover:bg-muted transition-all">Riwayat
+                        Transaksi</a>
+                    <button @click="modalOpen = false"
+                        class="h-10 px-8 rounded-md bg-primary text-primary-foreground shadow shadow-primary/20 flex items-center justify-center text-sm font-semibold hover:bg-primary/90 transition-all">Selesai
+                        Meninjau</button>
                 </div>
             @else
                 <div class="p-24 text-center">
-                    <div class="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-6"></div>
-                    <p class="text-[9px] font-bold text-muted-foreground opacity-80 italic animate-pulse">Menghubungkan Server...</p>
+                    <div
+                        class="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-6">
+                    </div>
+                    <p class="text-[9px] font-bold text-muted-foreground opacity-80 italic animate-pulse">Menghubungkan
+                        Server...</p>
                 </div>
             @endif
         </div>

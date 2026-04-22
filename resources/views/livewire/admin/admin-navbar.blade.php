@@ -49,14 +49,14 @@
                         Pelanggan
                     </a>
                     @if(auth()->user()->role === 'admin')
-                    <a href="{{ route('admin.affiliate') }}" wire:navigate
-                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
-                        Affiliate
-                    </a>
-                    <a href="{{ route('admin.settings') }}" wire:navigate
-                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
-                        Pengaturan
-                    </a>
+                        <a href="{{ route('admin.affiliate') }}" wire:navigate
+                            class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                            Affiliate
+                        </a>
+                        <a href="{{ route('admin.settings') }}" wire:navigate
+                            class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                            Pengaturan
+                        </a>
                     @endif
                 </div>
             </div>
@@ -147,10 +147,10 @@
         <a href="{{ route('admin.customers') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pelanggan</a>
         @if(auth()->user()->role === 'admin')
-        <a href="{{ route('admin.affiliate') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Affiliate</a>
-        <a href="{{ route('admin.settings') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pengaturan</a>
+            <a href="{{ route('admin.affiliate') }}" wire:navigate
+                class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Affiliate</a>
+            <a href="{{ route('admin.settings') }}" wire:navigate
+                class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pengaturan</a>
         @endif
 
         <div class="h-px bg-border my-4"></div>
