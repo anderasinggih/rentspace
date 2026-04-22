@@ -46,6 +46,10 @@
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Transaksi
                     </a>
+                    <a href="{{ route('admin.monitoring') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Monitoring
+                    </a>
                     @if(auth()->user()->role === 'admin')
                     <a href="{{ route('admin.affiliate') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">

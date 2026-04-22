@@ -4,13 +4,17 @@ namespace App\Livewire\Admin;
 
 use App\Models\Rental;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Transactions extends Component
 {
+    use WithPagination;
+
     public $search = '';
     public $filterStatus = '';
     public $dateStart = '';
     public $dateEnd = '';
+    public $perPage = 25;
 
     // Edit & Completion Properties
     public $isEditingTrx = false;
@@ -40,7 +44,14 @@ class Transactions extends Component
         'dateEnd' => ['except' => ''],
         'sortField' => ['except' => 'created_at'],
         'sortDirection' => ['except' => 'desc'],
+        'perPage' => ['except' => 25],
     ];
+    
+    public function updatingSearch() { $this->resetPage(); }
+    public function updatingFilterStatus() { $this->resetPage(); }
+    public function updatingDateStart() { $this->resetPage(); }
+    public function updatingDateEnd() { $this->resetPage(); }
+    public function updatingPerPage() { $this->resetPage(); }
 
     public function sortBy($field)
     {
@@ -193,6 +204,10 @@ class Transactions extends Component
 
     public function openInspect($id)
     {
+        if ($this->inspectTrxId === $id) {
+            $this->closeInspect();
+            return;
+        }
         $this->inspectTrxId = $id;
         $this->inspectTrx = Rental::with(['units', 'affiliator.affiliateProfile', 'commissions'])->find($id);
     }
@@ -392,7 +407,7 @@ class Transactions extends Component
             $q->whereDate('created_at', '<=', $this->dateEnd);
         })
             ->orderBy($this->sortField, $this->sortDirection)
-            ->get();
+            ->paginate($this->perPage);
 
         return view('livewire.admin.transactions', [
             'transactions' => $query

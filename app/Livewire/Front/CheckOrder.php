@@ -12,32 +12,17 @@ class CheckOrder extends Component
     public $nik = '';
     public $no_wa = '';
     public $orders = null;
-
-    protected $rules = [
-        'nik' => 'required|string|min:10',
-        'no_wa' => 'required|string|min:10',
-    ];
+    public $currentTab = 'pesanan';
 
     public function mount()
     {
-        // 1. Check URL parameters first
-        $urlNik = request('nik');
-        $urlWa = request('no_wa');
-
-        if ($urlNik && $urlWa) {
-            $this->nik = $urlNik;
-            $this->no_wa = $urlWa;
-            $this->saveToSession();
+        $customerSession = session('customer_session');
+        if ($customerSession && isset($customerSession['expires_at']) && now()->timestamp < $customerSession['expires_at']) {
+            $this->nik = $customerSession['nik'];
+            $this->no_wa = $customerSession['no_wa'];
             $this->search();
-            return;
-        }
-
-        // 2. Check Session with 5-minute expiry
-        $cached = session('check_order_cache');
-        if ($cached && isset($cached['expires_at']) && now()->timestamp < $cached['expires_at']) {
-            $this->nik = $cached['nik'];
-            $this->no_wa = $cached['no_wa'];
-            $this->search();
+        } else {
+            return redirect()->route('customer.login');
         }
     }
 
@@ -48,30 +33,42 @@ class CheckOrder extends Component
             'no_wa' => $this->no_wa,
             'expires_at' => now()->addMinutes(5)->timestamp
         ]]);
+
+        // Also create/update persistent customer session (6 hours)
+        session()->put('customer_session', [
+            'nik'          => $this->nik,
+            'no_wa'        => $this->no_wa,
+            'logged_in_at' => now()->toISOString(),
+            'expires_at'   => now()->addHours(6)->timestamp,
+        ]);
     }
 
     public function search()
     {
-        $this->validate();
-        
-        // Refresh session timer on every successful search
-        $this->saveToSession();
-
         $this->orders = Rental::with('units')
             ->where('nik', $this->nik)
             ->where('no_wa', $this->no_wa)
             ->latest()
             ->get();
-
-        if ($this->orders->isEmpty()) {
-            session()->flash('error', 'Pesanan tidak ditemukan. Pastikan NIK dan Nomor WA sudah benar.');
-        }
     }
 
-    public function resetSearch()
+    public function getTotalOrdersProperty()
     {
-        session()->forget('check_order_cache');
-        $this->reset(['nik', 'no_wa', 'orders']);
+        return $this->orders ? $this->orders->count() : 0;
+    }
+
+    public function getTotalBillingProperty()
+    {
+        if (!$this->orders) return 0;
+        return $this->orders->whereIn('status', ['pending', 'paid', 'completed'])->sum('grand_total');
+    }
+
+    public function getActiveRentalsCountProperty()
+    {
+        if (!$this->orders) return 0;
+        return $this->orders->where('status', 'paid')->filter(function($order) {
+            return now()->isBetween($order->waktu_mulai, $order->waktu_selesai);
+        })->count();
     }
 
     public function cancelOrder($booking_code)

@@ -114,10 +114,10 @@
                     @endif
 
                     <div class="grid grid-cols-2 gap-2">
-                        <a href="{{ route('public.check-order', ['nik' => $rental->nik, 'no_wa' => $rental->no_wa]) }}"
+                        <a href="{{ route('public.check-order') }}"
                             wire:navigate
                             class="flex items-center justify-center gap-1.5 h-11 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs font-semibold transition-all border border-border/50">
-                            Cek Status
+                            Cek Pesanan
                         </a>
                         <a href="/" wire:navigate
                             class="flex items-center justify-center gap-1.5 h-11 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs font-semibold transition-all border border-border/50">

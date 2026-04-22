@@ -17,6 +17,43 @@
     <livewire:navbar />
 
     <main class="flex-1 w-full">
+        @php
+            $customerSession = session('customer_session');
+            $isCustomerLoggedIn = $customerSession
+                && isset($customerSession['expires_at'])
+                && now()->timestamp < $customerSession['expires_at'];
+
+            $pendingOrders = collect();
+            $closestActiveRental = null;
+
+            if ($isCustomerLoggedIn) {
+                $pendingOrders = \App\Models\Rental::with('units')
+                    ->where('nik', $customerSession['nik'])
+                    ->where('no_wa', $customerSession['no_wa'])
+                    ->where('status', 'pending')
+                    ->latest()
+                    ->get();
+
+                $closestActiveRental = \App\Models\Rental::where('nik', $customerSession['nik'])
+                    ->where('no_wa', $customerSession['no_wa'])
+                    ->where('status', 'paid')
+                    ->where('waktu_selesai', '>', now())
+                    ->orderBy('waktu_selesai', 'asc')
+                    ->first();
+            }
+
+            $statsTotalRentals = \App\Models\Rental::count();
+            $statsTotalUsers = \App\Models\Rental::distinct('nik')->count('nik');
+            $statsTotalHours = round(\App\Models\Rental::whereNotNull('waktu_mulai')->whereNotNull('waktu_selesai')->get()->sum(function ($r) {
+                return \Carbon\Carbon::parse($r->waktu_mulai)->diffInHours(\Carbon\Carbon::parse($r->waktu_selesai));
+            }));
+
+            // Fallbacks for empty DB
+            $statsTotalRentals = $statsTotalRentals > 0 ? $statsTotalRentals : 1;
+            $statsTotalUsers = $statsTotalUsers > 0 ? $statsTotalUsers : 1;
+            $statsTotalHours = $statsTotalHours > 0 ? $statsTotalHours : 24;
+        @endphp
+
         <!-- Hero section -->
         <section
             class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-8 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl">
@@ -31,6 +68,70 @@
 
             <!-- Teks -->
             <div class="relative z-10 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8">
+                @if($isCustomerLoggedIn && $closestActiveRental)
+                    @php
+                        $selesaiHeroTimestamp = $closestActiveRental->waktu_selesai->timestamp * 1000;
+                    @endphp
+                    <div x-data="{
+                                countdown: '',
+                                status: 'green',
+                                endTime: {{ $selesaiHeroTimestamp }},
+                                tick() {
+                                    const now = Date.now();
+                                    const diff = Math.floor((this.endTime - now) / 1000);
+                                    if (diff <= 0) { 
+                                        this.countdown = 'Selesai'; 
+                                        this.status = 'red';
+                                        return; 
+                                    }
+
+                                    const hoursTotal = diff / 3600;
+                                    if (hoursTotal < 3) {
+                                        this.status = 'red';
+                                    } else if (hoursTotal < 6) {
+                                        this.status = 'amber';
+                                    } else {
+                                        this.status = 'green';
+                                    }
+
+                                    const h = Math.floor(hoursTotal);
+                                    const m = Math.floor((diff % 3600) / 60);
+                                    const s = diff % 60;
+
+                                    if(h > 0) {
+                                        this.countdown = h + 'j ' + m + 'm ' + s + 'd';
+                                    } else {
+                                        this.countdown = m + 'm ' + s + 'd';
+                                    }
+                                }
+                            }" x-init="tick(); setInterval(() => tick(), 1000)"
+                        class="mb-8 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <span
+                            class="text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5 backdrop-blur-md px-3 py-1 rounded-full border transition-colors duration-500"
+                            :class="{
+                                      'bg-emerald-500/20 border-emerald-500/30 text-emerald-300': status === 'green',
+                                      'bg-amber-500/20 border-amber-500/30 text-amber-300': status === 'amber',
+                                      'bg-red-500/20 border-red-500/40 text-red-200': status === 'red'
+                                  }">
+                            <span
+                                class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse transition-colors duration-500"
+                                :class="{
+                                          'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]': status === 'green',
+                                          'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]': status === 'amber',
+                                          'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.9)]': status === 'red'
+                                      }"></span>
+                            <span
+                                x-text="status === 'red' ? 'HAMPIR HABIS - SEGERA KEMBALIKAN!' : 'Sisa Waktu Pengembalian'"></span>
+                        </span>
+                        <div x-text="countdown"
+                            class="text-5xl sm:text-7xl lg:text-8xl font-black font-mono tracking-tighter transition-all duration-500"
+                            :class="{
+                                      'text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.5)]': status === 'green',
+                                      'text-amber-400 drop-shadow-[0_0_25px_rgba(251,191,36,0.6)]': status === 'amber',
+                                      'text-red-500 drop-shadow-[0_0_30px_rgba(248,113,113,0.8)] animate-pulse': status === 'red'
+                                 }"></div>
+                    </div>
+                @endif
                 <div
                     class="inline-flex items-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-white/90 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase">
                     RENT SPACE PURWOKERTO
@@ -45,21 +146,22 @@
                     menggunakan produk Apple original tanpa harus membeli baru. Proses cepat, stok terlihat transparan,
                     dan langsung transaksi!') }}
                 </p>
-                <div class="mt-12 flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
-                    <a href="{{ route('public.timeline') }}" wire:navigate
-                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-white text-zinc-950 shadow-[0_4px_24px_rgba(255,255,255,0.2)] hover:bg-zinc-100 hover:scale-[1.03] hover:shadow-[0_4px_32px_rgba(255,255,255,0.3)] min-w-[200px] h-12 px-8 py-2 text-base">
-                        BOOK SEKARANG
+                <div
+                    class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center">
+                    <a href="{{ route('public.booking') }}" wire:navigate
+                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-white text-zinc-950 shadow-[0_4px_24px_rgba(255,255,255,0.2)] hover:bg-zinc-100 hover:scale-[1.03] hover:shadow-[0_4px_32px_rgba(255,255,255,0.3)] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
+                        SEWA SEKARANG
                     </a>
                     <a href="https://wa.me/{{ \App\Models\Setting::getVal('admin_wa', '6281234567890') }}"
                         target="_blank" rel="noopener"
-                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all border border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 hover:scale-[1.03] min-w-[200px] h-12 px-8 py-2 text-base">
+                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all border border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 hover:scale-[1.03] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
                         @php
-                            $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                        stroke-linecap="round" stroke-linejoin="round" class="mr-2">
-                                                        <path
-                                                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                                    </svg>';
+                            $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                                                    stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0">
+                                                                                    <path
+                                                                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                                                </svg>';
                         @endphp
                         {!! $whatsappIcon !!}
                         HUBUNGI ADMIN
@@ -68,11 +170,294 @@
             </div>
         </section>
 
+        <!-- Public Stats Widget -->
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20 mb-10">
+            <div
+                class="grid grid-cols-3 divide-x divide-border bg-card/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden py-4 sm:py-6">
+                <!-- Total Transaksi -->
+                <div class="flex flex-col items-center text-center px-1 sm:px-4" x-data="{ 
+                         target: {{ $statsTotalRentals }}, 
+                         display: '0', 
+                         format(val) {
+                             if (val >= 1000) return (val/1000).toFixed(1).replace('.0', '') + 'K';
+                             return Math.floor(val);
+                         },
+                         run() { 
+                             let start = null;
+                             const duration = 2000;
+                             const animate = (timestamp) => {
+                                 if (!start) start = timestamp;
+                                 const progress = timestamp - start;
+                                 const easeOut = 1 - Math.pow(1 - Math.min(progress / duration, 1), 3);
+                                 this.display = this.format(easeOut * this.target);
+                                 if (progress < duration) requestAnimationFrame(animate);
+                             };
+                             requestAnimationFrame(animate);
+                         } 
+                     }" x-intersect.once="run()">
+                    <span
+                        class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2">Transaksi</span>
+                    <span class="text-xl sm:text-4xl font-black text-foreground"><span x-text="display"></span><span
+                            class="text-primary text-base sm:text-2xl ml-0.5">+</span></span>
+                </div>
+                <!-- Pelanggan -->
+                <div class="flex flex-col items-center text-center px-1 sm:px-4" x-data="{ 
+                         target: {{ $statsTotalUsers }}, 
+                         display: '0', 
+                         format(val) {
+                             if (val >= 1000) return (val/1000).toFixed(1).replace('.0', '') + 'K';
+                             return Math.floor(val);
+                         },
+                         run() { 
+                             let start = null;
+                             const duration = 2200;
+                             const animate = (timestamp) => {
+                                 if (!start) start = timestamp;
+                                 const progress = timestamp - start;
+                                 const easeOut = 1 - Math.pow(1 - Math.min(progress / duration, 1), 3);
+                                 this.display = this.format(easeOut * this.target);
+                                 if (progress < duration) requestAnimationFrame(animate);
+                             };
+                             requestAnimationFrame(animate);
+                         } 
+                     }" x-intersect.once="run()">
+                    <span
+                        class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2">Pelanggan</span>
+                    <span class="text-xl sm:text-4xl font-black text-foreground"><span x-text="display"></span><span
+                            class="text-primary text-base sm:text-2xl ml-0.5">+</span></span>
+                </div>
+                <!-- Jam Disewa -->
+                <div class="flex flex-col items-center text-center px-1 sm:px-4" x-data="{ 
+                         target: {{ $statsTotalHours }}, 
+                         display: '0', 
+                         format(val) {
+                             if (val >= 1000) return (val/1000).toFixed(1).replace('.0', '') + 'K';
+                             return Math.floor(val);
+                         },
+                         run() { 
+                             let start = null;
+                             const duration = 2500;
+                             const animate = (timestamp) => {
+                                 if (!start) start = timestamp;
+                                 const progress = timestamp - start;
+                                 const easeOut = 1 - Math.pow(1 - Math.min(progress / duration, 1), 3);
+                                 this.display = this.format(easeOut * this.target);
+                                 if (progress < duration) requestAnimationFrame(animate);
+                             };
+                             requestAnimationFrame(animate);
+                         } 
+                     }" x-intersect.once="run()">
+                    <span
+                        class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2">Jam
+                        Disewa</span>
+                    <span class="text-xl sm:text-4xl font-black text-foreground"><span x-text="display"></span><span
+                            class="text-primary text-base sm:text-2xl ml-0.5">+</span></span>
+                </div>
+            </div>
+        </div>
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-            <div class="text-center mb-5">
+
+            {{-- Customer Session Banner --}}
+
+            @if($isCustomerLoggedIn && $pendingOrders->count() > 0)
+                {{-- Pending Payment Banner (Amber) --}}
+                <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                    :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
+                    class="mb-8 rounded-2xl border border-border bg-card shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-1000 ease-out">
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10 shrink-0 border border-amber-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="text-amber-500">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" x2="12" y1="8" y2="12" />
+                                <line x1="12" x2="12.01" y1="16" y2="16" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-bold text-foreground text-sm">Pesanan Menunggu Pembayaran</p>
+                            <p class="text-xs text-muted-foreground mt-0.5">
+                                Anda memiliki <span class="font-bold text-amber-500">{{ $pendingOrders->count() }}
+                                    pesanan</span> yang belum dibayar.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0">
+                        <a href="{{ route('public.check-order') }}" wire:navigate
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl bg-amber-500 text-white text-xs font-bold px-5 py-2.5 hover:bg-amber-600 transition-colors shadow-sm shrink-0 whitespace-nowrap">
+                            Bayar Sekarang
+                        </a>
+                    </div>
+                </div>
+            @elseif($isCustomerLoggedIn && $closestActiveRental)
+                {{-- Active Rental Banner with Countdown (Green) --}}
+                @php
+                    $selesaiTimestamp = $closestActiveRental->waktu_selesai->timestamp * 1000;
+                @endphp
+                <div x-data="{
+                            visible: false,
+                            countdown: '',
+                            status: 'green',
+                            endTime: {{ $selesaiTimestamp }},
+                            tick() {
+                                const now = Date.now();
+                                const diff = Math.floor((this.endTime - now) / 1000);
+                                if (diff <= 0) { 
+                                    this.countdown = 'Selesai'; 
+                                    this.status = 'red';
+                                    return; 
+                                }
+
+                                const hoursTotal = diff / 3600;
+                                if (hoursTotal < 3) {
+                                    this.status = 'red';
+                                } else if (hoursTotal < 6) {
+                                    this.status = 'amber';
+                                } else {
+                                    this.status = 'green';
+                                }
+
+                                const h = Math.floor(hoursTotal);
+                                const m = Math.floor((diff % 3600) / 60);
+                                const s = diff % 60;
+
+                                if(h > 0) {
+                                    this.countdown = h + 'j ' + m + 'm ' + s + 'd';
+                                } else {
+                                    this.countdown = m + 'm ' + s + 'd';
+                                }
+                            }
+                        }" x-init="tick(); setInterval(() => tick(), 1000)"
+                    x-intersect.once="visible = true"
+                    :class="[
+                        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16',
+                        status === 'red' ? 'border-red-500/30 bg-red-500/5' : ''
+                    ]"
+                    class="mb-8 rounded-2xl border border-border bg-card shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 relative overflow-hidden transition-all duration-1000 ease-out">
+                    <div class="flex items-center gap-3 shrink-0 relative z-10 w-full sm:w-auto">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full shrink-0 relative border transition-colors duration-500"
+                            :class="{
+                                     'bg-emerald-500/10 border-emerald-500/20': status === 'green',
+                                     'bg-amber-500/10 border-amber-500/20': status === 'amber',
+                                     'bg-red-500/10 border-red-500/30': status === 'red'
+                                 }">
+                            <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full animate-ping"
+                                :class="{ 'bg-emerald-500': status === 'green', 'bg-amber-500': status === 'amber', 'bg-red-500': status === 'red' }"></span>
+                            <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border"
+                                :class="{ 'bg-emerald-500 border-emerald-200': status === 'green', 'bg-amber-500 border-amber-200': status === 'amber', 'bg-red-500 border-red-200': status === 'red' }"></span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="transition-colors duration-500"
+                                :class="{ 'text-emerald-500': status === 'green', 'text-amber-500': status === 'amber', 'text-red-500': status === 'red' }">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0 flex justify-between sm:block sm:w-auto items-center">
+                            <div>
+                                <p class="font-bold text-foreground text-sm flex items-center gap-2"
+                                    x-text="status === 'red' ? 'Masa Sewa Mau Habis' : 'Penyewaan Berlangsung'"></p>
+                                <p class="text-xs text-muted-foreground mt-0.5 truncate pr-2 sm:pr-0">
+                                    Sewa <span
+                                        class="font-bold text-foreground">#{{ str_pad($closestActiveRental->id, 4, '0', STR_PAD_LEFT) }}</span>
+                                </p>
+                            </div>
+                            <div class="sm:hidden text-right">
+                                <p class="text-[10px] font-bold uppercase transition-colors"
+                                    :class="{ 'text-emerald-500': status === 'green', 'text-amber-500': status === 'amber', 'text-red-600 animate-pulse': status === 'red' }"
+                                    x-text="status === 'red' ? 'SEGERA KEMBALIKAN' : 'Sisa Waktu'"></p>
+                                <p x-text="countdown" class="font-black font-mono text-sm tracking-tight transition-colors"
+                                    :class="{ 'text-emerald-600 dark:text-emerald-400': status === 'green', 'text-amber-600 dark:text-amber-400': status === 'amber', 'text-red-600 dark:text-red-400': status === 'red' }">
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hidden sm:block ml-auto mr-6 text-right relative z-10 w-48 shrink-0">
+                        <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5 transition-colors"
+                            :class="{ 'text-muted-foreground': status !== 'red', 'text-red-500 animate-pulse': status === 'red' }"
+                            x-text="status === 'red' ? 'SEGERA KEMBALIKAN' : 'Sisa Waktu'"></p>
+                        <p x-text="countdown"
+                            class="font-black text-2xl sm:text-3xl font-mono tracking-tight transition-colors"
+                            :class="{ 'text-emerald-600 dark:text-emerald-400': status === 'green', 'text-amber-600 dark:text-amber-400': status === 'amber', 'text-red-600 dark:text-red-400': status === 'red' }">
+                        </p>
+                    </div>
+
+                    <div class="flex w-full sm:w-auto mt-2 sm:mt-0 relative z-10 sm:ml-0">
+                        <a href="{{ route('public.check-order') }}" wire:navigate
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl border border-input text-xs font-bold px-5 py-2.5 transition-all shadow-sm shrink-0 whitespace-nowrap"
+                            :class="{
+                                    'bg-background hover:bg-muted text-foreground': status !== 'red',
+                                    'bg-red-500 border-red-500 text-white hover:bg-red-600 shadow-red-500/20': status === 'red'
+                                }">
+                            Rincian Sewa
+                        </a>
+                    </div>
+                </div>
+            @elseif($isCustomerLoggedIn)
+                {{-- Logged In but No Active/Pending Banner (Blue) --}}
+                <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                    :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
+                    class="mb-8 rounded-2xl border border-border bg-card shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-1000 ease-out">
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="text-blue-500">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-bold text-foreground text-sm">Sesi Peminjam Aktif</p>
+                            <p class="text-xs text-muted-foreground mt-0.5">
+                                Akses pesanan lebih cepat karena Anda sudah masuk.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0">
+                        <a href="{{ route('public.check-order') }}" wire:navigate
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl border border-input bg-background hover:bg-muted text-foreground text-xs font-bold px-5 py-2.5 transition-colors shadow-sm shrink-0 whitespace-nowrap">
+                            Cek Riwayat
+                        </a>
+                    </div>
+                </div>
+            @elseif(!$isCustomerLoggedIn)
+                {{-- Login CTA for guests --}}
+                <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                    :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
+                    class="mb-8 rounded-2xl border border-border bg-card/50 px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 transition-all duration-1000 ease-out">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="text-primary">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-foreground text-sm">Sudah pernah booking?</p>
+                            <p class="text-xs text-muted-foreground mt-0.5">Masuk untuk melihat status pesanan dan
+                                notifikasi pembayaran Anda.</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('customer.login') }}" wire:navigate
+                        class="inline-flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xs font-semibold px-4 py-2.5 hover:bg-primary/90 transition-colors shadow-sm w-full sm:w-auto ">
+                        Masuk
+                    </a>
+                </div>
+            @endif
+            {{-- End Customer Session Banner --}}
+
+            <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
+                class="text-center mb-8 transition-all duration-1000 ease-out">
                 <h2 class="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">Promo Spesial Aktif</h2>
-                <p class="mt-4 text-muted-foreground">Promo yang tersedia pada saat ini.
-                </p>
+                <p class="mt-4 text-muted-foreground">Promo yang tersedia pada saat ini.</p>
             </div>
             <!-- Promo -->
             @php
@@ -88,9 +473,11 @@
                     ->get();
             @endphp
             @if($promos->count() > 0)
-                <div class="mt-8 w-full max-w-4xl mx-auto px-4">
+                <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                    :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'"
+                    class="mt-8 w-full transition-all duration-1000 delay-100 ease-out">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         @foreach($promos as $promo)
                             <a href="{{ route('public.booking') }}" wire:navigate
                                 class="block p-5 bg-background shadow-sm border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all group">
@@ -114,10 +501,10 @@
                                                     number_format($promo->value, 0, ',', '.');
                                             elseif ($promo->tipe === 'hari_gratis')
                                                 $promoText = "Gratis " . $promo->value . "
-                                                                        Hari";
+                                                                                                            Hari";
                                             elseif ($promo->tipe === 'jam_gratis')
                                                 $promoText = "Gratis " . $promo->value . "
-                                                                        Jam";
+                                                                                                            Jam";
                                             elseif ($promo->tipe === 'cashback')
                                                 $promoText = "Cashback Rp " .
                                                     number_format($promo->value, 0, ',', '.');
@@ -144,7 +531,9 @@
 
             <!-- Pricelist Katalog Unit -->
             <div class="mt-24 w-full">
-                <div class="text-center mb-12 mt-16">
+                <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                    :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
+                    class="text-center mb-12 mt-16 transition-all duration-1000 ease-out">
                     <h2 class="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">Katalog Harga
                         Sewa</h2>
                     <p class="mt-4 text-muted-foreground">Pilih unit terbaik yang sesuai dengan kebutuhan dan budget
@@ -165,7 +554,9 @@
                 <div class="space-y-16">
                     @foreach($categorizedUnits as $categoryName => $units)
                         @php $category = $units->first()->category; @endphp
-                        <div>
+                        <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                            :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'"
+                            class="transition-all duration-1000 ease-out">
                             <div class="flex items-center gap-4 mb-6 mt-6">
                                 <h3
                                     class="text-xl font-bold text-foreground whitespace-nowrap px-4 py-1.5 bg-muted/50 rounded-lg border border-border">
@@ -211,14 +602,14 @@
                                                                                 <span
                                                                                     class="text-[10px] bg-secondary/50 px-1.5 py-0.5 rounded text-secondary-foreground"><span
                                                                                         class="font-bold opacity-70">{{ $key }}:</span> {{ $val
-                                                                                        }}</span>
+                                                                                                                            }}</span>
                                                                             @endif
                                                                         @endforeach
                                                                     </div>
                                                                 @endif
                                                                 @if($unit->kondisi)
                                                                     <p class="text-[10px] text-muted-foreground italic mt-1">{{ $unit->kondisi
-                                                                            }}</p>
+                                                                                                        }}</p>
                                                                 @endif
                                                             </div>
                                                         </div>

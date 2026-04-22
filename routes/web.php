@@ -13,6 +13,8 @@ use App\Livewire\Front\BookingForm;
 use App\Livewire\Front\Payment;
 use App\Livewire\Front\About;
 use App\Livewire\Front\CheckOrder;
+use App\Livewire\Front\CustomerLogin;
+use App\Livewire\Front\CustomerLogout;
 use App\Livewire\Auth\Login;
 use App\Livewire\Affiliate\Login as AffiliateLogin;
 use App\Livewire\Affiliate\Register as AffiliateRegister;
@@ -36,6 +38,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/categories', CategoryManager::class)->name('admin.categories');
         Route::get('/admin/promo', PricingRules::class)->name('admin.promo');
         Route::get('/admin/transactions', Transactions::class)->name('admin.transactions');
+        Route::get('/admin/monitoring', \App\Livewire\Admin\Monitoring::class)->name('admin.monitoring');
         Route::get('/admin/settings', Settings::class)->name('admin.settings');
         Route::get('/admin/affiliate', AffiliateManager::class)->name('admin.affiliate');
     });
@@ -52,6 +55,10 @@ Route::get('/cek-pesanan', CheckOrder::class)->name('public.check-order');
 Route::get('/booking', BookingForm::class)->name('public.booking');
 Route::get('/payment/{booking_code}', Payment::class)->name('public.payment');
 Route::get('/booking/success/{booking_code}', \App\Livewire\Front\Success::class)->name('public.success');
+
+// Customer Session Routes
+Route::get('/masuk', CustomerLogin::class)->name('customer.login');
+Route::get('/keluar', CustomerLogout::class)->name('customer.logout');
 
 // Affiliate Public Routes
 Route::get('/affiliate/login', AffiliateLogin::class)->name('affiliate.login');

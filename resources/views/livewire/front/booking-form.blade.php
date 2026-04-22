@@ -5,23 +5,6 @@
     <div class="max-w-3xl mx-auto">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Formulir Penyewaan</h1>
-            <a href="{{ route('public.timeline') }}" wire:navigate
-                class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 text-sm font-medium shadow-sm w-full sm:w-auto text-center transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                    <line x1="16" x2="16" y1="2" y2="6" />
-                    <line x1="8" x2="8" y1="2" y2="6" />
-                    <line x1="3" x2="21" y1="10" y2="10" />
-                    <path d="M8 14h.01" />
-                    <path d="M12 14h.01" />
-                    <path d="M16 14h.01" />
-                    <path d="M8 18h.01" />
-                    <path d="M12 18h.01" />
-                    <path d="M16 18h.01" />
-                </svg>
-                Lihat Kalender Jadwal
-            </a>
         </div>
 
         <div x-data="bookingForm()" class="bg-background rounded-2xl shadow-sm border border-border p-6 sm:p-8">
@@ -29,11 +12,11 @@
 
                 <!-- Progress Bar -->
                 <div class="mb-8 border-b border-border pb-4">
-                    <div class="flex items-center justify-between text-xs font-medium text-muted-foreground mb-2 px-1">
-                        <span x-bind:class="step >= 1 ? 'text-primary font-bold' : ''">Pilih Unit</span>
-                        <span x-bind:class="step >= 2 ? 'text-primary font-bold' : ''">Data & Promo</span>
-                        <span x-bind:class="step >= 3 ? 'text-primary font-bold' : ''">Konfirmasi</span>
-                        <span x-bind:class="step >= 4 ? 'text-primary font-bold' : ''">Pembayaran</span>
+                    <div class="flex items-center justify-center text-sm font-bold text-primary mb-3 px-1">
+                        <span x-show="step === 1">1. Pilih Unit & Jadwal</span>
+                        <span x-show="step === 2">2. Isi Data & Promo</span>
+                        <span x-show="step === 3">3. Konfirmasi Pesanan</span>
+                        <span x-show="step === 4">4. Proses Pembayaran</span>
                     </div>
                     <div class="h-2 bg-muted rounded-full overflow-hidden">
                         <div class="h-full bg-primary transition-all duration-500 rounded-full" 
@@ -45,7 +28,20 @@
                 <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8">
                     <!-- 1. Jadwal Sewa -->
                     <div>
-                        <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">1. Jadwal Peminjaman</h2>
+                        <div class="flex items-center justify-between gap-4 mb-4">
+                            <h2 class="text-xl font-bold tracking-tight text-foreground">1. Jadwal Peminjaman</h2>
+                            <a href="{{ route('public.timeline') }}" wire:navigate
+                                class="inline-flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 h-9 px-3.5 text-[11px] font-bold shadow-sm transition-colors border border-primary/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5">
+                                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                                    <line x1="16" x2="16" y1="2" y2="6" />
+                                    <line x1="8" x2="8" y1="2" y2="6" />
+                                    <line x1="3" x2="21" y1="10" y2="10" />
+                                </svg>
+                                Jadwal
+                            </a>
+                        </div>
                         <div class="flex flex-row justify-between items-start w-full gap-3 sm:gap-6">
                             <!-- Waktu Mulai Button -->
                             <div class="w-[48%] sm:w-48 shrink-0">
@@ -54,8 +50,8 @@
                                     x-on:click="$refs.mulaiInput.showPicker ? $refs.mulaiInput.showPicker() : $refs.mulaiInput.click()">
                                     {{-- Tombol visual --}}
                                     @if($waktu_mulai)
-                                    <div class="flex items-center justify-center w-full h-11 rounded-xl border border-border bg-card/40 text-xs font-semibold px-2 text-center pointer-events-none select-none">
-                                        <span class="text-foreground truncate">{{ \Carbon\Carbon::parse($waktu_mulai)->translatedFormat('d M Y') }}</span>
+                                    <div class="flex items-center justify-center w-full h-11 rounded-xl border border-border bg-card/40 text-[11px] font-semibold px-2 text-center pointer-events-none select-none">
+                                        <span class="text-foreground truncate">{{ \Carbon\Carbon::parse($waktu_mulai)->translatedFormat('d M Y, H:i') }}</span>
                                     </div>
                                     @else
                                     <div class="inline-flex items-center justify-center w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm pointer-events-none select-none px-3 transition-colors">
@@ -64,7 +60,7 @@
                                     </div>
                                     @endif
                                     {{-- Input transparan: tap langsung (iOS) --}}
-                                    <input type="date" wire:model.live="waktu_mulai" x-ref="mulaiInput"
+                                    <input type="datetime-local" wire:model.live="waktu_mulai" x-ref="mulaiInput"
                                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                         style="-webkit-appearance: none;">
                                 </div>
@@ -78,8 +74,8 @@
                                     x-on:click="$refs.selesaiInput.showPicker ? $refs.selesaiInput.showPicker() : $refs.selesaiInput.click()">
                                     {{-- Tombol visual --}}
                                     @if($waktu_selesai)
-                                    <div class="flex items-center justify-center w-full h-11 rounded-xl border border-border bg-card/40 text-xs font-semibold px-2 text-center pointer-events-none select-none">
-                                        <span class="text-foreground truncate">{{ \Carbon\Carbon::parse($waktu_selesai)->translatedFormat('d M Y') }}</span>
+                                    <div class="flex items-center justify-center w-full h-11 rounded-xl border border-border bg-card/40 text-[11px] font-semibold px-2 text-center pointer-events-none select-none">
+                                        <span class="text-foreground truncate">{{ \Carbon\Carbon::parse($waktu_selesai)->translatedFormat('d M Y, H:i') }}</span>
                                     </div>
                                     @else
                                     <div class="inline-flex items-center justify-center w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm pointer-events-none select-none px-3 transition-colors">
@@ -88,7 +84,7 @@
                                     </div>
                                     @endif
                                     {{-- Input transparan: tap langsung (iOS) --}}
-                                    <input type="date" wire:model.live="waktu_selesai" x-ref="selesaiInput"
+                                    <input type="datetime-local" wire:model.live="waktu_selesai" x-ref="selesaiInput"
                                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                         style="-webkit-appearance: none;">
                                 </div>
@@ -144,49 +140,47 @@
                             </div>
 
                             @if(count($available_units) > 0)
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 @foreach($available_units as $unit)
-                                @php
-                                $isSelected = in_array($unit->id, $selected_unit_ids);
-                                @endphp
                                 <label
-                                    x-bind:class="selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}') ? 'border-primary ring-1 ring-primary bg-primary/[0.02]' : 'border-border bg-background hover:border-primary/50'"
-                                    class="group relative flex cursor-pointer rounded-xl border p-4 shadow-sm transition-all focus:outline-none">
+                                    x-bind:class="selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}') ? 'border-primary ring-1 ring-primary bg-primary/[0.04]' : 'border-border bg-background hover:border-primary/50'"
+                                    class="group relative flex cursor-pointer rounded-xl border p-3.5 shadow-sm transition-all focus:outline-none items-center justify-between">
                                     <input type="checkbox" wire:model.live="selected_unit_ids" value="{{ $unit->id }}"
                                         class="sr-only">
-
-                                    <span class="flex flex-1 items-start justify-between gap-3">
-                                        <span class="flex flex-col">
-                                            <span class="block font-bold text-sm text-foreground group-hover:text-primary transition-colors">
-                                                {{ $unit->seri }}
-
-                                                @if($unit->category)
-                                                <span class="ml-1 text-[9px] uppercase font-black px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                                    {{ $unit->category->name }}
-                                                </span>
-                                                @endif
-                                            </span>
-                                            <span class="mt-1 flex items-center text-[10px] text-muted-foreground font-medium">
+                                    
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="font-bold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors">
+                                            {{ $unit->seri }}
+                                        </span>
+                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                            <span class="text-[10px] font-medium text-muted-foreground text-left">
                                                 {{ $unit->warna }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}
                                             </span>
-                                            <div class="mt-2.5 flex items-baseline gap-1">
-                                                <span class="text-[10px] font-bold text-primary">Rp</span>
-                                                <span class="text-sm font-black text-primary">{{ number_format($unit->harga_per_hari,0,',','.') }}</span>
-                                                <span class="text-[10px] text-muted-foreground font-medium">/hari</span>
-                                            </div>
-                                        </span>
+                                        </div>
+                                    </div>
 
-                                        <template x-if="selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}')">
-                                            <div class="shrink-0 w-6 h-6 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-md border-2 border-background animate-in zoom-in-50 duration-200">
-                                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-                                                </svg>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex flex-col items-end text-right shrink-0">
+                                            <div class="text-xs font-black text-primary">
+                                                Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }}
                                             </div>
-                                        </template>
-                                        <template x-if="!(selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}'))">
-                                            <div class="shrink-0 w-6 h-6 rounded-full border-2 border-border group-hover:border-primary/50 transition-colors"></div>
-                                        </template>
-                                    </span>
+                                            <span class="text-[9px] font-medium text-muted-foreground leading-none mt-0.5">/ hari</span>
+                                        </div>
+
+                                        <!-- Indicator -->
+                                        <div class="flex items-center">
+                                            <template x-if="selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}')">
+                                                <div class="shrink-0 w-5 h-5 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-md animate-in zoom-in-50 duration-200">
+                                                    <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                            </template>
+                                            <template x-if="!(selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}'))">
+                                                <div class="shrink-0 w-5 h-5 rounded-full border-2 border-border group-hover:border-primary/50 transition-colors"></div>
+                                            </template>
+                                        </div>
+                                    </div>
                                 </label>
                                 @endforeach
                             </div>
@@ -198,47 +192,53 @@
                             @endif
                         </div>
 
-                        {{-- KERANJANG SEWA (Cart List) --}}
-                        @if(count($selected_unit_ids) > 0)
-                        <div class="animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div class="flex items-center justify-between mb-3 px-1 mt-6">
-                                <h3 class="text-xs font-bold text-primary flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-                                    Keranjang Sewa ({{ count($selected_unit_ids) }})
-                                </h3>
+                        {{-- KERANJANG SEWA (Desktop Only) --}}
+                        <div x-show="selectedIds.length > 0" class="hidden sm:block mt-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div class="flex items-center gap-2 mb-4 px-1">
+                                <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
+                                <h3 class="text-sm font-bold text-foreground">Unit Terpilih (<span x-text="selectedIds.length"></span>)</h3>
                             </div>
-                            <div class="bg-card border-2 border-primary/20 rounded-xl overflow-hidden shadow-sm relative">
-                                <!-- Loader for Price/Cart updates -->
-                                <div wire:loading wire:target="calculatePrice, selected_unit_ids" 
-                                    class="absolute inset-0 bg-background/60 backdrop-blur-[1px] z-30 flex items-center justify-center">
-                                    <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                </div>
-
-                                <div class="divide-y divide-border/50">
-                                    @php 
-                                        $selectedUnits = collect($available_units)->whereIn('id', $selected_unit_ids);
-                                    @endphp
-                                    @foreach($selectedUnits as $sUnit)
-                                    <div class="flex items-center justify-between p-3 bg-primary/5">
-                                        <div class="flex items-center gap-3">
-                                            <div class="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                            
+                            <div class="bg-muted/30 border border-border rounded-2xl overflow-hidden shadow-sm">
+                                <div class="grid grid-cols-2 gap-3 p-3">
+                                    <template x-for="id in selectedIds" :key="id">
+                                        <div class="flex items-center justify-between p-3.5 bg-background border border-border/50 rounded-xl hover:border-primary/50 transition-all group">
+                                            <div class="flex items-center gap-3">
+                                                <div class="flex flex-col">
+                                                    <p class="text-sm font-bold text-foreground leading-tight" x-text="unitPrices[id]?.seri || 'Unit #' + id"></p>
+                                                    <p class="text-[10px] text-muted-foreground mt-0.5" x-text="(unitPrices[id]?.warna || '') + ' • ' + (unitPrices[id]?.memori || '')"></p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p class="text-[11px] font-bold text-foreground">{{ $sUnit->seri }} <span class="text-[9px] text-muted-foreground font-normal ml-1">{{ $sUnit->warna }} • {{ $sUnit->memori }}</span></p>
-                                                <p class="text-[9px] font-bold text-primary">Rp {{ number_format($sUnit->harga_per_hari, 0, ',', '.') }}<span class="text-muted-foreground font-normal">/hari</span></p>
+                                            <div class="flex items-center gap-4">
+                                                <div class="text-right">
+                                                    <p class="text-xs font-black text-primary">
+                                                        Rp <span x-text="new Intl.NumberFormat('id-ID').format((duration.days * (unitPrices[id]?.day || 0)) + (duration.hours * (unitPrices[id]?.hour || 0)))"></span>
+                                                    </p>
+                                                    <p class="text-[9px] text-muted-foreground leading-none mt-0.5">Estimasi Subtotal</p>
+                                                </div>
+                                                <button type="button" @click="selectedIds = selectedIds.filter(x => x != id)"
+                                                    class="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                                </button>
                                             </div>
                                         </div>
-                                        <button type="button" wire:click="$set('selected_unit_ids', {{ collect($selected_unit_ids)->filter(fn($id) => $id != $sUnit->id)->values()->toJson() }})"
-                                            class="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                                        </button>
+                                    </template>
+                                </div>
+                                
+                                {{-- Subtotal Footer --}}
+                                <div class="bg-primary/5 p-4 border-t border-primary/10 flex justify-between items-center px-6">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">Total Estimasi Harga</span>
+                                        <span class="text-[9px] text-muted-foreground mt-1">*Harga final akan dihitung otomatis termasuk promo</span>
                                     </div>
-                                    @endforeach
+                                    <div class="text-right">
+                                        <span class="text-lg font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal)"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        @endif
+
+
                         @else
                         <div class="p-6 bg-muted/30 border border-border border-dashed rounded-2xl text-muted-foreground text-xs text-center flex flex-col items-center gap-3">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-40 text-primary"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
@@ -264,13 +264,15 @@
                             <div class="mt-2 flex shadow-sm rounded-md h-10 w-full">
                                 <input type="text" wire:model.blur="nik" inputmode="numeric"
                                     oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                    class="flex h-10 w-full rounded-l-md border border-input bg-transparent px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
+                                    class="flex h-10 w-full border border-input bg-transparent rounded-l-md px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
                                     placeholder="">
+                                @if(!$isNikVerified)
                                 <button type="button" wire:click="checkNik"
                                     class="inline-flex items-center justify-center rounded-r-md border border-l-0 border-input bg-muted px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted/80 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ring transition-colors shrink-0 whitespace-nowrap">
                                     <span wire:loading.remove wire:target="checkNik">Cek NIK</span>
                                     <span wire:loading wire:target="checkNik">Mengecek...</span>
                                 </button>
+                                @endif
                             </div>
                             @error('nik') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
                             @if($nikFoundMessage)
@@ -284,8 +286,7 @@
                             <input type="text" wire:model="nama"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
-                                {{ $isNikVerified ? 'readonly' : '' }}
-                                class="mt-2 flex h-10 w-full rounded-md border border-input {{ $isNikVerified ? 'opacity-70 bg-muted/50 cursor-not-allowed' : 'bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 placeholder=" ">
                             @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
@@ -293,8 +294,7 @@
                             <label class="text-sm font-medium leading-none">Nomor Telepon / WhatsApp</label>
                             <input type="text" wire:model="no_wa" inputmode="numeric"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                {{ $isNikVerified ? 'readonly' : '' }}
-                                class="mt-2 flex h-10 w-full rounded-md border border-input {{ $isNikVerified ? 'opacity-70 bg-muted/50 cursor-not-allowed' : 'bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             @error('no_wa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div class="sm:col-span-2">
@@ -302,8 +302,7 @@
                             <textarea wire:model="alamat" rows="3"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
-                                {{ $isNikVerified ? 'readonly' : '' }}
-                                class="mt-2 flex w-full rounded-md border border-input {{ $isNikVerified ? 'opacity-70 bg-muted/50 cursor-not-allowed' : 'bg-transparent' }} px-3 py-2 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                class="mt-2 flex w-full rounded-md border border-input bg-transparent px-3 py-2 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 placeholder=""></textarea>
                             @error('alamat') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
@@ -350,7 +349,8 @@
                         $isSelected = in_array($promo['id'], (array)($selected_promo_ids ?? []));
                         @endphp
                         <label
-                            class="relative flex {{ $isEligible ? 'cursor-pointer hover:border-primary/50' : 'cursor-not-allowed opacity-50 grayscale bg-muted/20 border-border/50 shadow-inner' }} rounded-lg border-2 p-4 shadow-sm transition-all {{ $isEligible && $isSelected ? 'border-primary bg-primary/10' : 'border-border bg-background' }}">
+                            x-bind:class="selectedPromoIds.includes({{ $promo['id'] }}) || selectedPromoIds.includes('{{ $promo['id'] }}') ? 'border-primary bg-primary/10' : 'border-border bg-background'"
+                            class="relative flex {{ $isEligible ? 'cursor-pointer hover:border-primary/50' : 'cursor-not-allowed opacity-50 grayscale bg-muted/20 border-border/50 shadow-inner' }} rounded-lg border-2 p-4 shadow-sm transition-all">
                             <input type="checkbox" wire:model.live="selected_promo_ids" value="{{ $promo['id'] }}"
                                 class="sr-only" {{ !$isEligible ? 'disabled' : '' }}>
                             <span class="flex flex-1 items-center gap-3">
@@ -398,8 +398,7 @@
                                     </span>
                                 </span>
                             </span>
-                            @if($isEligible && $isSelected)
-                            <div
+                            <div x-show="selectedPromoIds.includes({{ $promo['id'] }}) || selectedPromoIds.includes('{{ $promo['id'] }}')"
                                 class="bg-primary text-primary-foreground rounded-full shadow-md h-6 w-6 flex items-center justify-center shrink-0">
                                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd"
@@ -407,7 +406,6 @@
                                         clip-rule="evenodd" />
                                 </svg>
                             </div>
-                            @endif
                         </label>
                         @endforeach
                     </div>
@@ -438,39 +436,39 @@
                         </div>
                     </div>
 
-                    <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">Rincian Tagihan Kalkulasi Otomatis</h2>
-                    <div class="space-y-2 text-sm">
+                    <h2 class="text-[11px] sm:text-sm font-bold tracking-tight mb-4 text-foreground uppercase tracking-widest opacity-60">Rincian Pembayaran</h2>
+                    <div class="space-y-2 text-[11px] sm:text-sm">
                         <div class="flex justify-between">
-                            <span class="text-muted-foreground">Subtotal Sewa</span>
+                            <span class="text-muted-foreground">Subtotal sewa</span>
                             <span class="font-medium" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal)">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
                         </div>
                         @if($potongan_diskon > 0)
                         <div class="flex justify-between text-green-600">
-                            <span>Diskon / Promo{{ $applied_promo_label ? ' ('.$applied_promo_label.')' : '' }}</span>
+                            <span>Diskon / promo{{ $applied_promo_label ? ' ('.$applied_promo_label.')' : '' }}</span>
                             <span class="font-medium">- Rp {{ number_format($potongan_diskon, 0, ',', '.') }}</span>
                         </div>
                         @endif
                         @if($hari_bonus > 0)
                         <div class="flex justify-between text-green-600">
-                            <span>🎁 Bonus Hari Gratis{{ $applied_promo_label ? ' ('.$applied_promo_label.')' : ''
+                            <span>Bonus hari gratis{{ $applied_promo_label ? ' ('.$applied_promo_label.')' : ''
                                 }}</span>
                             <span class="font-medium">+{{ $hari_bonus }} Hari</span>
                         </div>
                         @endif
                         @if($jam_bonus > 0)
                         <div class="flex justify-between text-green-600">
-                            <span>🎁 Bonus Jam Gratis{{ $applied_promo_label ? ' ('.$applied_promo_label.')' : ''
+                            <span>Bonus jam gratis{{ $applied_promo_label ? ' ('.$applied_promo_label.')' : ''
                                 }}</span>
                             <span class="font-medium">+{{ $jam_bonus }} Jam</span>
                         </div>
                         @endif
                         <div class="flex justify-between text-muted-foreground">
-                            <span>Kode Unik <span class="text-[10px]">(Membantu konfirmasi transfer)</span></span>
+                            <span>Kode unik <span class="text-[9px] sm:text-[10px] opacity-70">({{ $grand_total > 0 ?  : 'Otomatis' }})</span></span>
                             <span class="font-medium">+ Rp {{ $kode_unik }}</span>
                         </div>
                         <div class="pt-4 border-t border-border flex justify-between items-center">
-                            <span class="font-bold text-base text-foreground">Grand Total</span>
-                            <span class="font-black text-2xl text-primary">Rp {{ number_format($grand_total, 0, ',',
+                            <span class="font-bold text-[12px] sm:text-sm text-foreground">Grand total</span>
+                            <span class="font-black text-base sm:text-lg text-primary ">Rp {{ number_format($grand_total, 0, ',',
                                 '.') }}</span>
                         </div>
                     </div>
@@ -496,7 +494,7 @@
                     $termLines = array_filter(explode("
 ", $termsRaw));
                     @endphp
-                    <ul class="text-xs text-muted-foreground space-y-1.5 list-disc list-inside leading-relaxed">
+                    <ul class="text-[10px] text-muted-foreground space-y-1.5 list-disc list-inside leading-relaxed">
                         @foreach($termLines as $line)
                         <li>{{ trim($line) }}</li>
                         @endforeach
@@ -504,7 +502,7 @@
                     <label class="flex items-start gap-3 cursor-pointer mt-1">
                         <input type="checkbox" wire:model="agree" id="agree_terms"
                             class="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-primary focus:ring-primary">
-                        <span class="text-sm font-medium text-foreground">Saya telah membaca dan
+                        <span class="text-xs font-medium text-foreground">Saya telah membaca dan
                             <strong>menyetujui</strong> seluruh syarat & ketentuan penyewaan di atas.</span>
                     </label>
                     @error('agree') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
@@ -543,9 +541,6 @@
 
                 <div class="bg-background/10 backdrop-blur-sm border-t border-border shadow-[0_-15px_40px_rgba(0,0,0,0.15)] transition-all duration-500 ease-in-out"
                     x-bind:class="summaryExpanded ? 'rounded-t-[2.5rem]' : ''">
-                    
-
-                    
                     <!-- Expandable Content -->
                     <div x-show="summaryExpanded" 
                         x-transition:enter="transition-all ease-out duration-250"
@@ -668,6 +663,7 @@
         step: 1,
         summaryExpanded: false,
         selectedIds: @entangle('selected_unit_ids'),
+        selectedPromoIds: @entangle('selected_promo_ids'),
         unitPrices: {!! $unitPricesJson !!},
         
         nextStep() {

@@ -32,10 +32,6 @@
                     class="text-sm font-medium transition-colors {{ request()->routeIs('public.timeline') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
                     Jadwal
                 </a>
-                <a href="{{ route('public.check-order') }}" wire:navigate
-                    class="text-sm font-medium transition-colors {{ request()->routeIs('public.check-order') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
-                    Cek Pesanan
-                </a>
                 <a href="{{ route('public.about') }}" wire:navigate
                     class="text-sm font-medium transition-colors {{ request()->routeIs('public.about') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
                     Tentang & FAQ
@@ -44,6 +40,25 @@
                     class="text-sm font-medium transition-colors {{ request()->routeIs('affiliate.*') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
                     Affiliate
                 </a>
+                @php
+                    $navCustomer = session('customer_session');
+                    $navIsLoggedIn = $navCustomer && isset($navCustomer['expires_at']) && now()->timestamp < $navCustomer['expires_at'];
+                @endphp
+                @if($navIsLoggedIn)
+                    <a href="{{ route('public.check-order') }}" wire:navigate
+                        class="text-sm font-medium transition-colors {{ request()->routeIs('public.check-order') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
+                        Cek Pesanan
+                    </a>
+                    <a href="{{ route('customer.logout') }}" wire:navigate wire:confirm="Apakah Anda yakin ingin keluar?"
+                        class="text-sm font-medium text-red-500 hover:text-red-400 transition-colors">
+                        Keluar
+                    </a>
+                @else
+                    <a href="{{ route('customer.login') }}" wire:navigate
+                        class="text-sm font-medium transition-colors {{ request()->routeIs('customer.login') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
+                        Masuk
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -105,15 +120,31 @@
             class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->is('/') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">Beranda</a>
         <a href="{{ route('public.timeline') }}" wire:navigate
             class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.timeline') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">Jadwal</a>
-        <a href="{{ route('public.check-order') }}" wire:navigate
-            class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.check-order') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">Cek
-            Pesanan</a>
         <a href="{{ route('public.about') }}" wire:navigate
             class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.about') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
             Tentang & FAQ</a>
         <a href="{{ route('affiliate.login') }}" wire:navigate
             class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('affiliate.*') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
             Affiliate Center</a>
+        @php
+            $mobileCustomer = session('customer_session');
+            $mobileIsLoggedIn = $mobileCustomer && isset($mobileCustomer['expires_at']) && now()->timestamp < $mobileCustomer['expires_at'];
+        @endphp
+        @if($mobileIsLoggedIn)
+            <a href="{{ route('public.check-order') }}" wire:navigate
+                class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.check-order') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
+                Cek Pesanan
+            </a>
+            <a href="{{ route('customer.logout') }}" wire:navigate wire:confirm="Apakah Anda yakin ingin keluar?"
+                class="px-4 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10">
+                Keluar
+            </a>
+        @else
+            <a href="{{ route('customer.login') }}" wire:navigate
+                class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('customer.login') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
+                Masuk
+            </a>
+        @endif
         <div class="h-px bg-border my-1"></div>
         <a href="{{ route('public.booking') }}" wire:navigate
             class="flex items-center justify-center rounded-xl bg-foreground text-background text-sm font-semibold px-4 py-3 hover:bg-foreground/90 transition-all mt-2">

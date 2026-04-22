@@ -5,11 +5,8 @@
             
             <!-- Progress Bar -->
             <div class="mb-8 border-b border-border pb-4 text-left">
-                <div class="flex items-center justify-between text-[10px] sm:text-xs font-medium mb-2 px-1">
-                    <span class="text-primary font-bold">Pilih Unit</span>
-                    <span class="text-primary font-bold">Data & Promo</span>
-                    <span class="text-primary font-bold">Konfirmasi</span>
-                    <span class="text-primary font-bold">Pembayaran</span>
+                <div class="flex items-center justify-center text-sm font-bold text-primary mb-3 px-1">
+                    <span>4. Proses Pembayaran</span>
                 </div>
                 <div class="h-2 bg-muted rounded-full overflow-hidden">
                     <div class="h-full bg-primary transition-all duration-500 rounded-full w-full"></div>

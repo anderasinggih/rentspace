@@ -35,7 +35,7 @@ class BookingForm extends Component
     public $selected_category_id = null;
     public $schedule_available_unit_ids = [];
     public $categories_list = [];
-    
+
     // Internal cache for the request lifecycle
     protected $all_pricing_rules = null;
     protected $fetched_selected_units = null;
@@ -44,11 +44,38 @@ class BookingForm extends Component
     {
         // 1. Handle auto-selection of unit from URL (if still using specific links)
         if ($unit_id) {
-            $this->selected_unit_ids = [(int)$unit_id];
+            $this->selected_unit_ids = [(int) $unit_id];
             $this->checkAvailability();
         }
 
-        // 2. Handle auto-apply of referral from Cookie or Session
+        // 2. Handle persistent customer session auto-fill
+        $customerSession = session('customer_session');
+        if ($customerSession && isset($customerSession['expires_at']) && now()->timestamp < $customerSession['expires_at']) {
+            $this->nik = $customerSession['nik'];
+            $this->no_wa = $customerSession['no_wa'];
+
+            // Fetch name and address from latest rental
+            $lastRental = Rental::where('nik', $this->nik)
+                ->where('no_wa', $this->no_wa)
+                ->latest()
+                ->first();
+
+            if ($lastRental) {
+                $this->nama = $lastRental->nama;
+                $this->alamat = $lastRental->alamat;
+
+                $firstName = explode(' ', $this->nama)[0];
+                $this->nikFoundMessage = "Halo {$firstName}, data otomatis terisi dari sesi Anda.";
+                $this->nikFoundType = 'success';
+            } else {
+                $this->nikFoundMessage = "Halo, NIK Anda terdeteksi. Silakan lengkapi sisa data.";
+                $this->nikFoundType = 'success';
+            }
+
+            $this->isNikVerified = true;
+        }
+
+        // 3. Handle auto-apply of referral from Cookie or Session
         $ref = request()->cookie('affiliate_ref') ?? session('affiliate_ref');
 
         if ($ref) {
@@ -57,7 +84,7 @@ class BookingForm extends Component
             $this->calculatePrice();
         }
 
-        // 3. Pre-load categories
+        // 4. Pre-load categories
         $this->categories_list = \App\Models\Category::all();
     }
 
@@ -69,12 +96,6 @@ class BookingForm extends Component
             $this->isNikVerified = false;
             $this->loadAvailablePromos();
             $this->calculatePrice();
-        }
-        if ($propertyName === 'nama') {
-            $this->nama = strtoupper($this->nama);
-        }
-        if ($propertyName === 'alamat') {
-            $this->alamat = strtoupper($this->alamat);
         }
 
         if (in_array($propertyName, ['waktu_mulai', 'waktu_selesai'])) {
@@ -118,7 +139,7 @@ class BookingForm extends Component
         $end = Carbon::parse($this->waktu_selesai);
 
         if ($end->lte($start)) {
-            $this->addError('waktu_selesai', 'Waktu selesai harus setelah waktu mulai');
+            $this->addError('waktu_selesai', 'Harus setelah waktu mulai');
             $this->available_units = [];
             return;
         }
@@ -172,32 +193,45 @@ class BookingForm extends Component
         $days = floor($diffInHours / 24);
 
         $now = Carbon::now();
-        
+
+        // 1. Fetch rules (Cached for 10 minutes)
         if ($this->all_pricing_rules === null) {
-            $this->all_pricing_rules = PricingRule::where('is_active', true)
-                ->where(function ($q) use ($now) {
-                    $q->whereNull('start_date')->orWhere('start_date', '<=', $now->format('Y-m-d'));
-                })
-                ->where(function ($q) use ($now) {
-                    $q->whereNull('end_date')->orWhere('end_date', '>=', $now->format('Y-m-d'));
-                })
-                ->get();
+            $this->all_pricing_rules = \Illuminate\Support\Facades\Cache::remember('active_pricing_rules', 600, function () use ($now) {
+                return PricingRule::where('is_active', true)
+                    ->where(function ($q) use ($now) {
+                        $q->whereNull('start_date')->orWhere('start_date', '<=', $now->format('Y-m-d'));
+                    })
+                    ->where(function ($q) use ($now) {
+                        $q->whereNull('end_date')->orWhere('end_date', '>=', $now->format('Y-m-d'));
+                    })
+                    ->get();
+            });
         }
+
+        // 2. Pre-calculate values used inside filter to avoid per-item DB queries
+        $isAffiliateAuth = auth()->check() && auth()->user()->role === 'affiliator';
+        $isAffiliateNik = false;
+        if (!empty($this->nik)) {
+            // Cache this check for the current request
+            $isAffiliateNik = \App\Models\AffiliatorProfile::where('nik', $this->nik)
+                ->where('status', 'approved')
+                ->exists();
+        }
+
+        $isEligibleForAffiliatePromos = $isAffiliateAuth || $isAffiliateNik;
 
         $rules = $this->all_pricing_rules;
 
-        $this->available_promos = $rules->filter(function ($rule) {
+        // 3. Filter and Map
+        $this->available_promos = $rules->filter(function ($rule) use ($isEligibleForAffiliatePromos) {
             // Check if it's an affiliate-only promo
-            if ($rule->is_affiliate_only) {
-                $isAffiliateAuth = auth()->check() && auth()->user()->role === 'affiliator';
-                $isAffiliateNik = !empty($this->nik) && \App\Models\AffiliatorProfile::where('nik', $this->nik)->where('status', 'approved')->exists();
-                
-                if (!$isAffiliateAuth && !$isAffiliateNik) return false;
+            if ($rule->is_affiliate_only && !$isEligibleForAffiliatePromos) {
+                return false;
             }
 
             // Check if it requires a referral code
-            if ($rule->requires_referral) {
-                if (empty($this->referral_code)) return false;
+            if ($rule->requires_referral && empty($this->referral_code)) {
+                return false;
             }
 
             // Existing logic for affiliate_code specific promos
@@ -206,13 +240,10 @@ class BookingForm extends Component
                 return $refMatch;
             }
 
-            // If hidden, only show if:
-            // 1. It's tied to an affiliate/referral constraint (handled above)
-            // 2. OR code matches
-            // 3. OR it's already selected
+            // If hidden, only show if matched by code or already selected
             if ($rule->is_hidden) {
                 if ($rule->requires_referral || $rule->is_affiliate_only || $rule->affiliate_code) {
-                    // These are allowed if the previous checks passed
+                    // Allowed if previous checks passed
                     return true;
                 }
                 $codeMatch = $this->promo_code_input && strtoupper(trim($this->promo_code_input)) === strtoupper(trim($rule->kode_promo));
@@ -228,7 +259,7 @@ class BookingForm extends Component
             $isAffiliatePromo = $rule->affiliate_code || $rule->requires_referral || $rule->is_affiliate_only;
             if ($isAffiliatePromo && $is_eligible && !in_array($rule->id, $this->selected_promo_ids) && !$this->promoManuallyChanged) {
                 $this->selected_promo_ids[] = $rule->id;
-                $this->validateStacking(); // Ensure we don't break stacking rules
+                // Note: avoiding validateStacking here to prevent recursion during map
             }
 
             return array_merge($rule->toArray(), [
@@ -247,7 +278,7 @@ class BookingForm extends Component
         if ($this->all_pricing_rules === null) {
             $this->loadAvailablePromos();
         }
-        
+
         $lastSelectedRule = $this->all_pricing_rules->firstWhere('id', $lastSelectedId);
 
         if (!$lastSelectedRule)
@@ -259,7 +290,7 @@ class BookingForm extends Component
         } else {
             // If the newly selected one IS stackable, remove any existing non-stackable ones
             $this->selected_promo_ids = collect($this->selected_promo_ids)
-                ->filter(function($id) {
+                ->filter(function ($id) {
                     $r = $this->all_pricing_rules->firstWhere('id', $id);
                     return $r && $r->can_stack;
                 })->toArray();
@@ -447,6 +478,13 @@ class BookingForm extends Component
             'affiliator_id' => $this->referral_code ? (\App\Models\AffiliatorProfile::where('referral_code', strtoupper($this->referral_code))->first()->user_id ?? null) : null,
         ]);
 
+        // Create customer session for auto-login/auto-persistence
+        session(['customer_session' => [
+            'nik' => $this->nik,
+            'no_wa' => $this->no_wa,
+            'expires_at' => now()->addDays(7)->timestamp,
+        ]]);
+
         // Record ownership in session
         $owned = session('owned_bookings', []);
         $owned[] = $rental->booking_code;
@@ -498,10 +536,12 @@ class BookingForm extends Component
 
     public function render()
     {
-        $unitPrices = \App\Models\Unit::all()->mapWithKeys(fn($u) => [
+        $unitPrices = \App\Models\Unit::select('id', 'harga_per_hari', 'harga_per_jam', 'seri', 'warna', 'memori')
+            ->get()
+            ->mapWithKeys(fn($u) => [
             $u->id => [
-                'day' => (int)$u->harga_per_hari, 
-                'hour' => (int)$u->harga_per_jam,
+                'day' => (int) $u->harga_per_hari,
+                'hour' => (int) $u->harga_per_jam,
                 'seri' => $u->seri,
                 'warna' => $u->warna,
                 'memori' => $u->memori

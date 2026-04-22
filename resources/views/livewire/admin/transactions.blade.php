@@ -8,7 +8,7 @@
     <div>
         <div class="sm:flex sm:items-center">
             <div class="sm:flex-auto">
-                <h1 class="text-2xl font-bold tracking-tight text-foreground">Transactions & Mutations</h1>
+                <h1 class="text-2xl font-bold  text-foreground">Transactions & Mutations</h1>
                 <p class="mt-2 text-sm text-muted-foreground">Verify payments via unique codes and manage rental
                     schedules.</p>
             </div>
@@ -146,8 +146,9 @@
                             </thead>
                             <tbody class="divide-y divide-border text-[11px]">
                                 @forelse ($transactions as $trx)
-                                                                <tr>
-                                                                    <td class="whitespace-nowrap py-2 sm:py-4 pl-3 pr-3 text-xs sm:pl-6">
+                                                                <tr wire:click="openInspect({{ $trx->id }})"
+                                                                    class="cursor-pointer hover:bg-muted/40 transition-colors group/row">
+                                                                    <td class="whitespace-nowrap py-1.5 pl-3 pr-3 text-xs sm:pl-6">
                                                                         <div class="font-medium text-foreground">INV-{{ str_pad(
                                         $trx->id,
                                         5,
@@ -156,38 +157,45 @@
                                     ) }}</div>
                                                                         <div class="text-muted-foreground mt-0.5 sm:mt-1">{{ $trx->nama }} <br /> <a
                                                                                 href="https://wa.me/{{ preg_replace('/^0/', '62', $trx->no_wa) }}"
-                                                                                target="_blank" class="text-primary hover:underline">{{ $trx->no_wa
-                                                                                }}</a></div>
+                                                                                target="_blank" wire:click.stop class="text-primary hover:underline">{{ $trx->no_wa
+                                                                                                                }}</a></div>
                                                                     </td>
                                                                     <td
-                                                                        class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-xs text-muted-foreground">
+                                                                        class="hidden sm:table-cell whitespace-nowrap px-3 py-1.5 text-xs text-muted-foreground">
                                                                         {{ $trx->created_at->format('d M Y') }}<br />
                                                                         <span class="opacity-70">{{ $trx->created_at->format('H:i') }} WIB</span>
                                                                     </td>
-                                                                    <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-muted-foreground">
-                                                                        <div class="flex flex-col gap-0.5">
-                                                                            @foreach($trx->units as $u)
-                                                                                <span class="font-medium text-foreground text-xs">{{ $u->seri }}</span>
+                                                                    <td
+                                                                        class="hidden sm:table-cell whitespace-nowrap px-3 py-1.5 text-muted-foreground">
+                                                                        <div class="flex flex-col gap-0">
+                                                                            @foreach($trx->units->take(2) as $u)
+                                                                                <span
+                                                                                    class="font-medium text-foreground text-xs leading-none">{{ $u->seri }}</span>
                                                                             @endforeach
+                                                                            @if($trx->units->count() > 2)
+                                                                                <span
+                                                                                    class="text-[9px] text-muted-foreground mt-0.5">+{{ $trx->units->count() - 2 }}</span>
+                                                                            @endif
                                                                             @if($trx->units->isEmpty() && $trx->unit)
                                                                                 <span
-                                                                                    class="font-medium text-foreground text-xs">{{ $trx->unit->seri }}</span>
+                                                                                    class="font-medium text-foreground text-xs leading-none">{{ $trx->unit->seri }}</span>
                                                                             @endif
                                                                         </div>
                                                                     </td>
                                                                     <td
-                                                                        class="hidden md:table-cell whitespace-nowrap px-3 py-4 text-muted-foreground text-xs">
-                                                                        {{ \Carbon\Carbon::parse($trx->waktu_mulai)->format('d M Y, H:i')
-                                                                        }}<br />s/d<br />
-                                                                        {{ \Carbon\Carbon::parse($trx->waktu_selesai)->format('d M Y, H:i') }}
+                                                                        class="hidden md:table-cell whitespace-nowrap px-3 py-1.5 text-muted-foreground text-[10px] leading-tight">
+                                                                        {{ \Carbon\Carbon::parse($trx->waktu_mulai)->format('d/m/y H:i')
+                                                                                                        }}<br />
+                                                                        {{ \Carbon\Carbon::parse($trx->waktu_selesai)->format('d/m/y H:i') }}
                                                                     </td>
-                                                                    <td class="hidden md:table-cell whitespace-nowrap px-3 py-4 text-muted-foreground">
+                                                                    <td
+                                                                        class="hidden md:table-cell whitespace-nowrap px-3 py-1.5 text-muted-foreground leading-tight">
                                                                         Rp {{ number_format($trx->subtotal_harga, 0, ',', '.') }}<br />
                                                                         <span class="text-xs text-red-500">Diskon: -Rp {{
                                         number_format($trx->potongan_diskon, 0, ',', '.') }}</span>
                                                                     </td>
                                                                     <td
-                                                                        class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm font-bold text-primary">
+                                                                        class="hidden sm:table-cell whitespace-nowrap px-3 py-1.5 text-sm font-bold text-primary leading-none">
                                                                         Rp {{ number_format($trx->grand_total, 0, ',', '.') }}<br />
                                                                         @php
                                                                             $trxCommission = $trx->commissions->sum('amount');
@@ -195,77 +203,219 @@
                                                                         @endphp
                                                                         @if($trxCommission > 0)
                                                                             <div
-                                                                                class="text-[10px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                                                                                class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
                                                                                 Net: Rp {{ number_format($trxNet, 0, ',', '.') }}
                                                                             </div>
                                                                         @endif
-                                                                        <div class="mt-1 flex flex-wrap gap-1">
+                                                                        <div class="mt-0.5 flex flex-wrap gap-1">
                                                                             <span
-                                                                                class="inline-flex rounded border bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200/50 dark:border-purple-900/50 px-1.5 font-mono text-[10px] sm:text-xs font-semibold uppercase">
-                                                                                Kode: {{ $trx->kode_unik_pembayaran }}
+                                                                                class="inline-flex rounded border bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200/50 dark:border-purple-900/50 px-1 font-mono text-[9px] font-semibold uppercase">
+                                                                                {{ $trx->kode_unik_pembayaran }}
                                                                             </span>
                                                                             <span
-                                                                                class="inline-flex rounded border bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50 px-1.5 font-mono text-[10px] sm:text-xs font-semibold uppercase">
+                                                                                class="inline-flex rounded border bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50 px-1 font-mono text-[9px] font-semibold uppercase">
                                                                                 {{ $trx->metode_pembayaran }}
                                                                             </span>
                                                                         </div>
                                                                     </td>
-                                                                    <td class="whitespace-nowrap px-2 sm:px-3 py-2 sm:py-4">
+                                                                    <td class="whitespace-nowrap px-2 sm:px-3 py-1.5">
                                                                         @if($trx->status === 'pending')
-                                                                            <x-ui.badge variant="amber" class="text-[10px] sm:text-xs">Pending</x-ui.badge>
+                                                                            <x-ui.badge variant="amber" class="text-[9px]">Pending</x-ui.badge>
                                                                         @elseif($trx->status === 'paid')
-                                                                            <x-ui.badge variant="blue" class="text-[10px] sm:text-xs">Paid</x-ui.badge>
+                                                                            <x-ui.badge variant="blue" class="text-[9px]">Paid</x-ui.badge>
                                                                         @elseif($trx->status === 'completed')
-                                                                            <x-ui.badge variant="green" class="text-[10px] sm:text-xs">Selesai</x-ui.badge>
+                                                                            <x-ui.badge variant="green" class="text-[9px]">Selesai</x-ui.badge>
                                                                         @else
-                                                                            <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Batal</x-ui.badge>
+                                                                            <x-ui.badge variant="red" class="text-[9px]">Batal</x-ui.badge>
                                                                         @endif
                                                                     </td>
 
-                                                                    <td class="relative whitespace-nowrap py-2 sm:py-4 pl-2 pr-2 sm:pr-6 text-right">
-                                                                        <div class="flex flex-col gap-1 sm:gap-2 items-end">
+                                                                    <td class="relative whitespace-nowrap py-1.5 pl-2 pr-2 sm:pr-6 text-right">
+                                                                        <div class="flex items-center justify-end gap-2">
                                                                             @if($trx->status === 'pending')
                                                                                 @if(auth()->user()->role === 'admin')
-                                                                                    <button wire:click="markAsPaid({{ $trx->id }})"
+                                                                                    {{-- Validasi --}}
+                                                                                    <x-ui.button wire:click.stop="markAsPaid({{ $trx->id }})"
                                                                                         wire:confirm="Transaksi ini sudah valid transfer?"
-                                                                                        class="inline-flex items-center justify-center rounded-md border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs font-medium">Validasi</button>
-                                                                                    <button wire:click="cancel({{ $trx->id }})"
-                                                                                        wire:confirm="Batalkan pesanan ini?"
-                                                                                        class="text-[10px] sm:text-xs text-red-500 hover:text-red-700 hover:underline">Batalkan</button>
+                                                                                        wire:loading.attr="disabled" wire:target="markAsPaid({{ $trx->id }})"
+                                                                                        variant="success" size="sm"
+                                                                                        class="gap-1.5 shadow-lg shadow-emerald-500/10">
+                                                                                        <svg wire:loading.remove wire:target="markAsPaid({{ $trx->id }})"
+                                                                                            xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                                                            <polyline points="20 6 9 17 4 12" />
+                                                                                        </svg>
+                                                                                        <span wire:loading wire:target="markAsPaid({{ $trx->id }})"
+                                                                                            class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                                                                        Validasi
+                                                                                    </x-ui.button>
+
+                                                                                    {{-- Batalkan --}}
+                                                                                    <x-ui.button wire:click.stop="cancel({{ $trx->id }})"
+                                                                                        wire:confirm="Batalkan pesanan ini?" wire:loading.attr="disabled"
+                                                                                        wire:target="cancel({{ $trx->id }})" variant="destructive" size="sm"
+                                                                                        class="gap-1.5">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                                                            <circle cx="12" cy="12" r="10" />
+                                                                                            <line x1="15" y1="9" x2="9" y2="15" />
+                                                                                            <line x1="9" y1="9" x2="15" y2="15" />
+                                                                                        </svg>
+                                                                                        Batal
+                                                                                    </x-ui.button>
                                                                                 @endif
                                                                             @elseif($trx->status === 'paid')
-                                                                                                            @php
-                                                                                                                $tolerance = (int) \App\Models\Setting::getVal(
-                                                                                                                    'late_tolerance_minutes',
-                                                                                                                    60
-                                                                                                                );
-                                                                                                                $isLate =
-                                                                                                                    (\Carbon\Carbon::parse($trx->waktu_selesai)->addMinutes($tolerance) <
-                                                                                                            now()); @endphp @if(auth()->user()->role === 'admin')
-                                                                                    @if($isLate)
-                                                                                        <button wire:click="openDendaModal({{ $trx->id }})"
-                                                                                            class="inline-flex items-center justify-center rounded-md bg-red-600 text-white shadow hover:bg-red-700 h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs font-medium">Selesaikan
-                                                                                            (Telat)</button>
-                                                                                    @else
-                                                                                        <button wire:click="openDendaModal({{ $trx->id }})"
-                                                                                            class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs font-medium">Selesaikan</button>
-                                                                                    @endif
+                                                                                @php
+                                                                                    $tolerance = (int) \App\Models\Setting::getVal('late_tolerance_minutes', 60);
+                                                                                    $isLate = (\Carbon\Carbon::parse($trx->waktu_selesai)->addMinutes($tolerance) < now());
+                                                                                @endphp
+                                                                                @if(auth()->user()->role === 'admin')
+                                                                                    {{-- Selesaikan --}}
+                                                                                    <x-ui.button wire:click.stop="openDendaModal({{ $trx->id }})"
+                                                                                        wire:loading.attr="disabled"
+                                                                                        wire:target="openDendaModal({{ $trx->id }})" :variant="$isLate ? 'destructive' : 'default'" size="sm" class="gap-1.5 shadow-lg">
+                                                                                        <svg wire:loading.remove wire:target="openDendaModal({{ $trx->id }})"
+                                                                                            xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                                                                            <polyline points="22 4 12 14.01 9 11.01" />
+                                                                                        </svg>
+                                                                                        <span wire:loading wire:target="openDendaModal({{ $trx->id }})"
+                                                                                            class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                                                                        Selesaikan {{ $isLate ? '(Telat)' : '' }}
+                                                                                    </x-ui.button>
                                                                                 @endif
-                                                                            @endif
-                                                                            @if(auth()->user()->role === 'admin')
-                                                                                <div class="flex items-center gap-2 mt-1">
-                                                                                    <button wire:click="openInspect({{ $trx->id }})"
-                                                                                        class="text-[10px] sm:text-xs text-sky-600 hover:underline">Inspect</button>
-                                                                                    <button wire:click="editTrx({{ $trx->id }})"
-                                                                                        class="text-[10px] sm:text-xs text-primary hover:underline">Edit</button>
-                                                                                    <button wire:click="deleteRow({{ $trx->id }})"
-                                                                                        class="text-[10px] sm:text-xs text-muted-foreground hover:text-foreground"
-                                                                                        onclick="confirm('Hapus data secara permanen?') || event.stopImmediatePropagation()">Hapus</button>
-                                                                                </div>
                                                                             @endif
                                                                         </div>
                                                                     </td>
-                                                                </tr>
+                                                                    {{-- Expanded Inspection Area (Dark Shadcn Minimalist) --}}
+                                                                    @if($inspectTrxId === $trx->id && $inspectTrx)
+                                                                        <tr
+                                                                            class="bg-background animate-in fade-in slide-in-from-top-1 duration-300">
+                                                                            <td colspan="8" class="p-0 border-none">
+                                                                                <div class="p-6 md:p-8 bg-background border-b border-border shadow-inner">
+                                                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-start">
+
+                                                                                        {{-- Col 1: Customer (Theme Aware) --}}
+                                                                                        <div class="space-y-6">
+                                                                                            <div>
+                                                                                                <p class="text-[11px] font-bold text-muted-foreground mb-3 uppercase tracking-wider">Informasi
+                                                                                                    penyewa</p>
+                                                                                                <div class="space-y-1">
+                                                                                                    <h4
+                                                                                                        class="text-base font-bold text-foreground tracking-tight">
+                                                                                                        {{ $inspectTrx->nama }}</h4>
+                                                                                                    <p
+                                                                                                        class="text-xs text-muted-foreground font-medium">
+                                                                                                        {{ $inspectTrx->nik }}</p>
+                                                                                                </div>
+                                                                                                <div class="mt-4">
+                                                                                                    <a href="https://wa.me/{{ $inspectTrx->no_wa }}"
+                                                                                                        target="_blank"
+                                                                                                        class="inline-flex items-center gap-2 text-xs font-bold text-primary hover:text-primary/80 transition-colors">
+                                                                                                        <div
+                                                                                                            class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14"
+                                                                                                                height="14" viewBox="0 0 24 24" fill="none"
+                                                                                                                stroke="currentColor" stroke-width="2.5"
+                                                                                                                stroke-linecap="round" stroke-linejoin="round">
+                                                                                                                <path
+                                                                                                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                                                                            </svg>
+                                                                                                        </div>
+                                                                                                        <span>{{ $inspectTrx->no_wa }}</span>
+                                                                                                    </a>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {{-- Col 2: Units & Time (Theme Aware) --}}
+                                                                                        <div
+                                                                                            class="space-y-6 md:border-l border-border md:pl-12">
+                                                                                            <div>
+                                                                                                <p class="text-[11px] font-bold text-muted-foreground mb-3 uppercase tracking-wider">Detail sewa
+                                                                                                </p>
+                                                                                                <div class="space-y-2">
+                                                                                                    <div class="flex items-center gap-3 text-xs">
+                                                                                                        <span class="text-muted-foreground w-12 shrink-0">Mulai</span>
+                                                                                                        <span
+                                                                                                            class="text-foreground font-semibold">{{ $inspectTrx->waktu_mulai->format('d M Y, H:i') }}</span>
+                                                                                                    </div>
+                                                                                                    <div class="flex items-center gap-3 text-xs">
+                                                                                                        <span class="text-muted-foreground w-12 shrink-0">Selesai</span>
+                                                                                                        <span
+                                                                                                            class="text-foreground font-semibold">{{ $inspectTrx->waktu_selesai->format('d M Y, H:i') }}</span>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <p class="text-[11px] font-bold text-muted-foreground mb-3 uppercase tracking-wider">Unit
+                                                                                                    terdaftar</p>
+                                                                                                <div
+                                                                                                    class="max-h-[90px] overflow-y-auto pr-2 flex flex-wrap gap-2 scrollbar-hide">
+                                                                                                    @foreach($inspectTrx->units as $u)
+                                                                                                        <x-ui.badge variant="outline"
+                                                                                                            class="border-border text-muted-foreground bg-background hover:bg-muted">
+                                                                                                            {{ $u->seri }}
+                                                                                                        </x-ui.badge>
+                                                                                                    @endforeach
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {{-- Col 3: Financials (Theme Aware) --}}
+                                                                                        <div
+                                                                                            class="space-y-6 md:border-l border-border md:pl-12">
+                                                                                            <p class="text-[11px] font-bold text-muted-foreground mb-3 uppercase tracking-wider">Keuangan</p>
+                                                                                            <div class="space-y-3">
+                                                                                                <div class="flex justify-between items-center text-xs">
+                                                                                                    <span class="text-muted-foreground">Dasar + Fee</span>
+                                                                                                    <span
+                                                                                                        class="font-semibold text-foreground">Rp
+                                                                                                        {{ number_format($inspectTrx->subtotal_harga + $inspectTrx->kode_unik_pembayaran, 0, ',', '.') }}</span>
+                                                                                                </div>
+                                                                                                @if($inspectTrx->potongan_diskon > 0)
+                                                                                                    <div
+                                                                                                        class="flex justify-between items-center text-xs text-destructive font-bold">
+                                                                                                        <span>Potongan</span>
+                                                                                                        <span>- Rp
+                                                                                                            {{ number_format($inspectTrx->potongan_diskon, 0, ',', '.') }}</span>
+                                                                                                    </div>
+                                                                                                @endif
+                                                                                                <div
+                                                                                                    class="pt-4 border-t border-border flex justify-between items-end">
+                                                                                                    <span class="text-[11px] font-bold text-muted-foreground">Grand
+                                                                                                        total</span>
+                                                                                                    <span class="text-xl font-black text-primary ">Rp {{ number_format($inspectTrx->grand_total, 0, ',', '.') }}</span>
+                                                                                                                                    </div>
+                                                                                                                                </div>
+                                                                                                                            </div>
+
+                                                                                                                        </div>
+
+                                                                                                                        {{-- Footer: Actions (Theme Aware) --}}
+                                                                                                                        <div class="flex flex-col md:flex-row md:items-center justify-between mt-10 pt-6 border-t border-border gap-4">
+                                                                                                                            <div class="flex flex-wrap items-center gap-3">
+                                                                                                                                @if($inspectTrx->status === 'pending')
+                                                                                                                                    <x-ui.button wire:click="markAsPaid({{ $inspectTrx->id }})" wire:confirm="Validasi?" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Validasi Pembayaran</x-ui.button>
+                                                                                                                                    <x-ui.button wire:click="cancel({{ $inspectTrx->id }})" wire:confirm="Batal?" variant="destructive" size="sm" class="px-6">Batalkan</x-ui.button>
+                                                                                                                                @elseif($inspectTrx->status === 'paid')
+                                                                                                                                    <x-ui.button wire:click="openDendaModal({{ $inspectTrx->id }})" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Selesaikan Sewa</x-ui.button>
+                                                                                                                                @endif
+                                                                                                                                <x-ui.button wire:click="editTrx({{ $inspectTrx->id }})" variant="outline" size="sm">Edit Transaksi</x-ui.button>
+                                                                                                                            </div>
+                                                                                                                            <button wire:click="closeInspect" class="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                                                                                                                                Tutup Detail
+                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                                                                                                                            </button>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                </td>
+                                                                                                            </tr>
+                                                                    @endif
                                 @empty
                                     <tr>
                                         <td colspan="8" class="py-10 text-center text-sm text-muted-foreground">Belum ada
@@ -274,6 +424,56 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <div class="mt-8 flex items-center justify-between gap-4 px-2">
+                        <div class="flex items-center gap-3">
+                            <label for="perPage" class="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none">Rows per page</label>
+                            <div class="relative">
+                                <select wire:model.live="perPage" id="perPage"
+                                    class="h-9 w-20 appearance-none rounded-md border border-input bg-background pl-3 pr-8 text-sm font-bold shadow-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            {{-- Previous Page --}}
+                            @if ($transactions->onFirstPage())
+                                <button class="h-9 w-9 flex items-center justify-center rounded-md border border-input bg-background opacity-50 cursor-not-allowed text-muted-foreground shadow-sm" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                </button>
+                            @else
+                                <button wire:click="previousPage" wire:loading.attr="disabled"
+                                    class="h-9 w-9 flex items-center justify-center rounded-md border border-input bg-background text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                </button>
+                            @endif
+
+                            <div class="flex items-center gap-1.5 px-3">
+                                <span class="text-xs font-black text-foreground">{{ $transactions->currentPage() }}</span>
+                                <span class="text-xs font-medium text-muted-foreground/50">/</span>
+                                <span class="text-xs font-bold text-muted-foreground">{{ $transactions->lastPage() }}</span>
+                            </div>
+
+                            {{-- Next Page --}}
+                            @if ($transactions->hasMorePages())
+                                <button wire:click="nextPage" wire:loading.attr="disabled"
+                                    class="h-9 w-9 flex items-center justify-center rounded-md border border-input bg-background text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                            @else
+                                <button class="h-9 w-9 flex items-center justify-center rounded-md border border-input bg-background opacity-50 cursor-not-allowed text-muted-foreground shadow-sm" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                            @endif
+                        </div>
                     </div>
 
                 </div>
@@ -301,7 +501,7 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label
-                                    class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Denda
+                                    class="block text-[11px] font-bold uppercase  text-muted-foreground mb-1">Denda
                                     Keterlambatan</label>
                                 <input type="number" wire:model.live="dendaAmount" min="0"
                                     class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
@@ -309,7 +509,7 @@
                             </div>
                             <div>
                                 <label
-                                    class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Denda
+                                    class="block text-[11px] font-bold uppercase  text-muted-foreground mb-1">Denda
                                     Kerusakan</label>
                                 <input type="number" wire:model.live="dendaKerusakanAmount" min="0"
                                     class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
@@ -320,7 +520,7 @@
                         @if($dendaKerusakanAmount > 0)
                             <div>
                                 <label
-                                    class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Keterangan
+                                    class="block text-[11px] font-bold uppercase  text-muted-foreground mb-1">Keterangan
                                     Kerusakan</label>
                                 <textarea wire:model="catatanKerusakan" rows="2"
                                     class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none"
@@ -331,7 +531,7 @@
                         @if($dendaAmount > 0 || $dendaKerusakanAmount > 0)
                             <div class="rounded-lg bg-muted/30 p-4 border border-border">
                                 <label
-                                    class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">Metode
+                                    class="block text-[11px] font-bold uppercase  text-muted-foreground mb-3">Metode
                                     Pembayaran Denda</label>
                                 <div class="grid grid-cols-2 gap-3 mb-4">
                                     <label
@@ -353,36 +553,41 @@
                                 </div>
 
                                 @if($dendaMethod === 'qris')
-                                            <div class="space-y-4 pt-4 border-t border-border/50">
-                                                <div class="text-center">
-                                                    <p class="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">
-                                                        Total Denda Bayar</p>
-                                                    <p class="text-2xl font-black text-primary">Rp {{ number_format((int) $dendaAmount +
+                                                                <div class="space-y-4 pt-4 border-t border-border/50">
+                                                                    <div class="text-center">
+                                                                        <p class="text-[10px] text-muted-foreground uppercase font-bold  mb-1">
+                                                                            Total Denda Bayar</p>
+                                                                        <p class="text-2xl font-black text-primary">Rp {{ number_format((int) $dendaAmount +
                                     (int) $dendaKerusakanAmount, 0, ',', '.') }}</p>
-                                                    <p class="text-[10px] text-red-500 font-medium mt-1 uppercase italic">* TANPA KODE UNIK
-                                                    </p>
-                                                </div>
-                                                <div class="flex justify-center">
-                                                    <div class="p-2 bg-white rounded-lg shadow-inner border border-zinc-200">
-                                                        <img src="{{ asset('uploads/' . \App\Models\Setting::getVal('qris', 'default.jpg')) }}"
-                                                            class="w-48 h-48 object-contain">
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                                        <p class="text-[10px] text-red-500 font-medium mt-1 uppercase italic">* TANPA KODE UNIK
+                                                                        </p>
+                                                                    </div>
+                                                                    <div class="flex justify-center">
+                                                                        <div class="p-2 bg-white rounded-lg shadow-inner border border-zinc-200">
+                                                                            <img src="{{ asset('uploads/' . \App\Models\Setting::getVal('qris', 'default.jpg')) }}"
+                                                                                class="w-48 h-48 object-contain">
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                 @endif
                             </div>
                         @endif
                     </div>
 
                     <div class="mt-6 flex justify-end gap-3">
-                        <button wire:click="closeDendaModal"
-                            class="h-[36px] px-4 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors">Batalkan</button>
-                        <button wire:click="confirmDenda"
-                            class="h-[36px] px-4 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 shadow transition-colors flex items-center justify-center w-[160px]"
-                            wire:loading.attr="disabled">
+                        <x-ui.button wire:click="closeDendaModal" variant="outline" size="sm" class="rounded-full px-6">
+                            Batalkan
+                        </x-ui.button>
+                        <x-ui.button wire:click="confirmDenda"
+                            wire:loading.attr="disabled"
+                            wire:target="confirmDenda"
+                            variant="success" size="sm" class="w-[180px]">
                             <span wire:loading.remove wire:target="confirmDenda">Selesaikan & Tagih</span>
-                            <span wire:loading wire:target="confirmDenda">Memproses...</span>
-                        </button>
+                            <span wire:loading wire:target="confirmDenda" class="flex items-center gap-2">
+                                <span class="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                                Memproses...
+                            </span>
+                        </x-ui.button>
                     </div>
                 </div>
             </div>
@@ -409,7 +614,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Customer Info -->
                             <div class="space-y-4">
-                                <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Data Pelanggan</h4>
+                                <h4 class="text-xs font-bold uppercase  text-primary">Data Pelanggan</h4>
                                 <div>
                                     <label class="block text-xs font-medium text-muted-foreground mb-1">Nama Lengkap</label>
                                     <input type="text" wire:model="edit_nama"
@@ -434,7 +639,7 @@
 
                             <!-- Rental Details -->
                             <div class="space-y-4">
-                                <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Detail Sewa & Biaya</h4>
+                                <h4 class="text-xs font-bold uppercase  text-primary">Detail Sewa & Biaya</h4>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-xs font-medium text-muted-foreground mb-1">Waktu
@@ -510,267 +715,15 @@
                     </div>
 
                     <div class="p-4 border-t border-border flex justify-end gap-3 bg-muted/20">
-                        <button wire:click="closeEditModal"
-                            class="h-10 px-4 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors">Batal</button>
-                        <button wire:click="updateTrx"
-                            class="h-10 px-6 rounded-md bg-primary text-primary-foreground text-sm font-bold shadow-lg hover:shadow-primary/20 transition-all">Simpan
-                            Perubahan</button>
+                        <x-ui.button wire:click="closeEditModal" variant="outline" size="sm" class="rounded-full px-6">
+                            Batal
+                        </x-ui.button>
+                        <x-ui.button wire:click="updateTrx" variant="success" size="sm" class="px-8">
+                            Simpan Perubahan
+                        </x-ui.button>
                     </div>
                 </div>
             </div>
-        @endif
-
-        <!-- Inspect Modal -->
-        @if($inspectTrx)
-                <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm" wire:click="closeInspect"></div>
-                    <div
-                        class="relative bg-background rounded-xl shadow-2xl w-full max-w-xl border border-border overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
-                        <!-- Header -->
-                        <div class="p-6 border-b border-border flex justify-between items-start">
-                            <div>
-                                <h3 class="text-xl font-bold tracking-tight text-foreground">Detail Transaksi</h3>
-                                <p class="text-xs text-muted-foreground mt-0.5">INV-{{ str_pad(
-                $inspectTrx->id,
-                5,
-                '0',
-                STR_PAD_LEFT
-            ) }} • {{ $inspectTrx->created_at->format('d M Y') }}</p>
-                            </div>
-                            <button wire:click="closeInspect" class="rounded-md p-1 hover:bg-muted transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                    class="text-muted-foreground">
-                                    <path d="M18 6 6 18" />
-                                    <path d="m6 6 12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div class="p-6 overflow-y-auto space-y-8 scrollbar-hide">
-                            <!-- Status Section -->
-                            <div class="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
-                                <div class="space-y-1">
-                                    <p class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status
-                                        Transaksi</p>
-                                    <div class="flex items-center gap-2">
-                                        @if($inspectTrx->status === 'pending') <span
-                                            class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span> <span
-                                            class="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase">Menunggu
-                                            Pembayaran</span>
-                                        @elseif($inspectTrx->status === 'paid') <span
-                                            class="h-2 w-2 rounded-full bg-blue-500"></span> <span
-                                            class="text-sm font-semibold text-blue-600 dark:text-blue-400 uppercase">Dibayar
-                                            (Aktif)</span>
-                                        @elseif($inspectTrx->status === 'completed') <span
-                                            class="h-2 w-2 rounded-full bg-green-500"></span> <span
-                                            class="text-sm font-semibold text-green-600 dark:text-green-400 uppercase">Selesai</span>
-                                        @else <span class="h-2 w-2 rounded-full bg-red-500"></span> <span
-                                            class="text-sm font-semibold text-red-600 dark:text-red-400 uppercase">Dibatalkan</span>
-                                        @endif
-                                    </div>
-                                </div>
-                                <div class="text-right space-y-1 border-l border-border pl-4">
-                                    <p class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pengembalian
-                                        Aktual</p>
-                                    <p
-                                        class="text-sm font-semibold {{ $inspectTrx->completed_at ? 'text-foreground' : 'text-muted-foreground italic' }}">
-                                        {{ $inspectTrx->completed_at ? $inspectTrx->completed_at->format('d/m/y H:i') : 'Belum
-                                        Selesai' }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Grid Info -->
-                            <div class="grid grid-cols-2 gap-x-8 gap-y-6">
-                                <!-- Customer -->
-                                <div class="space-y-4">
-                                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
-                                        Informasi Penyewa</h4>
-                                    <div class="space-y-4">
-                                        <div class="group">
-                                            <p class="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">Nama Lengkap
-                                            </p>
-                                            <p class="text-sm font-semibold text-foreground leading-tight">{{ $inspectTrx->nama
-                                                }}</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">Identitas
-                                                (NIK)</p>
-                                            <p class="text-sm font-medium text-foreground tracking-wider">{{ $inspectTrx->nik }}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p class="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">Kontak
-                                                WhatsApp</p>
-                                            <p class="text-sm font-bold text-primary">{{ $inspectTrx->no_wa }}</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">Alamat
-                                                Domisili</p>
-                                            <p class="text-sm text-foreground leading-normal">{{ $inspectTrx->alamat }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Rental -->
-                                <div class="space-y-4">
-                                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
-                                        Detail Unit & Waktu</h4>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <p class="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">Unit Yang
-                                                Disewa</p>
-                                            <div class="space-y-2 mt-1">
-                                                @forelse($inspectTrx->units as $unit)
-                                                    <div class="p-2 rounded bg-muted/50 border border-border/50">
-                                                        <p class="text-sm font-bold text-foreground">{{ $unit->seri }}</p>
-                                                        <p class="text-[10px] text-muted-foreground">Price: Rp
-                                                            {{ number_format($unit->pivot->price_snapshot ?? 0, 0, ',', '.') }}</p>
-                                                    </div>
-                                                @empty
-                                                    @if($inspectTrx->unit)
-                                                        <div class="p-2 rounded bg-muted/50 border border-border/50">
-                                                            <p class="text-sm font-bold text-foreground">{{ $inspectTrx->unit->seri }}
-                                                            </p>
-                                                        </div>
-                                                    @else
-                                                        <p class="text-sm font-bold text-foreground">N/A</p>
-                                                    @endif
-                                                @endforelse
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p class="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">Jadwal Mulai
-                                            </p>
-                                            <p class="text-sm font-semibold text-foreground">{{
-                $inspectTrx->waktu_mulai->format('d M Y, H:i') }}</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">Jadwal
-                                                Selesai</p>
-                                            <p class="text-sm font-semibold text-foreground">{{
-                $inspectTrx->waktu_selesai->format('d M Y, H:i') }}</p>
-                                        </div>
-                                        @if($inspectTrx->applied_promo_name)
-                                            <div class="p-2 bg-primary/5 rounded border border-primary/20">
-                                                <p class="text-[9px] font-bold text-primary uppercase mb-0.5">Promo Aktif</p>
-                                                <p class="text-[11px] font-bold text-primary">{{ $inspectTrx->applied_promo_name }}
-                                                </p>
-                                                @if($inspectTrx->hari_bonus > 0 || $inspectTrx->jam_bonus > 0)
-                                                                        <p class="text-[9px] text-green-600 font-bold">🎁 Bonus +{{ $inspectTrx->hari_bonus
-                                                    > 0 ? $inspectTrx->hari_bonus . 'H' : '' }}{{ $inspectTrx->jam_bonus > 0 ?
-                                                    $inspectTrx->jam_bonus . 'J' : '' }}</p>
-                                                @endif
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Financial Summary -->
-                            <div class="space-y-4 pt-4 border-t border-border">
-                                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Ikhtisar
-                                    Pembayaran</h4>
-                                <div class="rounded-lg border border-border overflow-hidden">
-                                    <table class="w-full text-sm">
-                                        <tbody class="divide-y divide-border">
-                                            <tr class="bg-muted/10">
-                                                <td class="py-2.5 px-4 text-muted-foreground">Harga Dasar Sewa</td>
-                                                <td class="py-2.5 px-4 text-right font-medium">Rp {{
-                number_format($inspectTrx->subtotal_harga, 0, ',', '.') }}</td>
-                                            </tr>
-                                            @if($inspectTrx->potongan_diskon > 0)
-                                                                        <tr>
-                                                                            <td class="py-2.5 px-4 text-red-500">Potongan Diskon / Promo</td>
-                                                                            <td class="py-2.5 px-4 text-right font-medium text-red-500">- Rp {{
-                                                number_format($inspectTrx->potongan_diskon, 0, ',', '.') }}</td>
-                                                                        </tr>
-                                            @endif
-                                            <tr>
-                                                <td class="py-2.5 px-4 text-muted-foreground">Kode Unik / Service Fee</td>
-                                                <td class="py-2.5 px-4 text-right font-medium">+ Rp {{
-                $inspectTrx->kode_unik_pembayaran }}</td>
-                                            </tr>
-                                            @if($inspectTrx->denda > 0)
-                                                                        <tr class="bg-amber-500/5">
-                                                                            <td class="py-2.5 px-4 text-amber-600">Denda Keterlambatan</td>
-                                                                            <td class="py-2.5 px-4 text-right font-bold text-amber-600">+ Rp {{
-                                                number_format($inspectTrx->denda, 0, ',', '.') }}</td>
-                                                                        </tr>
-                                            @endif
-                                            @if($inspectTrx->denda_kerusakan > 0)
-                                                                        <tr class="bg-red-500/5">
-                                                                            <td class="py-2.5 px-4 text-red-600">
-                                                                                Denda Kerusakan
-                                                                                @if($inspectTrx->catatan_kerusakan)
-                                                                                    <p class="text-[10px] italic font-normal text-muted-foreground mt-0.5">Ket:
-                                                                                        {{ $inspectTrx->catatan_kerusakan }}
-                                                                                    </p>
-                                                                                @endif
-                                                                            </td>
-                                                                            <td class="py-2.5 px-4 text-right font-bold text-red-600">+ Rp {{
-                                                number_format($inspectTrx->denda_kerusakan, 0, ',', '.') }}</td>
-                                                                        </tr>
-                                            @endif
-                                            <tr class="bg-primary/5">
-                                                <td class="py-4 px-4 font-bold text-foreground">TOTAL AKHIR</td>
-                                                <td class="py-4 px-4 text-right text-lg font-black text-primary">Rp {{
-                number_format($inspectTrx->grand_total, 0, ',', '.') }}</td>
-                                            </tr>
-                                            @php
-                                                $commAmount = $inspectTrx->commissions->sum('amount');
-                                                $isEstimation = false;
-                                                if ($commAmount <= 0 && $inspectTrx->affiliate_code && $inspectTrx->affiliator?->affiliateProfile) {
-                                                    $rate = $inspectTrx->affiliator->affiliateProfile->commission_rate ?? 0;
-                                                    $commAmount = $inspectTrx->subtotal_harga * ($rate / 100);
-                                                    $isEstimation = true;
-                                                }
-                                                $netAmount = $inspectTrx->grand_total - $commAmount;
-                                            @endphp
-                                            @if($commAmount > 0)
-                                                <tr class="bg-red-500/5">
-                                                    <td class="py-2.5 px-4 text-[13px]">
-                                                        <div class="flex items-center gap-1.5 text-wrap">
-                                                            <span class="text-red-600 font-bold whitespace-nowrap">Komisi
-                                                                Affiliator</span>
-                                                            <span
-                                                                class="text-[10px] font-black bg-primary/10 text-primary border border-primary/20 px-1 rounded uppercase">{{ $inspectTrx->affiliate_code }}</span>
-                                                            @if($isEstimation)
-                                                                <span
-                                                                    class="text-[9px] font-bold bg-amber-100 text-amber-700 px-1 rounded">Estimasi</span>
-                                                            @endif
-                                                        </div>
-                                                        <p class="text-[10px] text-muted-foreground mt-0.5">Partner:
-                                                            {{ $inspectTrx->affiliator->name ?? 'N/A' }}</p>
-                                                    </td>
-                                                    <td class="py-2.5 px-4 text-right font-bold text-red-600">- Rp
-                                                        {{ number_format($commAmount, 0, ',', '.') }}</td>
-                                                </tr>
-                                                <tr class="bg-emerald-500/10">
-                                                    <td
-                                                        class="py-3 px-4 font-bold text-emerald-700 dark:text-emerald-400 text-[13px]">
-                                                        Omset Bersih (Net)</td>
-                                                    <td
-                                                        class="py-3 px-4 text-right text-base font-black text-emerald-700 dark:text-emerald-400">
-                                                        Rp {{ number_format($netAmount, 0, ',', '.') }}</td>
-                                                </tr>
-                                            @endif
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Footer -->
-                        <div class="p-6 border-t border-border flex justify-end bg-muted/20">
-                            <button wire:click="closeInspect"
-                                class="inline-flex items-center justify-center rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-8">
-                                Selesai Meninjau
-                            </button>
-                        </div>
-                    </div>
-                </div>
         @endif
     </div>
 </div>
