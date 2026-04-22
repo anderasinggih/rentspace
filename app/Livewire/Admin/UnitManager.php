@@ -21,6 +21,7 @@ class UnitManager extends Component
 
     public function create()
     {
+        if (auth()->user()->role !== 'admin') return;
         $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing']);
         $this->category_id = '';
         $this->is_active = true;
@@ -29,6 +30,7 @@ class UnitManager extends Component
 
     public function edit($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         $unit = Unit::findOrFail($id);
         $this->unit_id = $unit->id;
         $this->category_id = $unit->category_id;
@@ -47,6 +49,7 @@ class UnitManager extends Component
 
     public function save()
     {
+        if (auth()->user()->role !== 'admin') return;
         $selectedCat = \App\Models\Category::find($this->category_id);
         $isIphone = $selectedCat && str_contains(strtolower($selectedCat->slug), 'iphone');
 
@@ -89,11 +92,13 @@ class UnitManager extends Component
 
     public function delete($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         Unit::findOrFail($id)->delete();
     }
 
     public function restoreUnit($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         Unit::withTrashed()->find($id)->restore();
     }
 

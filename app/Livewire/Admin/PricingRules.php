@@ -17,6 +17,7 @@ class PricingRules extends Component
 
     public function create()
     {
+        if (auth()->user()->role !== 'admin') return;
         $this->reset(['rule_id', 'nama_promo', 'kode_promo', 'affiliate_code', 'value', 'syarat_minimal_durasi', 'start_date', 'end_date', 'isEditing', 'is_hidden', 'can_stack', 'is_affiliate_only', 'requires_referral']);
         $this->tipe = 'diskon_persen';
         $this->syarat_tipe_durasi = 'jam';
@@ -26,6 +27,7 @@ class PricingRules extends Component
 
     public function edit($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         $rule = PricingRule::withTrashed()->findOrFail($id);
         $this->rule_id = $rule->id;
         $this->nama_promo = $rule->nama_promo;
@@ -48,6 +50,7 @@ class PricingRules extends Component
 
     public function duplicate($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         $rule = PricingRule::withTrashed()->findOrFail($id);
         $this->reset(['rule_id', 'isEditing']);
         $this->nama_promo = $rule->nama_promo . ' (Copy)';
@@ -69,6 +72,7 @@ class PricingRules extends Component
 
     public function save()
     {
+        if (auth()->user()->role !== 'admin') return;
         $this->validate([
             'nama_promo' => 'required|string',
             'kode_promo' => 'nullable|string|unique:pricing_rules,kode_promo,'.$this->rule_id,
@@ -105,11 +109,13 @@ class PricingRules extends Component
 
     public function restore($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         PricingRule::withTrashed()->findOrFail($id)->restore();
     }
 
     public function delete($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         $rule = PricingRule::withTrashed()->findOrFail($id);
         if ($rule->trashed()) {
             $rule->forceDelete();

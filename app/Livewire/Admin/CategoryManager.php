@@ -18,7 +18,7 @@ class CategoryManager extends Component
 
     public function mount()
     {
-        if (auth()->user()->role !== 'admin') {
+        if (!in_array(auth()->user()->role, ['admin', 'viewer'])) {
             abort(403);
         }
     }
@@ -32,23 +32,27 @@ class CategoryManager extends Component
 
     public function addField()
     {
+        if (auth()->user()->role !== 'admin') return;
         $this->fields[] = '';
     }
 
     public function removeField($index)
     {
+        if (auth()->user()->role !== 'admin') return;
         unset($this->fields[$index]);
         $this->fields = array_values($this->fields);
     }
 
     public function create()
     {
+        if (auth()->user()->role !== 'admin') return;
         $this->reset(['category_id', 'name', 'slug', 'icon', 'fields', 'isEditing']);
         $this->showModal = true;
     }
 
     public function edit($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         $category = Category::findOrFail($id);
         $this->category_id = $category->id;
         $this->name = $category->name;
@@ -61,6 +65,7 @@ class CategoryManager extends Component
 
     public function save()
     {
+        if (auth()->user()->role !== 'admin') return;
         $this->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:categories,slug,' . $this->category_id,
@@ -87,6 +92,7 @@ class CategoryManager extends Component
 
     public function delete($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         // Prevent deleting if category has units?
         $category = Category::findOrFail($id);
         

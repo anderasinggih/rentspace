@@ -37,7 +37,7 @@ class AffiliateManager extends Component
 
     public function mount()
     {
-        if (auth()->user()->role !== 'admin') {
+        if (!in_array(auth()->user()->role, ['admin', 'viewer'])) {
             abort(403);
         }
 
@@ -228,6 +228,7 @@ class AffiliateManager extends Component
 
     public function deletePayout($id)
     {
+        if (auth()->user()->role !== 'admin') return;
         $payout = AffiliatePayout::findOrFail($id);
         $affiliatorId = $payout->affiliator_id;
         $profileId = $payout->affiliator->affiliateProfile->id ?? null;

@@ -42,8 +42,8 @@ class Settings extends Component
 
     public function mount()
     {
-        if (auth()->user()->role !== 'admin') {
-            abort(403, 'Akses ditolak. Fitur ini khusus Admin Utama.');
+        if (!in_array(auth()->user()->role, ['admin', 'viewer'])) {
+            abort(403, 'Akses ditolak.');
         }
 
         $this->loadUsers();
@@ -244,6 +244,7 @@ class Settings extends Component
 
     public function saveGeneralSettings()
     {
+        if (auth()->user()->role !== 'admin') return;
         $this->validate([
             'home_title' => 'required',
             'home_description' => 'required',
@@ -270,22 +271,26 @@ class Settings extends Component
 
     public function updatedIsMaintenance($value)
     {
+        if (auth()->user()->role !== 'admin') return;
         \App\Models\Setting::updateOrCreate(['key' => 'is_maintenance'], ['value' => $value ? '1' : '0']);
         session()->flash('general_message', 'Mode Pemeliharaan ' . ($value ? 'AKTIF' : 'NON-AKTIF'));
     }
 
     public function updatedMaintenanceMessage($value)
     {
+        if (auth()->user()->role !== 'admin') return;
         \App\Models\Setting::updateOrCreate(['key' => 'maintenance_message'], ['value' => $value]);
     }
 
     public function addFaq()
     {
+        if (auth()->user()->role !== 'admin') return;
         $this->about_faq_items[] = ['question' => '', 'answer' => ''];
     }
 
     public function removeFaq($index)
     {
+        if (auth()->user()->role !== 'admin') return;
         unset($this->about_faq_items[$index]);
         $this->about_faq_items = array_values($this->about_faq_items);
     }
@@ -338,6 +343,7 @@ class Settings extends Component
 
     public function saveQris()
     {
+        if (auth()->user()->role !== 'admin') return;
         $this->validate([
             'qris_photo' => 'required|image|max:2048', // 2MB Max
         ]);

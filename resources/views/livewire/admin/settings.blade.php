@@ -101,12 +101,16 @@
                                     @enderror
                                 </div>
 
+                                @if(auth()->user()->role === 'admin')
                                 <button type="submit" wire:confirm="Simpan foto QRIS baru ini?"
                                     class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
-                                    wire:loading.attr="disabled" {{ auth()->user()->role !== 'admin' ? 'disabled' : '' }}>
+                                    wire:loading.attr="disabled">
                                     <span wire:loading.remove wire:target="saveQris">Simpan QRIS Baru</span>
                                     <span wire:loading wire:target="saveQris">Menyimpan...</span>
                                 </button>
+                                @else
+                                <div class="w-full h-9 flex items-center justify-center rounded-md border border-dashed border-border text-[10px] font-bold text-muted-foreground uppercase opacity-50">Mode Viewer (Read Only)</div>
+                                @endif
                             </form>
                         </div>
                     </div>
@@ -161,12 +165,16 @@
                                     @enderror
                                 </div>
 
+                                @if(auth()->user()->role === 'admin')
                                 <button type="submit" wire:confirm="Ganti foto beranda utama?"
                                     class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
-                                    wire:loading.attr="disabled" {{ auth()->user()->role !== 'admin' ? 'disabled' : '' }}>
+                                    wire:loading.attr="disabled">
                                     <span wire:loading.remove wire:target="saveHero">Simpan Foto Beranda</span>
                                     <span wire:loading wire:target="saveHero">Menyimpan...</span>
                                 </button>
+                                @else
+                                <div class="w-full h-9 flex items-center justify-center rounded-md border border-dashed border-border text-[10px] font-bold text-muted-foreground uppercase opacity-50">Mode Viewer (Read Only)</div>
+                                @endif
                             </form>
                         </div>
                     </div>
@@ -535,8 +543,8 @@
                                     <p class="text-[10px] text-muted-foreground/80 lowercase">Aktifkan untuk menutup akses publik sementara.</p>
                                 </div>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" wire:model.live="is_maintenance" class="sr-only peer">
+                            <label class="relative inline-flex items-center {{ auth()->user()->role !== 'admin' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer' }}">
+                                <input type="checkbox" wire:model.live="is_maintenance" class="sr-only peer" {{ auth()->user()->role !== 'admin' ? 'disabled' : '' }}>
                                 <div
                                     class="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-destructive">
                                 </div>
@@ -669,12 +677,14 @@
                                 class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono"
                                 placeholder="1. Penyewa wajib..."></textarea>
                         </div>
+                        @if(auth()->user()->role === 'admin')
                         <button type="submit" wire:confirm="Simpan perubahan pengaturan umum?"
                             class="mt-4 self-start inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
                             wire:loading.attr="disabled">
                             <span wire:loading.remove wire:target="saveGeneralSettings">Simpan Pengaturan</span>
                             <span wire:loading wire:target="saveGeneralSettings">Menyimpan...</span>
                         </button>
+                        @endif
                     </form>
                 </div>
             </div>
@@ -697,6 +707,7 @@
                     <div class="space-y-4">
                         @foreach($about_faq_items as $index => $faq)
                             <div class="p-4 border border-border rounded-lg bg-muted/10 relative group">
+                                @if(auth()->user()->role === 'admin')
                                 <button type="button" wire:click="removeFaq({{ $index }})"
                                     class="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -706,6 +717,7 @@
                                         <path d="m6 6 12 12" />
                                     </svg>
                                 </button>
+                                @endif
                                 <div class="grid grid-cols-1 gap-4">
                                     <div>
                                         <label class="block text-xs font-bold uppercase text-muted-foreground mb-1">Pertanyaan
@@ -731,6 +743,7 @@
                             </div>
                         @endif
 
+                        @if(auth()->user()->role === 'admin')
                         <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
                             <button type="button" wire:click="addFaq"
                                 class="inline-flex items-center justify-center rounded-md border border-input bg-background shadow-sm hover:bg-muted h-9 px-4 py-2 text-sm font-medium transition-colors">
@@ -747,6 +760,11 @@
                                 Simpan Perubahan FAQ
                             </button>
                         </div>
+                        @else
+                        <div class="pt-4 border-t border-border">
+                             <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs font-bold text-muted-foreground uppercase opacity-50">Fitur Kelola FAQ hanya tersedia untuk Admin</div>
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -767,6 +785,7 @@
                         <h3 class="text-sm font-bold uppercase tracking-tight text-foreground">Ekspor Data (Backup)</h3>
                         <p class="text-xs text-muted-foreground leading-relaxed">Gunakan fitur ini untuk mendownload seluruh
                             data sistem Anda saat ini. Simpan file ini di tempat yang aman sebagai cadangan.</p>
+                        @if(auth()->user()->role === 'admin')
                         <button wire:click="exportData"
                             class="inline-flex items-center justify-center rounded-md bg-sky-600 text-white shadow hover:bg-sky-700 h-10 px-6 text-sm font-bold transition-colors w-full sm:w-auto">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -778,6 +797,9 @@
                             </svg>
                             Ekspor ke .JSON
                         </button>
+                        @else
+                        <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs font-bold text-muted-foreground uppercase opacity-50">Backup Terkunci untuk Viewer</div>
+                        @endif
                     </div>
 
                     <!-- Import Section -->
@@ -797,7 +819,12 @@
                             </div>
                         @endif
 
+                        @if(auth()->user()->role === 'admin')
                         <form wire:submit="importData" class="space-y-3">
+                        @else
+                        <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs font-bold text-muted-foreground uppercase opacity-50">Restore Terkunci untuk Viewer</div>
+                        <div class="hidden">
+                        @endif
                             <div class="relative">
                                 <input type="file" wire:model="importFile" accept=".json"
                                     class="w-full text-xs text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-red-100 file:text-red-600 hover:file:bg-red-200 transition-colors">

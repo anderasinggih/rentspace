@@ -5,9 +5,11 @@
             <p class="mt-2 text-sm text-muted-foreground">Kelola kategori unit untuk pengelompokan di katalog home dan filter admin.</p>
         </div>
         <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+            @if(auth()->user()->role === 'admin')
             <button wire:click="create" class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 Tambah Kategori
             </button>
+            @endif
         </div>
     </div>
 
@@ -54,8 +56,12 @@
                                         <code class="text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground">{{ $cat->slug }}</code>
                                     </td>
                                     <td class="px-3 py-4 align-middle text-right pr-2 sm:pr-6 whitespace-nowrap">
+                                        @if(auth()->user()->role === 'admin')
                                         <button wire:click="edit({{ $cat->id }})" class="text-primary hover:underline text-xs sm:text-sm font-semibold mr-3">Edit</button>
                                         <button wire:click="delete({{ $cat->id }})" class="text-destructive hover:underline text-xs sm:text-sm font-semibold" onclick="confirm('Yakin ingin menghapus kategori ini? Pastikan tidak ada unit yang menggunakan kategori ini.') || event.stopImmediatePropagation()">Hapus</button>
+                                        @else
+                                        <span class="text-xs text-muted-foreground italic">Read-only</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

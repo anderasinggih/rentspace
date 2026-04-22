@@ -133,19 +133,25 @@
                 </div>
 
                 <div class="mt-8 flex flex-col md:flex-row md:items-center justify-between gap-4 pt-6 border-t border-border">
-                    @if($reviewProfile->status === 'pending' || $reviewProfile->status === 'rejected' || $reviewProfile->status === 'inactive')
-                        <div class="flex items-center gap-3">
-                            <button wire:click="approve({{ $reviewProfile->id }})" class="h-9 px-6 bg-foreground text-background text-xs font-bold rounded-lg shadow hover:opacity-90 transition-all">
-                                {{ $reviewProfile->status === 'inactive' ? 'Aktifkan Kembali' : 'Setujui Akun' }}
-                            </button>
-                            @if($reviewProfile->status === 'pending')
-                                <button wire:click="reject({{ $reviewProfile->id }})" class="h-9 px-6 bg-background border border-input text-foreground text-xs font-bold rounded-lg hover:bg-muted transition-all">Tolak</button>
-                            @endif
-                        </div>
+                    @if(auth()->user()->role === 'admin')
+                        @if($reviewProfile->status === 'pending' || $reviewProfile->status === 'rejected' || $reviewProfile->status === 'inactive')
+                            <div class="flex items-center gap-3">
+                                <button wire:click="approve({{ $reviewProfile->id }})" class="h-9 px-6 bg-foreground text-background text-xs font-bold rounded-lg shadow hover:opacity-90 transition-all">
+                                    {{ $reviewProfile->status === 'inactive' ? 'Aktifkan Kembali' : 'Setujui Akun' }}
+                                </button>
+                                @if($reviewProfile->status === 'pending')
+                                    <button wire:click="reject({{ $reviewProfile->id }})" class="h-9 px-6 bg-background border border-input text-foreground text-xs font-bold rounded-lg hover:bg-muted transition-all">Tolak</button>
+                                @endif
+                            </div>
+                        @else
+                            <div class="flex items-center gap-3 text-xs font-medium">
+                                <span class="flex h-2 w-2 rounded-full bg-green-500"></span>
+                                <span class="capitalize">Status: Active</span>
+                            </div>
+                        @endif
                     @else
-                        <div class="flex items-center gap-3 text-xs font-medium">
-                            <span class="flex h-2 w-2 rounded-full bg-green-500"></span>
-                            <span class="capitalize">Status: Active</span>
+                        <div class="flex items-center gap-3">
+                             <span class="px-3 py-1.5 rounded-lg border border-dashed border-border text-[10px] font-bold text-muted-foreground uppercase">Mode Viewer (Read Only)</span>
                         </div>
                     @endif
 
@@ -243,18 +249,22 @@
                                     <td class="px-6 py-4 text-xs font-bold text-red-500">Rp {{ number_format($profile->total_withdrawn ?? 0, 0, ',', '.') }}</td>
                                 @endif
                                 <td class="px-6 py-4 text-nowrap">
-                                    @if($editingAffiliatorId === $profile->id)
-                                        <div class="flex items-center gap-2">
-                                            <input type="number" wire:model="commission_rate" class="w-16 h-8 text-xs rounded border border-input px-2 bg-background">
-                                            <button wire:click="saveCommission" class="text-xs text-primary font-bold">Simpan</button>
-                                        </div>
+                                    @if(auth()->user()->role === 'admin')
+                                        @if($editingAffiliatorId === $profile->id)
+                                            <div class="flex items-center gap-2">
+                                                <input type="number" wire:model="commission_rate" class="w-16 h-8 text-xs rounded border border-input px-2 bg-background">
+                                                <button wire:click="saveCommission" class="text-xs text-primary font-bold">Simpan</button>
+                                            </div>
+                                        @else
+                                            <div class="flex items-center gap-2 group">
+                                                <span class="font-bold text-foreground">{{ $profile->commission_rate }}%</span>
+                                                <button wire:click="editCommission({{ $profile->id }})" class="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                                </button>
+                                            </div>
+                                        @endif
                                     @else
-                                        <div class="flex items-center gap-2 group">
-                                            <span class="font-bold text-foreground">{{ $profile->commission_rate }}%</span>
-                                            <button wire:click="editCommission({{ $profile->id }})" class="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                                            </button>
-                                        </div>
+                                        <span class="font-bold text-foreground">{{ $profile->commission_rate }}%</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-right">
@@ -265,33 +275,35 @@
                                             </button>
                                         @endif
                                         
-                                        @if($profile->status === 'pending')
-                                            <div class="flex items-center gap-2">
-                                                <button wire:click="approve({{ $profile->id }})" class="text-[10px] font-bold text-primary hover:underline">Approve</button>
-                                                <button wire:click="reject({{ $profile->id }})" class="text-[10px] text-red-500 hover:underline">Tolak</button>
-                                            </div>
-                                        @elseif($profile->status === 'rejected' || $profile->status === 'inactive')
-                                            <div class="flex items-center gap-2">
-                                                <button wire:click="approve({{ $profile->id }})" class="text-[10px] font-bold text-primary hover:underline">
-                                                    {{ $profile->status === 'inactive' ? 'Aktifkan' : 'Approve' }}
-                                                </button>
-                                                <span class="text-[10px] font-bold uppercase {{ $profile->status === 'inactive' ? 'text-gray-500' : 'text-red-500' }}">
-                                                    {{ $profile->status === 'inactive' ? 'Nonaktif' : 'Ditolak' }}
-                                                </span>
-                                            </div>
-                                        @else
-                                            <div class="flex items-center gap-2">
-                                                <a href="{{ $this->getAffiliateStatusWaLink($profile->id) }}" target="_blank" title="Kirim Ulang Status WA" class="text-[#25D366] hover:scale-110 transition-transform flex items-center gap-1 text-[9px] font-bold">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                                                    Resend WA
-                                                </a>
-                                                <button wire:click="syncPartnerBalance({{ $profile->id }})" class="text-[9px] font-bold text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
-                                                    Sync
-                                                </button>
-                                                <button wire:click="confirmDeactivation({{ $profile->id }})" class="text-[9px] font-bold text-red-500 hover:underline">
-                                                    Nonaktifkan
-                                                </button>
-                                            </div>
+                                        @if(auth()->user()->role === 'admin')
+                                            @if($profile->status === 'pending')
+                                                <div class="flex items-center gap-2">
+                                                    <button wire:click="approve({{ $profile->id }})" class="text-[10px] font-bold text-primary hover:underline">Approve</button>
+                                                    <button wire:click="reject({{ $profile->id }})" class="text-[10px] text-red-500 hover:underline">Tolak</button>
+                                                </div>
+                                            @elseif($profile->status === 'rejected' || $profile->status === 'inactive')
+                                                <div class="flex items-center gap-2">
+                                                    <button wire:click="approve({{ $profile->id }})" class="text-[10px] font-bold text-primary hover:underline">
+                                                        {{ $profile->status === 'inactive' ? 'Aktifkan' : 'Approve' }}
+                                                    </button>
+                                                    <span class="text-[10px] font-bold uppercase {{ $profile->status === 'inactive' ? 'text-gray-500' : 'text-red-500' }}">
+                                                        {{ $profile->status === 'inactive' ? 'Nonaktif' : 'Ditolak' }}
+                                                    </span>
+                                                </div>
+                                            @else
+                                                <div class="flex items-center gap-2">
+                                                    <a href="{{ $this->getAffiliateStatusWaLink($profile->id) }}" target="_blank" title="Kirim Ulang Status WA" class="text-[#25D366] hover:scale-110 transition-transform flex items-center gap-1 text-[9px] font-bold">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                        Resend WA
+                                                    </a>
+                                                    <button wire:click="syncPartnerBalance({{ $profile->id }})" class="text-[9px] font-bold text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+                                                        Sync
+                                                    </button>
+                                                    <button wire:click="confirmDeactivation({{ $profile->id }})" class="text-[9px] font-bold text-red-500 hover:underline">
+                                                        Nonaktifkan
+                                                    </button>
+                                                </div>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
@@ -355,34 +367,38 @@
                                 </td>
                                 <td class="px-6 py-4 text-xs text-muted-foreground">{{ $payout->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="px-6 py-4 text-right">
-                                    @if($payout->status === 'pending')
-                                        <button wire:click="$set('processingPayoutId', {{ $payout->id }})" class="px-3 py-1 bg-foreground text-background text-xs font-bold rounded-md hover:opacity-90 transition-all">Proses Transfer</button>
-                                    @elseif($payout->status === 'processed')
-                                        <div class="flex items-center justify-end gap-2">
-                                            <a href="{{ $this->getWaNotificationLink($payout) }}" target="_blank" 
-                                               class="px-2 py-1 bg-foreground text-background text-[10px] font-bold rounded-md hover:opacity-90 transition-all text-nowrap">
-                                                Kirim Konfirmasi
-                                            </a>
-                                            <span class="text-[10px] uppercase font-bold text-green-500">SUKSES</span>
-                                            <button wire:click="deletePayout({{ $payout->id }})" 
-                                                wire:confirm="Hapus data payout ini?"
-                                                class="p-1 text-muted-foreground hover:text-red-500 transition-colors">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                            </button>
-                                        </div>
-                                    @elseif($payout->status === 'rejected')
-                                        <div class="flex items-center justify-end gap-2">
-                                            <a href="{{ $this->getWaNotificationLink($payout) }}" target="_blank" 
-                                               class="px-2 py-1 bg-foreground text-background text-[10px] font-bold rounded-md hover:opacity-90 transition-all text-nowrap">
-                                                Kirim Konfirmasi
-                                            </a>
-                                            <span class="text-[10px] uppercase font-bold text-red-500">DITOLAK</span>
-                                            <button wire:click="deletePayout({{ $payout->id }})" 
-                                                wire:confirm="Hapus data payout ini?"
-                                                class="p-1 text-muted-foreground hover:text-red-500 transition-colors">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                            </button>
-                                        </div>
+                                    @if(auth()->user()->role === 'admin')
+                                        @if($payout->status === 'pending')
+                                            <button wire:click="$set('processingPayoutId', {{ $payout->id }})" class="px-3 py-1 bg-foreground text-background text-xs font-bold rounded-md hover:opacity-90 transition-all">Proses Transfer</button>
+                                        @elseif($payout->status === 'processed')
+                                            <div class="flex items-center justify-end gap-2">
+                                                <a href="{{ $this->getWaNotificationLink($payout) }}" target="_blank" 
+                                                   class="px-2 py-1 bg-foreground text-background text-[10px] font-bold rounded-md hover:opacity-90 transition-all text-nowrap">
+                                                    Kirim Konfirmasi
+                                                </a>
+                                                <span class="text-[10px] uppercase font-bold text-green-500">SUKSES</span>
+                                                <button wire:click="deletePayout({{ $payout->id }})" 
+                                                    wire:confirm="Hapus data payout ini?"
+                                                    class="p-1 text-muted-foreground hover:text-red-500 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                                </button>
+                                            </div>
+                                        @elseif($payout->status === 'rejected')
+                                            <div class="flex items-center justify-end gap-2">
+                                                <a href="{{ $this->getWaNotificationLink($payout) }}" target="_blank" 
+                                                   class="px-2 py-1 bg-foreground text-background text-[10px] font-bold rounded-md hover:opacity-90 transition-all text-nowrap">
+                                                    Kirim Konfirmasi
+                                                </a>
+                                                <span class="text-[10px] uppercase font-bold text-red-500">DITOLAK</span>
+                                                <button wire:click="deletePayout({{ $payout->id }})" 
+                                                    wire:confirm="Hapus data payout ini?"
+                                                    class="p-1 text-muted-foreground hover:text-red-500 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                                </button>
+                                            </div>
+                                        @endif
+                                    @else
+                                        <span class="text-[10px] font-bold text-muted-foreground uppercase">Read Only</span>
                                     @endif
                                 </td>
                             </tr>

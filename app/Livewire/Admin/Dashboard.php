@@ -15,7 +15,7 @@ class Dashboard extends Component
 
     public function mount()
     {
-        if (auth()->user()->role !== 'admin') {
+        if (!in_array(auth()->user()->role, ['admin', 'viewer'])) {
             abort(403);
         }
 
