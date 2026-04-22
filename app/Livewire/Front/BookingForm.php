@@ -144,21 +144,38 @@ class BookingForm extends Component
             return;
         }
 
-        // 1. Get ALL units available for this schedule (Regardless of category/search)
+        // --- ACCOUNT FOR BONUS TIME IN AVAILABILITY CHECK ---
+        // If promos are selected that add bonus duration, we must check availability 
+        // until the NEW end time to prevent overlaps with existing bookings.
+        $hBonus = 0;
+        $jBonus = 0;
+        if (!empty($this->selected_promo_ids)) {
+            // Use PricingRule directly to avoid dependency on calculatePrice's state
+            $appliedRules = PricingRule::whereIn('id', $this->selected_promo_ids)->get();
+            foreach ($appliedRules as $rule) {
+                if ($rule->tipe === 'hari_gratis') $hBonus += (int)$rule->value;
+                if ($rule->tipe === 'jam_gratis') $jBonus += (int)$rule->value;
+            }
+        }
+
+        $effectiveEnd = $end->copy()->addDays($hBonus)->addHours($jBonus);
+        // ----------------------------------------------------
+
+        // 1. Get ALL units available for this schedule (Including Bonus Time)
         $this->schedule_available_unit_ids = Unit::query()->where('is_active', true)
-            ->whereDoesntHave('rentals', function ($query) use ($start, $end) {
+            ->whereDoesntHave('rentals', function ($query) use ($start, $effectiveEnd) {
                 $query->whereIn('status', ['pending', 'paid'])
-                    ->where(function ($q) use ($start, $end) {
-                        $q->whereBetween('waktu_mulai', [$start, $end])
-                            ->orWhereBetween('waktu_selesai', [$start, $end])
-                            ->orWhere(function ($q2) use ($start, $end) {
+                    ->where(function ($q) use ($start, $effectiveEnd) {
+                        $q->whereBetween('waktu_mulai', [$start, $effectiveEnd])
+                            ->orWhereBetween('waktu_selesai', [$start, $effectiveEnd])
+                            ->orWhere(function ($q2) use ($start, $effectiveEnd) {
                                 $q2->where('waktu_mulai', '<=', $start)
-                                    ->where('waktu_selesai', '>=', $end);
+                                    ->where('waktu_selesai', '>=', $effectiveEnd);
                             });
                     });
             })->pluck('id')->toArray();
 
-        // 2. Apply UI Filters (Category & Search) to the available units displayed to the user
+        // 2. Apply UI Filters (Category & Search)
         $this->available_units = Unit::query()->with('category')
             ->whereIn('id', $this->schedule_available_unit_ids)
             ->when($this->selected_category_id, function ($q) {
@@ -173,9 +190,13 @@ class BookingForm extends Component
             })
             ->get();
 
-        // 3. Keep selected_unit_ids only if they are still available for the schedule 
-        // (This allows persistent selection across category switches)
-        $this->selected_unit_ids = array_intersect($this->selected_unit_ids, $this->schedule_available_unit_ids);
+        // 3. Keep selected_unit_ids only if they are still available for the effective schedule
+        $originalCount = count($this->selected_unit_ids);
+        $this->selected_unit_ids = array_values(array_intersect($this->selected_unit_ids, $this->schedule_available_unit_ids));
+
+        if (count($this->selected_unit_ids) < $originalCount && $originalCount > 0) {
+            $this->addError('selected_unit_ids', 'Beberapa unit tidak tersedia karena bonus waktu dari promo berbenturan dengan jadwal lain.');
+        }
 
         $this->calculatePrice();
     }
