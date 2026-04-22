@@ -30,56 +30,58 @@
     </style>
 
     <div class="max-w-[98vw] mx-auto px-2 sm:px-4 pt-6">
-        <!-- Desktop Only Check -->
-        <div class="md:hidden flex flex-col items-center justify-center py-20 text-center">
+        <!-- Tablet & Desktop Alert (Visible only on small phones) -->
+        <div class="sm:hidden flex flex-col items-center justify-center py-20 text-center">
             <div class="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="10" x="2" y="3" rx="2"/><path d="M7 21h10"/><path d="M12 13v8"/></svg>
             </div>
-            <h2 class="text-xl font-bold text-foreground ">Desktop View Required</h2>
-            <p class="text-muted-foreground mt-2 text-sm max-w-[280px]">Fitur monitoring timeline hanya dioptimalkan untuk tampilan desktop.</p>
-            <a href="{{ route('admin.dashboard') }}" wire:navigate class="mt-8 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm">Kembali ke Dashboard</a>
+            <h2 class="text-xl font-bold text-foreground ">Layar Terlalu Kecil</h2>
+            <p class="text-muted-foreground mt-2 text-sm max-w-[280px]">Fitur monitoring timeline dioptimalkan untuk tampilan iPad, Tablet, atau Desktop.</p>
+            <a href="{{ route('admin.dashboard') }}" wire:navigate class="mt-8 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm">Kembali</a>
         </div>
 
-        <!-- Desktop Content -->
-        <div class="hidden md:block">
-            <!-- Filter Bar -->
-            <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-8 px-2 bg-muted/20 p-6 rounded-2xl border border-border">
-                <div class="flex flex-col lg:flex-row gap-6 flex-wrap">
+        <!-- Monitoring Content (Visible on iPad & Desktop) -->
+        <div class="hidden sm:block">
+            <!-- Filter Bar (Two-Row Layout for iPad/Tablet) -->
+            <div class="flex flex-col gap-6 mb-8 bg-muted/20 p-4 md:p-6 rounded-2xl border border-border w-full">
+                <!-- Row 1: Primary Filters -->
+                <div class="flex flex-col sm:flex-row items-end gap-4 md:gap-6">
                     <!-- Category Dropdown -->
-                    <div class="w-full lg:w-[220px]">
-                        <label class="text-[10px] font-black text-muted-foreground/70  ml-1 mb-2 block">Filter Kategori</label>
-                        <select wire:model.live="filterCategoryId" 
-                            class="w-full h-10 px-3 bg-background border border-border rounded-xl text-sm font-bold shadow-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all">
-                            <option value="">Semua Kategori</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Timeframe Presets -->
-                    <div>
-                        <label class="text-[10px] font-black text-muted-foreground/70  ml-1 mb-2 block">Rentang Waktu</label>
-                        <div class="inline-flex rounded-xl bg-background p-1 border border-border shadow-sm overflow-x-auto hide-scrollbar max-w-full" role="group">
-                            @foreach([
-                                '7' => '7H',
-                                '14' => '14H',
-                                'month' => 'Bulan',
-                                'year' => 'Tahun',
-                                'all' => 'Semua',
-                                'custom' => 'Custom'
-                            ] as $val => $label)
-                                <button wire:click="$set('timeframe', '{{ $val }}')" 
-                                    class="px-3 md:px-4 py-1.5 text-[10px] md:text-[11px] font-black rounded-lg transition-all {{ $timeframe == $val ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-muted' }} whitespace-nowrap">
-                                    {{ $label }}
-                                </button>
-                            @endforeach
+                    <div class="w-full sm:w-[240px]">
+                        <label class="text-[10px] font-black text-muted-foreground/70  ml-1 mb-2 block uppercase tracking-wider">Filter Kategori</label>
+                        <div class="relative">
+                            <select wire:model.live="filterCategoryId" 
+                                class="w-full h-10 pl-3 pr-10 bg-background border border-border rounded-xl text-xs font-bold shadow-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer">
+                                <option value="">Semua Kategori</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-muted-foreground">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Custom Range Pickers & ZOOM SLIDER -->
-                <div class="flex flex-wrap items-start sm:items-end gap-6 lg:justify-end">
+                    <!-- Timeframe Dropdown -->
+                    <div class="w-full sm:w-[180px]">
+                        <label class="text-[10px] font-black text-muted-foreground/70  ml-1 mb-2 block uppercase tracking-wider">Rentang Waktu</label>
+                        <div class="relative">
+                            <select wire:model.live="timeframe" 
+                                class="w-full h-10 pl-3 pr-10 bg-background border border-border rounded-xl text-xs font-bold shadow-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer">
+                                <option value="7">7 Hari</option>
+                                <option value="14">14 Hari</option>
+                                <option value="month">Bulan Ini</option>
+                                <option value="year">Tahun Ini</option>
+                                <option value="all">Semua</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-muted-foreground">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                        </div>
+                    </div>
+
                     @if($timeframe === 'custom')
                         <div class="flex items-center gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
                             <div class="w-[120px]">
@@ -94,37 +96,33 @@
                             </div>
                         </div>
                     @endif
+                </div>
 
-                    <!-- Premiere Style Zoom Sliders -->
-                    <div class="flex items-center gap-6 bg-background rounded-xl p-3 border border-border shadow-sm shrink-0">
-                        <!-- Day Width Slider -->
-                        <div class="flex flex-col gap-2 min-w-[100px] md:min-w-[130px]">
-                            <div class="flex items-center justify-between">
-                                <label class="text-[8px] font-black text-muted-foreground er">Timeline Zoom</label>
-                                <span class="text-[8px] font-bold text-primary" x-text="dayWidth + 'px'"></span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-                                <input type="range" min="40" max="300" x-model="dayWidth" 
-                                    class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-                            </div>
+                <!-- Row 2: Zoom Controls (Full Width) -->
+                <div class="flex flex-wrap items-center justify-between gap-6 bg-background rounded-xl p-3 md:p-4 border border-border shadow-sm w-full">
+                    <!-- Day Width Slider -->
+                    <div class="flex-1 min-w-[140px] flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Timeline Zoom</label>
+                            <span class="text-[8px] font-bold text-primary" x-text="dayWidth + 'px'"></span>
                         </div>
+                        <div class="flex items-center gap-2">
+                            <input type="range" min="40" max="300" x-model="dayWidth" 
+                                class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
+                        </div>
+                    </div>
 
-                        <div class="h-8 w-px bg-border"></div>
+                    <div class="hidden md:block h-8 w-px bg-border/60"></div>
 
-                        <!-- Unit Width Slider -->
-                        <div class="flex flex-col gap-2 min-w-[100px] md:min-w-[130px]">
-                            <div class="flex items-center justify-between">
-                                <label class="text-[8px] font-black text-muted-foreground er">Unit Area</label>
-                                <span class="text-[8px] font-bold text-primary" x-text="unitWidth + 'px'"></span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="4 6 12 12 20 6"/></svg>
-                                <input type="range" min="130" max="400" x-model="unitWidth" 
-                                    class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M3 3h18v18H3z"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
-                            </div>
+                    <!-- Unit Width Slider -->
+                    <div class="flex-1 min-w-[140px] flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Unit Area Width</label>
+                            <span class="text-[8px] font-bold text-primary" x-text="unitWidth + 'px'"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="range" min="130" max="400" x-model="unitWidth" 
+                                class="w-full accent-primary h-1 bg-muted rounded-full appearance-none cursor-pointer">
                         </div>
                     </div>
                 </div>
