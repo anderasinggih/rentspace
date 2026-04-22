@@ -393,7 +393,7 @@
                                         @if(!$isEligible)
                                         <br /><span
                                             class="text-[9px] text-red-500 font-black uppercase tracking-tighter">⚠️
-                                            TIDAK MEMENUHI SYARAT DURASI</span>
+                                            {{ $promo['ineligible_reason'] ?? 'TIDAK MEMENUHI SYARAT DURASI' }}</span>
                                         @endif
                                     </span>
                                 </span>

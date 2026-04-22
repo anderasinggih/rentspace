@@ -144,13 +144,25 @@ class BookingForm extends Component
             return;
         }
 
-        // --- ACCOUNT FOR BONUS TIME IN AVAILABILITY CHECK ---
-        // If promos are selected that add bonus duration, we must check availability 
-        // until the NEW end time to prevent overlaps with existing bookings.
+        // 1. BASE Availability (Used for the main catalog list)
+        // We check only the range the user is actually picking [start, end]
+        $this->schedule_available_unit_ids = Unit::query()->where('is_active', true)
+            ->whereDoesntHave('rentals', function ($query) use ($start, $end) {
+                $query->whereIn('status', ['pending', 'paid'])
+                    ->where(function ($q) use ($start, $end) {
+                        $q->whereBetween('waktu_mulai', [$start, $end])
+                            ->orWhereBetween('waktu_selesai', [$start, $end])
+                            ->orWhere(function ($q2) use ($start, $end) {
+                                $q2->where('waktu_mulai', '<=', $start)
+                                    ->where('waktu_selesai', '>=', $end);
+                            });
+                    });
+            })->pluck('id')->toArray();
+
+        // 2. EFFECTIVE Availability (Check bonus time for already selected units)
         $hBonus = 0;
         $jBonus = 0;
         if (!empty($this->selected_promo_ids)) {
-            // Use PricingRule directly to avoid dependency on calculatePrice's state
             $appliedRules = PricingRule::whereIn('id', $this->selected_promo_ids)->get();
             foreach ($appliedRules as $rule) {
                 if ($rule->tipe === 'hari_gratis') $hBonus += (int)$rule->value;
@@ -158,24 +170,30 @@ class BookingForm extends Component
             }
         }
 
-        $effectiveEnd = $end->copy()->addDays($hBonus)->addHours($jBonus);
-        // ----------------------------------------------------
+        if (($hBonus > 0 || $jBonus > 0) && !empty($this->selected_unit_ids)) {
+            $effectiveEnd = $end->copy()->addDays($hBonus)->addHours($jBonus);
+            
+            // Check if any selected unit has a conflict in the BONUS period [end, effectiveEnd]
+            $clashingUnitIds = Unit::whereIn('id', $this->selected_unit_ids)
+                ->whereHas('rentals', function ($query) use ($end, $effectiveEnd) {
+                    $query->whereIn('status', ['pending', 'paid'])
+                        ->where(function ($q) use ($end, $effectiveEnd) {
+                            $q->whereBetween('waktu_mulai', [$end, $effectiveEnd])
+                                ->orWhereBetween('waktu_selesai', [$end, $effectiveEnd])
+                                ->orWhere(function ($q2) use ($end, $effectiveEnd) {
+                                    $q2->where('waktu_mulai', '<=', $end)
+                                        ->where('waktu_selesai', '>=', $effectiveEnd);
+                                });
+                        });
+                })->pluck('id')->toArray();
 
-        // 1. Get ALL units available for this schedule (Including Bonus Time)
-        $this->schedule_available_unit_ids = Unit::query()->where('is_active', true)
-            ->whereDoesntHave('rentals', function ($query) use ($start, $effectiveEnd) {
-                $query->whereIn('status', ['pending', 'paid'])
-                    ->where(function ($q) use ($start, $effectiveEnd) {
-                        $q->whereBetween('waktu_mulai', [$start, $effectiveEnd])
-                            ->orWhereBetween('waktu_selesai', [$start, $effectiveEnd])
-                            ->orWhere(function ($q2) use ($start, $effectiveEnd) {
-                                $q2->where('waktu_mulai', '<=', $start)
-                                    ->where('waktu_selesai', '>=', $effectiveEnd);
-                            });
-                    });
-            })->pluck('id')->toArray();
+            if (!empty($clashingUnitIds)) {
+                $names = Unit::whereIn('id', $clashingUnitIds)->pluck('seri')->implode(', ');
+                $this->addError('selected_promo_ids', "Promo bonus tidak bisa digunakan untuk unit ($names) karena bentrok dengan jadwal lain.");
+            }
+        }
 
-        // 2. Apply UI Filters (Category & Search)
+        // 3. Update Available Units Display (Based on BASE range)
         $this->available_units = Unit::query()->with('category')
             ->whereIn('id', $this->schedule_available_unit_ids)
             ->when($this->selected_category_id, function ($q) {
@@ -190,13 +208,8 @@ class BookingForm extends Component
             })
             ->get();
 
-        // 3. Keep selected_unit_ids only if they are still available for the effective schedule
-        $originalCount = count($this->selected_unit_ids);
+        // 4. Remove selected units ONLY if they are not available in the BASE range
         $this->selected_unit_ids = array_values(array_intersect($this->selected_unit_ids, $this->schedule_available_unit_ids));
-
-        if (count($this->selected_unit_ids) < $originalCount && $originalCount > 0) {
-            $this->addError('selected_unit_ids', 'Beberapa unit tidak tersedia karena bonus waktu dari promo berbenturan dengan jadwal lain.');
-        }
 
         $this->calculatePrice();
     }
@@ -284,7 +297,7 @@ class BookingForm extends Component
 
                 if ($conflict) {
                     $is_eligible = false;
-                    $ineligible_reason = 'Bentrok jadwal di waktu bonus';
+                    $ineligible_reason = 'Bentrok dengan jadwal lain';
                 }
             }
 
