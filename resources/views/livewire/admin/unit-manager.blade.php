@@ -6,19 +6,199 @@
                 <p class="mt-2 text-sm text-muted-foreground">List all rental items across categories (iPhone and Gear).
                 </p>
             </div>
-            <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-                @if(auth()->user()->role === 'admin')
+            <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex gap-2">
+                @if($activeTab === 'units')
                     <button wire:click="create"
                         class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                        Add new unit
+                        Add Unit
+                    </button>
+                @else
+                    <button wire:click="createCat"
+                        class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        Add Category
                     </button>
                 @endif
             </div>
         </div>
+        
+        <!-- Pills Switcher -->
+        <div class="mt-6 flex justify-start">
+            <div class="flex w-full sm:w-auto p-1 bg-muted/60 rounded-lg border border-border/50 backdrop-blur-sm">
+                <button wire:click="setTab('units')"
+                    class="flex-1 sm:flex-none px-4 py-1.5 text-[13px] transition-all duration-200 rounded-md {{ $activeTab === 'units' ? 'bg-background text-foreground shadow-sm ring-1 ring-border/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40' }}">
+                    Unit
+                </button>
+                <button wire:click="setTab('categories')"
+                    class="flex-1 sm:flex-none px-4 py-1.5 text-[13px] transition-all duration-200 rounded-md {{ $activeTab === 'categories' ? 'bg-background text-foreground shadow-sm ring-1 ring-border/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40' }}">
+                    Kategori
+                </button>
+            </div>
+        </div>
 
-        <!-- Search + Filter -->
-        <div class="mt-8 flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between">
-            <div class="flex flex-1 flex-col sm:flex-row gap-4 w-full sm:w-auto">
+
+        @if($activeTab === 'units')
+            <!-- Search + Filter -->
+            <div class="mt-8 flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between">
+                <div class="flex flex-1 flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                    <div class="relative flex-1 max-w-sm">
+                        <div
+                            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.3-4.3" />
+                            </svg>
+                        </div>
+                        <input type="text" wire:model.live.debounce.300ms="search"
+                            class="block w-full h-9 pl-10 pr-3 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            placeholder="Cari seri, IMEI, warna...">
+                    </div>
+
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <select wire:model.live="filterKategori"
+                            class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <option value="">Semua Kategori</option>
+                            @foreach($all_categories as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model.live="filterStatus"
+                            class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <option value="">Semua Status</option>
+                            <option value="active">🟢 Aktif</option>
+                            <option value="inactive">⚪ Nonaktif</option>
+                            <option value="deleted">🔴 Dihapus</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 flow-root">
+                <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                        <div class="overflow-hidden shadow ring-1 ring-border rounded-lg bg-background">
+                            <table class="min-w-full divide-y divide-border">
+                                <thead>
+                                    <tr class="bg-muted/50">
+                                        <th scope="col"
+                                            class="py-3 pl-3 pr-3 text-left text-xs sm:text-sm font-semibold text-foreground sm:pl-6">
+                                            Nama & Info</th>
+                                        <th scope="col"
+                                            class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">
+                                            Detail Spesifikasi</th>
+                                        <th scope="col"
+                                            class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">
+                                            Harga Sewa</th>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-left text-xs sm:text-sm font-semibold text-foreground">
+                                            Status</th>
+                                        <th scope="col" class="relative py-3 pl-3 pr-2 sm:pr-6"><span
+                                                class="sr-only">Aksi</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-border">
+                                    @foreach($units as $unit)
+                                        <tr
+                                            class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5 opacity-60 grayscale' : (!$unit->is_active ? 'opacity-50' : '') }}">
+                                            <td class="px-3 sm:px-6 py-3 sm:py-4 align-middle">
+                                                <div
+                                                    class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'line-through text-muted-foreground' : '' }}">
+                                                    {{ $unit->seri }}
+                                                    @if($unit->category)
+                                                        <x-ui.badge
+                                                            variant="{{ str_contains(strtolower($unit->category->slug), 'iphone') ? 'blue' : 'purple' }}"
+                                                            class="ml-1 text-[10px] uppercase font-medium">
+                                                            {{ $unit->category->name }}
+                                                        </x-ui.badge>
+                                                    @endif
+                                                </div>
+                                                @if($unit->imei)
+                                                    <div class="text-xs text-muted-foreground">{{ $unit->imei }}</div>
+                                                @endif
+                                                {{-- Specs + price shown only on mobile --}}
+                                                <div class="sm:hidden mt-1 space-y-0.5">
+                                                    @if($unit->warna || $unit->memori)
+                                                        <div class="text-xs text-muted-foreground">{{ $unit->warna }} ·
+                                                            {{ $unit->memori }}</div>
+                                                    @endif
+                                                    <div class="text-xs font-semibold text-foreground">Rp
+                                                        {{ number_format($unit->harga_per_hari, 0, ',', '.') }}/hari · Rp
+                                                        {{ number_format($unit->harga_per_jam, 0, ',', '.') }}/jam</div>
+                                                </div>
+                                            </td>
+                                            <td class="hidden sm:table-cell px-6 py-4 align-middle">
+                                                @if($unit->category && str_contains(strtolower($unit->category->slug), 'iphone'))
+                                                    <div class="text-sm">{{ $unit->warna }} - {{ $unit->memori }}</div>
+                                                @else
+                                                    @if($unit->specs && count($unit->specs) > 0)
+                                                        <div class="space-y-0.5">
+                                                            @foreach($unit->specs as $key => $val)
+                                                                @if($val)
+                                                                    <div class="text-[11px]"><span
+                                                                            class="font-semibold text-muted-foreground uppercase text-[9px]">{{ $key }}:</span>
+                                                                        {{ $val }}</div>
+                                                                @endif
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <div class="text-sm text-muted-foreground italic truncate">Umum</div>
+                                                    @endif
+                                                @endif
+                                                @if($unit->kondisi)
+                                                    <div
+                                                        class="text-[10px] text-muted-foreground mt-1 border-t border-border pt-1 italic opacity-70">
+                                                        {{ $unit->kondisi }}</div>
+                                                @endif
+                                            </td>
+                                            <td class="hidden sm:table-cell px-6 py-4 align-middle">
+                                                <div class="text-sm font-semibold">Rp
+                                                    {{ number_format($unit->harga_per_hari, 0, ',', '.') }} / hari</div>
+                                                <div class="text-xs text-muted-foreground">Rp
+                                                    {{ number_format($unit->harga_per_jam, 0, ',', '.') }} / jam</div>
+                                            </td>
+                                            <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle">
+                                                @if($unit->trashed())
+                                                    <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Dihapus</x-ui.badge>
+                                                @elseif($unit->is_active)
+                                                    <x-ui.badge variant="green" class="text-[10px] sm:text-xs">Aktif</x-ui.badge>
+                                                @else
+                                                    <x-ui.badge variant="zinc" class="text-[10px] sm:text-xs">Nonaktif</x-ui.badge>
+                                                @endif
+                                            </td>
+                                            <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle text-right h-full">
+                                                <div class="flex items-center justify-end w-full gap-2 sm:gap-4">
+                                                    @if($unit->trashed())
+                                                        @if(auth()->user()->role === 'admin')
+                                                            <button wire:click="restoreUnit({{ $unit->id }})"
+                                                                class="inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors bg-emerald-100 text-emerald-700 hover:bg-emerald-200 h-7 sm:h-8 px-2 sm:px-4">Pulihkan</button>
+                                                        @endif
+                                                    @else
+                                                        @if(auth()->user()->role === 'admin')
+                                                            <button wire:click="edit({{ $unit->id }})"
+                                                                class="text-primary hover:underline text-xs sm:text-sm font-semibold">Edit</button>
+                                                            <button wire:click="delete({{ $unit->id }})"
+                                                                class="text-destructive hover:underline text-xs sm:text-sm font-semibold"
+                                                                onclick="confirm('Yakin ingin menghapus unit ini?') || event.stopImmediatePropagation()">Hapus</button>
+                                                        @endif
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                    @if(count($units) == 0)
+                                        <tr>
+                                            <td colspan="5" class="p-8 text-center text-muted-foreground">Belum ada data unit.</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @else
+            <!-- Search Category -->
+            <div class="mt-8 flex items-center justify-between">
                 <div class="relative flex-1 max-w-sm">
                     <div
                         class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
@@ -30,154 +210,66 @@
                     </div>
                     <input type="text" wire:model.live.debounce.300ms="search"
                         class="block w-full h-9 pl-10 pr-3 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        placeholder="Cari seri, IMEI, warna...">
-                </div>
-
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <select wire:model.live="filterKategori"
-                        class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                        <option value="">Semua Kategori</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                        @endforeach
-                    </select>
-                    <select wire:model.live="filterStatus"
-                        class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                        <option value="">Semua Status</option>
-                        <option value="active">🟢 Aktif</option>
-                        <option value="inactive">⚪ Nonaktif</option>
-                        <option value="deleted">🔴 Dihapus</option>
-                    </select>
+                        placeholder="Cari kategori...">
                 </div>
             </div>
-        </div>
 
-        <div class="mt-4 flow-root">
-            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                    <div class="overflow-hidden shadow ring-1 ring-border rounded-lg bg-background">
-                        <table class="min-w-full divide-y divide-border">
-                            <thead>
-                                <tr class="bg-muted/50">
-                                    <th scope="col"
-                                        class="py-3 pl-3 pr-3 text-left text-xs sm:text-sm font-semibold text-foreground sm:pl-6">
-                                        Nama & Info</th>
-                                    <th scope="col"
-                                        class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">
-                                        Detail Spesifikasi</th>
-                                    <th scope="col"
-                                        class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">
-                                        Harga Sewa</th>
-                                    <th scope="col"
-                                        class="px-3 py-3 text-left text-xs sm:text-sm font-semibold text-foreground">
-                                        Status</th>
-                                    <th scope="col" class="relative py-3 pl-3 pr-2 sm:pr-6"><span
-                                            class="sr-only">Aksi</span></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-border">
-                                @foreach($units as $unit)
-                                    <tr
-                                        class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5 opacity-60 grayscale' : (!$unit->is_active ? 'opacity-50' : '') }}">
-                                        <td class="px-3 sm:px-6 py-3 sm:py-4 align-middle">
-                                            <div
-                                                class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'line-through text-muted-foreground' : '' }}">
-                                                {{ $unit->seri }}
-                                                @if($unit->category)
-                                                    <x-ui.badge
-                                                        variant="{{ str_contains(strtolower($unit->category->slug), 'iphone') ? 'blue' : 'purple' }}"
-                                                        class="ml-1 text-[10px] uppercase font-medium">
-                                                        {{ $unit->category->name }}
-                                                    </x-ui.badge>
+            <div class="mt-4 flow-root">
+                <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                        <div class="overflow-hidden shadow ring-1 ring-border rounded-lg bg-background">
+                            <table class="min-w-full divide-y divide-border">
+                                <thead>
+                                    <tr class="bg-muted/50">
+                                        <th scope="col"
+                                            class="py-3 pl-3 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">
+                                            Nama Kategori</th>
+                                        <th scope="col"
+                                            class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
+                                            Slug / Icon</th>
+                                        <th scope="col"
+                                            class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
+                                            Custom Fields</th>
+                                        <th scope="col" class="relative py-3 pl-3 pr-6"><span
+                                                class="sr-only">Aksi</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-border">
+                                    @foreach($categories as $cat)
+                                        <tr class="hover:bg-muted/50">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">{{ $cat->name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                                <code class="text-[11px] px-1.5 py-0.5 rounded bg-muted">/{{ $cat->slug }}</code>
+                                                @if($cat->icon)
+                                                    <span class="ml-2">{{ $cat->icon }}</span>
                                                 @endif
-                                            </div>
-                                            @if($unit->imei)
-                                                <div class="text-xs text-muted-foreground">{{ $unit->imei }}</div>
-                                            @endif
-                                            {{-- Specs + price shown only on mobile --}}
-                                            <div class="sm:hidden mt-1 space-y-0.5">
-                                                @if($unit->warna || $unit->memori)
-                                                    <div class="text-xs text-muted-foreground">{{ $unit->warna }} ·
-                                                        {{ $unit->memori }}</div>
-                                                @endif
-                                                <div class="text-xs font-semibold text-foreground">Rp
-                                                    {{ number_format($unit->harga_per_hari, 0, ',', '.') }}/hari · Rp
-                                                    {{ number_format($unit->harga_per_jam, 0, ',', '.') }}/jam</div>
-                                            </div>
-                                        </td>
-                                        <td class="hidden sm:table-cell px-6 py-4 align-middle">
-                                            @if($unit->category && str_contains(strtolower($unit->category->slug), 'iphone'))
-                                                <div class="text-sm">{{ $unit->warna }} - {{ $unit->memori }}</div>
-                                            @else
-                                                @if($unit->specs && count($unit->specs) > 0)
-                                                    <div class="space-y-0.5">
-                                                        @foreach($unit->specs as $key => $val)
-                                                            @if($val)
-                                                                <div class="text-[11px]"><span
-                                                                        class="font-semibold text-muted-foreground uppercase text-[9px]">{{ $key }}:</span>
-                                                                    {{ $val }}</div>
-                                                            @endif
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-muted-foreground">
+                                                @if($cat->custom_fields)
+                                                    <div class="flex flex-wrap gap-1">
+                                                        @foreach($cat->custom_fields as $field)
+                                                            <span class="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[10px] font-medium text-muted-foreground">{{ $field }}</span>
                                                         @endforeach
                                                     </div>
                                                 @else
-                                                    <div class="text-sm text-muted-foreground italic truncate">Umum</div>
+                                                    <span class="text-xs italic">-</span>
                                                 @endif
-                                            @endif
-                                            @if($unit->kondisi)
-                                                <div
-                                                    class="text-[10px] text-muted-foreground mt-1 border-t border-border pt-1 italic opacity-70">
-                                                    {{ $unit->kondisi }}</div>
-                                            @endif
-                                        </td>
-                                        <td class="hidden sm:table-cell px-6 py-4 align-middle">
-                                            <div class="text-sm font-semibold">Rp
-                                                {{ number_format($unit->harga_per_hari, 0, ',', '.') }} / hari</div>
-                                            <div class="text-xs text-muted-foreground">Rp
-                                                {{ number_format($unit->harga_per_jam, 0, ',', '.') }} / jam</div>
-                                        </td>
-                                        <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle">
-                                            @if($unit->trashed())
-                                                <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Dihapus</x-ui.badge>
-                                            @elseif($unit->is_active)
-                                                <x-ui.badge variant="green" class="text-[10px] sm:text-xs">Aktif</x-ui.badge>
-                                            @else
-                                                <x-ui.badge variant="zinc" class="text-[10px] sm:text-xs">Nonaktif</x-ui.badge>
-                                            @endif
-                                        </td>
-                                        <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle text-right h-full">
-                                            <div class="flex items-center justify-end w-full gap-2 sm:gap-4">
-                                                @if($unit->trashed())
-                                                    @if(auth()->user()->role === 'admin')
-                                                        <button wire:click="restoreUnit({{ $unit->id }})"
-                                                            class="inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors bg-emerald-100 text-emerald-700 hover:bg-emerald-200 h-7 sm:h-8 px-2 sm:px-4">Pulihkan</button>
-                                                    @endif
-                                                @else
-                                                    @if(auth()->user()->role === 'admin')
-                                                        <button wire:click="edit({{ $unit->id }})"
-                                                            class="text-primary hover:underline text-xs sm:text-sm font-semibold">Edit</button>
-                                                        <button wire:click="delete({{ $unit->id }})"
-                                                            class="text-destructive hover:underline text-xs sm:text-sm font-semibold"
-                                                            onclick="confirm('Yakin ingin menghapus unit ini?') || event.stopImmediatePropagation()">Hapus</button>
-                                                    @endif
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                                @if(count($units) == 0)
-                                    <tr>
-                                        <td colspan="5" class="p-8 text-center text-muted-foreground">Belum ada data unit
-                                            iPhone.</td>
-                                    </tr>
-                                @endif
-                            </tbody>
-                        </table>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <button wire:click="editCat({{ $cat->id }})" class="text-primary hover:underline">Edit</button>
+                                                <button wire:click="deleteCat({{ $cat->id }})"
+                                                    onclick="confirm('Yakin ingin menghapus kategori ini? Pastikan tidak ada unit di dalamnya.') || event.stopImmediatePropagation()"
+                                                    class="ml-4 text-destructive hover:underline">Hapus</button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-
-
             </div>
-        </div>
+        @endif
 
         @if($showModal)
             <div class="relative z-50">
@@ -188,7 +280,7 @@
                         <h2 class="text-lg font-semibold">{{ $isEditing ? 'Edit Item Sewa' : 'Tambah Item Sewa Baru' }}</h2>
                         <form wire:submit="save" class="mt-6 space-y-4">
                             @php
-                                $selectedCat = $categories->find($category_id);
+                                $selectedCat = $all_categories->find($category_id);
                                 $isIphone = $selectedCat && str_contains(strtolower($selectedCat->slug), 'iphone');
                             @endphp
                             <div>
@@ -196,7 +288,7 @@
                                 <select wire:model.live="category_id"
                                     class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="">-- Pilih Kategori --</option>
-                                    @foreach($categories as $cat)
+                                    @foreach($all_categories as $cat)
                                         <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                                     @endforeach
                                 </select>
@@ -299,6 +391,74 @@
                                         Simpan
                                     </button>
                                 </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Category Modal -->
+        @if($showCatModal)
+            <div class="relative z-50">
+                <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"></div>
+                <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div class="relative w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8">
+                        <h2 class="text-lg font-semibold">{{ $isEditingCat ? 'Edit Kategori' : 'Tambah Kategori Baru' }}</h2>
+                        <form wire:submit="saveCat" class="mt-6 space-y-4">
+                            <div>
+                                <label class="text-sm font-medium leading-none">Nama Kategori</label>
+                                <input type="text" wire:model.live="cat_name"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    placeholder="Contoh: iPhone, Gear, Kamera">
+                                @error('cat_name') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="text-sm font-medium leading-none">URL Slug</label>
+                                <input type="text" wire:model="cat_slug"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    placeholder="iphone">
+                                @error('cat_slug') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="text-sm font-medium leading-none">Icon (Emoji/SVG)</label>
+                                <input type="text" wire:model="cat_icon"
+                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    placeholder="📱">
+                            </div>
+
+                            <div class="pt-4 border-t border-border">
+                                <label class="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                                    Custom Fields (Spesifikasi)
+                                    <button type="button" wire:click="addCatField" class="text-primary hover:underline text-[10px] normal-case font-medium">+ Tambah Kolom</button>
+                                </label>
+                                <p class="text-[10px] text-muted-foreground mt-1 mb-3">Tentukan kolom spesifikasi tambahan untuk kategori ini.</p>
+                                
+                                <div class="space-y-2">
+                                    @foreach($cat_fields as $index => $field)
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" wire:model="cat_fields.{{ $index }}"
+                                                class="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                placeholder="Contoh: Resolusi, Tipe Lensa">
+                                            <button type="button" wire:click="removeCatField({{ $index }})" class="text-destructive p-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="mt-6 flex justify-end gap-3">
+                                <button type="button" wire:click="$set('showCatModal', false)"
+                                    class="inline-flex items-center justify-center rounded-md border border-input bg-background h-9 px-4 text-sm font-medium shadow-sm hover:bg-muted hover:text-foreground">
+                                    Batal
+                                </button>
+                                <button type="submit"
+                                    class="inline-flex items-center justify-center rounded-md bg-primary h-9 px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                                    Simpan
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
