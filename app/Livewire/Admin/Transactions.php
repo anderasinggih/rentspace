@@ -199,7 +199,22 @@ class Transactions extends Component
     {
         if (auth()->user()->role !== 'admin')
             return;
-        Rental::findOrFail($id)->delete();
+
+        // Clear any active UI state if the being deleted ID matches
+        if ($this->inspectTrxId == $id) {
+            $this->closeInspect();
+        }
+        if ($this->editTrxId == $id) {
+            $this->closeEditModal();
+        }
+        if ($this->completingTrxId == $id) {
+            $this->closeDendaModal();
+        }
+
+        // Use where()->delete() instead of findOrFail()->delete() to avoid 404 on double clicks
+        Rental::where('id', $id)->delete();
+        
+        session()->flash('message', 'Transaksi berhasil dihapus.');
     }
 
     public function openInspect($id)
