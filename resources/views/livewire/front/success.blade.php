@@ -12,7 +12,7 @@
                     </svg>
                 </div>
                 <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Dibatalkan</h1>
-                <p class="text-[10px] text-muted-foreground mt-1">Status: Menghapus antrean unit</p>
+                <p class="text-[10px] text-rose-500/70 mt-1 font-medium italic">Status: Sesi Pembayaran Berakhir (Unit Dilepas)</p>
             @elseif($rental->status === 'paid')
                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-500 mb-4 animate-in zoom-in duration-500">
                     <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -132,10 +132,17 @@
                         <span class="font-medium">- Rp {{ number_format($rental->potongan_diskon, 0, ',', '.') }}</span>
                     </div>
                 @endif
-                @if($rental->kode_unik_pembayaran)
+                @if($this->rental->kode_unik_pembayaran)
                     <div class="flex justify-between text-amber-600 text-xs">
                         <span>Kode Unik</span>
-                        <span class="font-medium">+ {{ $rental->kode_unik_pembayaran }}</span>
+                        <span class="font-medium">+ {{ $this->rental->kode_unik_pembayaran }}</span>
+                    </div>
+                @endif
+                @if($fee = data_get($this->rental->payment_details, 'payment_fee'))
+                    <div class="flex justify-between text-muted-foreground text-[10px] uppercase font-bold">
+                        @php $label = data_get($this->rental->payment_details, 'payment_fee_label', ''); @endphp
+                        <span>Biaya Layanan <span class="text-zinc-500 font-medium ml-1">{{ $label }}</span></span>
+                        <span class="font-bold text-foreground">+ Rp {{ number_format($fee, 0, ',', '.') }}</span>
                     </div>
                 @endif
                 <div class="flex justify-between items-center pt-2 mt-1 border-t border-dashed border-border/60">
@@ -156,6 +163,12 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h7"/><path d="M16 19h6"/><path d="M19 16v6"/><rect width="7" height="5" x="14" y="11" rx="1"/><path d="M3 10h18"/></svg>
                                 Bayar Sekarang
                             </a>
+                            <div class="text-center mt-3">
+                                <a href="{{ route('public.payment', ['booking_code' => $rental->booking_code, 'change' => 1]) }}"
+                                   class="text-[10px] font-bold text-muted-foreground hover:text-foreground transition-all uppercase tracking-widest border-b border-muted hover:border-foreground pb-0.5">
+                                   Ganti Metode Pembayaran
+                                </a>
+                            </div>
                         @endif
 
                         {{-- Jika Cash, tetap tombol WA --}}

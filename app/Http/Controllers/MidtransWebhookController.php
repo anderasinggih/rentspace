@@ -24,26 +24,32 @@ class MidtransWebhookController extends Controller
         $fraud = $payload['fraud_status'] ?? '';
 
         $rental = Rental::where('booking_code', $booking_code)->first();
-
         if (!$rental) {
-            Log::error("Rental not found for booking code: " . $booking_code);
+            Log::error("Midtrans Webhook: Rental not found", ['booking_code' => $booking_code, 'order_id' => $order_id]);
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-        if ($status == 'capture') {
-            if ($type == 'credit_card') {
-                if ($fraud == 'challenge') {
-                    $rental->update(['status' => 'pending']);
-                } else {
-                    $rental->update(['status' => 'paid']);
-                }
+        // Gabungkan data lama dengan data baru dari Midtrans
+        $updatedDetails = array_merge($rental->payment_details ?? [], $payload);
+        $rental->update(['payment_details' => $updatedDetails]);
+
+        // Proteksi: Jika sudah PAID, jangan dirubah lagi statusnya kecuali oleh admin
+        if ($rental->status === 'paid') {
+            Log::info("Midtrans Webhook: Rental already paid, ignoring status update", ['booking_code' => $booking_code]);
+            return response()->json(['message' => 'Already Paid']);
+        }
+
+        if ($status == 'capture' || $status == 'settlement') {
+            if ($fraud == 'challenge') {
+                $rental->update(['status' => 'pending']);
+            } else {
+                $rental->update(['status' => 'paid']);
             }
-        } elseif ($status == 'settlement') {
-            $rental->update(['status' => 'paid']);
         } elseif ($status == 'pending') {
             $rental->update(['status' => 'pending']);
-        } elseif ($status == 'deny' || $status == 'expire' || $status == 'cancel') {
+        } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
             $rental->update(['status' => 'cancelled']);
+            Log::warning("Midtrans Webhook: Transaction closed", ['booking_code' => $booking_code, 'status' => $status]);
         }
 
         return response()->json(['message' => 'OK']);

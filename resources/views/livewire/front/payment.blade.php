@@ -86,9 +86,17 @@
         <div class="p-4 space-y-4">
             @if(!$isCash)
                 <!-- Summary -->
-                <div class="p-4 bg-muted/30 rounded-xl border border-border/50 flex justify-between items-center shadow-inner">
-                    <span class="text-sm font-medium text-muted-foreground">Total Tagihan</span>
-                    <span class="text-xl font-bold">Rp {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
+                <div class="p-4 bg-muted/30 rounded-xl border border-border/50 shadow-inner">
+                    @if($paymentFee > 0)
+                        <div class="flex justify-between text-muted-foreground text-[10px] mb-2 leading-none uppercase font-bold">
+                            <span>Biaya Layanan <span class="text-zinc-500 font-medium ml-1">{{ $paymentFeeLabel }}</span></span>
+                            <span class="font-bold text-foreground">+ Rp {{ number_format($paymentFee, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+                    <div class="flex justify-between items-center pt-2 mt-1 border-t border-dashed border-border/60">
+                        <span class="font-bold text-sm text-muted-foreground">Total Tagihan</span>
+                        <span class="text-xl font-black text-foreground leading-none">Rp {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
+                    </div>
                 </div>
             @endif
 
@@ -236,8 +244,10 @@
                                          </a>
                                     </div>
                                 @else
-                                    <div class="text-left">
-                                        <p class="text-[9px] font-bold text-muted-foreground mb-1">NOMOR VIRTUAL ACCOUNT ({{ strtoupper($selectedChannel) }})</p>
+                                    <div class="text-center mb-5">
+                                        <h3 class="text-3xl font-black text-foreground uppercase tracking-tighter">{{ $selectedChannel }}</h3>
+                                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-80">Nomor Virtual Account</p>
+                                    </div>
                                     <div class="p-3 bg-background border border-border rounded-xl flex items-center justify-between shadow-sm">
                                         <p class="text-base font-bold text-foreground break-all mr-2" id="va-number">
                                             @if($va = data_get($paymentInfo, 'va_numbers.0.va_number'))
@@ -258,9 +268,14 @@
                                 @endif
                                 
                                 @if($selectedChannel === 'mandiri')
-                                    <div class="p-3 bg-background border border-border rounded-xl flex justify-between items-center text-xs">
+                                    <div class="mt-3 p-3 bg-background border border-border rounded-xl flex justify-between items-center text-xs">
                                         <span class="text-muted-foreground font-medium">Biller Code</span>
-                                        <span class="text-sm font-bold">{{ data_get($paymentInfo, 'biller_code', '-') }}</span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-bold">{{ data_get($paymentInfo, 'biller_code', '-') }}</span>
+                                            <button onclick="copyText('{{ data_get($paymentInfo, 'biller_code', '') }}')" class="h-6 w-6 flex items-center justify-center border border-border rounded-md bg-background hover:bg-accent transition-all active:scale-90">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 @endif
                             </div>

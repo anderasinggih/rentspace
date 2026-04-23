@@ -16,6 +16,8 @@ class Payment extends Component
     public $metode_pembayaran = 'online';
     public $selectedChannel = null;
     public $paymentInfo = null;
+    public $paymentFee = 0;
+    public $paymentFeeLabel = '';
 
     public function boot()
     {
@@ -32,8 +34,8 @@ class Payment extends Component
             ->where('booking_code', $booking_code)
             ->firstOrFail();
 
-        // 1. Prokteksi: Jika sudah 'LUNAS', paksa ke halaman success
-        if ($this->rental->status === 'paid') {
+        // 1. Proteksi: Jika sudah 'LUNAS' atau 'DIBATALKAN', paksa ke halaman success
+        if (in_array($this->rental->status, ['paid', 'cancelled'])) {
             return redirect()->route('public.success', $this->rental->booking_code);
         }
 
@@ -61,6 +63,8 @@ class Payment extends Component
         // 4. Load: Ambil detail pembayaran Midtrans yang ada
         if ($this->rental->payment_details) {
             $this->paymentInfo = $this->rental->payment_details;
+            $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
+            $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
             $this->selectedChannel = $this->rental->metode_pembayaran;
             
             // Sync status jika data masih mentah
@@ -85,9 +89,23 @@ class Payment extends Component
                 // Simpan data VA/Biller Code ke database biar muncul di tampilan
                 $this->paymentInfo = array_merge($this->rental->payment_details ?? [], $status);
                 $this->rental->update(['payment_details' => $this->paymentInfo]);
+                
+                // Pastikan variabel local juga terisi biar gak hilang di tampilan
+                $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
+                $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
 
                 if ($status['transaction_status'] == 'settlement' || $status['transaction_status'] == 'capture') {
+                    // Jika pesanan ternyata sudah lunas (mungkin sudah diupdate oleh webhook)
+                    if ($this->rental->status === 'paid') {
+                        return redirect()->route('public.success', $this->rental->booking_code);
+                    }
+
                     $this->rental->update(['status' => 'paid']);
+                    return redirect()->route('public.success', $this->rental->booking_code);
+                }
+
+                if (in_array($status['transaction_status'], ['deny', 'expire', 'cancel'])) {
+                    $this->rental->update(['status' => 'cancelled']);
                     return redirect()->route('public.success', $this->rental->booking_code);
                 }
             } catch (\Exception $e) {}
@@ -132,28 +150,64 @@ class Payment extends Component
 
         // Batalkan transaksi lama di Midtrans biar dashboard rapi (Status jadi Cancelled)
         $oldOrderId = data_get($this->rental->payment_details, 'order_id');
-        if ($oldOrderId) {
+        // 1. Bersihkan transaksi lama di Midtrans agar tidak 'nyampah' di Dashboard
+        if ($this->rental->payment_details && isset($this->rental->payment_details['order_id'])) {
             try {
-                \Midtrans\Transaction::cancel($oldOrderId);
-                \Illuminate\Support\Facades\Log::info("Midtrans Cancel Success: " . $oldOrderId);
+                // Beri tahu Midtrans: "Batalkan yang lama, user ganti pilihan"
+                \Midtrans\Transaction::cancel($this->rental->payment_details['order_id']);
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Midtrans Cancel Failed: " . $oldOrderId . " Error: " . $e->getMessage());
+                // Abaikan jika gagal (misal transaksi memang belum terbentuk di Midtrans)
             }
         }
 
-        // Gunakan suffix timestamp biar gak bentrok di Midtrans kalau gonta-ganti bank
-        $uniqueOrderId = $this->rental->booking_code . '-' . time();
+        // 2. Hitung Ulang Harga dengan Biaya Layanan Baru
+        $baseTotal = ($this->rental->subtotal_harga - $this->rental->potongan_diskon) + $this->rental->kode_unik_pembayaran;
         
+        $paymentFee = 0;
+        $paymentFeeLabel = '';
+        if ($channel === 'qris') {
+            $paymentFee = floor($baseTotal * 0.007); // 0.7% untuk QRIS
+            $paymentFeeLabel = '(0.7%)';
+        } elseif (in_array($channel, ['bca', 'mandiri', 'bni', 'bri', 'permata', 'bsi', 'cimb'])) {
+            $paymentFee = 4000; // Flat 4rb untuk Bank Transfer
+            $paymentFeeLabel = '(Bank Fee)';
+        }
+
+        $newGrandTotal = $baseTotal + $paymentFee;
+        $uniqueOrderId = $this->rental->booking_code . '-' . time();
+        $this->rental->update([
+            'grand_total' => $newGrandTotal,
+            'payment_details' => [
+                'order_id' => $uniqueOrderId,
+                'payment_fee' => $paymentFee,
+                'payment_fee_label' => $paymentFeeLabel,
+                'base_total' => $baseTotal
+            ],
+            'metode_pembayaran' => $channel
+        ]);
+        
+        $this->rental->refresh();
+        $this->paymentInfo = $this->rental->payment_details;
+        $this->paymentFee = $paymentFee;
+        $this->paymentFeeLabel = $paymentFeeLabel;
+
         $params = [
             'transaction_details' => [
                 'order_id' => $uniqueOrderId,
-                'gross_amount' => (int) $this->rental->grand_total,
+                'gross_amount' => (int) $newGrandTotal,
             ],
             'customer_details' => [
                 'first_name' => $this->rental->nama,
                 'phone' => $this->rental->no_wa,
             ],
-            'item_details' => $item_details,
+            'item_details' => array_merge($item_details, [
+                [
+                    'id' => 'payment_fee',
+                    'price' => (int) $paymentFee,
+                    'quantity' => 1,
+                    'name' => 'Biaya Layanan (' . strtoupper($channel) . ')'
+                ]
+            ]),
         ];
 
         // LOGIKA BAYAR TUNAI (CASH)
@@ -225,13 +279,19 @@ class Payment extends Component
             }
         }
 
+        // Hitung harga dasar asli untuk mereset grand_total
+        $baseTotal = ($this->rental->subtotal_harga - $this->rental->potongan_diskon) + $this->rental->kode_unik_pembayaran;
+
         $this->rental->update([
             'payment_details' => null,
             'metode_pembayaran' => 'online',
-            'status' => 'pending'
+            'status' => 'pending',
+            'grand_total' => $baseTotal // Kembalikan ke harga dasar
         ]);
         $this->paymentInfo = null;
-        $this->selectedChannel = 'online';
+        $this->selectedChannel = null;
+        $this->paymentFee = 0;
+        $this->paymentFeeLabel = '';
         $this->snapToken = null;
     }
 
@@ -242,11 +302,15 @@ class Payment extends Component
 
     public function cancelBooking()
     {
+        // Hitung harga dasar asli untuk mereset grand_total
+        $baseTotal = ($this->rental->subtotal_harga - $this->rental->potongan_diskon) + $this->rental->kode_unik_pembayaran;
+
         // Saat dibatalkan, reset juga metodenya biar gak 'menuduh' QRIS atau bank tertentu di struk
         $this->rental->update([
             'status' => 'cancelled',
             'metode_pembayaran' => 'online',
-            'payment_details' => null
+            'payment_details' => null,
+            'grand_total' => $baseTotal // Kembalikan ke harga dasar
         ]);
         
         return redirect()->route('public.success', $this->rental->booking_code);
