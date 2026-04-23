@@ -69,7 +69,6 @@ class Payment extends Component
 
     public function checkStatus()
     {
-        \Illuminate\Support\Facades\Log::info("DEBUG: checkStatus dipanggil untuk " . $this->rental->booking_code);
         $this->rental = $this->rental->fresh();
         
         // 1. Cek status lokal di database
@@ -90,8 +89,17 @@ class Payment extends Component
                 $transactionStatus = $status['transaction_status'] ?? '';
 
                 // Simpan detail terbaru dari Midtrans ke database kita (biar sinkron)
-                $updatedDetails = array_merge($this->rental->payment_details ?? [], $status);
+                $existingDetails = $this->rental->payment_details ?? [];
+                $updatedDetails = array_merge($existingDetails, $status);
+                
                 $this->rental->update(['payment_details' => $updatedDetails]);
+                $this->rental = $this->rental->fresh();
+                
+                // --- KUNCI BIAR GAK ILANG ---
+                // Update variabel layar dari data terbaru di database
+                $this->paymentInfo = $this->rental->payment_details;
+                $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
+                $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
 
                 if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
                     // Jika Webhook gagal/telat, baris ini jadi pahlawannya!
@@ -104,7 +112,7 @@ class Payment extends Component
                     return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("DEBUG ERROR: " . $e->getMessage());
+                // Silently fail polling error
             }
         }
     }
@@ -216,7 +224,19 @@ class Payment extends Component
 
         if ($isExistingAndValid) {
             $this->paymentInfo = $existingDetails;
-            $this->rental->update(['metode_pembayaran' => $channel]);
+            
+            // --- KUNCI MATI BIAR GAK ILANG ---
+            $this->paymentInfo['payment_fee'] = $paymentFee;
+            $this->paymentInfo['payment_fee_label'] = $paymentFeeLabel;
+            
+            $this->rental->update([
+                'metode_pembayaran' => $channel,
+                'grand_total' => $newGrandTotal,
+                'payment_details' => $this->paymentInfo // Simpan lagi biar permanen
+            ]);
+            
+            $this->paymentFee = $paymentFee;
+            $this->paymentFeeLabel = $paymentFeeLabel;
             return;
         }
 
@@ -240,18 +260,36 @@ class Payment extends Component
                 // 1. Tanya ke Midtrans: "ID ini sudah pernah dibuat belum?"
                 $response = Transaction::status($uniqueOrderId);
                 $this->paymentInfo = (array) $response;
+                
+                // --- SINKRON HARGA: Ikut kata Midtrans ---
+                if (isset($this->paymentInfo['gross_amount'])) {
+                    $newGrandTotal = (int) $this->paymentInfo['gross_amount'];
+                }
             } catch (\Exception $e) {
                 // 2. Kalau error (berarti ID memang belum pernah ada), baru kita BIKIN (Charge)
                 $response = CoreApi::charge($coreParams);
                 $this->paymentInfo = (array) $response;
+                
+                // Pastikan harga sinkron juga di sini
+                if (isset($this->paymentInfo['gross_amount'])) {
+                    $newGrandTotal = (int) $this->paymentInfo['gross_amount'];
+                }
             }
             
             // --- JURUS CUCI DATA (Murni Array) ---
             // Kita cuci datanya biar bener-bener jadi array polos, biar Livewire gak bingung nangkepnya
             $this->paymentInfo = json_decode(json_encode($this->paymentInfo), true);
 
-            // 1. Simpan ke Database
-            $this->rental->update(['payment_details' => $this->paymentInfo, 'metode_pembayaran' => $channel]);
+            // --- JURUS SEMEN BETON: Masukkan biaya layanan ke data yang disimpan ---
+            $this->paymentInfo['payment_fee'] = $paymentFee;
+            $this->paymentInfo['payment_fee_label'] = $paymentFeeLabel;
+
+            // 1. Simpan ke Database (Lengkap dengan harga baru)
+            $this->rental->update([
+                'payment_details' => $this->paymentInfo, 
+                'metode_pembayaran' => $channel,
+                'grand_total' => $newGrandTotal // Simpan harga baru + biaya bank
+            ]);
             
             // 2. PAKSA RE-ASSIGN (Sengat Listrik)
             $this->rental = $this->rental->fresh();
@@ -319,6 +357,15 @@ class Payment extends Component
 
     public function render()
     {
+        // --- JURUS MATA DEWA (Anti-Ilang) ---
+        // Kita paksa web nengok ke database detik ini juga sebelum nampil ke layar.
+        // Biar biaya layanan nggak sempet kabur pas polling jalan.
+        if ($this->rental->payment_details && $this->rental->metode_pembayaran !== 'online') {
+            $this->paymentInfo = $this->rental->payment_details;
+            $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
+            $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
+        }
+
         return view('livewire.front.payment')->layout('layouts.app');
     }
 }

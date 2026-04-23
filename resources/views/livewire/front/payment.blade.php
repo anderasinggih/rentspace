@@ -87,10 +87,27 @@
             @if(!$isCash)
                 <!-- Summary -->
                 <div class="p-4 bg-muted/30 rounded-xl border border-border/50 shadow-inner">
-                    @if($paymentFee > 0)
+                    @php
+                        // HITUNG DI TEMPAT: Biar gak ilang-ilangan pas polling
+                        $basePriceForFee = ($rental->subtotal_harga - $rental->potongan_diskon) + $rental->kode_unik_pembayaran;
+                        $displayFee = 0;
+                        $displayLabel = '';
+                        
+                        $currentChan = $selectedChannel ?: $rental->metode_pembayaran;
+                        
+                        if ($currentChan === 'qris') {
+                            $displayFee = floor($basePriceForFee * 0.007);
+                            $displayLabel = '(0.7%)';
+                        } elseif (in_array($currentChan, ['bca', 'mandiri', 'bni', 'bri', 'permata', 'bsi', 'cimb'])) {
+                            $displayFee = 4000;
+                            $displayLabel = '(Bank Fee)';
+                        }
+                    @endphp
+
+                    @if($displayFee > 0)
                         <div class="flex justify-between text-muted-foreground text-[10px] mb-2 leading-none uppercase font-bold">
-                            <span>Biaya Layanan <span class="text-zinc-500 font-medium ml-1">{{ $paymentFeeLabel }}</span></span>
-                            <span class="font-bold text-foreground">+ Rp {{ number_format($paymentFee, 0, ',', '.') }}</span>
+                            <span>Biaya Layanan <span class="text-zinc-500 font-medium ml-1">{{ $displayLabel }}</span></span>
+                            <span class="font-bold text-foreground">+ Rp {{ number_format($displayFee, 0, ',', '.') }}</span>
                         </div>
                     @endif
                     <div class="flex justify-between items-center pt-2 mt-1 border-t border-dashed border-border/60">
