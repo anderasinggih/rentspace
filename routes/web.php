@@ -66,7 +66,7 @@ Route::get('/affiliate/login', AffiliateLogin::class)->name('affiliate.login');
 Route::get('/affiliate/register', AffiliateRegister::class)->name('affiliate.register');
  
 // Midtrans Webhook Route
-Route::match(['get', 'post'], '/official-midtrans-callback', [\App\Http\Controllers\MidtransWebhookController::class, 'handle']);
+Route::post('/official-midtrans-callback', [\App\Http\Controllers\MidtransWebhookController::class, 'handle']);
 
 // Temporary route for testing Midtrans
 Route::get('/test-midtrans', function() {
