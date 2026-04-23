@@ -34,7 +34,13 @@ class Success extends Component
         $this->admin_wa = Setting::getVal('admin_wa', '6281234567890');
         $this->isOwner = in_array($booking_code, session('owned_bookings', []));
 
-        // --- GARI POLISI: Cek apakah sudah basi sebelum ngerjain yang lain ---
+        // 1. CEK MIDTRANS DULU (Prioritas Utama)
+        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && $this->rental->metode_pembayaran !== 'online') {
+            $this->checkMidtransStatus(); // Update DB kalau emang sebenernya sudah bayar
+            $this->rental->refresh();
+        }
+
+        // 2. GARI POLISI: Baru cek apakah sudah basi (Hanya jika masih pending)
         $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
         if ($this->rental->status === 'pending' && $isExpired) {
             // --- JURUS SAPU JAGAT: CANCEL SEMUA KEMUNGKINAN BANK ---
@@ -48,10 +54,6 @@ class Success extends Component
 
             $this->rental->update(['status' => 'cancelled']);
             $this->rental = $this->rental->fresh();
-        }
-
-        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash') {
-            $this->checkMidtransStatus();
         }
 
         // 3. Auto-login sesi untuk Cek Pesanan agar user tidak perlu ngetik NIK lagi nantinya
@@ -69,9 +71,15 @@ class Success extends Component
     {
         $this->rental = $this->rental->fresh();
         
-        // --- JURUS AUTO-CANCEL 15 MENIT ---
+        // 1. CEK MIDTRANS DULU
+        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && $this->rental->metode_pembayaran !== 'online') {
+            $this->checkMidtransStatus();
+            $this->rental->refresh();
+        }
+
+        // 2. CEK TIMER (Hanya jika di Midtrans belum dibayar)
         if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
-            // --- JURUS SAPU JAGAT: CANCEL SEMUA KEMUNGKINAN BANK ---
+            // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
             foreach ($banks as $bank) {
                 try {
@@ -83,10 +91,6 @@ class Success extends Component
             $this->rental->update(['status' => 'cancelled']);
             $this->rental = $this->rental->fresh();
             return;
-        }
-
-        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash') {
-            $this->checkMidtransStatus();
         }
     }
 

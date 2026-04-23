@@ -91,6 +91,14 @@
                         <span class="text-xs text-muted-foreground">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
                     </div>
                 @endforeach
+                @if($rental->status == 'pending' && $rental->metode_pembayaran != 'cash')
+                    <div class="mt-4 pt-4 border-t border-dashed border-border/50">
+                        <a href="{{ route('public.payment', $rental->booking_code) }}?change=1" 
+                            class="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                            ← Ubah Metode Pembayaran
+                        </a>
+                    </div>
+                @endif
             </div>
 
             <div class="h-px bg-border/50"></div>

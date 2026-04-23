@@ -56,35 +56,35 @@ class Payment extends Component
             return redirect()->route('public.payment', $this->rental->booking_code);
         }
 
-        // 3. Gembok Pintu Depan: Kalau sudah basi atau statusnya Batal, jangan kasih masuk
-        $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
-        
-        if ($this->rental->status === 'cancelled' || ($this->rental->status === 'pending' && $isExpired)) {
-            if ($this->rental->status === 'pending') {
-                // --- JURUS SAPU JAGAT ---
-                $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
-                foreach ($banks as $bank) {
-                    try {
-                        $potentialId = $this->rental->booking_code . '-' . $bank;
-                        \Midtrans\Transaction::cancel($potentialId);
-                    } catch (\Exception $e) { }
-                }
+        // 3. JEMPUT BOLA AWAL: Tanya Midtrans dulu (Prioritas Utama)
+        $this->paymentInfo = $this->rental->payment_details;
+        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'online' && !empty($this->paymentInfo)) {
+            $this->checkStatus(); // Ini bakal nge-update status jadi paid kalau emang sudah lunas
+            $this->rental->refresh();
+        }
 
-                $this->rental->update(['status' => 'cancelled']);
+        // 4. GARI POLISI: Baru cek apakah sudah basi (Hanya jika masih pending)
+        $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
+        if ($this->rental->status === 'pending' && $isExpired) {
+            // --- JURUS SAPU JAGAT ---
+            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
+            foreach ($banks as $bank) {
+                try {
+                    $potentialId = $this->rental->booking_code . '-' . $bank;
+                    \Midtrans\Transaction::cancel($potentialId);
+                } catch (\Exception $e) { }
             }
+            $this->rental->update(['status' => 'cancelled']);
             return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }
 
-        // 4. Load: Ambil data dari DB kalau memang sudah pernah milih bank
-        $this->paymentInfo = $this->rental->payment_details;
-        if ($this->paymentInfo) {
-            $this->selectedChannel = $this->rental->metode_pembayaran;
-            $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
-            $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
-            
-            // Sync status jika data masih mentah
-            if (isset($this->paymentInfo['order_id']) && count($this->paymentInfo) <= 1) {
-                $this->checkStatus();
+        // 5. Load: Siapkan variabel layar
+        if ($this->rental->status === 'pending') {
+            $this->paymentInfo = $this->rental->payment_details;
+            if ($this->paymentInfo) {
+                $this->selectedChannel = $this->rental->metode_pembayaran;
+                $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
+                $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
             }
         }
     }
@@ -93,55 +93,25 @@ class Payment extends Component
     {
         $this->rental = $this->rental->fresh();
         
-        // 1. Cek apakah sudah melebihi batas 15 menit (Auto-Cancel)
-        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
-            // --- JURUS SAPU JAGAT: CANCEL SEMUA KEMUNGKINAN BANK ---
-            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
-            foreach ($banks as $bank) {
-                try {
-                    $potentialId = $this->rental->booking_code . '-' . $bank;
-                    \Midtrans\Transaction::cancel($potentialId);
-                } catch (\Exception $e) {
-                    // Abaikan kalau ID tidak ketemu atau sudah cancel
-                }
-            }
-
-            $this->rental->update(['status' => 'cancelled']);
-            return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
-        }
-
-        // 2. Cek status lokal di database untuk pengalihan sukses/gagal
-        if ($this->rental->status === 'paid') {
-            return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
-        }
-
-        // 2. JEMPUT BOLA: Tanya langsung ke API Midtrans
+        // 1. CEK MIDTRANS DULU (Prioritas Nomor Wahid)
         $orderId = data_get($this->rental->payment_details, 'order_id');
-        
-        if ($orderId) {
+        if ($orderId && $this->rental->status === 'pending') {
             try {
-                // Pastikan konfigurasi terpasang (jaga-jaga jika di lingkungan polling berbeda)
                 Config::$serverKey = env('MIDTRANS_SERVER_KEY');
                 Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
 
                 $status = (array) Transaction::status($orderId);
                 $transactionStatus = $status['transaction_status'] ?? '';
 
-                // Simpan detail terbaru dari Midtrans ke database kita (biar sinkron)
+                // Simpan detail terbaru
                 $existingDetails = $this->rental->payment_details ?? [];
                 $updatedDetails = array_merge($existingDetails, $status);
-                
                 $this->rental->update(['payment_details' => $updatedDetails]);
                 $this->rental = $this->rental->fresh();
                 
-                // --- KUNCI BIAR GAK ILANG ---
-                // Update variabel layar dari data terbaru di database
                 $this->paymentInfo = $this->rental->payment_details;
-                $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
-                $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
 
                 if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
-                    // Jika Webhook gagal/telat, baris ini jadi pahlawannya!
                     $this->rental->update(['status' => 'paid']);
                     return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
@@ -150,9 +120,22 @@ class Payment extends Component
                     $this->rental->update(['status' => 'cancelled']);
                     return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
-            } catch (\Exception $e) {
-                // Silently fail polling error
+            } catch (\Exception $e) { }
+        }
+
+        // 2. CEK TIMER (Hanya jika di Midtrans memang belum dibayar)
+        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
+            // --- JURUS SAPU JAGAT ---
+            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
+            foreach ($banks as $bank) {
+                try {
+                    $potentialId = $this->rental->booking_code . '-' . $bank;
+                    \Midtrans\Transaction::cancel($potentialId);
+                } catch (\Exception $e) { }
             }
+
+            $this->rental->update(['status' => 'cancelled']);
+            return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }
     }
 
