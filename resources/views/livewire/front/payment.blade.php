@@ -145,7 +145,7 @@
                 </div>
             @else
                 <!-- Detail View -->
-                <div class="space-y-5 animate-in fade-in slide-in-from-bottom-2">
+                <div class="space-y-5 animate-in fade-in slide-in-from-bottom-2" wire:key="payment-detail-{{ $selectedChannel }}-{{ count($paymentInfo ?? []) }}">
                     <div class="p-5 bg-muted/40 rounded-xl border border-border/50 text-center text-sm">
                         @if($selectedChannel === 'qris')
                             <p class="font-semibold text-muted-foreground mb-4">Silakan scan kode QRIS</p>
@@ -250,11 +250,14 @@
                                     </div>
                                     <div class="p-3 bg-background border border-border rounded-xl flex items-center justify-between shadow-sm">
                                         <p class="text-base font-bold text-foreground break-all mr-2" id="va-number">
-                                            @if($va = data_get($paymentInfo, 'va_numbers.0.va_number'))
+                                            @php 
+                                                $details = $rental->payment_details;
+                                            @endphp
+                                            @if($va = data_get($details, 'va_numbers.0.va_number'))
                                                 {{ $va }}
-                                            @elseif($bk = data_get($paymentInfo, 'bill_key'))
+                                            @elseif($bk = data_get($details, 'bill_key'))
                                                 {{ $bk }}
-                                            @elseif($pva = data_get($paymentInfo, 'permata_va_number'))
+                                            @elseif($pva = data_get($details, 'permata_va_number'))
                                                 {{ $pva }}
                                             @else
                                                 -

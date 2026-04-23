@@ -53,8 +53,8 @@ class Payment extends Component
             $this->rental->refresh();
         }
 
-        // 4. Load: Ambil detail pembayaran Midtrans yang ada
-        if ($this->rental->payment_details) {
+        // 4. Load: Ambil detail pembayaran Midtrans yang ada (Hanya jika metodenya spesifik, bukan 'online/pemilihan')
+        if ($this->rental->payment_details && $this->rental->metode_pembayaran !== 'online') {
             $this->paymentInfo = $this->rental->payment_details;
             $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
             $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
@@ -69,6 +69,7 @@ class Payment extends Component
 
     public function checkStatus()
     {
+        \Illuminate\Support\Facades\Log::info("DEBUG: checkStatus dipanggil untuk " . $this->rental->booking_code);
         $this->rental = $this->rental->fresh();
         
         // 1. Cek status lokal di database
@@ -103,7 +104,7 @@ class Payment extends Component
                     return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
             } catch (\Exception $e) {
-                // Jika error (misal API Midtrans down), biarkan polling berikutnya mencoba lagi
+                \Illuminate\Support\Facades\Log::error("DEBUG ERROR: " . $e->getMessage());
             }
         }
     }
@@ -159,20 +160,8 @@ class Payment extends Component
         }
 
         $newGrandTotal = $baseTotal + $paymentFee;
-        $uniqueOrderId = $this->rental->booking_code . '-' . time();
-        $this->rental->update([
-            'grand_total' => $newGrandTotal,
-            'payment_details' => [
-                'order_id' => $uniqueOrderId,
-                'payment_fee' => $paymentFee,
-                'payment_fee_label' => $paymentFeeLabel,
-                'base_total' => $baseTotal
-            ],
-            'metode_pembayaran' => $channel
-        ]);
+        $uniqueOrderId = $this->rental->booking_code . '-' . strtoupper($channel);
         
-        $this->rental->refresh();
-        $this->paymentInfo = $this->rental->payment_details;
         $this->paymentFee = $paymentFee;
         $this->paymentFeeLabel = $paymentFeeLabel;
 
@@ -218,8 +207,23 @@ class Payment extends Component
             return redirect()->route('public.success', $this->rental->booking_code);
         }
 
+        // --- JURUS ANTI-DUPLICATE ---
+        // Kita hanya ambil dari database kalau datanya sudah "Lengkap" (paling tidak ada nomor VA/QRIS-nya)
+        $existingDetails = $this->rental->payment_details;
+        $isExistingAndValid = isset($existingDetails['order_id']) && 
+                             $existingDetails['order_id'] === $uniqueOrderId && 
+                             (isset($existingDetails['va_numbers']) || isset($existingDetails['payment_code']) || isset($existingDetails['bill_key']));
+
+        if ($isExistingAndValid) {
+            $this->paymentInfo = $existingDetails;
+            $this->rental->update(['metode_pembayaran' => $channel]);
+            return;
+        }
+
         try {
-            // Coba Tampilan Sendiri dulu
+            Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+            Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+
             $coreParams = $params;
             if (in_array($channel, ['bca', 'bni', 'bri', 'permata', 'bsi', 'cimb'])) {
                 $coreParams['payment_type'] = 'bank_transfer';
@@ -231,9 +235,31 @@ class Payment extends Component
                 $coreParams['payment_type'] = 'qris';
             }
 
-            $response = CoreApi::charge($coreParams);
-            $this->paymentInfo = (array) $response;
+            // --- JURUS PAMUNGKAS: CEK DULU SEBELUM TEMBAK ---
+            try {
+                // 1. Tanya ke Midtrans: "ID ini sudah pernah dibuat belum?"
+                $response = Transaction::status($uniqueOrderId);
+                $this->paymentInfo = (array) $response;
+            } catch (\Exception $e) {
+                // 2. Kalau error (berarti ID memang belum pernah ada), baru kita BIKIN (Charge)
+                $response = CoreApi::charge($coreParams);
+                $this->paymentInfo = (array) $response;
+            }
+            
+            // --- JURUS CUCI DATA (Murni Array) ---
+            // Kita cuci datanya biar bener-bener jadi array polos, biar Livewire gak bingung nangkepnya
+            $this->paymentInfo = json_decode(json_encode($this->paymentInfo), true);
+
+            // 1. Simpan ke Database
             $this->rental->update(['payment_details' => $this->paymentInfo, 'metode_pembayaran' => $channel]);
+            
+            // 2. PAKSA RE-ASSIGN (Sengat Listrik)
+            $this->rental = $this->rental->fresh();
+            $this->paymentInfo = $this->rental->payment_details;
+            
+            $this->paymentFee = $paymentFee;
+            $this->paymentFeeLabel = $paymentFeeLabel;
+            $this->selectedChannel = $channel;
             
         } catch (\Exception $e) {
             // JIKA AKUN DIBLOKIR CORE API, PAKAI POPUP SEBAGAI PANCINGAN
@@ -259,7 +285,6 @@ class Payment extends Component
         $baseTotal = ($this->rental->subtotal_harga - $this->rental->potongan_diskon) + $this->rental->kode_unik_pembayaran;
 
         $this->rental->update([
-            'payment_details' => null,
             'metode_pembayaran' => 'online',
             'status' => 'pending',
             'grand_total' => $baseTotal // Kembalikan ke harga dasar

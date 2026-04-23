@@ -10,46 +10,55 @@ class MidtransWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        Log::info("Midtrans Webhook Received", ['payload' => $request->all()]);
+        // 1. Catat APAPUN yang masuk dari Midtrans (Sangat detail buat debug)
+        Log::info("MIDTRANS WEBHOOK: Masuk", [
+            'method' => $request->method(),
+            'url' => $request->fullUrl(),
+            'ip' => $request->ip(),
+            'payload' => $request->all()
+        ]);
         
         $payload = $request->all();
-        
-        // Extract original booking code from order_id (format: CODE-TIMESTAMP)
-        $order_id = $payload['order_id'] ?? '';
-        $parts = explode('-', $order_id);
-        $booking_code = $parts[0];
-        
-        $status = $payload['transaction_status'] ?? '';
-        $type = $payload['payment_type'] ?? '';
-        $fraud = $payload['fraud_status'] ?? '';
+        $order_id = trim($payload['order_id'] ?? '');
 
+        if (empty($order_id)) {
+            Log::warning("MIDTRANS WEBHOOK: Order ID kosong");
+            return response()->json(['message' => 'Empty Order ID'], 200);
+        }
+        
+        // 2. Ekstrak Booking Code (Format: CODE-TIMESTAMP)
+        $parts = explode('-', $order_id);
+        $booking_code = trim($parts[0]);
+        
+        $status = strtolower(trim($payload['transaction_status'] ?? ''));
+        $type = $payload['payment_type'] ?? '';
+        $fraud = strtolower(trim($payload['fraud_status'] ?? ''));
+
+        // 3. Cari Data Rental di Database
         $rental = Rental::where('booking_code', $booking_code)->first();
+        
         if (!$rental) {
-            Log::error("Midtrans Webhook: Rental not found", ['booking_code' => $booking_code, 'order_id' => $order_id]);
-            return response()->json(['message' => 'Order not found or Webhook testing'], 200);
+            Log::error("MIDTRANS WEBHOOK: Rental tidak ditemukan", ['code' => $booking_code, 'id' => $order_id]);
+            // Tetap kasih 200 biar Midtrans berhenti "teriak"
+            return response()->json(['message' => 'OK - Rental Not Found'], 200);
         }
 
-        // Gabungkan data lama dengan data baru dari Midtrans
+        // 4. Update Detail Pembayaran
         $updatedDetails = array_merge($rental->payment_details ?? [], $payload);
         $rental->update(['payment_details' => $updatedDetails]);
 
-        // Proteksi: Jika sudah PAID, jangan dirubah lagi statusnya kecuali oleh admin
-        if ($rental->status === 'paid') {
-            Log::info("Midtrans Webhook: Rental already paid, ignoring status update", ['booking_code' => $booking_code]);
-            return response()->json(['message' => 'Already Paid']);
-        }
-
-        if ($status == 'capture' || $status == 'settlement') {
-            if ($fraud == 'challenge') {
-                $rental->update(['status' => 'pending']);
-            } else {
-                $rental->update(['status' => 'paid']);
+        // 5. Update Status Rental
+        if ($rental->status !== 'paid') {
+            if (in_array($status, ['capture', 'settlement'])) {
+                if ($fraud == 'challenge') {
+                    $rental->update(['status' => 'pending']);
+                } else {
+                    $rental->update(['status' => 'paid']);
+                    Log::info("MIDTRANS WEBHOOK: Pembayaran Berhasil untuk Booking Code: " . $booking_code);
+                }
+            } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
+                $rental->update(['status' => 'cancelled']);
             }
-        } elseif ($status == 'pending') {
-            $rental->update(['status' => 'pending']);
-        } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
-            $rental->update(['status' => 'cancelled']);
-            Log::warning("Midtrans Webhook: Transaction closed", ['booking_code' => $booking_code, 'status' => $status]);
         }
 
         return response()->json(['message' => 'OK']);
