@@ -46,13 +46,6 @@ class Payment extends Component
 
         // 3. Reset: Jika user minta ganti metode
         if (request()->query('change')) {
-            // Cancel transaksi lama di Midtrans biar gak numpuk
-            if ($this->rental->payment_details && isset($this->rental->payment_details['order_id'])) {
-                try {
-                    \Midtrans\Transaction::cancel($this->rental->payment_details['order_id']);
-                } catch (\Exception $e) {}
-            }
-
             $this->rental->update([
                 'payment_details' => null,
                 'metode_pembayaran' => 'online'
@@ -149,18 +142,7 @@ class Payment extends Component
         }
 
         // Batalkan transaksi lama di Midtrans biar dashboard rapi (Status jadi Cancelled)
-        $oldOrderId = data_get($this->rental->payment_details, 'order_id');
-        // 1. Bersihkan transaksi lama di Midtrans agar tidak 'nyampah' di Dashboard
-        if ($this->rental->payment_details && isset($this->rental->payment_details['order_id'])) {
-            try {
-                // Beri tahu Midtrans: "Batalkan yang lama, user ganti pilihan"
-                \Midtrans\Transaction::cancel($this->rental->payment_details['order_id']);
-            } catch (\Exception $e) {
-                // Abaikan jika gagal (misal transaksi memang belum terbentuk di Midtrans)
-            }
-        }
-
-        // 2. Hitung Ulang Harga dengan Biaya Layanan Baru
+        // 1. Hitung Ulang Harga dengan Biaya Layanan Baru
         $baseTotal = ($this->rental->subtotal_harga - $this->rental->potongan_diskon) + $this->rental->kode_unik_pembayaran;
         
         $paymentFee = 0;
@@ -270,15 +252,6 @@ class Payment extends Component
 
     public function resetPayment()
     {
-        // Jika ada transaksi lama di Midtrans, coba batalkan dulu biar rapi
-        if ($this->rental->payment_details && isset($this->rental->payment_details['order_id'])) {
-            try {
-                \Midtrans\Transaction::cancel($this->rental->payment_details['order_id']);
-            } catch (\Exception $e) {
-                // Abaikan jika gagal (misal: transaksinya memang belum terdaftar di Midtrans)
-            }
-        }
-
         // Hitung harga dasar asli untuk mereset grand_total
         $baseTotal = ($this->rental->subtotal_harga - $this->rental->potongan_diskon) + $this->rental->kode_unik_pembayaran;
 
