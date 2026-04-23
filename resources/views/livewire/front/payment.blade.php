@@ -100,15 +100,15 @@
                         $activeMethods = json_decode($savedPayment, true) ?: [];
                         
                         $banks = [
-                            ['id' => 'bca', 'name' => 'BCA', 'sub' => 'Transfer otomatis', 'icon' => 'BCA'],
-                            ['id' => 'mandiri', 'name' => 'Mandiri', 'sub' => 'Mandiri bill', 'icon' => 'MDR'],
-                            ['id' => 'bni', 'name' => 'BNI', 'sub' => 'Transfer otomatis', 'icon' => 'BNI'],
-                            ['id' => 'bri', 'name' => 'BRI', 'sub' => 'Transfer otomatis', 'icon' => 'BRI'],
-                            ['id' => 'permata', 'name' => 'Permata', 'sub' => 'Transfer bank', 'icon' => 'PRM'],
-                            ['id' => 'bsi', 'name' => 'BSI', 'sub' => 'Transfer otomatis', 'icon' => 'BSI'],
-                            ['id' => 'cimb', 'name' => 'CIMB', 'sub' => 'Transfer otomatis', 'icon' => 'CMB'],
-                            ['id' => 'qris', 'name' => 'QRIS', 'sub' => 'Gopay / ShopeePay / QR', 'icon' => 'QR'],
-                            ['id' => 'cash', 'name' => 'Bayar di Tempat', 'sub' => 'Tunai / Cash di Lokasi', 'icon' => 'CSH'],
+                            ['id' => 'bca', 'name' => 'BCA', 'sub' => 'Transfer otomatis', 'icon' => 'BCA', 'color' => 'bg-blue-500/10 text-blue-600 border-blue-500/20'],
+                            ['id' => 'mandiri', 'name' => 'Mandiri', 'sub' => 'Mandiri bill', 'icon' => 'MDR', 'color' => 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'],
+                            ['id' => 'bni', 'name' => 'BNI', 'sub' => 'Transfer otomatis', 'icon' => 'BNI', 'color' => 'bg-orange-500/10 text-orange-600 border-orange-500/20'],
+                            ['id' => 'bri', 'name' => 'BRI', 'sub' => 'Transfer otomatis', 'icon' => 'BRI', 'color' => 'bg-cyan-500/10 text-cyan-600 border-cyan-500/20'],
+                            ['id' => 'permata', 'name' => 'Permata', 'sub' => 'Transfer bank', 'icon' => 'PRM', 'color' => 'bg-violet-500/10 text-violet-600 border-violet-500/20'],
+                            ['id' => 'bsi', 'name' => 'BSI', 'sub' => 'Transfer otomatis', 'icon' => 'BSI', 'color' => 'bg-teal-500/10 text-teal-600 border-teal-500/20'],
+                            ['id' => 'cimb', 'name' => 'CIMB', 'sub' => 'Transfer otomatis', 'icon' => 'CMB', 'color' => 'bg-red-500/10 text-red-600 border-red-500/20'],
+                            ['id' => 'qris', 'name' => 'QRIS', 'sub' => 'Gopay / ShopeePay / QR', 'icon' => 'QR', 'color' => 'bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/20'],
+                            ['id' => 'cash', 'name' => 'Bayar di Tempat', 'sub' => 'Tunai / Cash di Lokasi', 'icon' => 'CSH', 'color' => 'bg-zinc-500/10 text-zinc-600 border-zinc-500/20'],
                         ];
                         
                         // Filter hanya bank yang dicentang di Admin Settings
@@ -119,8 +119,8 @@
 
                     @foreach($filteredBanks as $bank)
                         <button wire:click="selectChannel('{{ $bank['id'] }}')" wire:loading.attr="disabled"
-                            class="group flex items-center p-3.5 rounded-xl border border-border bg-background hover:bg-accent hover:border-accent-foreground/5 transition-all text-left relative overflow-hidden">
-                            <div class="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-border/50 flex items-center justify-center mr-4 text-[10px] font-bold text-muted-foreground group-hover:bg-background transition-colors">
+                            class="group flex items-center p-3.5 rounded-xl border border-border bg-background hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all text-left relative overflow-hidden">
+                            <div class="w-10 h-10 rounded-lg {{ $bank['color'] }} border flex items-center justify-center mr-4 text-[10px] font-bold transition-all group-hover:scale-110">
                                 {{ $bank['icon'] }}
                             </div>
                             <div class="flex-1">

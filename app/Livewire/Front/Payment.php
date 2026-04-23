@@ -242,7 +242,13 @@ class Payment extends Component
 
     public function cancelBooking()
     {
-        $this->rental->update(['status' => 'cancelled']);
+        // Saat dibatalkan, reset juga metodenya biar gak 'menuduh' QRIS atau bank tertentu di struk
+        $this->rental->update([
+            'status' => 'cancelled',
+            'metode_pembayaran' => 'online',
+            'payment_details' => null
+        ]);
+        
         return redirect()->route('public.success', $this->rental->booking_code);
     }
 
