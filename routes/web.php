@@ -65,6 +65,15 @@ Route::get('/keluar', CustomerLogout::class)->name('customer.logout');
 Route::get('/affiliate/login', AffiliateLogin::class)->name('affiliate.login');
 Route::get('/affiliate/register', AffiliateRegister::class)->name('affiliate.register');
  
+// Midtrans Webhook Route
+Route::post('/midtrans/webhook', [\App\Http\Controllers\MidtransWebhookController::class, 'handle']);
+
+// Temporary route for testing Midtrans
+Route::get('/test-midtrans', function() {
+    \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+    return "Library Midtrans Aman!";
+});
+
 // Temporary route to clear cache on hosting - Delete after use
 Route::get('/clear-cache', function() {
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');

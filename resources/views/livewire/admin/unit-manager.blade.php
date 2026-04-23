@@ -7,16 +7,18 @@
                 </p>
             </div>
             <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex gap-2">
-                @if($activeTab === 'units')
-                    <button wire:click="create"
-                        class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                        Add Unit
-                    </button>
-                @else
-                    <button wire:click="createCat"
-                        class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                        Add Category
-                    </button>
+                @if(auth()->user()->role === 'admin')
+                    @if($activeTab === 'units')
+                        <button type="button" wire:key="btn-add-unit" wire:click="create" wire:loading.attr="disabled"
+                            class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            Add Unit
+                        </button>
+                    @else
+                        <button type="button" wire:key="btn-add-cat" wire:click="createCat" wire:loading.attr="disabled"
+                            class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            Add Category
+                        </button>
+                    @endif
                 @endif
             </div>
         </div>
@@ -293,6 +295,7 @@
                                     @endforeach
                                 </select>
                                 @error('category_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            </div>
                                 <div class="grid grid-cols-1 @if($isIphone) sm:grid-cols-2 @endif gap-4">
                                     <div>
                                         <label
@@ -399,7 +402,7 @@
 
         <!-- Category Modal -->
         @if($showCatModal)
-            <div class="relative z-50">
+            <div class="relative z-50" wire:key="category-modal">
                 <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"></div>
                 <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div class="relative w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8">

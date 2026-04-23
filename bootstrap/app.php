@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'midtrans/webhook',
+            'midtrans/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

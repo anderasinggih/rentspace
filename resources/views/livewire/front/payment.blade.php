@@ -1,156 +1,317 @@
-<div class="py-4 sm:py-12 px-3 sm:px-6 lg:px-8 bg-background min-h-[calc(100vh-4rem)]">
-
-    <div class="max-w-2xl mx-auto">
-        <div class="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-8 text-center">
-
-            <!-- Progress Bar -->
-            <div class="mb-8 border-b border-border pb-4 text-left">
-                <div class="flex items-center justify-center text-sm font-bold text-primary mb-3 px-1">
-                    <span>4. Proses Pembayaran</span>
-                </div>
-                <div class="h-2 bg-muted rounded-full overflow-hidden">
-                    <div class="h-full bg-primary transition-all duration-500 rounded-full w-full"></div>
-                </div>
+<div class="py-0 px-4 sm:py-16 flex flex-col items-center font-sans tracking-normal" @if($paymentInfo) wire:poll.5s="checkStatus" @endif>
+    <!-- Processing Loading Overlay -->
+    <div wire:loading wire:target="selectChannel" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex flex-col items-center w-full animate-in fade-in duration-300 px-6">
+        <div class="bg-card p-5 rounded-2xl shadow-2xl flex flex-row items-center gap-4 text-left max-w-[320px] w-full border border-border/50 mt-[40vh]">
+            <div class="relative h-10 w-10 flex shrink-0 items-center justify-center">
+                <div class="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                <div class="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent shadow-[0_0_15px_rgba(var(--primary),0.3)]"></div>
             </div>
-
-            <h1 class="text-xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-1 sm:mb-4">Selesaikan
-                Pembayaran</h1>
-            <p class="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-8">Tagihan untuk unit
-                <strong>{{ $rental->units->pluck('seri')->implode(', ') ?: ($rental->unit->seri ?? '-') }}</strong>.
-                Mohon transfer tepat hingga tiga digit terakhir agar pembayaran dapat dikenali sistem.
-            </p>
-
-            <div
-                class="flex flex-col items-center justify-center p-4 sm:p-8 bg-muted/30 border border-border rounded-xl gap-3 sm:gap-0">
-
-                <!-- ButtonGroup-style Payment Toggle -->
-                @php
-                    $enabledMethods = json_decode(\App\Models\Setting::getVal('payment_methods', json_encode(['qris' => true, 'cash' => true, 'transfer' => false])), true) ?: ['qris' => true, 'cash' => true];
-                    $methodLabels = ['qris' => 'QRIS', 'cash' => 'Cash', 'transfer' => 'Transfer Bank'];
-                    $activeMethods = array_keys(array_filter($enabledMethods));
-                    $count = count($activeMethods);
-                @endphp
-                @if($count > 0)
-                    <div class="inline-flex rounded-md shadow-sm sm:mb-6 mx-2 sm:mx-0 flex-wrap justify-center"
-                        role="group">
-                        @foreach($activeMethods as $i => $method)
-                            @php
-                                $isFirst = $i === 0;
-                                $isLast = $i === $count - 1;
-                                $radius = $isFirst && $isLast ? 'rounded-md' : ($isFirst ? 'rounded-l-md' : ($isLast ? 'rounded-r-md' : ''));
-                                $border = $isFirst ? 'border border-input' : 'border border-l-0 border-input';
-                                $active = $metode_pembayaran === $method;
-                            @endphp
-                            <button wire:click="$set('metode_pembayaran', '{{ $method }}')"
-                                class="{{ $radius }} {{ $border }} h-8 sm:h-9 px-4 sm:px-5 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-                                            {{ $active ? 'bg-primary text-primary-foreground z-10' : 'bg-background text-foreground hover:bg-muted' }}">
-                                {{ $methodLabels[$method] ?? strtoupper($method) }}
-                            </button>
-                        @endforeach
-                    </div>
-                @endif
-
-                <!-- Nominal Tagihan -->
-                <p class="text-xs font-semibold text-muted-foreground mb-0.5 sm:mb-2">Total Transaksi</p>
-                <div class="flex items-end justify-center tracking-tight mb-2 sm:mb-6">
-                    @php
-                        $grandTotalStr = (string) floor($rental->grand_total);
-                        if (strlen($grandTotalStr) <= 3) {
-                            $basePrice = 0;
-                            $lastThree = str_pad($grandTotalStr, 3, '0', STR_PAD_LEFT);
-                        } else {
-                            $lastThree = substr($grandTotalStr, -3);
-                            $basePrice = (float) substr($grandTotalStr, 0, -3);
-                        }
-                    @endphp
-                    <span class="text-lg sm:text-2xl font-bold align-baseline mr-1 text-foreground">Rp</span>
-                    <span
-                        class="text-3xl sm:text-5xl font-extrabold text-foreground">{{ number_format($basePrice, 0, ',', '.') }}</span>
-                    @if($metode_pembayaran === 'qris')
-                        <span class="text-3xl sm:text-5xl font-extrabold text-primary">.{{ $lastThree }}</span>
-                    @else
-                        <span class="text-3xl sm:text-5xl font-extrabold text-muted-foreground">.000</span>
-                    @endif
-                </div>
-
-                @if($metode_pembayaran === 'qris')
-                    <!-- QRIS Box -->
-                    <div
-                        class="w-[220px] h-[220px] sm:w-64 sm:h-64 bg-background border-2 border-dashed border-border rounded-xl overflow-hidden shadow-sm relative">
-                        <img src="{{ asset('uploads/' . \App\Models\Setting::getVal('qris', 'default.jpg')) }}"
-                            onerror="this.style.display='none'" class="absolute inset-0 w-full h-full object-cover">
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                                class="text-muted-foreground/30">
-                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                                <rect width="8" height="8" x="7" y="7" />
-                                <path d="M3 13h18" />
-                                <path d="M13 3v18" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="mt-2 text-xs text-muted-foreground max-w-xs">
-                        Transfer sesuai tiga digit unik (<strong class="text-primary">{{ $lastThree }}</strong>) untuk
-                        verifikasi otomatis.
-                    </div>
-                @elseif($metode_pembayaran === 'transfer')
-                    <!-- Transfer Bank Box -->
-                    <div
-                        class="w-full max-w-xs p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex flex-col items-center shadow-sm text-blue-700 dark:text-blue-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="mb-2">
-                            <rect width="20" height="14" x="2" y="5" rx="2" />
-                            <line x1="2" x2="22" y1="10" y2="10" />
-                        </svg>
-                        <span class="text-sm font-bold text-center">Transfer ke Rekening</span>
-                        @php $adminWa = \App\Models\Setting::getVal('admin_wa', ''); @endphp
-                        <p class="text-xs text-center mt-1 opacity-80">Konfirmasi via
-                            WhatsApp{{ $adminWa ? ' ke ' . $adminWa : '' }} setelah transfer.</p>
-                    </div>
-                @else
-                    <!-- Cash Box -->
-                    <div
-                        class="w-full max-w-xs p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex flex-col items-center shadow-sm text-amber-700 dark:text-amber-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="mb-2">
-                            <rect width="20" height="12" x="2" y="6" rx="2" />
-                            <circle cx="12" cy="12" r="2" />
-                            <path d="M6 12h.01M18 12h.01" />
-                        </svg>
-                        <span class="text-sm font-bold text-center">Pembayaran Tunai</span>
-                        <p class="text-xs text-center mt-1 opacity-80">Bayar langsung di kasir saat pengambilan Unit.</p>
-                    </div>
-                @endif
-            </div>
-
-            <!-- Submit Button with Spinner -->
-            <button wire:click="finish" wire:loading.attr="disabled" wire:loading.class="opacity-70 cursor-not-allowed"
-                class="mt-4 sm:mt-8 w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 sm:h-12 px-8 font-bold text-base sm:text-lg transition-opacity">
-
-                <svg wire:loading wire:target="finish" class="animate-spin h-5 w-5 text-primary-foreground"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-
-                <span wire:loading wire:target="finish" class="text-sm">Memproses...</span>
-                <span wire:loading.remove wire:target="finish">
-                    {{ $metode_pembayaran === 'qris' ? 'Saya Sudah Transfer QRIS' : ($metode_pembayaran === 'transfer' ? 'Konfirmasi Transfer Bank' : 'Selesaikan Pesanan Tunai') }}
-                </span>
-            </button>
-
-            <!-- Cancellation Option -->
-            <div class="mt-8 pt-6 border-t border-border">
-                <p class="text-[10px] text-muted-foreground mb-2">Ingin membatalkan pesanan ini?</p>
-                <button wire:click="cancelBooking"
-                    wire:confirm="Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan."
-                    class="mt-2 w-full inline-flex items-center justify-center rounded-md bg-red-600 text-white shadow hover:bg-red-700 h-10 sm:h-12 px-8 font-bold text-base sm:text-lg transition-opacity">
-                    Batalkan Pesanan
-                </button>
+            <div class="flex flex-col">
+                <p class="text-sm font-bold text-foreground tracking-tight leading-none">Memproses Transaksi</p>
+                <p class="text-[10px] text-muted-foreground mt-1.5 leading-tight">Mohon tunggu sebentar, kami sedang menyiapkan pesanan Anda...</p>
             </div>
         </div>
     </div>
+
+    <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-4 animate-in fade-in duration-500">
+        
+        <!-- Header -->
+        <div class="p-4 text-center border-b border-border/50 bg-muted/10">
+            <h1 class="text-lg font-bold tracking-tight text-foreground">
+                {{ $paymentInfo ? 'Selesaikan Pesanan' : 'Pilih Pembayaran' }}
+            </h1>
+            
+            @if(session()->has('error'))
+                <div class="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-[10px] text-red-600">
+                    {{ session('error') }}
+                </div>
+            @endif
+            
+            @php
+                $isCash = data_get($paymentInfo, 'payment_type') === 'cash';
+                
+                // Ambil expiry_time dari Midtrans (prioritas)
+                $expiryTime = data_get($paymentInfo, 'expiry_time');
+                
+                if ($expiryTime) {
+                    // Jika ada expiry_time dari Midtrans, parse dengan asumsi WIB (UTC+7)
+                    $expiryTimestamp = \Carbon\Carbon::parse($expiryTime, 'Asia/Jakarta')->timestamp * 1000;
+                } else {
+                    // Jika belum ada/masih pilih metode, default 24 jam dari buat
+                    $expiryTimestamp = $rental->created_at->addDay()->timestamp * 1000;
+                }
+            @endphp
+
+            @if($isCash)
+                <div class="mt-3 flex flex-col items-center">
+                    <span class="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Jadwal Pengambilan</span>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-3xl font-bold text-emerald-600 tracking-tighter">
+                            {{ $rental->waktu_mulai->format('H:i') }}
+                        </span>
+                        <span class="text-xs font-semibold text-muted-foreground">
+                            {{ $rental->waktu_mulai->format('d M Y') }}
+                        </span>
+                    </div>
+                </div>
+            @else
+                <div x-data="{
+                    timeLeft: '',
+                    status: 'green',
+                    endTime: {{ $expiryTimestamp }},
+                    update() {
+                        const now = new Date().getTime();
+                        const diff = this.endTime - now;
+                        if (diff <= 0) { this.timeLeft = 'Waktu habis'; this.status = 'red'; return; }
+                        const h = Math.floor(diff / (1000 * 60 * 60));
+                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const s = Math.floor((diff % (1000 * 60)) / 1000);
+                        this.timeLeft = (h > 0 ? h + 'j ' : '') + m + 'm ' + s + 'd';
+                        this.status = h < 1 ? 'red' : (h < 12 ? 'amber' : 'green');
+                    }
+                }" x-init="update(); setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center">
+                    <span class="text-[9px] text-muted-foreground mb-0.5 uppercase font-bold tracking-widest">Batas Waktu Bayar</span>
+                    <div x-text="timeLeft" 
+                        class="text-3xl font-black font-mono tracking-tighter transition-all duration-500"
+                        :class="{
+                            'text-emerald-600': status === 'green',
+                            'text-amber-500': status === 'amber',
+                            'text-red-500 animate-pulse': status === 'red'
+                        }">
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        <div class="p-4 space-y-4">
+            @if(!$isCash)
+                <!-- Summary -->
+                <div class="p-4 bg-muted/30 rounded-xl border border-border/50 flex justify-between items-center shadow-inner">
+                    <span class="text-sm font-medium text-muted-foreground">Total Tagihan</span>
+                    <span class="text-xl font-bold">Rp {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
+                </div>
+            @endif
+
+            @if(!$paymentInfo)
+                <!-- Bank List -->
+                <div class="grid grid-cols-1 gap-2">
+                    @php
+                        $savedPayment = \App\Models\Setting::getVal('payment_methods', '[]');
+                        $activeMethods = json_decode($savedPayment, true) ?: [];
+                        
+                        $banks = [
+                            ['id' => 'bca', 'name' => 'BCA', 'sub' => 'Transfer otomatis', 'icon' => 'BCA'],
+                            ['id' => 'mandiri', 'name' => 'Mandiri', 'sub' => 'Mandiri bill', 'icon' => 'MDR'],
+                            ['id' => 'bni', 'name' => 'BNI', 'sub' => 'Transfer otomatis', 'icon' => 'BNI'],
+                            ['id' => 'bri', 'name' => 'BRI', 'sub' => 'Transfer otomatis', 'icon' => 'BRI'],
+                            ['id' => 'permata', 'name' => 'Permata', 'sub' => 'Transfer bank', 'icon' => 'PRM'],
+                            ['id' => 'bsi', 'name' => 'BSI', 'sub' => 'Transfer otomatis', 'icon' => 'BSI'],
+                            ['id' => 'cimb', 'name' => 'CIMB', 'sub' => 'Transfer otomatis', 'icon' => 'CMB'],
+                            ['id' => 'qris', 'name' => 'QRIS', 'sub' => 'Gopay / ShopeePay / QR', 'icon' => 'QR'],
+                            ['id' => 'cash', 'name' => 'Bayar di Tempat', 'sub' => 'Tunai / Cash di Lokasi', 'icon' => 'CSH'],
+                        ];
+                        
+                        // Filter hanya bank yang dicentang di Admin Settings
+                        $filteredBanks = collect($banks)->filter(function($bank) use ($activeMethods) {
+                            return isset($activeMethods[$bank['id']]) && $activeMethods[$bank['id']] == true;
+                        })->all();
+                    @endphp
+
+                    @foreach($filteredBanks as $bank)
+                        <button wire:click="selectChannel('{{ $bank['id'] }}')" wire:loading.attr="disabled"
+                            class="group flex items-center p-3.5 rounded-xl border border-border bg-background hover:bg-accent hover:border-accent-foreground/5 transition-all text-left relative overflow-hidden">
+                            <div class="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-border/50 flex items-center justify-center mr-4 text-[10px] font-bold text-muted-foreground group-hover:bg-background transition-colors">
+                                {{ $bank['icon'] }}
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-semibold leading-none mb-1">{{ $bank['name'] }}</p>
+                                <p class="text-[11px] text-muted-foreground">{{ $bank['sub'] }}</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all"><path d="m9 18 6-6-6-6"/></svg>
+                            
+                            <div wire:loading wire:target="selectChannel('{{ $bank['id'] }}')" class="absolute inset-0 bg-background/80 flex items-center justify-center rounded-xl">
+                                <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        </button>
+                    @endforeach
+                </div>
+            @else
+                <!-- Detail View -->
+                <div class="space-y-5 animate-in fade-in slide-in-from-bottom-2">
+                    <div class="p-5 bg-muted/40 rounded-xl border border-border/50 text-center text-sm">
+                        @if($selectedChannel === 'qris')
+                            <p class="font-semibold text-muted-foreground mb-4">Silakan scan kode QRIS</p>
+                            @if(isset($paymentInfo['actions']))
+                                @php $qrAction = collect($paymentInfo['actions'])->where('name', 'generate-qr-code')->first(); @endphp
+                                @if($qrAction)
+                                    <div class="inline-block p-4 bg-white rounded-xl border border-border shadow-xl">
+                                        <img src="{{ $qrAction['url'] }}" alt="QRIS" class="w-56 h-56 mx-auto">
+                                    </div>
+                                @endif
+                            @endif
+                        @else
+                            <div class="space-y-4">
+                                @if(data_get($paymentInfo, 'payment_type') === 'cash')
+                                    <div class="space-y-4">
+                                        <div class="p-3 bg-muted/50 border border-border rounded-xl text-center">
+                                            <p class="text-[11px] font-bold text-foreground mb-0.5">Bayar Tunai di Lokasi</p>
+                                            <p class="text-[10px] text-muted-foreground leading-tight">
+                                                Silakan datang ke alamat kami untuk melakukan pembayaran.
+                                            </p>
+                                        </div>
+
+                                        <div class="p-3 bg-background border border-border rounded-xl">
+                                            <p class="text-[9px] font-bold text-muted-foreground mb-1 uppercase">Lokasi</p>
+                                            <p class="text-[11px] font-medium text-foreground leading-tight">
+                                                {{ data_get($paymentInfo, 'address') }}
+                                            </p>
+                                        </div>
+
+                                        <!-- Struk Detail -->
+                                        <div class="p-3 border-2 border-dashed border-muted rounded-xl bg-muted/10 space-y-2">
+                                            <div class="flex justify-between items-start border-b border-muted pb-1.5">
+                                                <div class="flex-1 pr-2">
+                                                    <p class="text-[9px] font-bold text-muted-foreground uppercase">Unit</p>
+                                                    <p class="text-[11px] font-bold leading-tight">{{ $rental->units->pluck('seri')->join(', ') }}</p>
+                                                </div>
+                                                <div class="text-right shrink-0">
+                                                    <p class="text-[9px] font-bold text-muted-foreground uppercase text-emerald-600">Kode Booking</p>
+                                                    <p class="text-[12px] font-black tracking-tight text-emerald-600">{{ $rental->booking_code }}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex justify-between items-center opacity-80 text-[10px] py-0.5">
+                                                <span class="font-medium text-muted-foreground uppercase tracking-tighter">Durasi Sewa</span>
+                                                <span class="font-bold">{{ $rental->waktu_mulai->diffInDays($rental->waktu_selesai) }} Hari</span>
+                                            </div>
+                                            
+                                            <div class="space-y-0.5 text-[11px]">
+                                                <div class="flex justify-between opacity-80">
+                                                    <span>Subtotal</span>
+                                                    <span>{{ number_format($rental->subtotal_harga, 0, ',', '.') }}</span>
+                                                </div>
+                                                @if($rental->potongan_diskon > 0)
+                                                    <div class="flex justify-between text-emerald-600 font-medium">
+                                                        <span>Diskon</span>
+                                                        <span>-{{ number_format($rental->potongan_diskon, 0, ',', '.') }}</span>
+                                                    </div>
+                                                @endif
+                                                @if($rental->kode_unik_pembayaran > 0)
+                                                    <div class="flex justify-between opacity-80">
+                                                        <span>Kode Unik</span>
+                                                        <span>+{{ number_format($rental->kode_unik_pembayaran, 0, ',', '.') }}</span>
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            <div class="flex justify-between items-center border-t border-dashed border-muted pt-1.5 text-emerald-600 font-bold">
+                                                <span class="text-[10px] uppercase">Total Tunai</span>
+                                                <span class="text-lg tracking-tighter">Rp {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
+                                            </div>
+                                        </div>
+
+                                        @php
+                                            $unitNames = $rental->units->pluck('seri')->join(', ');
+                                            $startTime = $rental->waktu_mulai->format('d M Y, H:i');
+                                            $endTime = $rental->waktu_selesai ? $rental->waktu_selesai->format('d M Y, H:i') : '-';
+                                            
+                                            $waMessage = "Halo Admin, saya baru saja melakukan pemesanan di RENT SPACE. Berikut rinciannya:\n\n"
+                                                       . "Kode Booking: " . $rental->booking_code . "\n"
+                                                       . "Nama: " . $rental->nama . "\n"
+                                                       . "Unit: " . $unitNames . "\n"
+                                                       . "Waktu Sewa: " . $startTime . " s/d " . $endTime . "\n"
+                                                       . "Total Bayar: Rp " . number_format($rental->grand_total, 0, ',', '.') . "\n"
+                                                       . "Ref: " . ($rental->affiliate_code ?: '-') . "\n\n"
+                                                       . "Link Detail: " . route('public.payment', $rental->booking_code) . "\n\n"
+                                                       . "Mohon bantuannya untuk diproses. Terima kasih!";
+                                            
+                                            $waUrl = "https://wa.me/" . \App\Models\Setting::getVal('admin_wa') . "?text=" . urlencode($waMessage);
+                                        @endphp
+
+                                        <a href="{{ $waUrl }}" 
+                                           target="_blank"
+                                           class="w-full h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center gap-2 font-bold border border-emerald-500/10 transition-all text-xs">
+                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                             Konfirmasi WhatsApp
+                                         </a>
+                                    </div>
+                                @else
+                                    <div class="text-left">
+                                        <p class="text-[9px] font-bold text-muted-foreground mb-1">NOMOR VIRTUAL ACCOUNT ({{ strtoupper($selectedChannel) }})</p>
+                                    <div class="p-3 bg-background border border-border rounded-xl flex items-center justify-between shadow-sm">
+                                        <p class="text-base font-bold text-foreground break-all mr-2" id="va-number">
+                                            @if($va = data_get($paymentInfo, 'va_numbers.0.va_number'))
+                                                {{ $va }}
+                                            @elseif($bk = data_get($paymentInfo, 'bill_key'))
+                                                {{ $bk }}
+                                            @elseif($pva = data_get($paymentInfo, 'permata_va_number'))
+                                                {{ $pva }}
+                                            @else
+                                                -
+                                            @endif
+                                        </p>
+                                        <button onclick="copyVA()" class="h-8 w-8 flex items-center justify-center border border-border rounded-lg bg-background hover:bg-accent transition-all active:scale-90 shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                        </button>
+                                    </div>
+                                    </div>
+                                @endif
+                                
+                                @if($selectedChannel === 'mandiri')
+                                    <div class="p-3 bg-background border border-border rounded-xl flex justify-between items-center text-xs">
+                                        <span class="text-muted-foreground font-medium">Biller Code</span>
+                                        <span class="text-sm font-bold">{{ data_get($paymentInfo, 'biller_code', '-') }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+
+                </div>
+            @endif
+
+            @if($paymentInfo)
+                <div class="mt-3">
+                    <button wire:click="resetPayment" class="mt-16 w-full h-11 rounded-xl bg-white text-zinc-900 flex items-center justify-center gap-2 font-bold border border-zinc-200 hover:bg-zinc-50 transition-all text-sm active:scale-95 shadow-sm">
+                        Ubah Metode Pembayaran
+                    </button>
+                </div>
+            @endif
+
+            <div class=" text-center">
+            <button wire:click="cancelBooking" wire:confirm="Batalkan pesanan ini?"
+                class="text-xs font-bold text-red-600 hover:text-red-700 transition-colors">
+                Batalkan transaksi
+            </button>
+        </div>
+            
+            <p class="text-[10px] text-muted-foreground text-center opacity-40">
+                &copy; {{ date('Y') }} Rent Space &bull; Transaksi Terenkripsi SSL
+            </p>
+        </div>
+    </div>
+
+    <!-- Scripts Area -->
+    @php
+        $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        $snapUrl = $isProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
+    @endphp
+    <script src="{{ $snapUrl }}" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+    <script>
+        document.addEventListener('livewire:init', () => {
+           Livewire.on('pay-with-snap', (event) => {
+               window.snap.pay(event.token, {
+                   onSuccess: function(result){ @this.call('finish'); },
+                   onPending: function(result){ window.location.reload(); },
+                   onClose: function(){ window.location.reload(); },
+                   onError: function(result){ window.location.reload(); }
+               });
+           });
+        });
+
+        function copyVA() {
+            var vaText = document.getElementById("va-number").innerText;
+            navigator.clipboard.writeText(vaText);
+            alert("Nomor VA berhasil disalin");
+        }
+    </script>
 </div>

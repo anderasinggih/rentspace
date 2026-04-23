@@ -1,45 +1,98 @@
-<div class="py-0 px-4 sm:py-16 flex flex-col items-center">
+<div class="py-0 px-4 sm:py-16 flex flex-col items-center" @if($rental->status === 'pending') wire:poll.5s="refreshStatus" @endif>
     <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-4">
 
         <!-- Header -->
-        <div class="p-5 text-center border-b border-border/50 bg-muted/20">
+        <div class="p-6 text-center border-b border-border/50 bg-muted/20">
             @if($rental->status === 'cancelled')
-                <div
-                    class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 mb-3">
-                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-rose-500/10 text-rose-500 mb-4">
+                    <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5">
                         <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round" />
                         <line x1="15" y1="9" x2="9" y2="15" stroke-linecap="round" stroke-linejoin="round" />
                         <line x1="9" y1="9" x2="15" y2="15" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
                 <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Dibatalkan</h1>
-            @else
-                <div
-                    class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 mb-3">
-                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5">
+                <p class="text-[10px] text-muted-foreground mt-1">Status: Menghapus antrean unit</p>
+            @elseif($rental->status === 'paid')
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-500 mb-4 animate-in zoom-in duration-500">
+                    <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Berhasil!</h1>
+                <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Pembayaran Berhasil!</h1>
+                <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Lunas / Terbayar</p>
+            @elseif($rental->metode_pembayaran === 'cash' && $rental->status === 'pending')
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-500/10 text-blue-500 mb-4 animate-in zoom-in duration-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-foreground text-blue-600">Pesanan Diterima!</h1>
+                <p class="text-[11px] text-blue-600/80 font-semibold mt-1">Selesaikan Pembayaran di lokasi</p>
+            @else
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500/10 text-amber-500 mb-4">
+                    <div class="w-7 h-7 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></div>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-foreground">Menunggu Pembayaran</h1>
+                
+                @php
+                    // Sinkronkan logika waktu dengan halaman Payment
+                    $expiryTime = data_get($rental->payment_details, 'expiry_time');
+                    
+                    if ($expiryTime) {
+                        // Jika ada dari Midtrans, gunakan Asia/Jakarta (WIB)
+                        $expiryTimestamp = \Carbon\Carbon::parse($expiryTime, 'Asia/Jakarta')->timestamp * 1000;
+                    } else {
+                        // Default 24 jam jika belum ada data Midtrans
+                        $expiryTimestamp = $rental->created_at->addDay()->timestamp * 1000;
+                    }
+                @endphp
+                <div x-data="{
+                    timeLeft: '',
+                    status: 'green',
+                    endTime: {{ $expiryTimestamp }},
+                    update() {
+                        const now = new Date().getTime();
+                        const diff = this.endTime - now;
+                        if (diff <= 0) { this.timeLeft = 'waktu habis'; this.status = 'red'; return; }
+                        
+                        const hoursTotal = diff / (1000 * 60 * 60);
+                        if (hoursTotal < 1) { this.status = 'red'; }
+                        else if (hoursTotal < 12) { this.status = 'amber'; }
+                        else { this.status = 'green'; }
+
+                        const h = Math.floor(hoursTotal);
+                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const s = Math.floor((diff % (1000 * 60)) / 1000);
+                        this.timeLeft = (h > 0 ? h + 'j ' : '') + m + 'm ' + s + 'd';
+                    }
+                }" x-init="update(); setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center">
+                    <span class="text-xs text-muted-foreground mb-1">Batas Waktu Pembayaran</span>
+                    <div x-text="timeLeft" 
+                        class="text-3xl font-black font-mono tracking-tighter transition-all duration-500"
+                        :class="{
+                            'text-emerald-500': status === 'green',
+                            'text-amber-500': status === 'amber',
+                            'text-red-500 animate-pulse': status === 'red'
+                        }">
+                    </div>
+                </div>
             @endif
-            <p class="text-xs text-muted-foreground mt-1">ID Pesanan: #{{ str_pad($rental->id, 5, '0', STR_PAD_LEFT) }}
-                &bull; {{ $rental->nama }}
-                @if($rental->affiliate_code)
-                &bull; <span class="text-primary font-bold">Ref: {{ $rental->affiliate_code }}</span>
-                @endif
-            </p>
-            <p class="text-[10px] text-muted-foreground mt-1 opacity-70">
-                {{ $rental->created_at->translatedFormat('d F Y, H:i') }} WIB
-            </p>
+
+            <p class="text-xs text-muted-foreground mt-3 font-medium">{{ $rental->nama }} &bull; <span class="bg-muted px-1.5 py-0.5 rounded text-foreground font-bold tracking-tight">{{ $rental->booking_code }}</span></p>
+
+            @if($debugError && auth()->check() && auth()->user()->role === 'admin')
+                <div class="mt-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-[10px] text-red-600 font-mono text-left">
+                    Debug Error: {{ $debugError }}
+                </div>
+            @endif
         </div>
 
-        <div class="p-5 space-y-4">
+        <div class="px-6 pb-6 pt-3 space-y-3.5">
             <!-- Units -->
-            <div class="space-y-2">
-                <p class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Detail Item</p>
+            <div class="space-y-2.5">
+                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">Item Yang Disewa</p>
                 @foreach($rental->units as $unit)
                     <div class="flex items-center justify-between text-sm">
-                        <span class="font-medium text-foreground">{{ $unit->seri }}</span>
+                        <span class="font-semibold text-foreground">{{ $unit->seri }}</span>
                         <span class="text-xs text-muted-foreground">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
                     </div>
                 @endforeach
@@ -48,78 +101,95 @@
             <div class="h-px bg-border/50"></div>
 
             <!-- Schedule -->
-            <div class="grid grid-cols-2 gap-3 text-sm">
+            <div class="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                    <p class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pengambilan
-                    </p>
-                    <p class="font-medium">{{ $rental->waktu_mulai->format('d/m/Y') }}</p>
-                    <p class="text-xs text-muted-foreground">{{ $rental->waktu_mulai->format('H:i') }} WIB</p>
+                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-1.5">Pengambilan</p>
+                    <p class="font-bold text-foreground leading-none">{{ $rental->waktu_mulai->format('d M Y') }}</p>
+                    <p class="text-xs text-muted-foreground mt-1">{{ $rental->waktu_mulai->format('H:i') }} WIB</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Kembali</p>
-                    <p class="font-medium text-primary">{{ $rental->waktu_selesai->format('d/m/Y') }}</p>
-                    <p class="text-xs text-muted-foreground">{{ $rental->waktu_selesai->format('H:i') }} WIB</p>
+                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-1.5">Kembali</p>
+                    <p class="font-bold text-primary leading-none">{{ $rental->waktu_selesai->format('d M Y') }}</p>
+                    <p class="text-xs text-muted-foreground mt-1">{{ $rental->waktu_selesai->format('H:i') }} WIB</p>
                 </div>
             </div>
 
             <div class="h-px bg-border/50"></div>
 
-            <!-- Price -->
-            <div class="space-y-1.5 text-xs">
-                <div class="flex justify-between text-muted-foreground">
-                    <span>Subtotal</span>
-                    <span>Rp {{ number_format($rental->subtotal_harga, 0, ',', '.') }}</span>
+            <!-- Price Breakdown -->
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between text-muted-foreground text-xs">
+                    <span>Metode Pembayaran</span>
+                    <span class="font-medium">{{ strtoupper($rental->metode_pembayaran ?? 'Online') }}</span>
+                </div>
+                <div class="flex justify-between text-muted-foreground text-xs">
+                    <span>Subtotal Harga</span>
+                    <span class="font-medium">Rp {{ number_format($rental->subtotal_harga, 0, ',', '.') }}</span>
                 </div>
                 @if($rental->potongan_diskon > 0)
-                    <div class="flex justify-between text-rose-500">
-                        <span>Diskon</span>
-                        <span>- Rp {{ number_format($rental->potongan_diskon, 0, ',', '.') }}</span>
+                    <div class="flex justify-between text-rose-500 text-xs">
+                        <span>Potongan Diskon</span>
+                        <span class="font-medium">- Rp {{ number_format($rental->potongan_diskon, 0, ',', '.') }}</span>
                     </div>
                 @endif
                 @if($rental->kode_unik_pembayaran)
-                    <div class="flex justify-between text-amber-500">
+                    <div class="flex justify-between text-amber-600 text-xs">
                         <span>Kode Unik</span>
-                        <span>+ {{ $rental->kode_unik_pembayaran }}</span>
+                        <span class="font-medium">+ {{ $rental->kode_unik_pembayaran }}</span>
                     </div>
                 @endif
-                <div class="flex justify-between items-center pt-2 text-sm font-bold text-foreground">
-                    <span>Total Bayar</span>
-                    <span class="text-base text-primary">Rp
-                        {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
+                <div class="flex justify-between items-center pt-2 mt-1 border-t border-dashed border-border/60">
+                    <span class="font-bold">{{ $rental->metode_pembayaran === 'cash' ? 'Total Tunai' : 'Total Tagihan' }}</span>
+                    <span class="text-xl font-black text-foreground">Rp {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
                 </div>
             </div>
 
+            <!-- Conditional Actions Based on Ownership and Status -->
+            <!-- Conditional Actions Based on Ownership and Status -->
             @if($isOwner)
-                @if($rental->status !== 'cancelled')
-                    <!-- Warning -->
-                    <div
-                        class="flex items-start gap-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 p-3 rounded-lg text-xs">
-                        <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M12 8v4m0 4h.01" />
-                        </svg>
-                        <p>Wajib <span class="font-bold underline">SCREENSHOT</span> halaman ini sebagai bukti pesanan Anda.</p>
-                    </div>
-                @endif
+                <div class="space-y-3 pt-4">
+                    @if($rental->status === 'pending')
+                        {{-- Jika Online, kasih tombol Bayar Sekarang --}}
+                        @if($rental->metode_pembayaran !== 'cash')
+                            <a href="{{ route('public.payment', $rental->booking_code) }}"
+                                class="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-zinc-900 text-white text-sm font-bold transition-all active:scale-95 shadow-lg shadow-zinc-900/10">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h7"/><path d="M16 19h6"/><path d="M19 16v6"/><rect width="7" height="5" x="14" y="11" rx="1"/><path d="M3 10h18"/></svg>
+                                Bayar Sekarang
+                            </a>
+                        @endif
 
-                <!-- Actions -->
-                <div class="space-y-2 pt-2">
-                    @if($rental->status === 'cancelled')
-                        <a href="{{ route('public.booking') }}" wire:navigate
-                            class="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold transition-all shadow-sm group mb-3">
-                            <span>Sewa Unit Lain</span>
+                        {{-- Jika Cash, tetap tombol WA --}}
+                        @if($rental->metode_pembayaran === 'cash')
+                            <a href="{{ $waUrl }}" target="_blank"
+                                class="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-emerald-600 text-white text-sm font-bold border border-emerald-500/10 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                <span>Konfirmasi WhatsApp</span>
+                            </a>
+                        @else
+                            <p class="text-[10px] text-center text-muted-foreground px-4">Setelah membayar, halaman ini akan otomatis berubah menjadi struk berhasil.</p>
+                        @endif
+                    @elseif($rental->status === 'paid')
+                        <!-- Success Notifications -->
+                        <div class="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-xl flex items-start gap-3">
+                            <div class="p-1 bg-emerald-500 rounded-full text-white mt-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <p class="text-xs text-emerald-800 leading-relaxed font-medium">Lunas! Silakan <span class="font-bold underline">SCREENSHOT</span> halaman ini dan tunjukkan saat pengambilan unit.</p>
+                        </div>
+                        <a href="{{ $waUrl }}" target="_blank"
+                            class="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-zinc-900 text-white text-sm font-bold transition-all">
+                            <span>Konfirmasi ke WhatsApp</span>
                         </a>
                     @else
-                        <a href="{{ $waUrl }}" target="_blank"
-                            class="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold transition-all shadow-sm group mb-3">
-                            <span>Konfirmasi Pesanan</span>
+                        <!-- Cancelled Case -->
+                        <a href="{{ route('public.booking') }}" wire:navigate
+                            class="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-bold border border-zinc-200 hover:bg-zinc-200 transition-all">
+                            Sewa Unit Lain
                         </a>
                     @endif
 
-                    <div class="grid grid-cols-2 gap-2">
-                        <a href="{{ route('public.check-order') }}"
-                            wire:navigate
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <a href="{{ route('public.check-order') }}" wire:navigate
                             class="flex items-center justify-center gap-1.5 h-11 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs font-semibold transition-all border border-border/50">
                             Cek Pesanan
                         </a>
@@ -131,44 +201,42 @@
                 </div>
             @endif
 
+            <!-- Admin Panel (Keep as requested) -->
             @if(auth()->check() && auth()->user()->role === 'admin')
-                <div class="pt-4 border-t border-border/50 mt-4 space-y-3">
+                <div class="pt-6 border-t border-border mt-6 space-y-3">
                     <div class="flex items-center justify-between">
-                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Admin Panel</p>
-                        <span class="text-[10px] font-bold uppercase {{ $rental->status === 'paid' ? 'text-emerald-500' : ($rental->status === 'cancelled' ? 'text-rose-500' : 'text-amber-500') }}">
-                            {{ $rental->status }}
+                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Admin Control</p>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $rental->status === 'paid' ? 'bg-emerald-500/10 text-emerald-600' : ($rental->status === 'cancelled' ? 'bg-rose-500/10 text-rose-600' : 'bg-amber-500/10 text-amber-600') }}">
+                            #{{ strtoupper($rental->status) }}
                         </span>
                     </div>
 
                     @if(session()->has('admin_message'))
-                        <div class="bg-emerald-500/10 text-emerald-600 text-[10px] p-2 rounded text-center">
+                        <div class="bg-emerald-500/10 text-emerald-600 text-[10px] p-2 rounded-lg text-center font-bold">
                             {{ session('admin_message') }}
                         </div>
                     @endif
 
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-1 gap-2">
                         @if($rental->status === 'pending')
-                            <button wire:click="validateOrder" 
-                                wire:confirm="Apakah Anda yakin ingin memvalidasi pesanan ini?"
-                                wire:loading.attr="disabled"
-                                class="flex items-center justify-center h-10 rounded-xl bg-foreground text-background text-xs font-bold hover:opacity-90 transition-all shadow-sm disabled:opacity-50">
-                                Validasi Pesanan
-                            </button>
-
-                            <button wire:click="cancelOrder" 
-                                wire:confirm="Apakah Anda yakin ingin membatalkan pesanan ini?"
-                                wire:loading.attr="disabled"
-                                class="flex items-center justify-center h-10 rounded-xl bg-background text-foreground border border-border text-xs font-bold hover:bg-muted transition-all shadow-sm disabled:opacity-50">
-                                Batalkan
-                            </button>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button wire:click="validateOrder" wire:confirm="Validasi pembayarn manual?"
+                                    class="flex items-center justify-center h-10 rounded-xl bg-zinc-900 text-white text-[11px] font-bold hover:bg-black transition-all">
+                                    Lunas
+                                </button>
+                                <button wire:click="cancelOrder" wire:confirm="Apakah Anda yakin ingin membatalkan pesanan ini?"
+                                    wire:loading.attr="disabled"
+                                    class="flex items-center justify-center h-10 rounded-xl bg-rose-600 text-white text-[11px] font-bold hover:bg-rose-700 transition-all shadow-sm disabled:opacity-50">
+                                    Batalkan Pesanan
+                                </button>
+                            </div>
                         @endif
                     </div>
                 </div>
             @endif
 
-            <!-- Footer -->
-            <p class="text-[10px] text-muted-foreground text-center pt-4 opacity-50">
-                &copy; {{ date('Y') }} All Rights Reserved Rent Space
+            <p class="text-[10px] text-muted-foreground text-center pt-6 opacity-40">
+                &copy; {{ date('Y') }} Rent Space &bull; Tanda Terima Digital
             </p>
         </div>
     </div>

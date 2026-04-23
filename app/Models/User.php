@@ -56,13 +56,6 @@ class User extends Authenticatable
         return $this->hasOne(AffiliatorProfile::class);
     }
 
-    /**
-     * Backward compatibility or alias for affiliatorProfile
-     */
-    public function affiliatorProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(AffiliatorProfile::class);
-    }
 
     /**
      * Get commissions earned by this user (as affiliator).
