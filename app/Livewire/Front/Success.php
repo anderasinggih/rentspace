@@ -38,6 +38,14 @@ class Success extends Component
             $this->checkMidtransStatus();
         }
 
+        // 3. Auto-login sesi untuk Cek Pesanan agar user tidak perlu ngetik NIK lagi nantinya
+        session()->put('customer_session', [
+            'nik'          => $this->rental->nik,
+            'no_wa'        => $this->rental->no_wa,
+            'logged_in_at' => now()->toISOString(),
+            'expires_at'   => now()->addHours(6)->timestamp,
+        ]);
+
         $this->waUrl = $this->generateWaUrl();
     }
 
