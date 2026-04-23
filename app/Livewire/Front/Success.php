@@ -44,7 +44,7 @@ class Success extends Component
         $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
         if ($this->rental->status === 'pending' && $isExpired) {
             // --- JURUS SAPU JAGAT: CANCEL SEMUA KEMUNGKINAN BANK ---
-            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
+            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
                 try {
                     $potentialId = $this->rental->booking_code . '-' . $bank;
@@ -80,7 +80,7 @@ class Success extends Component
         // 2. CEK TIMER (Hanya jika di Midtrans belum dibayar)
         if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
             // --- JURUS SAPU JAGAT ---
-            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
+            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
                 try {
                     $potentialId = $this->rental->booking_code . '-' . $bank;
