@@ -46,7 +46,7 @@ class Transactions extends Component
         'sortDirection' => ['except' => 'desc'],
         'perPage' => ['except' => 25],
     ];
-    
+
     public function updatingSearch() { $this->resetPage(); }
     public function updatingFilterStatus() { $this->resetPage(); }
     public function updatingDateStart() { $this->resetPage(); }
@@ -211,10 +211,60 @@ class Transactions extends Component
             $this->closeDendaModal();
         }
 
-        // Use where()->delete() instead of findOrFail()->delete() to avoid 404 on double clicks
+        // Use where()->delete() instead of findOrFail()->delete()
+        // If it's already in trash, this will just call soft delete again (no effect)
+        $rental = Rental::find($id);
         Rental::where('id', $id)->delete();
+
+        if ($rental && $rental->affiliator_id) {
+            $this->syncAffiliateBalance($rental->affiliator_id);
+        }
         
-        session()->flash('message', 'Transaksi berhasil dihapus.');
+        session()->flash('message', 'Transaksi dipindahkan ke kotak sampah.');
+    }
+
+    public function restore($id)
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        $rental = Rental::withTrashed()->find($id);
+        Rental::withTrashed()->where('id', $id)->restore();
+
+        if ($rental && $rental->affiliator_id) {
+            $this->syncAffiliateBalance($rental->affiliator_id);
+        }
+
+        session()->flash('message', 'Transaksi berhasil dikembalikan.');
+    }
+
+    public function forceDelete($id)
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        $rental = Rental::withTrashed()->find($id);
+        Rental::withTrashed()->where('id', $id)->forceDelete();
+
+        if ($rental && $rental->affiliator_id) {
+            $this->syncAffiliateBalance($rental->affiliator_id);
+        }
+
+        session()->flash('message', 'Transaksi telah dihapus permanen.');
+    }
+
+    private function syncAffiliateBalance($userId)
+    {
+        $profile = \App\Models\AffiliatorProfile::where('user_id', $userId)->first();
+        if ($profile) {
+            // Commissions only from non-deleted rentals
+            $totalEarned = \App\Models\AffiliateCommission::where('affiliator_id', $userId)
+                ->whereHas('rental')
+                ->sum('amount');
+            
+            $totalWithdrawn = \App\Models\AffiliatePayout::where('affiliator_id', $userId)->sum('amount');
+            
+            $profile->balance = $totalEarned - $totalWithdrawn;
+            $profile->save();
+        }
     }
 
     public function openInspect($id)
@@ -306,15 +356,16 @@ class Transactions extends Component
     {
         if (auth()->user()->role !== 'admin') return;
 
-        $transactions = Rental::with('units')
+        $transactions = Rental::with(['units', 'affiliator', 'commissions'])
+            ->when($this->filterStatus === 'trashed', fn($q) => $q->onlyTrashed())
             ->when($this->search, function ($q) {
                 $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
                 ->orWhere('id', 'like', '%' . $this->search . '%')
                 ->orWhere('booking_code', 'like', '%' . $this->search . '%')
                 ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
             })
-            ->when($this->filterStatus, function ($q) {
-                $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
+            ->when($this->filterStatus && $this->filterStatus !== 'trashed', function ($q) {
+                $q->where('status', $this->filterStatus);
             })
             ->when($this->dateStart, function ($q) {
                 $q->whereDate('created_at', '>=', $this->dateStart);
@@ -327,7 +378,7 @@ class Transactions extends Component
 
         $headers = [
             "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=mutasi_transaksi.csv",
+            "Content-Disposition" => "attachment; filename=mutasi_transaksi_" . now()->format('Y-m-d_His') . ".csv",
             "Pragma" => "no-cache",
             "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
             "Expires" => "0"
@@ -335,88 +386,92 @@ class Transactions extends Component
 
         $callback = function () use ($transactions) {
             $file = fopen('php://output', 'w');
+            
+            // Add UTF-8 BOM for proper Excel encoding
+            fputs($file, $bom = chr(0xEF) . chr(0xBB) . chr(0xBF));
+
             fputcsv($file, [
-                'ID Transaksi', 
-                'Payment Code (Booking)',
+                'ID INVOICE', 
+                'KODE BOOKING',
+                'TGL PESAN',
+                'NAMA PENYEWA',
                 'NIK',
-                'Nama Penyewa', 
-                'Alamat',
-                'No WhatsApp', 
-                'Unit', 
-                'Tgl Mulai', 
-                'Tgl Selesai', 
-                'Subtotal', 
-                'Diskon', 
-                'Promo Applied',
-                'Hari Bonus',
-                'Jam Bonus',
-                'Kode Unik',
-                'Grand Total', 
-                'Ref Code',
-                'Affiliator',
-                'Komisi Affiliator',
-                'Profit (Net)',
-                'Metode Bayar Trx', 
-                'Denda Telat', 
-                'Denda Kerusakan', 
-                'Metode Bayar Denda',
-                'Catatan Kerusakan',
-                'Status',
-                'Tgl Selesai Aktual',
-                'Tgl Dibuat'
-            ]);
+                'WHATSAPP',
+                'ALAMAT',
+                'UNIT SEWA',
+                'WAKTU MULAI', 
+                'WAKTU SELESAI', 
+                'DURASI (JAM)',
+                'SUBTOTAL (RP)', 
+                'DISKON (RP)', 
+                'KODE UNIK (RP)',
+                'DENDA TELAT (RP)',
+                'DENDA RUSAK (RP)',
+                'GRAND TOTAL (RP)', 
+                'METODE BAYAR',
+                'STATUS',
+                'AFFILIATOR',
+                'KOMISI AFF (RP)',
+                'PROFIT NETTO (RP)',
+                'TGL SELESAI AKTUAL',
+                'PROMO APPLIED'
+            ], ";");
 
             foreach ($transactions as $trx) {
+                $units = $trx->units->pluck('seri')->implode(', ') ?: ($trx->unit->seri ?? '-');
                 $commission = $trx->commissions->sum('amount');
                 $netProfit = $trx->grand_total - $commission;
                 
+                // Duration calculation
+                $durasi = 0;
+                if ($trx->waktu_mulai && $trx->waktu_selesai) {
+                    $durasi = abs(\Carbon\Carbon::parse($trx->waktu_selesai)->diffInHours(\Carbon\Carbon::parse($trx->waktu_mulai)));
+                }
+
                 fputcsv($file, [
                     'INV-' . str_pad($trx->id, 5, '0', STR_PAD_LEFT),
                     $trx->booking_code,
-                    $trx->nik,
+                    $trx->created_at->format('d/m/Y H:i'),
                     strtoupper($trx->nama),
+                    "'" . $trx->nik, // Prepend quote to preserve NIK leading zeros in Excel
+                    "'" . $trx->no_wa, // Prepend quote to preserve Phone leading zeros
                     strtoupper($trx->alamat),
-                    $trx->no_wa,
-                    $trx->units->pluck('seri')->implode(', ') ?: ($trx->unit->seri ?? '-'),
+                    $units,
                     $trx->waktu_mulai->format('d/m/Y H:i'),
                     $trx->waktu_selesai->format('d/m/Y H:i'),
+                    $durasi,
                     $trx->subtotal_harga,
                     $trx->potongan_diskon,
-                    $trx->applied_promo_name ?? '-',
-                    $trx->hari_bonus,
-                    $trx->jam_bonus,
                     $trx->kode_unik_pembayaran,
+                    $trx->denda,
+                    $trx->denda_kerusakan,
                     $trx->grand_total,
-                    $trx->affiliate_code ?? '-',
+                    $trx->metode_pembayaran,
+                    strtoupper($trx->status),
                     $trx->affiliator->name ?? '-',
                     $commission,
                     $netProfit,
-                    $trx->metode_pembayaran,
-                    $trx->denda,
-                    $trx->denda_kerusakan,
-                    $trx->denda_payment_method ?? '-',
-                    $trx->catatan_kerusakan ?? '-',
-                    $trx->status,
                     $trx->completed_at ? $trx->completed_at->format('d/m/Y H:i') : '-',
-                    $trx->created_at->format('d/m/Y H:i')
-                ]);
+                    $trx->applied_promo_name ?? '-'
+                ], ";");
             }
             fclose($file);
         };
 
-        return response()->streamDownload($callback, 'mutasi_transaksi.csv', $headers);
+        return response()->streamDownload($callback, "export_transaksi_" . now()->format('Ymd_Hi') . ".csv", $headers);
     }
 
     public function render()
     {
         $query = Rental::with(['units', 'affiliator', 'commissions'])
+            ->when($this->filterStatus === 'trashed', fn($q) => $q->onlyTrashed())
             ->when($this->search, function ($q) {
             $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
             ->orWhere('id', 'like', '%' . $this->search . '%')
             ->orWhere('booking_code', 'like', '%' . $this->search . '%')
             ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
         })
-            ->when($this->filterStatus, function ($q) {
+            ->when($this->filterStatus && $this->filterStatus !== 'trashed', function ($q) {
             $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
         })
             ->when($this->dateStart, function ($q) {
