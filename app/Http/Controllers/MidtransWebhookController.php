@@ -26,7 +26,7 @@ class MidtransWebhookController extends Controller
         $rental = Rental::where('booking_code', $booking_code)->first();
         if (!$rental) {
             Log::error("Midtrans Webhook: Rental not found", ['booking_code' => $booking_code, 'order_id' => $order_id]);
-            return response()->json(['message' => 'Order not found'], 404);
+            return response()->json(['message' => 'Order not found or Webhook testing'], 200);
         }
 
         // Gabungkan data lama dengan data baru dari Midtrans
