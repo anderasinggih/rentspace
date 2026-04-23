@@ -30,10 +30,10 @@
             @php
                 $isCash = data_get($paymentInfo, 'payment_type') === 'cash';
                 
-                // --- JURUS ANTI-ZONA WAKTU (VERSI TIMESTAMP) ---
+                // --- JURUS ANTI-ZONA WAKTU (SINKRON 15 MENIT) ---
                 // Pake angka detik murni biar nggak ngaco pas refresh
                 $secondsPassed = now()->timestamp - $rental->created_at->timestamp;
-                $secondsRemaining = 60 - $secondsPassed;
+                $secondsRemaining = 900 - $secondsPassed;
                 if ($secondsRemaining < 0) $secondsRemaining = 0;
             @endphp
 
@@ -52,7 +52,7 @@
             @else
                 <div wire:ignore x-data="{
                     seconds: {{ $secondsRemaining }},
-                    timeLeft: '',
+                    timeLeft: '--m --d',
                     status: 'green',
                     update() {
                         if (this.seconds <= 0) { 
@@ -72,10 +72,10 @@
                         // JALAN MUNDUR: Kurangi 1 detik tiap kali fungsi dipanggil
                         this.seconds--;
                     }
-                }" x-init="setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center">
+                }" x-init="update(); setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center min-h-[60px] justify-center">
                     <span class="text-[9px] text-muted-foreground mb-0.5 uppercase font-bold tracking-widest">Batas Waktu Bayar</span>
                     <div x-text="timeLeft" 
-                        class="text-3xl font-black font-mono tracking-tighter transition-all duration-500"
+                        class="text-3xl font-black font-mono tracking-tighter transition-all duration-500 min-w-[120px] text-center"
                         :class="{
                             'text-emerald-600': status === 'green',
                             'text-amber-500': status === 'amber',

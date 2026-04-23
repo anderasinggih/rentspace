@@ -53,8 +53,22 @@ class Payment extends Component
             $this->rental->refresh();
         }
 
-        // 3. Gembok: Kalau sudah Batal, jangan kasih masuk
-        if ($this->rental->status === 'cancelled') {
+        // 3. Gembok Pintu Depan: Kalau sudah basi atau statusnya Batal, jangan kasih masuk
+        $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
+        
+        if ($this->rental->status === 'cancelled' || ($this->rental->status === 'pending' && $isExpired)) {
+            if ($this->rental->status === 'pending') {
+                // --- JURUS SAPU JAGAT ---
+                $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
+                foreach ($banks as $bank) {
+                    try {
+                        $potentialId = $this->rental->booking_code . '-' . $bank;
+                        \Midtrans\Transaction::cancel($potentialId);
+                    } catch (\Exception $e) { }
+                }
+
+                $this->rental->update(['status' => 'cancelled']);
+            }
             return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }
 
@@ -76,8 +90,19 @@ class Payment extends Component
     {
         $this->rental = $this->rental->fresh();
         
-        // 1. Cek apakah sudah melebihi batas 60 detik (Auto-Cancel)
-        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 60)) {
+        // 1. Cek apakah sudah melebihi batas 15 menit (Auto-Cancel)
+        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
+            // --- JURUS SAPU JAGAT: CANCEL SEMUA KEMUNGKINAN BANK ---
+            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
+            foreach ($banks as $bank) {
+                try {
+                    $potentialId = $this->rental->booking_code . '-' . $bank;
+                    \Midtrans\Transaction::cancel($potentialId);
+                } catch (\Exception $e) {
+                    // Abaikan kalau ID tidak ketemu atau sudah cancel
+                }
+            }
+
             $this->rental->update(['status' => 'cancelled']);
             return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }

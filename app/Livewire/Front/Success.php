@@ -34,6 +34,22 @@ class Success extends Component
         $this->admin_wa = Setting::getVal('admin_wa', '6281234567890');
         $this->isOwner = in_array($booking_code, session('owned_bookings', []));
 
+        // --- GARI POLISI: Cek apakah sudah basi sebelum ngerjain yang lain ---
+        $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
+        if ($this->rental->status === 'pending' && $isExpired) {
+            // --- JURUS SAPU JAGAT: CANCEL SEMUA KEMUNGKINAN BANK ---
+            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
+            foreach ($banks as $bank) {
+                try {
+                    $potentialId = $this->rental->booking_code . '-' . $bank;
+                    \Midtrans\Transaction::cancel($potentialId);
+                } catch (\Exception $e) { }
+            }
+
+            $this->rental->update(['status' => 'cancelled']);
+            $this->rental = $this->rental->fresh();
+        }
+
         if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash') {
             $this->checkMidtransStatus();
         }
@@ -53,8 +69,17 @@ class Success extends Component
     {
         $this->rental = $this->rental->fresh();
         
-        // --- JURUS AUTO-CANCEL 1 MENIT ---
-        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 60)) {
+        // --- JURUS AUTO-CANCEL 15 MENIT ---
+        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
+            // --- JURUS SAPU JAGAT: CANCEL SEMUA KEMUNGKINAN BANK ---
+            $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'QRIS'];
+            foreach ($banks as $bank) {
+                try {
+                    $potentialId = $this->rental->booking_code . '-' . $bank;
+                    \Midtrans\Transaction::cancel($potentialId);
+                } catch (\Exception $e) { }
+            }
+
             $this->rental->update(['status' => 'cancelled']);
             $this->rental = $this->rental->fresh();
             return;
