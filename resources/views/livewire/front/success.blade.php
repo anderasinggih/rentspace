@@ -138,11 +138,16 @@
                         <span class="font-medium">+ {{ $this->rental->kode_unik_pembayaran }}</span>
                     </div>
                 @endif
-                @if($fee = data_get($this->rental->payment_details, 'payment_fee'))
+                @php 
+                    $details = $this->rental->payment_details;
+                    $paymentFee = is_array($details) ? ($details['payment_fee'] ?? 0) : data_get($details, 'payment_fee', 0);
+                    $paymentFeeLabel = is_array($details) ? ($details['payment_fee_label'] ?? '') : data_get($details, 'payment_fee_label', '');
+                @endphp
+
+                @if($paymentFee > 0)
                     <div class="flex justify-between text-muted-foreground text-[10px] uppercase font-bold">
-                        @php $label = data_get($this->rental->payment_details, 'payment_fee_label', ''); @endphp
-                        <span>Biaya Layanan <span class="text-zinc-500 font-medium ml-1">{{ $label }}</span></span>
-                        <span class="font-bold text-foreground">+ Rp {{ number_format($fee, 0, ',', '.') }}</span>
+                        <span>Biaya Layanan <span class="text-zinc-500 font-medium ml-1">{{ $paymentFeeLabel }}</span></span>
+                        <span class="font-bold text-foreground">+ Rp {{ number_format($paymentFee, 0, ',', '.') }}</span>
                     </div>
                 @endif
                 <div class="flex justify-between items-center pt-2 mt-1 border-t border-dashed border-border/60">

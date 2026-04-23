@@ -402,18 +402,44 @@
                                                                                             class="space-y-6 md:border-l border-border md:pl-12">
                                                                                             <p class="text-[11px] font-bold text-muted-foreground mb-3 uppercase tracking-wider">Keuangan</p>
                                                                                             <div class="space-y-3">
+                                                                                                {{-- Harga Dasar --}}
                                                                                                 <div class="flex justify-between items-center text-xs">
-                                                                                                    <span class="text-muted-foreground">Dasar + Fee</span>
-                                                                                                    <span
-                                                                                                        class="font-semibold text-foreground">Rp
-                                                                                                        {{ number_format($inspectTrx->subtotal_harga + $inspectTrx->kode_unik_pembayaran, 0, ',', '.') }}</span>
+                                                                                                    <span class="text-muted-foreground">Harga Dasar</span>
+                                                                                                    <span class="font-semibold text-foreground">Rp {{ number_format($inspectTrx->subtotal_harga, 0, ',', '.') }}</span>
                                                                                                 </div>
+                                                                                                
+                                                                                                {{-- Biaya Bank --}}
+                                                                                                @php 
+                                                                                                    $details = $inspectTrx->payment_details;
+                                                                                                    $paymentFee = is_array($details) ? ($details['payment_fee'] ?? 0) : data_get($details, 'payment_fee', 0);
+                                                                                                @endphp
+                                                                                                @if($paymentFee > 0)
+                                                                                                    <div class="flex justify-between items-center text-xs">
+                                                                                                        <span class="text-muted-foreground">Biaya Bank</span>
+                                                                                                        <span class="font-semibold text-foreground">Rp {{ number_format($paymentFee, 0, ',', '.') }}</span>
+                                                                                                    </div>
+                                                                                                @endif
+
+                                                                                                {{-- Kode Unik --}}
+                                                                                                @if($inspectTrx->kode_unik_pembayaran > 0)
+                                                                                                    <div class="flex justify-between items-center text-xs">
+                                                                                                        <span class="text-muted-foreground">Kode Unik</span>
+                                                                                                        <span class="font-semibold text-foreground">Rp {{ number_format($inspectTrx->kode_unik_pembayaran, 0, ',', '.') }}</span>
+                                                                                                    </div>
+                                                                                                @endif
+
+                                                                                                {{-- Potongan Diskon --}}
                                                                                                 @if($inspectTrx->potongan_diskon > 0)
-                                                                                                    <div
-                                                                                                        class="flex justify-between items-center text-xs text-destructive font-bold">
+                                                                                                    <div class="flex justify-between items-center text-xs text-destructive font-bold">
                                                                                                         <span>Potongan</span>
-                                                                                                        <span>- Rp
-                                                                                                            {{ number_format($inspectTrx->potongan_diskon, 0, ',', '.') }}</span>
+                                                                                                        <span>- Rp {{ number_format($inspectTrx->potongan_diskon, 0, ',', '.') }}</span>
+                                                                                                    </div>
+                                                                                                @endif
+
+                                                                                                @if($inspectTrx->denda > 0 || $inspectTrx->denda_kerusakan > 0)
+                                                                                                    <div class="flex justify-between items-center text-xs text-amber-600 font-bold">
+                                                                                                        <span>Total Denda</span>
+                                                                                                        <span>+ Rp {{ number_format($inspectTrx->denda + $inspectTrx->denda_kerusakan, 0, ',', '.') }}</span>
                                                                                                     </div>
                                                                                                 @endif
                                                                                                 <div
