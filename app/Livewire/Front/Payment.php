@@ -70,38 +70,41 @@ class Payment extends Component
     public function checkStatus()
     {
         $this->rental = $this->rental->fresh();
+        
+        // 1. Cek status lokal di database
         if ($this->rental->status === 'paid') {
-            return redirect()->route('public.success', $this->rental->booking_code);
+            return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }
 
-        $orderId = $this->paymentInfo['order_id'] ?? null;
+        // 2. JEMPUT BOLA: Tanya langsung ke API Midtrans
+        $orderId = data_get($this->rental->payment_details, 'order_id');
+        
         if ($orderId) {
             try {
+                // Pastikan konfigurasi terpasang (jaga-jaga jika di lingkungan polling berbeda)
+                Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+                Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+
                 $status = (array) Transaction::status($orderId);
-                
-                // Simpan data VA/Biller Code ke database biar muncul di tampilan
-                $this->paymentInfo = array_merge($this->rental->payment_details ?? [], $status);
-                $this->rental->update(['payment_details' => $this->paymentInfo]);
-                
-                // Pastikan variabel local juga terisi biar gak hilang di tampilan
-                $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
-                $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
+                $transactionStatus = $status['transaction_status'] ?? '';
 
-                if ($status['transaction_status'] == 'settlement' || $status['transaction_status'] == 'capture') {
-                    // Jika pesanan ternyata sudah lunas (mungkin sudah diupdate oleh webhook)
-                    if ($this->rental->status === 'paid') {
-                        return redirect()->route('public.success', $this->rental->booking_code);
-                    }
+                // Simpan detail terbaru dari Midtrans ke database kita (biar sinkron)
+                $updatedDetails = array_merge($this->rental->payment_details ?? [], $status);
+                $this->rental->update(['payment_details' => $updatedDetails]);
 
+                if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
+                    // Jika Webhook gagal/telat, baris ini jadi pahlawannya!
                     $this->rental->update(['status' => 'paid']);
-                    return redirect()->route('public.success', $this->rental->booking_code);
+                    return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
 
-                if (in_array($status['transaction_status'], ['deny', 'expire', 'cancel'])) {
+                if (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
                     $this->rental->update(['status' => 'cancelled']);
-                    return redirect()->route('public.success', $this->rental->booking_code);
+                    return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+                // Jika error (misal API Midtrans down), biarkan polling berikutnya mencoba lagi
+            }
         }
     }
 
