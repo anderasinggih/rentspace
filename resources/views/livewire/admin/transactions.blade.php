@@ -232,6 +232,7 @@
                                                                                 @if(auth()->user()->role === 'admin')
                                                                                     {{-- Restore Button --}}
                                                                                     <button wire:click.stop="restore({{ $trx->id }})"
+                                                                                        wire:confirm="Pulihkan transaksi ini ke daftar aktif?"
                                                                                         class="flex h-8 w-8 items-center justify-center rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
                                                                                         title="Pulihkan Transaksi">
                                                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
