@@ -33,39 +33,34 @@
                 </div>
                 <h1 class="text-xl font-bold tracking-tight text-foreground">Menunggu Pembayaran</h1>
                 
-                @php
-                    // Sinkronkan logika waktu dengan halaman Payment
-                    $expiryTime = data_get($rental->payment_details, 'expiry_time');
-                    
-                    if ($expiryTime) {
-                        // Jika ada dari Midtrans, gunakan Asia/Jakarta (WIB)
-                        $expiryTimestamp = \Carbon\Carbon::parse($expiryTime, 'Asia/Jakarta')->timestamp * 1000;
-                    } else {
-                        // Default 24 jam jika belum ada data Midtrans
-                        $expiryTimestamp = $rental->created_at->addDay()->timestamp * 1000;
-                    }
-                @endphp
-                <div x-data="{
+                 @php
+                    // --- JURUS ANTI-ZONA WAKTU (SINKRON 1 MENIT) ---
+                    $secondsRemaining = 60 - (now()->timestamp - $rental->created_at->timestamp);
+                    if ($secondsRemaining < 0) $secondsRemaining = 0;
+                 @endphp
+
+                <div wire:ignore x-data="{
+                    seconds: {{ $secondsRemaining }},
                     timeLeft: '',
                     status: 'green',
-                    endTime: {{ $expiryTimestamp }},
                     update() {
-                        const now = new Date().getTime();
-                        const diff = this.endTime - now;
-                        if (diff <= 0) { this.timeLeft = 'waktu habis'; this.status = 'red'; return; }
+                        if (this.seconds <= 0) { 
+                            this.timeLeft = 'Waktu habis'; 
+                            this.status = 'red'; 
+                            // Kita biarkan poller mereduce status ke cancelled
+                            return; 
+                        }
                         
-                        const hoursTotal = diff / (1000 * 60 * 60);
-                        if (hoursTotal < 1) { this.status = 'red'; }
-                        else if (hoursTotal < 12) { this.status = 'amber'; }
-                        else { this.status = 'green'; }
-
-                        const h = Math.floor(hoursTotal);
-                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                        const s = Math.floor((diff % (1000 * 60)) / 1000);
-                        this.timeLeft = (h > 0 ? h + 'j ' : '') + m + 'm ' + s + 'd';
+                        const h = Math.floor(this.seconds / 3600);
+                        const m = Math.floor((this.seconds % 3600) / 60);
+                        const s = Math.floor(this.seconds % 60);
+                        
+                        this.timeLeft = (h > 0 ? h + 'j ' : '') + (m > 0 || h > 0 ? m + 'm ' : '') + s + 'd';
+                        this.status = this.seconds < 10 ? 'red' : (this.seconds < 30 ? 'amber' : 'green');
+                        this.seconds--;
                     }
                 }" x-init="update(); setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center">
-                    <span class="text-xs text-muted-foreground mb-1">Batas Waktu Pembayaran</span>
+                    <span class="text-[9px] text-muted-foreground mb-0.5 uppercase font-bold tracking-widest">Batas Waktu Pembayaran</span>
                     <div x-text="timeLeft" 
                         class="text-3xl font-black font-mono tracking-tighter transition-all duration-500"
                         :class="{

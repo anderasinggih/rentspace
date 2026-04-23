@@ -30,16 +30,11 @@
             @php
                 $isCash = data_get($paymentInfo, 'payment_type') === 'cash';
                 
-                // Ambil expiry_time dari Midtrans (prioritas)
-                $expiryTime = data_get($paymentInfo, 'expiry_time');
-                
-                if ($expiryTime) {
-                    // Jika ada expiry_time dari Midtrans, parse dengan asumsi WIB (UTC+7)
-                    $expiryTimestamp = \Carbon\Carbon::parse($expiryTime, 'Asia/Jakarta')->timestamp * 1000;
-                } else {
-                    // Jika belum ada/masih pilih metode, default 24 jam dari buat
-                    $expiryTimestamp = $rental->created_at->addDay()->timestamp * 1000;
-                }
+                // --- JURUS ANTI-ZONA WAKTU (VERSI TIMESTAMP) ---
+                // Pake angka detik murni biar nggak ngaco pas refresh
+                $secondsPassed = now()->timestamp - $rental->created_at->timestamp;
+                $secondsRemaining = 60 - $secondsPassed;
+                if ($secondsRemaining < 0) $secondsRemaining = 0;
             @endphp
 
             @if($isCash)
@@ -55,21 +50,29 @@
                     </div>
                 </div>
             @else
-                <div x-data="{
+                <div wire:ignore x-data="{
+                    seconds: {{ $secondsRemaining }},
                     timeLeft: '',
                     status: 'green',
-                    endTime: {{ $expiryTimestamp }},
                     update() {
-                        const now = new Date().getTime();
-                        const diff = this.endTime - now;
-                        if (diff <= 0) { this.timeLeft = 'Waktu habis'; this.status = 'red'; return; }
-                        const h = Math.floor(diff / (1000 * 60 * 60));
-                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                        const s = Math.floor((diff % (1000 * 60)) / 1000);
-                        this.timeLeft = (h > 0 ? h + 'j ' : '') + m + 'm ' + s + 'd';
-                        this.status = h < 1 ? 'red' : (h < 12 ? 'amber' : 'green');
+                        if (this.seconds <= 0) { 
+                            this.timeLeft = 'Waktu habis'; 
+                            this.status = 'red'; 
+                            window.location.href = '{{ route('public.success', $this->rental->booking_code) }}';
+                            return; 
+                        }
+                        // Hitung Jam, Menit, Detik
+                        const h = Math.floor(this.seconds / 3600);
+                        const m = Math.floor((this.seconds % 3600) / 60);
+                        const s = Math.floor(this.seconds % 60);
+                        
+                        this.timeLeft = (h > 0 ? h + 'j ' : '') + (m > 0 || h > 0 ? m + 'm ' : '') + s + 'd';
+                        this.status = this.seconds < 10 ? 'red' : (this.seconds < 30 ? 'amber' : 'green');
+                        
+                        // JALAN MUNDUR: Kurangi 1 detik tiap kali fungsi dipanggil
+                        this.seconds--;
                     }
-                }" x-init="update(); setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center">
+                }" x-init="setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center">
                     <span class="text-[9px] text-muted-foreground mb-0.5 uppercase font-bold tracking-widest">Batas Waktu Bayar</span>
                     <div x-text="timeLeft" 
                         class="text-3xl font-black font-mono tracking-tighter transition-all duration-500"

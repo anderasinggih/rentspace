@@ -52,6 +52,14 @@ class Success extends Component
     public function refreshStatus()
     {
         $this->rental = $this->rental->fresh();
+        
+        // --- JURUS AUTO-CANCEL 1 MENIT ---
+        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 60)) {
+            $this->rental->update(['status' => 'cancelled']);
+            $this->rental = $this->rental->fresh();
+            return;
+        }
+
         if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash') {
             $this->checkMidtransStatus();
         }

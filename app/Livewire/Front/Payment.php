@@ -53,6 +53,11 @@ class Payment extends Component
             $this->rental->refresh();
         }
 
+        // 3. Gembok: Kalau sudah Batal, jangan kasih masuk
+        if ($this->rental->status === 'cancelled') {
+            return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
+        }
+
         // 4. Load: Ambil detail pembayaran Midtrans yang ada (Hanya jika metodenya spesifik, bukan 'online/pemilihan')
         if ($this->rental->payment_details && $this->rental->metode_pembayaran !== 'online') {
             $this->paymentInfo = $this->rental->payment_details;
@@ -71,7 +76,13 @@ class Payment extends Component
     {
         $this->rental = $this->rental->fresh();
         
-        // 1. Cek status lokal di database
+        // 1. Cek apakah sudah melebihi batas 60 detik (Auto-Cancel)
+        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 60)) {
+            $this->rental->update(['status' => 'cancelled']);
+            return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
+        }
+
+        // 2. Cek status lokal di database untuk pengalihan sukses/gagal
         if ($this->rental->status === 'paid') {
             return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }
@@ -119,7 +130,7 @@ class Payment extends Component
 
     public function selectChannel($channel)
     {
-        if ($this->rental->status === 'paid') return;
+        if ($this->rental->status !== 'pending') return;
 
         // Setup Midtrans Config (WAJIB tiap kali action)
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
