@@ -112,7 +112,9 @@
                     @endif
                     <div class="flex justify-between items-center pt-2 mt-1 border-t border-dashed border-border/60">
                         <span class="font-bold text-sm text-muted-foreground">Total Tagihan</span>
-                        <span class="text-xl font-black text-foreground leading-none">Rp {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
+                        <span class="text-xl font-black text-foreground leading-none">
+                            Rp {{ number_format($basePriceForFee + $displayFee, 0, ',', '.') }}
+                        </span>
                     </div>
                 </div>
             @endif
