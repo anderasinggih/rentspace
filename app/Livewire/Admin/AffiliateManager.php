@@ -320,7 +320,7 @@ class AffiliateManager extends Component
             ->latest()
             ->paginate(10);
 
-        $payoutsQuery = AffiliatePayout::with('affiliator', 'affiliator.affiliatorProfile')
+        $payoutsQuery = AffiliatePayout::with('affiliator', 'affiliator.affiliateProfile')
             ->when($this->tab === 'payouts', function($q) {
                 $q->where(function($sub) {
                     $sub->where('status', 'pending')
