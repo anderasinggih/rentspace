@@ -51,6 +51,9 @@ class Payment extends Component
                 'metode_pembayaran' => 'online'
             ]);
             $this->rental->refresh();
+            
+            // --- CUCI ALAMAT: Buang ?change=1 biar gak ngeriset terus pas direfresh ---
+            return redirect()->route('public.payment', $this->rental->booking_code);
         }
 
         // 3. Gembok Pintu Depan: Kalau sudah basi atau statusnya Batal, jangan kasih masuk
@@ -72,12 +75,12 @@ class Payment extends Component
             return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }
 
-        // 4. Load: Ambil detail pembayaran Midtrans yang ada (Hanya jika metodenya spesifik, bukan 'online/pemilihan')
-        if ($this->rental->payment_details && $this->rental->metode_pembayaran !== 'online') {
-            $this->paymentInfo = $this->rental->payment_details;
+        // 4. Load: Ambil data dari DB kalau memang sudah pernah milih bank
+        $this->paymentInfo = $this->rental->payment_details;
+        if ($this->paymentInfo) {
+            $this->selectedChannel = $this->rental->metode_pembayaran;
             $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
             $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
-            $this->selectedChannel = $this->rental->metode_pembayaran;
             
             // Sync status jika data masih mentah
             if (isset($this->paymentInfo['order_id']) && count($this->paymentInfo) <= 1) {

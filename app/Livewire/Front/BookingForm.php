@@ -532,6 +532,7 @@ class BookingForm extends Component
             'kode_unik_pembayaran' => $this->kode_unik,
             'grand_total' => $this->grand_total,
             'status' => 'pending',
+            'metode_pembayaran' => 'online', // Paksa online biar gak kena default qris dari DB
             'affiliate_code' => $this->referral_code ?: null,
             'affiliator_id' => $this->referral_code ? (\App\Models\AffiliatorProfile::where('referral_code', strtoupper($this->referral_code))->first()->user_id ?? null) : null,
         ]);

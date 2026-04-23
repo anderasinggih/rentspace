@@ -100,6 +100,11 @@ class Success extends Component
                 return;
             }
 
+            // Jika status masih 'online' (User belum milih bank di halaman depan)
+            if ($this->rental->metode_pembayaran === 'online' && empty($details)) {
+                return;
+            }
+
             if (empty($details)) {
                 $this->debugError = "Kolom payment_details di database KOSONG.";
                 return;
