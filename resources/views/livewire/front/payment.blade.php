@@ -1,4 +1,4 @@
-<div class="py-0 px-4 sm:py-16 flex flex-col items-center font-sans tracking-normal" @if($rental->status === 'pending') wire:poll.5s="checkStatus" @endif>
+<div class="py-0 px-4 sm:py-16 flex flex-col items-center font-sans tracking-normal" @if($rental->status === 'pending') wire:poll.15s="checkStatus" @endif>
     <!-- Processing Loading Overlay -->
     <div wire:loading wire:target="selectChannel" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex flex-col items-center w-full animate-in fade-in duration-300 px-6">
         <div class="bg-card p-5 rounded-2xl shadow-2xl flex flex-row items-center gap-4 text-left max-w-[320px] w-full border border-border/50 mt-[40vh]">

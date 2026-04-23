@@ -103,11 +103,16 @@ class Payment extends Component
                 $status = (array) Transaction::status($orderId);
                 $transactionStatus = $status['transaction_status'] ?? '';
 
-                // Simpan detail terbaru
-                $existingDetails = $this->rental->payment_details ?? [];
-                $updatedDetails = array_merge($existingDetails, $status);
-                $this->rental->update(['payment_details' => $updatedDetails]);
-                $this->rental = $this->rental->fresh();
+                // --- OPTIMASI: Hanya tulis ke DB kalau ada berita penting ---
+                $isStatusChanged = ($transactionStatus !== ($this->rental->payment_details['transaction_status'] ?? ''));
+                $isEmptyDetails = empty($this->rental->payment_details);
+
+                if ($isStatusChanged || $isEmptyDetails) {
+                    $existingDetails = $this->rental->payment_details ?? [];
+                    $updatedDetails = array_merge($existingDetails, $status);
+                    $this->rental->update(['payment_details' => $updatedDetails]);
+                    $this->rental = $this->rental->fresh();
+                }
                 
                 $this->paymentInfo = $this->rental->payment_details;
 

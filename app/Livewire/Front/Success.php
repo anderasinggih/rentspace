@@ -120,9 +120,13 @@ class Success extends Component
                 $status = Transaction::status($orderId);
                 $transactionStatus = $status->transaction_status;
 
-                // Sync data detail dari Midtrans (termasuk expiry_time terbaru)
-                $updatedDetails = array_merge($this->rental->payment_details ?? [], (array) $status);
-                $this->rental->update(['payment_details' => $updatedDetails]);
+                // --- OPTIMASI DB WRITES ---
+                $isStatusChanged = ($transactionStatus !== ($this->rental->payment_details['transaction_status'] ?? ''));
+                
+                if ($isStatusChanged) {
+                    $updatedDetails = array_merge($this->rental->payment_details ?? [], (array) $status);
+                    $this->rental->update(['payment_details' => $updatedDetails]);
+                }
 
                 if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
                     $this->rental->update(['status' => 'paid']);
