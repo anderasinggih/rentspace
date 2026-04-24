@@ -209,9 +209,9 @@
 
         <!-- Public Stats Widget -->
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20 mb-10">
-            <div class="grid grid-cols-3 divide-x divide-red-500/20 bg-red-500/[0.02] dark:bg-red-500/[0.01] backdrop-blur-xl border border-red-500/20 shadow-2xl rounded-3xl overflow-hidden py-4 sm:py-6">
+            <div class="grid grid-cols-3 divide-x divide-white/10 bg-white/[0.03] dark:bg-white/[0.02] backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden py-4 sm:py-6">
                 <!-- Total Transaksi -->
-                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 transition-all duration-300 hover:bg-red-500/5" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 transition-all duration-500 hover:bg-white/5" 
                      x-data="{ 
                          target: {{ $statsTotalRentals }}, 
                          display: '0', 
@@ -232,15 +232,15 @@
                              requestAnimationFrame(animate);
                          } 
                      }" x-intersect.once="run()">
-                    <!-- Red Glow Blob -->
-                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-500/10 rounded-full blur-xl group-hover:bg-red-500/20 transition-all duration-500 z-0"></div>
+                    <!-- White Glow Blob -->
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-white/5 rounded-full blur-xl group-hover:bg-white/10 transition-all duration-700 z-0"></div>
                     
-                    <span class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-red-500 transition-colors">Transaksi</span>
-                    <span class="text-xl sm:text-4xl font-black text-foreground group-hover:scale-110 transition-transform duration-300"><span x-text="display"></span><span class="text-red-500 text-base sm:text-2xl ml-0.5">+</span></span>
+                    <span class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-foreground transition-colors duration-500">Transaksi</span>
+                    <span class="text-xl sm:text-4xl font-black text-foreground group-hover:scale-110 transition-all duration-500"><span x-text="display"></span><span class="text-white/40 group-hover:text-white transition-colors duration-500 text-base sm:text-2xl ml-0.5">+</span></span>
                 </div>
 
                 <!-- Pelanggan -->
-                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 transition-all duration-300 hover:bg-red-500/5" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 transition-all duration-500 hover:bg-white/5" 
                      x-data="{ 
                          target: {{ $statsTotalUsers }}, 
                          display: '0', 
@@ -261,15 +261,15 @@
                              requestAnimationFrame(animate);
                          } 
                      }" x-intersect.once="run()">
-                    <!-- Red Glow Blob -->
-                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-500/10 rounded-full blur-xl group-hover:bg-red-500/20 transition-all duration-500 z-0"></div>
+                    <!-- White Glow Blob -->
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-white/5 rounded-full blur-xl group-hover:bg-white/10 transition-all duration-700 z-0"></div>
 
-                    <span class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-red-500 transition-colors">Pelanggan</span>
-                    <span class="text-xl sm:text-4xl font-black text-foreground group-hover:scale-110 transition-transform duration-300"><span x-text="display"></span><span class="text-red-500 text-base sm:text-2xl ml-0.5">+</span></span>
+                    <span class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-foreground transition-colors duration-500">Pelanggan</span>
+                    <span class="text-xl sm:text-4xl font-black text-foreground group-hover:scale-110 transition-all duration-500"><span x-text="display"></span><span class="text-white/40 group-hover:text-white transition-colors duration-500 text-base sm:text-2xl ml-0.5">+</span></span>
                 </div>
 
                 <!-- Jam Disewa -->
-                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 transition-all duration-300 hover:bg-red-500/5" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 transition-all duration-500 hover:bg-white/5" 
                      x-data="{ 
                          target: {{ $statsTotalHours }}, 
                          display: '0', 
@@ -290,11 +290,11 @@
                              requestAnimationFrame(animate);
                          } 
                      }" x-intersect.once="run()">
-                    <!-- Red Glow Blob -->
-                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-500/10 rounded-full blur-xl group-hover:bg-red-500/20 transition-all duration-500 z-0"></div>
+                    <!-- White Glow Blob -->
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-white/5 rounded-full blur-xl group-hover:bg-white/10 transition-all duration-700 z-0"></div>
 
-                    <span class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-red-500 transition-colors">Jam Disewa</span>
-                    <span class="text-xl sm:text-4xl font-black text-foreground group-hover:scale-110 transition-transform duration-300"><span x-text="display"></span><span class="text-red-500 text-base sm:text-2xl ml-0.5">+</span></span>
+                    <span class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-foreground transition-colors duration-500">Jam Disewa</span>
+                    <span class="text-xl sm:text-4xl font-black text-foreground group-hover:scale-110 transition-all duration-500"><span x-text="display"></span><span class="text-white/40 group-hover:text-white transition-colors duration-500 text-base sm:text-2xl ml-0.5">+</span></span>
                 </div>
             </div>
         </div>
