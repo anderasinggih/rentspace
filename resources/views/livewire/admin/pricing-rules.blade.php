@@ -247,14 +247,14 @@
 
                         <div class="mt-4 p-4 rounded-xl bg-muted/50 border border-border">
                             <label class="text-sm font-bold text-foreground">Kuota Penggunaan Promo</label>
-                            <div class="mt-2 flex items-center gap-3">
-                                <div class="flex-1">
+                            <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div class="w-full sm:w-32">
                                     <input type="number" wire:model="usage_limit"
                                         class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                        placeholder="Kosongkan untuk unlimited">
+                                        placeholder="0">
                                 </div>
-                                <div class="text-xs text-muted-foreground bg-background px-3 py-2 rounded-md border border-border">
-                                    Total kuota tersedia untuk dipakai seluruh pelanggan.
+                                <div class="text-[10px] sm:text-xs text-muted-foreground bg-background px-3 py-2 rounded-md border border-border flex-1">
+                                    Total kuota tersedia untuk dipakai seluruh pelanggan. Kosongkan untuk unlimited.
                                 </div>
                             </div>
                             @error('usage_limit') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
