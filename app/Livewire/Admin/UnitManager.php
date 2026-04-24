@@ -86,7 +86,7 @@ class UnitManager extends Component
                 'imei' => $isIphone ? $this->imei : null,
                 'memori' => $isIphone ? $this->memori : null,
                 'warna' => $isIphone ? $this->warna : null,
-                'kondisi' => $this->kondition ?? $this->kondisi,
+                'kondisi' => $this->kondisi,
                 'specs' => $this->specs,
                 'harga_per_jam' => $this->harga_per_jam,
                 'harga_per_hari' => $this->harga_per_hari,

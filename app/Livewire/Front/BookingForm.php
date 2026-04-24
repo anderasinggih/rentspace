@@ -526,12 +526,13 @@ class BookingForm extends Component
             'subtotal_harga' => $this->subtotal,
             'potongan_diskon' => $this->potongan_diskon,
             'applied_promo_name' => $this->applied_promo_label ?: null,
-            'applied_promo_id' => !empty($this->selected_promo_ids) ? $this->selected_promo_ids[0] : null, // Store primary promo ID
+            'applied_promo_id' => !empty($this->selected_promo_ids) ? reset($this->selected_promo_ids) : null, // Store primary promo ID
             'hari_bonus' => $this->hari_bonus,
             'jam_bonus' => $this->jam_bonus,
             'kode_unik_pembayaran' => $this->kode_unik,
             'grand_total' => $this->grand_total,
             'status' => 'pending',
+            'metode_pembayaran' => 'online', // Paksa online biar gak kena default qris dari DB
             'affiliate_code' => $this->referral_code ?: null,
             'affiliator_id' => $this->referral_code ? (\App\Models\AffiliatorProfile::where('referral_code', strtoupper($this->referral_code))->first()->user_id ?? null) : null,
         ]);

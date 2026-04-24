@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Rental extends Model
 {
+    use SoftDeletes;
     protected $guarded = ['id'];
 
     protected $casts = [
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
         'completed_at' => 'datetime',
+        'payment_details' => 'array',
     ];
 
     protected static function booted()

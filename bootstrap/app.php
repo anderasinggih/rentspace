@@ -19,7 +19,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'official-midtrans-callback',
+            'midtrans/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule) {
+        $schedule->command('bookings:cancel-expired')->everyMinute();
+    })
+    ->create();

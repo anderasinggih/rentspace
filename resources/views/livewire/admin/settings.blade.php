@@ -623,15 +623,17 @@
                                         <p class="text-xs text-muted-foreground">Bayar langsung di tempat</p>
                                     </div>
                                 </label>
-                                <label
-                                    class="flex items-center gap-3 p-3 rounded-lg border border-input bg-background cursor-pointer hover:bg-muted/40 transition-colors">
-                                    <input type="checkbox" wire:model="payment_methods.transfer"
-                                        class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
-                                    <div>
-                                        <p class="text-sm font-medium">Transfer Bank</p>
-                                        <p class="text-xs text-muted-foreground">Transfer rekening admin</p>
-                                    </div>
-                                </label>
+                                @foreach(['bca' => 'BCA', 'mandiri' => 'Mandiri', 'bni' => 'BNI', 'bri' => 'BRI', 'permata' => 'Permata', 'bsi' => 'BSI', 'cimb' => 'CIMB'] as $id => $label)
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg border border-input bg-background cursor-pointer hover:bg-muted/40 transition-colors">
+                                        <input type="checkbox" wire:model="payment_methods.{{ $id }}"
+                                            class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                                        <div>
+                                            <p class="text-sm font-medium">{{ $label }}</p>
+                                            <p class="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Otomatis / VA</p>
+                                        </div>
+                                    </label>
+                                @endforeach
                             </div>
                         </div>
                         <div>

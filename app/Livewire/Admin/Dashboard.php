@@ -60,7 +60,8 @@ class Dashboard extends Component
             ->get()
             ->keyBy('date_val');
 
-        $commissionDataObj = \App\Models\AffiliateCommission::selectRaw('DATE(created_at) as date_val, SUM(amount) as total_commission')
+        $commissionDataObj = \App\Models\AffiliateCommission::whereHas('rental')
+            ->selectRaw('DATE(created_at) as date_val, SUM(amount) as total_commission')
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('date_val')
             ->get()
@@ -81,7 +82,8 @@ class Dashboard extends Component
                 ->get()
                 ->keyBy('val');
 
-            $commissionDataObj = \App\Models\AffiliateCommission::selectRaw('strftime("%Y-%m", created_at) as val, SUM(amount) as total_commission')
+            $commissionDataObj = \App\Models\AffiliateCommission::whereHas('rental')
+                ->selectRaw('strftime("%Y-%m", created_at) as val, SUM(amount) as total_commission')
                 ->whereBetween('created_at', [$start, $end])
                 ->groupBy('val')
                 ->get()
@@ -143,7 +145,7 @@ class Dashboard extends Component
         $periodDiscounts = Rental::whereBetween('created_at', [$start, $end])->sum('potongan_diskon');
         
         // Affiliate Metrics
-        $periodCommissions = \App\Models\AffiliateCommission::whereBetween('created_at', [$start, $end])->sum('amount');
+        $periodCommissions = \App\Models\AffiliateCommission::whereHas('rental')->whereBetween('created_at', [$start, $end])->sum('amount');
         $periodNetRevenue = $periodRevenue - $periodCommissions;
 
         $todayRevenue = Rental::where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
@@ -172,7 +174,8 @@ class Dashboard extends Component
             ->get();
 
         // Affiliate Leaderboard
-        $topAffiliates = \App\Models\AffiliateCommission::selectRaw('affiliator_id, SUM(amount) as total_commission, COUNT(rental_id) as total_trx')
+        $topAffiliates = \App\Models\AffiliateCommission::whereHas('rental')
+            ->selectRaw('affiliator_id, SUM(amount) as total_commission, COUNT(rental_id) as total_trx')
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('affiliator_id')
             ->with('affiliator')
