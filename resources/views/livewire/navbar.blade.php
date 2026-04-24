@@ -1,5 +1,7 @@
 <div x-data="{ 
     publicMenuOpen: false,
+    showNavbar: true,
+    lastScrollY: window.scrollY,
     darkMode: localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
     toggleTheme() {
         this.darkMode = !this.darkMode;
@@ -11,7 +13,14 @@
             localStorage.theme = 'light';
         }
     }
-}" class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12">
+}" 
+x-init="window.addEventListener('scroll', () => { 
+    showNavbar = window.scrollY < lastScrollY || window.scrollY < 50;
+    lastScrollY = window.scrollY;
+})"
+class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-transform duration-500 ease-in-out"
+:class="showNavbar ? 'translate-y-0' : '-translate-y-32'"
+>
     <nav
         class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-blur-[4px] backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all overflow-hidden">
         <!-- Left Side: Logo & Links -->
