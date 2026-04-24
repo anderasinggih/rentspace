@@ -180,6 +180,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
             <!-- Contextual Greetings Setting -->
             <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm mt-6 w-full">
