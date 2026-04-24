@@ -334,7 +334,7 @@
                     </div>
                     <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0 relative z-10">
                         <a href="{{ route('public.check-order') }}" wire:navigate
-                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl bg-amber-500 text-white text-xs font-bold px-5 py-2.5 hover:bg-amber-600 transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-amber-500/20">
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-5 py-2.5 hover:bg-amber-500 hover:text-white transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-amber-500/20">
                             {{ $onlinePendingTotal > 0 ? 'Bayar Sekarang' : 'Lihat Rincian' }}
                         </a>
                     </div>
@@ -445,9 +445,9 @@
                         <a href="{{ route('public.check-order') }}" wire:navigate
                             class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl text-xs font-bold px-5 py-2.5 transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap group-hover:scale-105 group-hover:shadow-lg"
                             :class="{
-                                        'bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-500/20 group-hover:shadow-emerald-500/30': status === 'green',
-                                        'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-500/20 group-hover:shadow-amber-500/30': status === 'amber',
-                                        'bg-red-500 text-white hover:bg-red-600 shadow-red-500/20 group-hover:shadow-red-500/30': status === 'red'
+                                        'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white shadow-emerald-500/10': status === 'green',
+                                        'bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-white shadow-amber-500/10': status === 'amber',
+                                        'bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white shadow-red-500/10': status === 'red'
                                     }">
                             Rincian Sewa
                         </a>
@@ -480,7 +480,7 @@
                     </div>
                     <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0 relative z-10">
                         <a href="{{ route('public.check-order') }}" wire:navigate
-                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl bg-blue-600 text-white text-xs font-bold px-5 py-2.5 transition-all duration-300 shadow-sm shadow-blue-500/20 shrink-0 whitespace-nowrap hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 group-hover:scale-105">
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold px-5 py-2.5 transition-all duration-300 shadow-sm shadow-blue-500/10 shrink-0 whitespace-nowrap hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-500/20 group-hover:scale-105">
                             Cek Riwayat
                         </a>
                     </div>
