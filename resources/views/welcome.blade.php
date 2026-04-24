@@ -167,11 +167,11 @@
                     RENT SPACE PURWOKERTO
                 </div>
                 <h1
-                    class="text-4xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl drop-shadow-md">
+                    class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl drop-shadow-md">
                     {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda\nLebih Mudah &
                     Terjangkau."))) !!}
                 </h1>
-                <p class="mt-6 text-lg sm:text-xl leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl drop-shadow-sm">
+                <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl drop-shadow-sm">
                     {{ \App\Models\Setting::getVal('home_description', 'Pilihan terbaik untuk merasakan pengalaman
                     menggunakan produk Apple original tanpa harus membeli baru. Proses cepat, stok terlihat transparan,
                     dan langsung transaksi!') }}
@@ -489,8 +489,8 @@
             <div x-data="{ visible: false }" x-intersect.once="visible = true"
                 :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
                 class="text-center mb-8 transition-all duration-1000 ease-out">
-                <h2 class="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">Promo Spesial Aktif</h2>
-                <p class="mt-4 text-muted-foreground">Promo yang tersedia pada saat ini.</p>
+                <h2 class="text-2xl font-extrabold tracking-tight text-foreground sm:text-4xl">Promo Spesial Aktif</h2>
+                <p class="mt-4 text-sm sm:text-base text-muted-foreground">Promo yang tersedia pada saat ini.</p>
             </div>
             <!-- Promo -->
             @php
@@ -506,21 +506,27 @@
                     ->get();
             @endphp
             @if($promos->count() > 0)
-                <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                <div x-data="{ expandedPromo: false, visible: false }" x-intersect.once="visible = true"
                     :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'"
                     class="mt-8 w-full transition-all duration-1000 delay-100 ease-out">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         @foreach($promos as $promo)
                             <a href="{{ route('public.booking') }}" wire:navigate
-                                class="block p-5 bg-background shadow-sm border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all group">
+                                :class="{ 
+                                    'hidden': !expandedPromo && {{ $loop->index }} >= 2, 
+                                    'sm:block': !expandedPromo && {{ $loop->index }} >= 2 && {{ $loop->index }} < 4,
+                                    'sm:hidden': !expandedPromo && {{ $loop->index }} >= 4,
+                                    'block': expandedPromo || {{ $loop->index }} < 2 
+                                }"
+                                class="p-4 sm:p-5 bg-background shadow-sm border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all group">
                                 <div class="flex items-start gap-4">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between mb-2 gap-3">
-                                            <h3 class="font-bold text-foreground text-base truncate">
+                                            <h3 class="font-bold text-foreground text-sm sm:text-base truncate">
                                                 {{ $promo->nama_promo }}</h3>
                                             <x-ui.badge variant="green"
-                                                class="uppercase tracking-tight text-[10px] px-2 py-0.5 shrink-0">Promo
+                                                class="uppercase tracking-tight text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 shrink-0">Promo
                                                 Aktif</x-ui.badge>
                                         </div>
 
@@ -545,7 +551,7 @@
                                         @endphp
 
                                         <div class="flex items-center justify-between gap-4 mb-1">
-                                            <p class="text-xs text-muted-foreground truncate">Min. sewa {{ $durasi }}</p>
+                                            <p class="text-[10px] sm:text-xs text-muted-foreground truncate">Min. sewa {{ $durasi }}</p>
                                             @if($promo->end_date)
                                                 <div x-data="{
                                                                 timeLeft: '',
@@ -565,15 +571,15 @@
                                                                     }
                                                                 }
                                                             }" x-init="update(); setInterval(() => update(), 1000)"
-                                                    class="bg-zinc-900 dark:bg-zinc-800 text-white px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-tighter shrink-0"
+                                                    class="bg-zinc-900 dark:bg-zinc-800 text-white px-1.5 sm:px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono font-bold tracking-tighter shrink-0"
                                                     x-text="timeLeft"></div>
                                             @endif
                                         </div>
 
                                         <div class="flex items-center justify-between gap-4">
-                                            <span class="font-semibold text-primary/90 text-xs block truncate">{{ $promoText }}</span>
+                                            <span class="font-semibold text-primary/90 text-[11px] sm:text-xs block truncate">{{ $promoText }}</span>
                                             @if($promo->start_date || $promo->end_date)
-                                                <div class="text-[9px] text-muted-foreground font-medium shrink-0 leading-none">
+                                                <div class="text-[8px] sm:text-[9px] text-muted-foreground font-medium shrink-0 leading-none">
                                                     {{ $promo->start_date ? \Carbon\Carbon::parse($promo->start_date)->format('d M') : 'Sekarang' }}
                                                     -
                                                     {{ $promo->end_date ? \Carbon\Carbon::parse($promo->end_date)->format('d M y') : 'Selesai' }}
@@ -585,6 +591,20 @@
                             </a>
                         @endforeach
                     </div>
+ 
+                    @if($promos->count() > 2)
+                        <div class="mt-8 flex justify-center {{ $promos->count() <= 4 ? 'sm:hidden' : '' }}">
+                            <button @click="expandedPromo = !expandedPromo"
+                                class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-border bg-card text-[10px] font-bold text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all shadow-sm group/btn">
+                                <span x-text="expandedPromo ? 'Sembunyikan Promo' : 'Lihat Promo Lainnya'"></span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                    :class="expandedPromo ? 'rotate-180' : ''" class="transition-transform duration-300">
+                                    <path d="m6 9 6 6 6-6" />
+                                </svg>
+                            </button>
+                        </div>
+                    @endif
                 </div>
             @endif
 
@@ -612,45 +632,48 @@
                 $allFeedbacks = $realFeedbacks->count() > 0 ? $realFeedbacks->toArray() : $dummyFeedbacks;
             @endphp
 
-            <div class="mt-24 relative overflow-hidden py-10">
-                <div x-data="{ visible: false }" x-intersect.once="visible = true"
-                    :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
-                    class="text-center mb-12 mt-16 transition-all duration-1000 ease-out">
-                    <h2 class="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">Kata Mereka</h2>
-                    <p class="mt-4 text-muted-foreground">Ribuan pengalaman manis bersama Rent Space</p>
+            <!-- Testimonials Marquee Section -->
+            <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
+                class="mt-12 transition-all duration-1000 ease-out">
+                <div class="text-center mb-12">
+                    <h2 class="text-2xl font-extrabold tracking-tight text-foreground sm:text-4xl">Kata Mereka</h2>
+                    <p class="mt-2 text-sm sm:text-base text-muted-foreground">Ribuan pengalaman manis bersama Rent Space</p>
                 </div>
-
-                <!-- Infinite Marquee Row 1 -->
-                <div class="flex flex-nowrap gap-6 animate-marquee whitespace-nowrap mb-6">
-                    @php
-                        // Teknik buat mastiin marquee penuh & gak ada gap
-                        $loopCount = count($allFeedbacks) <= 2 ? 6 : (count($allFeedbacks) <= 5 ? 3 : 2);
-                        $finalFeedbacks = [];
-                        for($i=0; $i<$loopCount; $i++) { $finalFeedbacks = array_merge($finalFeedbacks, $allFeedbacks); }
-                    @endphp
-                    @foreach($finalFeedbacks as $item)
-                        <div class="inline-block w-[320px] bg-card border border-border/50 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow">
-                            <div class="flex items-center gap-3 mb-3">
-                                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                                    {{ substr($item['nama'], 0, 2) }}
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold text-foreground">{{ $item['nama'] }}</p>
-                                    <div class="flex gap-0.5">
-                                        @for($s=1; $s<=5; $s++)
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="{{ $item['rating'] >= $s ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" class="{{ $item['rating'] >= $s ? 'text-amber-400' : 'text-zinc-300' }}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+ 
+                <div class="relative overflow-hidden py-4">
+                    <!-- Infinite Marquee Row 1 -->
+                    <div class="flex flex-nowrap gap-6 animate-marquee whitespace-nowrap mb-6">
+                        @php
+                            // Teknik buat mastiin marquee penuh & gak ada gap
+                            $loopCount = count($allFeedbacks) <= 2 ? 6 : (count($allFeedbacks) <= 5 ? 3 : 2);
+                            $finalFeedbacks = [];
+                            for($i=0; $i<$loopCount; $i++) { $finalFeedbacks = array_merge($finalFeedbacks, $allFeedbacks); }
+                        @endphp
+                        @foreach($finalFeedbacks as $item)
+                            <div class="inline-block w-[320px] bg-card border border-border/50 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                                        {{ substr($item['nama'], 0, 2) }}
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-foreground">{{ $item['nama'] }}</p>
+                                        <div class="flex gap-0.5">
+                                            @for($s=1; $s<=5; $s++)
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="{{ $item['rating'] >= $s ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" class="{{ $item['rating'] >= $s ? 'text-amber-400' : 'text-zinc-300' }}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                                         @endfor
+                                        </div>
                                     </div>
                                 </div>
+                                <p class="text-xs text-muted-foreground leading-relaxed whitespace-normal line-clamp-2">"{{ $item['feedback'] }}"</p>
                             </div>
-                            <p class="text-xs text-muted-foreground leading-relaxed whitespace-normal line-clamp-2">"{{ $item['feedback'] }}"</p>
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
+ 
+                    <!-- Radial Gradient Fades (Hanya nutupin Marquee) -->
+                    <div class="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none"></div>
+                    <div class="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"></div>
                 </div>
-
-                <!-- Radial Gradient Fades -->
-                <div class="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none"></div>
-                <div class="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"></div>
             </div>
 
             <style>
@@ -666,13 +689,13 @@
             </style>
 
             <!-- Pricelist Katalog Unit -->
-            <div class="mt-24 w-full">
+            <div class="mt-12 w-full">
                 <div x-data="{ visible: false }" x-intersect.once="visible = true"
                     :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
-                    class="text-center mb-12 mt-16 transition-all duration-1000 ease-out">
-                    <h2 class="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">Katalog Harga
+                    class="text-center mb-12 mt-4 transition-all duration-1000 ease-out">
+                    <h2 class="text-2xl font-extrabold tracking-tight text-foreground sm:text-4xl">Katalog Harga
                         Sewa</h2>
-                    <p class="mt-4 text-muted-foreground">Pilih unit terbaik yang sesuai dengan kebutuhan dan budget
+                    <p class="mt-4 text-sm sm:text-base text-muted-foreground">Pilih unit terbaik yang sesuai dengan kebutuhan dan budget
                         Anda.</p>
                 </div>
 

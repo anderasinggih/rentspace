@@ -252,7 +252,7 @@ class Settings extends Component
         $this->role = 'admin';
         $this->resetValidation();
     }
-
+ 
     public function deleteUser($id)
     {
         if (auth()->user()->role !== 'admin')

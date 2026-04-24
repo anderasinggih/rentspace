@@ -1,5 +1,5 @@
-<div class="p-6">
-    <div class="sm:flex sm:items-center mb-8">
+<div class="p-2 sm:p-6">
+    <div class="sm:flex sm:items-center mb-6">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-bold text-foreground">Audit Trail: Staff Activity Logs</h1>
             <p class="mt-2 text-sm text-muted-foreground italic">Pelacakan otomatis untuk semua tindakan yang dilakukan oleh staff di sistem admin.</p>
@@ -7,7 +7,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="mb-6 bg-background rounded-xl border border-border p-3 shadow-sm">
+    <div class="mb-4 bg-background rounded-xl border border-border p-3 shadow-sm">
         <div class="flex flex-wrap items-end gap-3">
             <!-- Search -->
             <div class="flex-1 min-w-[240px] group">
@@ -77,11 +77,11 @@
             <tbody class="divide-y divide-border bg-background">
                 @forelse($logs as $log)
                     <tr class="hover:bg-muted/30 transition-colors">
-                        <td class="whitespace-nowrap px-4 py-4 text-xs">
+                        <td class="whitespace-nowrap px-3 sm:px-4 py-4 text-xs">
                             <div class="font-semibold text-foreground">{{ $log->created_at->format('d M Y') }}</div>
                             <div class="text-muted-foreground opacity-70">{{ $log->created_at->format('H:i:s') }} WIB</div>
                         </td>
-                        <td class="whitespace-nowrap px-4 py-4">
+                        <td class="whitespace-nowrap px-3 sm:px-4 py-4">
                             <div class="flex items-center gap-2">
                                 <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
                                     {{ substr($log->user->name, 0, 1) }}
@@ -92,7 +92,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="whitespace-nowrap px-4 py-4">
+                        <td class="whitespace-nowrap px-3 sm:px-4 py-4">
                             <span class="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter
                                 {{ str_contains($log->action, 'paid') ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : '' }}
                                 {{ str_contains($log->action, 'cancel') ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : '' }}
@@ -102,10 +102,10 @@
                                 {{ str_replace('_', ' ', $log->action) }}
                             </span>
                         </td>
-                        <td class="px-4 py-4 text-xs text-muted-foreground leading-relaxed">
+                        <td class="px-3 sm:px-4 py-4 text-xs text-muted-foreground leading-relaxed">
                             {{ $log->description }}
                         </td>
-                        <td class="whitespace-nowrap px-4 py-4 text-[10px] font-mono text-muted-foreground">
+                        <td class="whitespace-nowrap px-3 sm:px-4 py-4 text-[10px] font-mono text-muted-foreground">
                             {{ $log->ip_address }}
                         </td>
                     </tr>
