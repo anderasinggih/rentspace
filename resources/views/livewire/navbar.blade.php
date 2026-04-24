@@ -21,7 +21,7 @@ x-init="window.addEventListener('scroll', () => {
         lastScrollY = currentScrollY;
     }
 })"
-class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-all duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
+class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-all duration-[1600ms] ease-in-out"
 :class="showNavbar ? 'translate-y-0' : '-translate-y-48 pointer-events-none'"
 >
     <nav
