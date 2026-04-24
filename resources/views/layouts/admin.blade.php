@@ -22,10 +22,31 @@
     <style>
         html,
         body {
-            touch-action: manipulation;
+            touch-action: pan-x pan-y;
             -webkit-text-size-adjust: 100%;
         }
+
+        /* Prevent input auto-zoom on iOS */
+        @media screen and (max-width: 768px) {
+
+            input,
+            select,
+            textarea {
+                font-size: 16px !important;
+            }
+        }
     </style>
+    <script>
+        // Force disable double-tap to zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            let now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
     <!-- Alpine.js is included via Vite/Livewire usually but handled automatically by Livewire 3 -->
 </head>
 

@@ -29,10 +29,40 @@
     <style>
         html,
         body {
-            touch-action: manipulation;
+            touch-action: pan-x pan-y;
             -webkit-text-size-adjust: 100%;
+            overscroll-behavior-y: none;
+        }
+
+        /* Prevent input auto-zoom on iOS */
+        @media screen and (max-width: 768px) {
+
+            input,
+            select,
+            textarea {
+                font-size: 16px !important;
+            }
         }
     </style>
+    <script>
+        // Force disable double-tap to zoom
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                // Allow pinch-to-zoom if they really want it
+            }
+        }, {
+            passive: false
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            let now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
 </head>
 
 <body class="bg-background text-foreground antialiased font-sans flex flex-col min-h-screen">
