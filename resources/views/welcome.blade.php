@@ -5,7 +5,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>{{ config('app.name', 'RENT SPACE') }} PURWOKERTO</title>
     
     <script>
@@ -21,6 +21,35 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+
+    <style>
+        html,
+        body {
+            touch-action: pan-x pan-y;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* Prevent input auto-zoom on iOS */
+        @media screen and (max-width: 768px) {
+
+            input,
+            select,
+            textarea {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+    <script>
+        // Force disable double-tap to zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            let now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
 </head>
 
 <body class="font-sans antialiased min-h-screen bg-background text-foreground flex flex-col">
