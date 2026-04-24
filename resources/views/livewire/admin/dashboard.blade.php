@@ -23,11 +23,13 @@
             <div class="bg-background rounded-xl border border-border p-4 shadow-sm flex flex-col justify-between">
                 <h3 class="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Antrean Pending
                 </h3>
-                <p class="text-xl md:text-2xl font-bold text-amber-500">{{ $pendingRentals }} <span
-                        class="text-xs font-normal text-muted-foreground">Order</span></p>
-                <p class="text-[10px] font-bold text-muted-foreground mt-1">Total: Rp
-                    {{ number_format($pendingRevenue / 1000, 0, ',', '.') }}k
-                </p>
+                <p class="text-xl md:text-2xl font-bold text-amber-500 leading-tight">{{ $pendingRentals }} <span
+                        class="text-xs font-normal text-muted-foreground">Order Terbuka</span></p>
+                <div class="mt-2.5">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-black tracking-tight shadow-sm">
+                        Total: Rp {{ number_format($pendingRevenue / 1000, 0, ',', '.') }}k
+                    </span>
+                </div>
             </div>
             <div
                 class="bg-background rounded-xl border border-border p-4 shadow-sm flex flex-col justify-between border-l-4 border-l-emerald-500">
