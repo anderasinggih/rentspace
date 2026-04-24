@@ -8,7 +8,7 @@ use Livewire\WithPagination;
 
 class Transactions extends Component
 {
-    use WithPagination;
+    use WithPagination, \App\Traits\LogsStaffActivity;
 
     public $search = '';
     public $filterStatus = '';
@@ -71,6 +71,8 @@ class Transactions extends Component
         if ($rental->status === 'pending') {
             $rental->update(['status' => 'paid']);
             $this->calculateAffiliateCommission($rental);
+            
+            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id}");
         }
     }
 
@@ -81,6 +83,7 @@ class Transactions extends Component
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid'])) {
             $rental->update(['status' => 'cancelled']);
+            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id}");
         }
     }
 
@@ -142,6 +145,8 @@ class Transactions extends Component
                     'completed_at' => now(),
                 ]);
                 $this->calculateAffiliateCommission($rental);
+                
+                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} dengan denda Rp" . number_format($this->dendaAmount + $this->dendaKerusakanAmount, 0, ',', '.'));
             }
         }
 
@@ -161,6 +166,8 @@ class Transactions extends Component
                 'completed_at' => now(),
             ]);
             $this->calculateAffiliateCommission($rental);
+            
+            $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} tanpa denda");
         }
     }
 
@@ -347,6 +354,8 @@ class Transactions extends Component
             'status' => $this->edit_status,
             'metode_pembayaran' => $this->edit_metode_pembayaran,
         ]);
+
+        $this->logActivity('edit_transaction', $trx, "Mengedit data transaksi #{$trx->id}");
 
         $this->closeEditModal();
         session()->flash('message', 'Transaksi berhasil diperbarui.');
