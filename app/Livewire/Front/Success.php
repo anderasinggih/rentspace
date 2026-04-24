@@ -17,6 +17,9 @@ class Success extends Component
     public $waUrl;
     public $isOwner = false;
     public $debugError = null;
+    public $rating = 5;
+    public $feedback = '';
+    public $showFeedbackModal = false;
 
     public function boot()
     {
@@ -70,6 +73,14 @@ class Success extends Component
         ]);
 
         $this->waUrl = $this->generateWaUrl();
+
+        // Show feedback modal if paid/completed or cash-pending and not yet rated
+        $isCashPending = ($this->rental->status === 'pending' && $this->rental->metode_pembayaran === 'cash');
+        if ((in_array($this->rental->status, ['paid', 'completed']) || $isCashPending) && 
+            \Illuminate\Support\Facades\Schema::hasColumn('rentals', 'rating') && 
+            !($this->rental->rating)) {
+            $this->showFeedbackModal = true;
+        }
     }
 
     public function refreshStatus()
@@ -163,6 +174,29 @@ class Success extends Component
         if (!auth()->check() || auth()->user()->role !== 'admin') return;
         $this->rental->update(['status' => 'cancelled']);
         $this->rental = $this->rental->fresh();
+    }
+
+    public function submitFeedback()
+    {
+        $this->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'feedback' => 'nullable|string|max:500'
+        ]);
+
+        $this->rental->update([
+            'rating' => $this->rating,
+            'feedback' => $this->feedback,
+            'is_feedback_shown' => true
+        ]);
+
+        $this->showFeedbackModal = false;
+        session()->flash('feedback_success', 'Terima kasih atas masukan Anda!');
+    }
+
+    public function skipFeedback()
+    {
+        $this->rental->update(['is_feedback_shown' => true]);
+        $this->showFeedbackModal = false;
     }
 
     private function generateWaUrl()

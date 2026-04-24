@@ -278,4 +278,51 @@
             </p>
         </div>
     </div>
+    <!-- Feedback Modal -->
+    @if($showFeedbackModal)
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm animate-in fade-in duration-300 no-pdf">
+        <div class="bg-card w-full max-w-sm rounded-[2.5rem] shadow-2xl border border-border p-6 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                </div>
+                <h3 class="text-2xl font-black tracking-tight text-foreground italic">Gimana Servis Kami?</h3>
+                <p class="text-xs text-muted-foreground mt-2 px-4 leading-relaxed">Puas sama layanannya? Kasih bintang & feedback ya biar kami makin semangat!</p>
+            </div>
+
+            <div class="mt-8">
+                <!-- Star Rating -->
+                <div class="flex justify-center gap-2.5 mb-8">
+                    @for($i = 1; $i <= 5; $i++)
+                    <button wire:click="$set('rating', {{ $i }})" class="transition-all active:scale-75 hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" 
+                            fill="{{ $rating >= $i ? 'currentColor' : 'none' }}" 
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" 
+                            class="{{ $rating >= $i ? 'text-amber-500' : 'text-zinc-300 dark:text-zinc-700' }}">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                    </button>
+                    @endfor
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Testimoni Kamu</label>
+                    <textarea wire:model="feedback" 
+                        placeholder="Tulis kesan & pesan kamu di sini..."
+                        class="w-full min-h-[120px] rounded-[1.5rem] border border-border bg-muted/30 p-5 text-sm focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500/30 transition-all outline-none resize-none"></textarea>
+                </div>
+            </div>
+
+            <div class="mt-8 flex flex-col gap-3">
+                <button wire:click="submitFeedback" 
+                    class="h-14 w-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-bold text-sm shadow-xl shadow-zinc-950/20 active:scale-95 transition-all">
+                    Kirim Review
+                </button>
+                <button wire:click="skipFeedback" class="h-10 w-full text-xs text-muted-foreground font-bold hover:text-foreground transition-colors uppercase tracking-widest">
+                    Nanti Saja
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
