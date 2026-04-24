@@ -75,7 +75,7 @@
             class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-8 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl">
             
             <!-- Background Image Slideshow -->
-            <div class="absolute inset-0 z-0 bg-zinc-950 overflow-hidden">
+            <div class="absolute inset-0 z-0 bg-white dark:bg-zinc-950 overflow-hidden text-zinc-950 dark:text-white">
                 @for($i = 0; $i < 3; $i++)
                     @php
                         $key = $i == 0 ? 'hero' : 'hero' . ($i + 1);
@@ -95,15 +95,15 @@
                     </div>
                 @endfor
                 
-                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent z-20"></div>
-                <div class="absolute inset-0 bg-black/40 z-20"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent dark:from-zinc-950 dark:via-zinc-950/50 z-20"></div>
+                <div class="absolute inset-0 bg-white/40 dark:bg-black/40 z-20"></div>
 
                 <!-- Slide Indicators -->
                 <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-30">
                     @for($i = 0; $i < 3; $i++)
                         <button @click="activeSlide = {{ $i }}" 
                             class="h-1.5 rounded-full transition-all duration-700"
-                            :class="activeSlide === {{ $i }} ? 'w-10 bg-white' : 'w-2 bg-white/30'"></button>
+                            :class="activeSlide === {{ $i }} ? 'w-10 bg-zinc-950 dark:bg-white' : 'w-2 bg-zinc-950/30 dark:bg-white/30'"></button>
                     @endfor
                 </div>
             </div>
@@ -175,15 +175,15 @@
                     </div>
                 @endif
                 <div
-                    class="inline-flex items-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-white/90 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase">
+                    class="inline-flex items-center rounded-full border border-zinc-950/20 dark:border-white/20 bg-zinc-950/10 dark:bg-white/10 backdrop-blur-md text-zinc-950/90 dark:text-white/90 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase">
                     RENT SPACE PURWOKERTO
                 </div>
                 <h1
-                    class="text-4xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-white uppercase max-w-4xl drop-shadow-md">
+                    class="text-4xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl drop-shadow-md">
                     {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda\nLebih Mudah &
                     Terjangkau."))) !!}
                 </h1>
-                <p class="mt-6 text-lg sm:text-xl leading-8 text-zinc-300 font-medium max-w-2xl drop-shadow-sm">
+                <p class="mt-6 text-lg sm:text-xl leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl drop-shadow-sm">
                     {{ \App\Models\Setting::getVal('home_description', 'Pilihan terbaik untuk merasakan pengalaman
                     menggunakan produk Apple original tanpa harus membeli baru. Proses cepat, stok terlihat transparan,
                     dan langsung transaksi!') }}
@@ -196,7 +196,7 @@
                     </a>
                     <a href="https://wa.me/{{ \App\Models\Setting::getVal('admin_wa', '6281234567890') }}"
                         target="_blank" rel="noopener"
-                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all border border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 hover:scale-[1.03] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
+                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all border border-zinc-950/20 dark:border-white/20 bg-zinc-950/10 dark:bg-white/10 backdrop-blur-md text-zinc-950 dark:text-white hover:bg-zinc-950/20 dark:hover:bg-white/20 hover:scale-[1.03] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
                         @php
                             $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                                                                                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
