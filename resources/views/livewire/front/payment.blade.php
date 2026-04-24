@@ -332,10 +332,10 @@
 
     <!-- Scripts Area -->
     @php
-        $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        $isProduction = config('midtrans.is_production');
         $snapUrl = $isProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
     @endphp
-    <script src="{{ $snapUrl }}" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+    <script src="{{ $snapUrl }}" data-client-key="{{ config('midtrans.client_key') }}"></script>
     <script>
         document.addEventListener('livewire:init', () => {
            Livewire.on('pay-with-snap', (event) => {

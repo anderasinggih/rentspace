@@ -20,8 +20,8 @@ class Success extends Component
 
     public function boot()
     {
-        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
     }
 
     public function mount($booking_code)

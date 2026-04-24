@@ -21,9 +21,9 @@ class Payment extends Component
 
     public function boot()
     {
-        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$clientKey = env('MIDTRANS_CLIENT_KEY');
-        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$clientKey = config('midtrans.client_key');
+        Config::$isProduction = config('midtrans.is_production');
         Config::$isSanitized = true;
         Config::$is3ds = true;
     }
@@ -108,8 +108,8 @@ class Payment extends Component
         $orderId = data_get($this->rental->payment_details, 'order_id');
         if ($orderId && $this->rental->status === 'pending') {
             try {
-                Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-                Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+                Config::$serverKey = config('midtrans.server_key');
+                Config::$isProduction = config('midtrans.is_production');
 
                 $status = (array) Transaction::status($orderId);
                 $transactionStatus = $status['transaction_status'] ?? '';
@@ -160,8 +160,8 @@ class Payment extends Component
         if ($this->rental->status !== 'pending') return;
 
         // Setup Midtrans Config (WAJIB tiap kali action)
-        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
         Config::$isSanitized = true;
         Config::$is3ds = true;
         
@@ -279,8 +279,8 @@ class Payment extends Component
         }
 
         try {
-            Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-            Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+            Config::$serverKey = config('midtrans.server_key');
+            Config::$isProduction = config('midtrans.is_production');
 
             $coreParams = $params;
             if (in_array($channel, ['bca', 'bni', 'bri', 'permata', 'bsi', 'cimb'])) {
