@@ -278,10 +278,16 @@
             </p>
         </div>
     </div>
-    <!-- Feedback Modal -->
+    <!-- Feedback Modal with 4s Delay -->
     @if($showFeedbackModal)
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm animate-in fade-in duration-300 no-pdf">
-        <div class="bg-card w-full max-w-sm rounded-[2.5rem] shadow-2xl border border-border p-6 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+    <div x-data="{ showDelayed: false }" x-init="setTimeout(() => showDelayed = true, 4000)">
+        <div x-show="showDelayed" 
+            x-transition:enter="transition ease-out duration-500"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm no-pdf"
+            x-cloak>
+            <div class="bg-card w-full max-w-sm rounded-[2.5rem] shadow-2xl border border-border p-6 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
             <div class="text-center">
                 <div class="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
@@ -324,5 +330,6 @@
             </div>
         </div>
     </div>
-    @endif
+</div>
+@endif
 </div>
