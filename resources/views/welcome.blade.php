@@ -81,14 +81,10 @@
                         $key = $i == 0 ? 'hero' : 'hero' . ($i + 1);
                         $image = \App\Models\Setting::getVal($key, 'default.jpg');
                     @endphp
-                    <div x-show="activeSlide === {{ $i }}"
-                         x-transition:enter="transition opacity duration-[2000ms] ease-in-out"
-                         x-transition:enter-start="opacity-0"
-                         x-transition:enter-end="opacity-100"
-                         x-transition:leave="transition opacity duration-[2000ms] ease-in-out"
-                         x-transition:leave-start="opacity-100"
-                         x-transition:leave-end="opacity-0"
-                         class="absolute inset-0 w-full h-full will-change-opacity">
+                    <div 
+                         class="absolute inset-0 w-full h-full transition-opacity duration-[2000ms] ease-in-out"
+                         :class="activeSlide === {{ $i }} ? 'opacity-100 z-10' : 'opacity-0 z-0'"
+                    >
                         <img src="/uploads/{{ $image }}" 
                              class="w-full h-full object-cover opacity-60"
                              onerror="this.style.opacity='0.1'">
