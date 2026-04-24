@@ -24,15 +24,15 @@
             $greeting = 'Halo Bos!';
             
             if ($currentTime >= 5 && $currentTime < 11) {
-                $greeting = 'Pagi Bos! ⚡️ Semangat harinya, jangan lupa bawa iPhone RentSpace buat momen spesialmu.';
+                $greeting = \App\Models\Setting::getVal('greeting_morning', 'Pagi Bos! ⚡️ Semangat harinya, jangan lupa bawa iPhone RentSpace buat momen spesialmu.');
             } elseif ($currentTime >= 11 && $currentTime < 15) {
-                $greeting = 'Siang Bos! ☀️ Panas ya? Tetep tampil kece & profesional bareng iPhone dari RentSpace.';
+                $greeting = \App\Models\Setting::getVal('greeting_day', 'Siang Bos! ☀️ Panas ya? Tetep tampil kece & profesional bareng iPhone dari RentSpace.');
             } elseif ($currentTime >= 15 && $currentTime < 18) {
-                $greeting = 'Sore Bos! ☁️ Purwokerto mulai sejuk nih, asik banget buat bikin konten cinematic.';
+                $greeting = \App\Models\Setting::getVal('greeting_afternoon', 'Sore Bos! ☁️ Purwokerto mulai sejuk nih, asik banget buat bikin konten cinematic.');
             } elseif ($currentTime >= 18 && $currentTime < 24) {
-                $greeting = 'Malam Bos! ✨ Butuh iPhone buat dinner atau event keren malam ini? Kami ready!';
+                $greeting = \App\Models\Setting::getVal('greeting_evening', 'Malam Bos! ✨ Butuh iPhone buat dinner atau event keren malam ini? Kami ready!');
             } else {
-                $greeting = 'Masih bangun Bos? 🌙 Lagi nyari unit buat dipake besok ya? Langsung sikat!';
+                $greeting = \App\Models\Setting::getVal('greeting_night', 'Masih bangun Bos? 🌙 Lagi nyari unit buat dipake besok ya? Langsung sikat!');
             }
 
             $customerSession = session('customer_session');
@@ -146,7 +146,6 @@
                 {{-- Dynamic Greeting Badge --}}
                 <div class="mb-4 animate-in fade-in slide-in-from-top-4 duration-1000">
                     <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-[2px] border border-white/10 shadow-sm transition-all hover:bg-white/10 group cursor-default">
-                        <span class="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                         <p class="text-[10px] sm:text-xs font-semibold text-white/90 tracking-wide">{{ $greeting }}</p>
                     </div>
                 </div>
