@@ -7,7 +7,9 @@
             <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Formulir Penyewaan</h1>
         </div>
 
-        <div x-data="bookingForm()" class="bg-background rounded-2xl shadow-sm border border-border p-6 sm:p-8">
+        <div x-data="bookingForm()" 
+            class="bg-background rounded-2xl shadow-sm border border-border sm:p-8 transition-all duration-300"
+            :class="keyboardOpen ? 'p-4 pb-2' : 'p-6'">
             <form wire:submit.prevent="submit" class="space-y-8">
 
                 <!-- Progress Bar -->
