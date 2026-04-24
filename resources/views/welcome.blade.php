@@ -82,13 +82,13 @@
                         $image = \App\Models\Setting::getVal($key, 'default.jpg');
                     @endphp
                     <div x-show="activeSlide === {{ $i }}"
-                         x-transition:enter="transition transform opacity duration-[2500ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-                         x-transition:enter-start="translate-y-full opacity-0"
-                         x-transition:enter-end="translate-y-0 opacity-100"
-                         x-transition:leave="transition transform opacity duration-[2500ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-                         x-transition:leave-start="translate-y-0 opacity-100"
-                         x-transition:leave-end="-translate-y-full opacity-0"
-                         class="absolute inset-0 w-full h-full transform-gpu will-change-[transform,opacity]">
+                         x-transition:enter="transition opacity duration-[2000ms] ease-in-out"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="transition opacity duration-[2000ms] ease-in-out"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="absolute inset-0 w-full h-full will-change-opacity">
                         <img src="/uploads/{{ $image }}" 
                              class="w-full h-full object-cover opacity-60"
                              onerror="this.style.opacity='0.1'">
@@ -98,14 +98,6 @@
                 <div class="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent dark:from-zinc-950 dark:via-zinc-950/50 z-20"></div>
                 <div class="absolute inset-0 bg-white/40 dark:bg-black/40 z-20"></div>
 
-                <!-- Slide Indicators -->
-                <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-30">
-                    @for($i = 0; $i < 3; $i++)
-                        <button @click="activeSlide = {{ $i }}" 
-                            class="h-1.5 rounded-full transition-all duration-700"
-                            :class="activeSlide === {{ $i }} ? 'w-10 bg-zinc-950 dark:bg-white' : 'w-2 bg-zinc-950/30 dark:bg-white/30'"></button>
-                    @endfor
-                </div>
             </div>
 
             <!-- Teks -->
