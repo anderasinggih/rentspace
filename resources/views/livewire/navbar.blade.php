@@ -28,7 +28,7 @@
             <!-- Logo Box -->
             <a href="/" wire:navigate
                 class="font-extrabold tracking-tight text-foreground flex items-center mr-6 shrink-0 transition-transform hover:scale-105">
-                {{ config('app.name', 'RENT SPACE') }}
+                {{ config('app.name', 'rentspace') }}
             </a>
 
             <!-- Desktop Navigation Links -->
