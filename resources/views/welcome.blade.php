@@ -165,9 +165,9 @@
                     </div>
                 @endif
                 <div
-                    class="inline-flex items-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-white px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700"
+                    class="inline-flex items-center rounded-full border-t border-l border-white/40 bg-white/10 dark:bg-white/5 backdrop-blur-xl text-white px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]"
                     :class="spotlight ? 'opacity-30 translate-y-2' : ''">
-                    RENT SPACE PURWOKERTO
+                    <span class="relative z-10">RENT SPACE PURWOKERTO</span>
                 </div>
                 <h1 @mouseenter="spotlight = true" @mouseleave="spotlight = false"
                     class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl transition-all duration-700 cursor-pointer relative z-40"
@@ -182,20 +182,29 @@
                 <div
                     class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center transition-all duration-700"
                     :class="spotlight ? 'opacity-20 translate-y-4' : ''">
+                    
+                    <!-- Button SEWA SEKARANG (Liquid Glass) -->
                     <a href="{{ route('public.booking') }}" wire:navigate
-                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-white text-zinc-950 shadow-[0_4px_24px_rgba(255,255,255,0.2)] hover:bg-zinc-100 hover:scale-[1.03] hover:shadow-[0_4px_32px_rgba(255,255,255,0.3)] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
-                        SEWA SEKARANG
+                        class="group/btn relative w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-white/10 dark:bg-white/5 backdrop-blur-[40px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/50 border-r border-b border-white/20 text-foreground shadow-[0_8px_32px_rgba(255,255,255,0.05)] hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
+                        <!-- Liquid Shine Overlay -->
+                        <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/btn:opacity-100 opacity-60"></div>
+                        <span class="relative z-10 tracking-wider">SEWA SEKARANG</span>
                     </a>
+
+                    <!-- Button Hubungi Admin (Liquid Glass) -->
                     <a href="https://wa.me/{{ \App\Models\Setting::getVal('admin_wa', '6281234567890') }}"
                         target="_blank" rel="noopener"
-                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all border border-zinc-950/20 dark:border-white/20 bg-zinc-950/10 dark:bg-white/10 backdrop-blur-md text-zinc-950 dark:text-white hover:bg-zinc-950/20 dark:hover:bg-white/20 hover:scale-[1.03] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
-                        @php
-                            $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                                                                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                                                                                                            stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0">
-                                                                                                                                            <path
-                                                                                                                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                                                                                                                        </svg>';
+                        class="group/wa relative w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-zinc-950/20 dark:bg-white/5 backdrop-blur-[40px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/30 border-r border-b border-zinc-950/10 text-foreground hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
+                        <!-- Liquid Shine Overlay -->
+                        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/wa:opacity-100 opacity-40"></div>
+                        <span class="relative z-10 flex items-center justify-center tracking-wider">
+                            @php
+                                $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                                                                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                                                                                                                                stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0">
+                                                                                                                                                <path
+                                                                                                                                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                                                                                                            </svg>';
                         @endphp
                         {!! $whatsappIcon !!}
                         HUBUNGI ADMIN
@@ -209,7 +218,9 @@
 
         <!-- Public Stats Widget -->
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20 mb-10">
-            <div class="grid grid-cols-3 divide-x divide-white/10 bg-white/[0.03] dark:bg-white/[0.02] backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden py-0">
+            <div class="grid grid-cols-3 divide-x divide-white/10 bg-white/[0.06] dark:bg-white/[0.02] backdrop-blur-[40px] border-t border-l border-white/20 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden py-0 relative group/stats">
+                <!-- Specular Reflection Overlay -->
+                <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none z-20"></div>
                 <!-- Total Transaksi -->
                 <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-3 sm:py-5 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
                      x-data="{ 
@@ -307,10 +318,13 @@
                 {{-- Pending Payment Banner (Amber) --}}
                 <div x-data="{ visible: false }" x-intersect.once="visible = true"
                     :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
-                    class="group relative mb-8 rounded-2xl border border-amber-500/20 bg-amber-500/[0.01] dark:bg-amber-500/[0.01] backdrop-blur-md shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-500/10 overflow-hidden">
+                    class="group relative mb-8 rounded-2xl border-t border-l border-amber-500/30 bg-amber-500/[0.03] dark:bg-amber-500/[0.02] backdrop-blur-[30px] shadow-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-500 hover:border-amber-500/60 hover:shadow-2xl hover:shadow-amber-500/20 overflow-hidden">
                     
-                    <!-- Amber Glow Blob -->
-                    <div class="absolute -right-8 -top-8 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/15 transition-all duration-500 z-0"></div>
+                    <!-- Liquid Glow Blob -->
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/20 group-hover:scale-150 transition-all duration-1000 z-0"></div>
+                    
+                    <!-- Specular Highlight -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none z-10"></div>
                     <div class="flex items-center gap-3 shrink-0">
                         <div
                             class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10 shrink-0 border border-amber-500/20">
@@ -457,10 +471,13 @@
                 {{-- Logged In but No Active/Pending Banner (Blue) --}}
                 <div x-data="{ visible: false }" x-intersect.once="visible = true"
                     :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
-                    class="group relative mb-8 rounded-2xl border border-blue-500/20 bg-blue-500/[0.01] dark:bg-blue-500/[0.01] backdrop-blur-md shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 overflow-hidden">
+                    class="group relative mb-8 rounded-2xl border-t border-l border-blue-500/30 bg-blue-500/[0.03] dark:bg-blue-500/[0.02] backdrop-blur-[30px] shadow-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-500 hover:border-blue-500/60 hover:shadow-2xl hover:shadow-blue-500/20 overflow-hidden">
                     
-                    <!-- Blue Glow Blob -->
-                    <div class="absolute -right-8 -top-8 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/15 transition-all duration-500 z-0"></div>
+                    <!-- Liquid Glow Blob -->
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 group-hover:scale-150 transition-all duration-1000 z-0"></div>
+
+                    <!-- Specular Highlight -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none z-10"></div>
                     <div class="flex items-center gap-3 shrink-0">
                         <div
                             class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 shrink-0">
@@ -546,11 +563,14 @@
                                     'sm:hidden': !expandedPromo && {{ $loop->index }} >= 4,
                                     'block': expandedPromo || {{ $loop->index }} < 2 
                                 }"
-                                class="p-4 sm:p-6 bg-emerald-500/[0.01] dark:bg-emerald-500/[0.01] backdrop-blur-md shadow-sm border border-emerald-500/30 rounded-2xl hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 ease-out group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[{{ $loop->index * 100 }}ms]">
+                                class="p-4 sm:p-6 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] backdrop-blur-[30px] shadow-xl border-t border-l border-emerald-500/40 rounded-2xl hover:border-emerald-500/60 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500 ease-out group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[{{ $loop->index * 100 }}ms]">
                                 
-                                <!-- Living Glow Blobs (Moving) -->
-                                <div class="absolute -right-12 -top-12 w-32 h-32 bg-emerald-400/15 rounded-full blur-3xl animate-pulse group-hover:bg-emerald-400/25 transition-all duration-500 ease-in-out z-0"></div>
-                                <div class="absolute -left-12 -bottom-12 w-32 h-32 bg-green-500/10 rounded-full blur-3xl animate-bounce [animation-duration:8s] group-hover:bg-green-500/20 transition-all duration-500 ease-in-out z-0"></div>
+                                <!-- Specular Highlight -->
+                                <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none z-10"></div>
+
+                                <!-- Liquid Glow Blobs (Moving) -->
+                                <div class="absolute -right-12 -top-12 w-40 h-40 bg-emerald-400/15 rounded-full blur-3xl animate-pulse group-hover:bg-emerald-400/25 group-hover:scale-125 transition-all duration-1000 ease-in-out z-0"></div>
+                                <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-green-500/10 rounded-full blur-3xl animate-bounce [animation-duration:8s] group-hover:bg-green-500/20 transition-all duration-1000 ease-in-out z-0"></div>
 
                                 <div class="relative z-10 flex items-start gap-4">
                                     <div class="flex-1">
@@ -675,9 +695,12 @@
                             }
                         @endphp
                         @foreach($finalFeedbacks as $item)
-                            <div class="group relative inline-block w-[260px] sm:w-[320px] bg-violet-500/[0.02] dark:bg-violet-500/[0.01] backdrop-blur-md border border-violet-500/20 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] transition-all duration-300 hover:border-violet-500/50 hover:shadow-2xl hover:shadow-violet-500/10 overflow-hidden">
-                                <!-- Violet Glow Blob -->
-                                <div class="absolute -right-8 -top-8 w-20 h-20 bg-violet-500/10 rounded-full blur-2xl group-hover:bg-violet-500/20 transition-all duration-500 z-0"></div>
+                            <div class="group relative inline-block w-[260px] sm:w-[320px] bg-violet-500/[0.03] dark:bg-violet-500/[0.02] backdrop-blur-[30px] border-t border-l border-violet-500/40 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] transition-all duration-500 hover:border-violet-500/60 hover:shadow-2xl hover:shadow-violet-500/20 overflow-hidden">
+                                <!-- Specular Highlight -->
+                                <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none z-10"></div>
+                                
+                                <!-- Violet Liquid Glow Blob -->
+                                <div class="absolute -right-8 -top-8 w-24 h-24 bg-violet-500/15 rounded-full blur-3xl group-hover:bg-violet-500/25 group-hover:scale-150 transition-all duration-1000 z-0"></div>
                                 
                                 <div class="relative z-10 flex items-center gap-3 mb-3">
                                     <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-violet-500/20 border border-violet-500/20 flex items-center justify-center text-[10px] sm:text-[12px] font-bold text-violet-600 dark:text-violet-400">
@@ -765,13 +788,16 @@
                                     @endphp
                                     <div
                                         :class="{ 'hidden sm:flex': !expanded && {{ $loop->index }} >= 4, 'flex': expanded || {{ $loop->index }} < 4 }"
-                                        class="group relative bg-blue-500/[0.01] dark:bg-blue-500/[0.01] backdrop-blur-md border border-blue-500/20 rounded-2xl p-3 shadow-sm hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 ease-out flex-col justify-between overflow-hidden">
+                                        class="group relative bg-blue-500/[0.03] dark:bg-blue-500/[0.02] backdrop-blur-[30px] border-t border-l border-blue-500/40 rounded-2xl p-3 shadow-xl hover:border-blue-500/60 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 ease-out flex-col justify-between overflow-hidden">
                                         
-                                        <!-- Subtle Glow Blobs (Blue-Sky) -->
-                                        <div class="absolute -right-8 -top-8 w-20 h-20 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/15 transition-all duration-500 ease-in-out z-0"></div>
-                                        <div class="absolute -left-8 -bottom-8 w-20 h-20 bg-sky-500/5 rounded-full blur-2xl group-hover:bg-sky-500/10 transition-all duration-500 ease-in-out z-0"></div>
+                                        <!-- Specular Highlight Overlay -->
+                                        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none z-10"></div>
+
+                                        <!-- Fluid Glow Blobs (Blue-Sky) -->
+                                        <div class="absolute -right-8 -top-8 w-24 h-24 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 group-hover:scale-150 transition-all duration-1000 ease-in-out z-0"></div>
+                                        <div class="absolute -left-8 -bottom-8 w-24 h-24 bg-sky-500/5 rounded-full blur-3xl group-hover:bg-sky-500/15 group-hover:rotate-45 transition-all duration-1000 ease-in-out z-0"></div>
                                         
-                                        <div class="relative z-10">
+                                        <div class="relative z-20">
                                             <h4
                                                 class="font-bold text-foreground text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight mb-1">
                                                 {{ $unit->seri }}
