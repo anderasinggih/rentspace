@@ -28,7 +28,7 @@
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Dashboard
                     </a>
-                    
+
                     <a href="{{ route('admin.monitoring') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Monitoring
@@ -58,7 +58,9 @@
                             x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                             class="absolute left-0 mt-1 w-48 rounded-xl bg-background border border-border shadow-xl py-1.5 z-[110]"
                             x-cloak>
-                            <div class="px-3 py-1 text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest">Inventory</div>
+                            <div
+                                class="px-3 py-1 text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest">
+                                Inventory</div>
                             <a href="{{ route('admin.units') }}" wire:navigate
                                 class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.units') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
                                 Unit
@@ -67,10 +69,12 @@
                                 class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.promo') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
                                 Promo & Diskon
                             </a>
-                            
+
                             <div class="h-px bg-border/50 my-1 mx-2"></div>
-                            <div class="px-3 py-1 text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest">Resources</div>
-                            
+                            <div
+                                class="px-3 py-1 text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest">
+                                Resources</div>
+
                             <a href="{{ route('admin.customers') }}" wire:navigate
                                 class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.customers') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
                                 Pelanggan
@@ -173,13 +177,15 @@
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted' }}">Transaksi</a>
 
         <div class="h-px bg-border/50 my-2 mx-3"></div>
-        <div class="text-[10px] font-bold uppercase text-muted-foreground px-3 mb-1 tracking-widest">Database & Sistem</div>
-        
+        <div class="text-[10px] font-bold uppercase text-muted-foreground px-3 mb-1 tracking-widest">Database & Sistem
+        </div>
+
         <a href="{{ route('admin.units') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Unit (Inventaris)</a>
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Unit</a>
         <a href="{{ route('admin.promo') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Promo & Diskon</a>
-        
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Promo
+            & Diskon</a>
+
         <div class="h-px bg-border/40 my-1 mx-3"></div>
 
         <a href="{{ route('admin.customers') }}" wire:navigate
