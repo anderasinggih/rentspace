@@ -955,7 +955,7 @@
                     x-transition:leave="transition ease-in duration-500"
                     x-transition:leave-start="opacity-100 translate-x-0 scale-100"
                     x-transition:leave-end="opacity-0 -translate-x-10 scale-90"
-                    class="group relative flex items-center gap-3 sm:gap-4 bg-white/10 dark:bg-zinc-900/40 backdrop-blur-xl backdrop-saturate-[180%] border-t border-l border-white/40 border-r border-b border-white/10 p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl shadow-2xl pointer-events-auto">
+                    class="group relative flex items-center gap-3 sm:gap-4 bg-white/10 dark:bg-zinc-900/40 backdrop-blur-sm backdrop-saturate-[180%] border-t border-l border-white/40 border-r border-b border-white/10 p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl shadow-2xl pointer-events-auto">
                     
                     <!-- Specular Polish -->
                     <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none rounded-2xl"></div>
