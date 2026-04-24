@@ -131,7 +131,7 @@
             class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-8 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl">
             
             <!-- Background Image Slideshow -->
-            <div class="absolute inset-0 z-0 bg-white dark:bg-zinc-950 overflow-hidden text-zinc-950 dark:text-white">
+            <div class="absolute inset-0 z-0 bg-background overflow-hidden text-foreground">
                 @for($i = 0; $i < 3; $i++)
                     @php
                         $key = $i == 0 ? 'hero' : 'hero' . ($i + 1);
@@ -147,8 +147,8 @@
                     </div>
                 @endfor
                 
-                <div class="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent dark:from-zinc-950 dark:via-zinc-950/50 z-20"></div>
-                <div class="absolute inset-0 bg-white/40 dark:bg-black/40 z-20 transition-all duration-700"
+                <div class="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent z-20"></div>
+                <div class="absolute inset-0 bg-background/40 z-20 transition-all duration-700"
                     :class="spotlight ? 'bg-black/80 backdrop-blur-[2px]' : ''"></div>
 
             </div>
