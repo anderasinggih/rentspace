@@ -92,12 +92,12 @@
                 @endfor
                 
                 <div class="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent dark:from-zinc-950 dark:via-zinc-950/50 z-20"></div>
-                <div class="absolute inset-0 bg-white/40 dark:bg-black/40 z-20"></div>
+                <div class="absolute inset-0 bg-white/40 dark:bg-black/40 z-20 transition-colors duration-700 group-hover:bg-black/70"></div>
 
             </div>
 
             <!-- Teks -->
-            <div class="relative z-10 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8 group cursor-default">
+            <div class="relative z-30 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8 group cursor-default">
                 @if($isCustomerLoggedIn && $closestActiveRental)
                     @php
                         $selesaiHeroTimestamp = $closestActiveRental->waktu_selesai->timestamp * 1000;
@@ -163,14 +163,14 @@
                     </div>
                 @endif
                 <div
-                    class="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md text-emerald-600 dark:text-emerald-400 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700 group-hover:scale-95 group-hover:opacity-50">
+                    class="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md text-emerald-600 dark:text-emerald-400 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700 group-hover:opacity-40">
                     RENT SPACE PURWOKERTO
                 </div>
                 <h1
-                    class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl transition-all duration-700 group-hover:scale-[1.03] group-hover:drop-shadow-[0_0_30px_rgba(52,211,153,0.3)] dark:group-hover:drop-shadow-[0_0_30px_rgba(52,211,153,0.5)]">
+                    class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl transition-all duration-700 group-hover:drop-shadow-[0_0_40px_rgba(52,211,153,0.6)] dark:group-hover:drop-shadow-[0_0_50px_rgba(52,211,153,0.8)]">
                     {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda Lebih Mudah & Cepat"))) !!}
                 </h1>
-                <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl transition-all duration-700 group-hover:opacity-60 group-hover:scale-95">
+                <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl transition-all duration-700 group-hover:opacity-50">
                     {{ \App\Models\Setting::getVal('home_description', 'Pilihan terbaik untuk merasakan pengalaman
                     menggunakan produk Apple original tanpa harus membeli baru. Aman, transparan dan terpercaya.') }}
                 </p>
