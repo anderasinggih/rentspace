@@ -137,7 +137,7 @@ class Monitoring extends Component
             });
         }
         
-        $activeRentals = $activeRentalsQuery->latest()->get();
+        $activeRentals = $activeRentalsQuery->orderBy('waktu_selesai', 'asc')->get();
 
         // 4. Fetch Upcoming Rentals (Booked for Future)
         $upcomingRentalsQuery = Rental::with('units')
