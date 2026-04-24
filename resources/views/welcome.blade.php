@@ -239,7 +239,7 @@
 
         <!-- Public Stats Widget -->
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20 mb-10">
-            <div class="grid grid-cols-3 divide-x divide-white/10 bg-white/[0.015] dark:bg-white/[0.01] backdrop-blur-[2px] border-t border-l border-white/20 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden py-0 relative group/stats">
+            <div class="grid grid-cols-3 divide-x divide-white/5 bg-white/[0.005] dark:bg-white/[0.002] backdrop-blur-[1px] border-t border-l border-white/20 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden py-0 relative group/stats">
                 <!-- Specular Reflection Overlay -->
                 <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none z-20"></div>
                 <!-- Total Transaksi -->
@@ -339,7 +339,7 @@
                 {{-- Pending Payment Banner (Amber) --}}
                 <div x-data="{ visible: false }" x-intersect.once="visible = true"
                     :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
-                    class="group relative mb-8 rounded-2xl border-t border-l border-amber-500/30 bg-amber-500/[0.01] dark:bg-amber-500/[0.01] backdrop-blur-[2px] shadow-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-500 hover:border-amber-500/60 hover:shadow-2xl hover:shadow-amber-500/20 overflow-hidden">
+                    class="group relative mb-8 rounded-2xl border-t border-l border-amber-500/20 bg-amber-500/[0.005] dark:bg-amber-500/[0.002] backdrop-blur-[1px] shadow-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-500 hover:border-amber-500/60 hover:shadow-2xl hover:shadow-amber-500/20 overflow-hidden">
                     
                     <!-- Liquid Glow Blob -->
                     <div class="absolute -right-8 -top-8 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/20 group-hover:scale-150 transition-all duration-1000 z-0"></div>
@@ -492,7 +492,7 @@
                 {{-- Logged In but No Active/Pending Banner (Blue) --}}
                 <div x-data="{ visible: false }" x-intersect.once="visible = true"
                     :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
-                    class="group relative mb-8 rounded-2xl border-t border-l border-blue-500/30 bg-blue-500/[0.01] dark:bg-blue-500/[0.01] backdrop-blur-[2px] shadow-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-500 hover:border-blue-500/60 hover:shadow-2xl hover:shadow-blue-500/20 overflow-hidden">
+                    class="group relative mb-8 rounded-2xl border-t border-l border-blue-500/20 bg-blue-500/[0.005] dark:bg-blue-500/[0.002] backdrop-blur-[1px] shadow-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-500 hover:border-blue-500/60 hover:shadow-2xl hover:shadow-blue-500/20 overflow-hidden">
                     
                     <!-- Liquid Glow Blob -->
                     <div class="absolute -right-8 -top-8 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 group-hover:scale-150 transition-all duration-1000 z-0"></div>
@@ -584,7 +584,7 @@
                                     'sm:hidden': !expandedPromo && {{ $loop->index }} >= 4,
                                     'block': expandedPromo || {{ $loop->index }} < 2 
                                 }"
-                                class="p-4 sm:p-6 bg-emerald-500/[0.01] dark:bg-emerald-500/[0.01] backdrop-blur-[2px] shadow-xl border-t border-l border-emerald-500/40 rounded-2xl hover:border-emerald-500/60 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500 ease-out group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[{{ $loop->index * 100 }}ms]">
+                                class="p-4 sm:p-6 bg-emerald-500/[0.005] dark:bg-emerald-500/[0.002] backdrop-blur-[1px] shadow-xl border-t border-l border-emerald-500/30 rounded-2xl hover:border-emerald-500/60 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500 ease-out group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[{{ $loop->index * 100 }}ms]">
                                 
                                 <!-- Specular Highlight -->
                                 <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none z-10"></div>
@@ -716,7 +716,7 @@
                             }
                         @endphp
                         @foreach($finalFeedbacks as $item)
-                            <div class="group relative inline-block w-[260px] sm:w-[320px] bg-violet-500/[0.01] dark:bg-violet-500/[0.01] backdrop-blur-[2px] border-t border-l border-violet-500/40 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] transition-all duration-500 hover:border-violet-500/60 hover:shadow-2xl hover:shadow-violet-500/20 overflow-hidden">
+                            <div class="group relative inline-block w-[260px] sm:w-[320px] bg-violet-500/[0.005] dark:bg-violet-500/[0.002] backdrop-blur-[1px] border-t border-l border-violet-500/30 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] transition-all duration-500 hover:border-violet-500/60 hover:shadow-2xl hover:shadow-violet-500/20 overflow-hidden">
                                 <!-- Specular Highlight -->
                                 <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none z-10"></div>
                                 
@@ -809,7 +809,7 @@
                                     @endphp
                                     <div
                                         :class="{ 'hidden sm:flex': !expanded && {{ $loop->index }} >= 4, 'flex': expanded || {{ $loop->index }} < 4 }"
-                                        class="group relative bg-blue-500/[0.01] dark:bg-blue-500/[0.01] backdrop-blur-[2px] border-t border-l border-blue-500/40 rounded-2xl p-3 shadow-xl hover:border-blue-500/60 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 ease-out flex-col justify-between overflow-hidden">
+                                        class="group relative bg-blue-500/[0.005] dark:bg-blue-500/[0.002] backdrop-blur-[1px] border-t border-l border-blue-500/30 rounded-2xl p-3 shadow-xl hover:border-blue-500/60 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 ease-out flex-col justify-between overflow-hidden">
                                         
                                         <!-- Specular Highlight Overlay -->
                                         <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none z-10"></div>
@@ -955,7 +955,7 @@
                     x-transition:leave="transition ease-in duration-500"
                     x-transition:leave-start="opacity-100 translate-x-0 scale-100"
                     x-transition:leave-end="opacity-0 -translate-x-10 scale-90"
-                    class="group relative flex items-center gap-3 sm:gap-4 bg-white/5 dark:bg-zinc-900/20 backdrop-blur-[4px] backdrop-saturate-[180%] border-t border-l border-white/40 border-r border-b border-white/10 p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl shadow-2xl pointer-events-auto">
+                    class="group relative flex items-center gap-3 sm:gap-4 bg-white/[0.005] dark:bg-zinc-900/[0.002] backdrop-blur-[1px] backdrop-saturate-[180%] border-t border-l border-white/40 border-r border-b border-white/10 p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl shadow-2xl pointer-events-auto">
                     
                     <!-- Specular Polish -->
                     <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none rounded-2xl"></div>
