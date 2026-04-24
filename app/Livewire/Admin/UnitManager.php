@@ -5,9 +5,12 @@ namespace App\Livewire\Admin;
 use App\Models\Unit;
 use Livewire\Component;
 
+use Livewire\WithPagination;
+
 class UnitManager extends Component
 {
-    use \App\Traits\LogsStaffActivity;
+    use WithPagination, \App\Traits\LogsStaffActivity;
+    public $perPage = 20;
     public $unit_id, $seri, $imei, $memori, $warna, $kondisi;
     public $category_id, $harga_per_jam, $harga_per_hari;
     public $specs = []; // Dynamic specifications
@@ -21,11 +24,15 @@ class UnitManager extends Component
     public $filterStatus = '';
     public $activeTab = 'units'; // 'units' or 'categories'
 
-    // Category Management State
     public $cat_id, $cat_name, $cat_slug, $cat_icon;
     public $cat_fields = [];
     public $showCatModal = false;
     public $isEditingCat = false;
+
+    public function updatedSearch() { $this->resetPage(); }
+    public function updatedFilterKategori() { $this->resetPage(); }
+    public function updatedFilterStatus() { $this->resetPage(); }
+    public function updatedActiveTab() { $this->resetPage(); }
 
     public function create()
     {
@@ -245,7 +252,7 @@ class UnitManager extends Component
             ->orderBy('seri', 'asc');
 
         return view('livewire.admin.unit-manager', [
-            'units' => $unitsQuery->get(),
+            'units' => $unitsQuery->paginate($this->perPage),
             'categories' => $categoriesQuery->get(),
             'all_categories' => \App\Models\Category::orderBy('name')->get() // For the dropdowns
         ])->layout('layouts.admin');
