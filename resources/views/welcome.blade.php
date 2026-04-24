@@ -27,6 +27,17 @@
         body {
             touch-action: pan-x pan-y;
             -webkit-text-size-adjust: 100%;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        /* Allow selection in inputs */
+        input,
+        textarea {
+            user-select: text;
+            -webkit-user-select: text;
         }
 
         /* Prevent input auto-zoom on iOS */
@@ -258,23 +269,20 @@
                     </div>
                 @endif
                 <div
-                    class="inline-flex items-center rounded-full border-t border-l border-white/40 bg-white/10 dark:bg-white/5 backdrop-blur-md text-white px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]"
-                    :class="spotlight ? 'opacity-30 translate-y-2' : ''">
+                    class="inline-flex items-center rounded-full border-t border-l border-white/40 bg-white/10 dark:bg-white/5 backdrop-blur-md text-white px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]">
                     <span class="relative z-10">RENT SPACE PURWOKERTO</span>
                 </div>
                 <h1 @mouseenter="spotlight = true" @mouseleave="spotlight = false"
                     class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl transition-all duration-700 cursor-pointer relative z-40"
-                    :class="spotlight ? 'drop-shadow-[0_0_60px_rgba(255,255,255,0.7)] scale-[1.02]' : ''">
+                    :class="spotlight ? 'drop-shadow-[0_0_60px_rgba(255,255,255,0.7)]' : ''">
                     {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda Lebih Mudah & Cepat"))) !!}
                 </h1>
-                <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl transition-all duration-700"
-                    :class="spotlight ? 'opacity-40 scale-95 translate-y-[-10px]' : ''">
+                <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl transition-all duration-700">
                     {{ \App\Models\Setting::getVal('home_description', 'Pilihan terbaik untuk merasakan pengalaman
                     menggunakan produk Apple original tanpa harus membeli baru. Aman, transparan dan terpercaya.') }}
                 </p>
                 <div
-                    class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center transition-all duration-700"
-                    :class="spotlight ? 'opacity-20 translate-y-4' : ''">
+                    class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center transition-all duration-700">
                     
                     <!-- Button SEWA SEKARANG (Liquid Glass) -->
                     <a href="{{ route('public.booking') }}" wire:navigate
