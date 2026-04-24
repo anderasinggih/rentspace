@@ -208,13 +208,6 @@
                         </a>
                     @endif
 
-                    <!-- Invoice Button -->
-                     @if($rental->status !== 'cancelled')
-                        <button onclick="downloadInvoice()"
-                            class="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-white text-zinc-900 text-xs font-bold border border-zinc-200 hover:bg-zinc-50 transition-all shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Simpan Invoice (PDF)
-                        </button>
                      @endif
 
                     <div class="grid grid-cols-2 gap-2 mt-2">
@@ -287,38 +280,7 @@
         </div>
     </div>
 
-    <!-- html2pdf Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script>
-        function downloadInvoice() {
-            const element = document.getElementById('invoice-content');
-            const bookingCode = '{{ $rental->booking_code }}';
-            
-            // Konfigurasi PDF
-            const opt = {
-                margin:       [10, 10],
-                filename:     `Invoice-${bookingCode}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
-                    scale: 3, 
-                    useCORS: true,
-                    letterRendering: true,
-                    // Sembunyikan elemen dengan class no-pdf dan buat di tengah
-                    onclone: (clonedDoc) => {
-                        clonedDoc.querySelectorAll('.no-pdf').forEach(el => el.remove());
-                        const inv = clonedDoc.getElementById('invoice-content');
-                        if(inv) {
-                            inv.style.margin = '0 auto';
-                            inv.style.float = 'none';
-                        }
-                    }
-                },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            // Jalankan Generate
-            html2pdf().set(opt).from(element).save();
-        }
-    </script>
+        </div>
+    </div>
 </div>
 </div>
