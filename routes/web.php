@@ -68,9 +68,8 @@ Route::get('/affiliate/register', AffiliateRegister::class)->name('affiliate.reg
 // Midtrans Webhook Route
 Route::post('/official-midtrans-callback', [\App\Http\Controllers\MidtransWebhookController::class, 'handle']);
 
-// Temporary route for testing Midtrans
 Route::get('/test-midtrans', function() {
-    \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+    \Midtrans\Config::$serverKey = config('midtrans.server_key');
     return "Library Midtrans Aman!";
 });
 
