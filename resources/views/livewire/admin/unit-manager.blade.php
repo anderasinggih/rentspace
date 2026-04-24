@@ -212,6 +212,9 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="mt-4 px-4 pb-4">
+                            {{ $units->links() }}
+                        </div>
                     </div>
                 </div>
             </div>
