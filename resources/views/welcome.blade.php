@@ -35,6 +35,9 @@
                     ->latest()
                     ->get();
 
+                $onlinePendingTotal = $pendingOrders->where('metode_pembayaran', '!=', 'cash')->count();
+                $cashPendingTotal = $pendingOrders->where('metode_pembayaran', 'cash')->count();
+
                 $closestActiveRental = \App\Models\Rental::where('nik', $customerSession['nik'])
                     ->where('no_wa', $customerSession['no_wa'])
                     ->where('status', 'paid')
@@ -281,17 +284,19 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="font-bold text-foreground text-sm">Pesanan Menunggu Pembayaran</p>
+                            <p class="font-bold text-foreground text-sm">
+                                {{ $onlinePendingTotal > 0 ? 'Pesanan Menunggu Pembayaran' : 'Pesanan Menunggu Pembayaran di Lokasi' }}
+                            </p>
                             <p class="text-xs text-muted-foreground mt-0.5">
                                 Anda memiliki <span class="font-bold text-amber-500">{{ $pendingOrders->count() }}
-                                    pesanan</span> yang belum dibayar.
+                                    pesanan</span> {{ $onlinePendingTotal > 0 ? 'yang belum dibayar' : 'dengan metode bayar di tempat' }}.
                             </p>
                         </div>
                     </div>
                     <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0">
                         <a href="{{ route('public.check-order') }}" wire:navigate
                             class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl bg-amber-500 text-white text-xs font-bold px-5 py-2.5 hover:bg-amber-600 transition-colors shadow-sm shrink-0 whitespace-nowrap">
-                            Bayar Sekarang
+                            {{ $onlinePendingTotal > 0 ? 'Bayar Sekarang' : 'Lihat Rincian' }}
                         </a>
                     </div>
                 </div>
