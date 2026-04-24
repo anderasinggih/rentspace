@@ -1,4 +1,4 @@
-<div class="py-0 px-4 sm:py-16 flex flex-col items-center justify-center min-h-screen sm:min-h-0" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
+<div class="min-h-screen bg-background py-4 px-4 sm:py-16 flex flex-col items-center justify-start sm:justify-center" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
     <div id="invoice-content" class="w-full max-w-md mx-auto bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
 
         <!-- Header -->
@@ -296,21 +296,16 @@
             
             // Konfigurasi PDF
             const opt = {
-                margin:       [15, 15],
+                margin:       [10, 10],
                 filename:     `Invoice-${bookingCode}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { 
                     scale: 3, 
                     useCORS: true,
                     letterRendering: true,
-                    // Sembunyikan elemen dengan class no-pdf dan buat di tengah
+                    // Sembunyikan elemen dengan class no-pdf
                     onclone: (clonedDoc) => {
                         clonedDoc.querySelectorAll('.no-pdf').forEach(el => el.remove());
-                        const inv = clonedDoc.getElementById('invoice-content');
-                        if(inv) {
-                            inv.style.margin = '0 auto';
-                            inv.style.float = 'none';
-                        }
                     }
                 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
