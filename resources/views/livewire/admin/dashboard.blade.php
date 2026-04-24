@@ -410,18 +410,25 @@
                 },
                 yaxis: {
                     labels: {
-                        formatter: (val) => {
-                            if (val >= 1000000) return (val / 1000000).toFixed(1).replace('.', ',') + ' jt';
-                            if (val >= 1000) return (val / 1000).toFixed(0) + ' rb';
+                        formatter: function(val) {
+                            if (val >= 1000000) return Math.round(val / 1000000) + 'jt';
+                            if (val >= 1000) return Math.round(val / 1000) + 'rb';
                             return val;
                         },
                         style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '10px' }
                     }
                 },
+                legend: {
+                    show: true, position: 'top', horizontalAlign: 'left',
+                    offsetY: -10, // Move it up a bit to create space below it
+                    markers: { radius: 12 },
+                    itemMargin: { vertical: 10 }, // Margin top/bottom for the legend items
+                    style: { fontSize: '11px', fontFamily: 'inherit' }
+                },
                 grid: {
                     borderColor: colors.borderColor, strokeDashArray: 0,
                     yaxis: { lines: { show: true } }, xaxis: { lines: { show: false } },
-                    padding: { top: 0, right: 0, bottom: 0, left: 20 }
+                    padding: { top: 20, right: 0, bottom: 0, left: 20 }
                 },
                 fill: {
                     type: 'gradient',
