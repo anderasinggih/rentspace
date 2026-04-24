@@ -363,7 +363,7 @@
                                     x-text="status === 'red' ? 'Masa Sewa Mau Habis' : 'Penyewaan Berlangsung'"></p>
                                 <p class="text-xs text-muted-foreground mt-0.5 truncate pr-2 sm:pr-0">
                                     Sewa <span
-                                        class="font-bold text-foreground">#{{ str_pad($closestActiveRental->id, 4, '0', STR_PAD_LEFT) }}</span>
+                                        class="font-bold text-primary uppercase tracking-tighter">{{ $closestActiveRental->booking_code }}</span>
                                 </p>
                             </div>
                             <div class="sm:hidden text-right">
