@@ -18,8 +18,8 @@ x-init="window.addEventListener('scroll', () => {
     showNavbar = window.scrollY < lastScrollY || window.scrollY < 50;
     lastScrollY = window.scrollY;
 })"
-class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-transform duration-500 ease-in-out"
-:class="showNavbar ? 'translate-y-0' : '-translate-y-32'"
+class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-all duration-700 ease-in-out"
+:class="showNavbar ? 'translate-y-0 opacity-100 blur-none' : '-translate-y-32 opacity-0 blur-sm pointer-events-none'"
 >
     <nav
         class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-blur-[4px] backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all overflow-hidden">
