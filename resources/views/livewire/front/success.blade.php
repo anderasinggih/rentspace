@@ -1,5 +1,5 @@
-<div class="py-0 px-4 sm:py-16 flex flex-col items-center" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
-    <div id="invoice-content" class="w-full max-w-md mx-auto bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-4">
+<div class="py-0 px-4 sm:py-16 flex flex-col items-center justify-center min-h-screen sm:min-h-0" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
+    <div id="invoice-content" class="w-full max-w-md mx-auto bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
 
         <!-- Header -->
         <div class="p-6 text-center border-b border-border/50 bg-muted/20">
