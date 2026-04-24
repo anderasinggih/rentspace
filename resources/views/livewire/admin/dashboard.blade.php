@@ -402,9 +402,9 @@
                     events: {
                         mouseMove: function (event, chartContext, config) {
                             const pointIndex = config.dataPointIndex;
-                            if (pointIndex !== -1 && pointIndex !== undefined && typeof window.navigator.vibrate === 'function') {
+                            if (pointIndex !== -1 && pointIndex !== undefined && navigator.vibrate) {
                                 if (window.lastVibratePoint !== pointIndex) {
-                                    window.navigator.vibrate(5);
+                                    navigator.vibrate(10);
                                     window.lastVibratePoint = pointIndex;
                                 }
                             }
