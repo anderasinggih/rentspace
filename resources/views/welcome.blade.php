@@ -165,13 +165,13 @@
                     </div>
                 @endif
                 <div
-                    class="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md text-emerald-600 dark:text-emerald-400 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700"
+                    class="inline-flex items-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-white px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700"
                     :class="spotlight ? 'opacity-30 translate-y-2' : ''">
                     RENT SPACE PURWOKERTO
                 </div>
                 <h1 @mouseenter="spotlight = true" @mouseleave="spotlight = false"
                     class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl transition-all duration-700 cursor-pointer relative z-40"
-                    :class="spotlight ? 'drop-shadow-[0_0_50px_rgba(52,211,153,0.8)] scale-[1.02]' : ''">
+                    :class="spotlight ? 'drop-shadow-[0_0_60px_rgba(255,255,255,0.7)] scale-[1.02]' : ''">
                     {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda Lebih Mudah & Cepat"))) !!}
                 </h1>
                 <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl transition-all duration-700"
