@@ -1,22 +1,4 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-    x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' || (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) }"
-    x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))" x-bind:class="{ 'dark': darkMode }">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'RENT SPACE') }} PURWOKERTO</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
-</head>
-
-<body class="font-sans antialiased min-h-screen bg-background text-foreground flex flex-col">
-    <livewire:front.global-announcement />
-
-    <!-- Navbar Publik Baru yang identik dengan Admin Navbar -->
-    <livewire:navbar />
-
+<x-app-layout>
     <main class="flex-1 w-full">
         @php
             \Carbon\Carbon::setLocale('id');
@@ -1043,6 +1025,5 @@
             </template>
         </div>
     @endif
-</body>
-
-</html>
+    </main>
+</x-app-layout>
