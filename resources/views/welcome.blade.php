@@ -59,7 +59,7 @@
 
             // Social Proof Ticker Data
             $recentRentals = \App\Models\Rental::with('units')
-                ->whereIn('status', ['paid', 'pending', 'canceled'])
+                ->whereIn('status', ['paid', 'pending', 'cancelled'])
                 ->latest()
                 ->take(15)
                 ->get()
@@ -74,7 +74,7 @@
                     $unitName = $r->units->first() ? $r->units->first()->seri : 'iPhone';
                     $action = 'baru sewa';
                     if($r->status === 'pending') $action = 'sedang booking';
-                    if($r->status === 'canceled') $action = 'baru batal';
+                    if($r->status === 'cancelled') $action = 'baru batal';
                     
                     return [
                         'name' => $censoredName,
@@ -971,7 +971,7 @@
                         :class="{ 
                             'bg-emerald-500/20 border border-emerald-500/30': rentals[currentIndex].status === 'paid',
                             'bg-amber-500/20 border border-amber-500/30': rentals[currentIndex].status === 'pending',
-                            'bg-rose-500/20 border border-rose-500/30': rentals[currentIndex].status === 'canceled'
+                            'bg-rose-500/20 border border-rose-500/30': rentals[currentIndex].status === 'cancelled'
                         }">
                         <svg x-show="rentals[currentIndex].status === 'paid'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-emerald-500 animate-pulse sm:w-6 sm:h-6">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
@@ -980,7 +980,7 @@
                         <svg x-show="rentals[currentIndex].status === 'pending'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-amber-500 animate-spin sm:w-6 sm:h-6">
                              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                          </svg>
-                        <svg x-show="rentals[currentIndex].status === 'canceled'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-rose-500 sm:w-6 sm:h-6">
+                        <svg x-show="rentals[currentIndex].status === 'cancelled'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-rose-500 sm:w-6 sm:h-6">
                             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                         </svg>
                     </div>
@@ -990,7 +990,7 @@
                             <span :class="{
                                 'text-emerald-600 dark:text-emerald-400': rentals[currentIndex].status === 'paid',
                                 'text-amber-600 dark:text-amber-400': rentals[currentIndex].status === 'pending',
-                                'text-rose-600 dark:text-rose-400': rentals[currentIndex].status === 'canceled'
+                                'text-rose-600 dark:text-rose-400': rentals[currentIndex].status === 'cancelled'
                             }" x-text="rentals[currentIndex].name"></span>
                             <span class="text-muted-foreground/80 font-medium" x-text="rentals[currentIndex].action"></span>
                         </p>
@@ -1006,13 +1006,13 @@
                         :class="{
                             'bg-emerald-500': rentals[currentIndex].status === 'paid',
                             'bg-amber-500': rentals[currentIndex].status === 'pending',
-                            'bg-rose-500': rentals[currentIndex].status === 'canceled'
+                            'bg-rose-500': rentals[currentIndex].status === 'cancelled'
                         }">
                         <span class="animate-ping absolute h-2 w-2 rounded-full opacity-75"
                             :class="{
                                 'bg-emerald-500': rentals[currentIndex].status === 'paid',
                                 'bg-amber-500': rentals[currentIndex].status === 'pending',
-                                'bg-rose-500': rentals[currentIndex].status === 'canceled'
+                                'bg-rose-500': rentals[currentIndex].status === 'cancelled'
                             }"></span>
                     </div>
                 </div>
