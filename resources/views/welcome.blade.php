@@ -945,7 +945,7 @@
                     }, 15000);
                 }
             }"
-            class="fixed bottom-6 left-6 z-[60] pointer-events-none sm:block hidden">
+            class="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 z-[60] pointer-events-none block max-w-[calc(100vw-2rem)] sm:max-w-md">
             
             <template x-if="rentals[currentIndex]">
                 <div x-show="show"
@@ -955,32 +955,34 @@
                     x-transition:leave="transition ease-in duration-500"
                     x-transition:leave-start="opacity-100 translate-x-0 scale-100"
                     x-transition:leave-end="opacity-0 -translate-x-10 scale-90"
-                    class="group relative flex items-center gap-4 bg-white/10 dark:bg-zinc-900/40 backdrop-blur-[40px] backdrop-saturate-[180%] border-t border-l border-white/40 border-r border-b border-white/10 p-3 pr-6 rounded-2xl shadow-2xl pointer-events-auto">
+                    class="group relative flex items-center gap-3 sm:gap-4 bg-white/10 dark:bg-zinc-900/40 backdrop-blur-[40px] backdrop-saturate-[180%] border-t border-l border-white/40 border-r border-b border-white/10 p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl shadow-2xl pointer-events-auto">
                     
                     <!-- Specular Polish -->
                     <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none rounded-2xl"></div>
 
-                    <div class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30 overflow-hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-emerald-500 animate-pulse">
+                    <div class="relative flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30 overflow-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-emerald-500 animate-pulse sm:w-6 sm:h-6">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                             <polyline points="22 4 12 14.01 9 11.01"/>
                         </svg>
                     </div>
 
                     <div class="flex flex-col">
-                        <p class="text-xs font-bold text-foreground leading-tight">
+                        <p class="text-[10px] sm:text-xs font-bold text-foreground leading-tight">
                             <span class="text-emerald-600 dark:text-emerald-400" x-text="rentals[currentIndex].name"></span>
-                            <span class="text-muted-foreground/80 font-medium">baru saja menyewa</span>
+                            <span class="text-muted-foreground/80 font-medium">baru sewa</span>
                         </p>
-                        <p class="text-[13px] font-black text-foreground mt-0.5 tracking-tight uppercase" x-text="rentals[currentIndex].unit"></p>
-                        <p class="text-[10px] text-muted-foreground/60 mt-0.5 font-medium flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <p class="text-[11px] sm:text-[13px] font-black text-foreground mt-0.5 tracking-tight uppercase line-clamp-1" x-text="rentals[currentIndex].unit"></p>
+                        <p class="text-[9px] sm:text-[10px] text-muted-foreground/60 mt-0.5 font-medium flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sm:w-2.5 sm:h-2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             <span x-text="rentals[currentIndex].time"></span>
                         </p>
                     </div>
 
-                    <!-- Small Close Button hint -->
-                    <div class="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 border border-white dark:border-zinc-950 animate-ping opacity-20"></div>
+                    <!-- Small Live Indicator -->
+                    <div class="absolute-inline flex h-2 w-2 rounded-full bg-emerald-500 ml-auto self-start mt-1">
+                        <span class="animate-ping absolute h-2 w-2 rounded-full bg-emerald-500 opacity-75"></span>
+                    </div>
                 </div>
             </template>
         </div>
