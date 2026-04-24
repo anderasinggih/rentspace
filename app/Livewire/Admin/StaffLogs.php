@@ -63,7 +63,7 @@ class StaffLogs extends Component
             ->orderBy('created_at', 'desc')
             ->paginate($this->perPage);
 
-        $users = \App\Models\User::whereIn('role', ['admin', 'staff', 'viewer'])
+        $users = \App\Models\User::whereIn('role', ['admin', 'staff'])
             ->orderBy('name')
             ->get();
 

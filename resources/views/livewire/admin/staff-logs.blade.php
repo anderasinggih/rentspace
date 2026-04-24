@@ -40,7 +40,6 @@
                     <option value="">Semua Role</option>
                     <option value="admin">Admin</option>
                     <option value="staff">Staff</option>
-                    <option value="viewer">Viewer</option>
                 </select>
             </div>
 
