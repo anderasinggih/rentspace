@@ -453,6 +453,14 @@
                 },
                 colors: ['#6366f1', '#10b981'],
                 theme: { mode: colors.isDark ? 'dark' : 'light' },
+                legend: {
+                    show: true,
+                    position: 'bottom',
+                    horizontalAlign: 'left',
+                    offsetY: 8,
+                    itemMargin: { horizontal: 10, vertical: 5 },
+                    labels: { colors: colors.textColor, useSeriesColors: false }
+                },
                 tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } }
             });
             revChart.render();
@@ -490,6 +498,14 @@
                     padding: { top: 0, right: 0, bottom: 0, left: 10 }
                 },
                 theme: { mode: colors.isDark ? 'dark' : 'light' },
+                legend: {
+                    show: true,
+                    position: 'bottom',
+                    horizontalAlign: 'left',
+                    offsetY: 8,
+                    itemMargin: { horizontal: 10, vertical: 5 },
+                    labels: { colors: colors.textColor, useSeriesColors: false }
+                },
                 tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => val + " Orders" }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } }
             });
             trxChart.render();
