@@ -3,9 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+
+use Illuminate\Database\Eloquent\Prunable;
 
 class StaffLog extends Model
 {
+    use Prunable;
+
+    /**
+     * Get the prunable model query.
+     */
+    public function prunable()
+    {
+        return static::where('created_at', '<=', now()->subMonth());
+    }
+
     protected $fillable = [
         'user_id',
         'action',
