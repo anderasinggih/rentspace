@@ -24,35 +24,15 @@
 
                 <!-- Desktop Links -->
                 <div class="hidden md:flex items-center space-x-1">
-                    <!-- Dropdown Dashboard (Overview & Monitoring) -->
-                    <div x-data="{ open: false }" @click.away="open = false" class="relative">
-                        <button @click="open = !open"
-                            class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.dashboard') || request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
-                            Dashboard
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                stroke-linejoin="round" class="transition-transform duration-200"
-                                :class="open ? 'rotate-180' : ''">
-                                <path d="m6 9 6 6 6-6" />
-                            </svg>
-                        </button>
-
-                        <div x-show="open" x-transition:enter="transition ease-out duration-100"
-                            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                            x-transition:leave="transition ease-in duration-75"
-                            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                            class="absolute left-0 mt-1 w-48 rounded-xl bg-background border border-border shadow-xl py-1.5 z-[110]"
-                            x-cloak>
-                            <a href="{{ route('admin.dashboard') }}" wire:navigate
-                                class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.dashboard') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
-                                Statistik (Utama)
-                            </a>
-                            <a href="{{ route('admin.monitoring') }}" wire:navigate
-                                class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.monitoring') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
-                                Monitoring (Live)
-                            </a>
-                        </div>
-                    </div>
+                    <a href="{{ route('admin.dashboard') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Dashboard
+                    </a>
+                    
+                    <a href="{{ route('admin.monitoring') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Monitoring
+                    </a>
 
                     <a href="{{ route('admin.transactions') }}" wire:navigate
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
@@ -183,11 +163,11 @@
     <div x-show="adminMenuOpen" x-transition x-cloak style="display: none;"
         class="md:hidden border-t border-border bg-background px-4 py-4 space-y-2 pb-6">
 
-        <div class="text-[10px] font-bold uppercase text-muted-foreground px-3 mb-1 tracking-widest">Dashboard</div>
+        <div class="text-[10px] font-bold uppercase text-muted-foreground px-3 mb-1 tracking-widest">Utama</div>
         <a href="{{ route('admin.dashboard') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted' }}">Statistik Utama</a>
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted' }}">Dashboard</a>
         <a href="{{ route('admin.monitoring') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted' }}">Monitoring Live</a>
+            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted' }}">Monitoring</a>
         <div class="h-px bg-border/50 my-2 mx-3"></div>
         <a href="{{ route('admin.transactions') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted' }}">Transaksi</a>
