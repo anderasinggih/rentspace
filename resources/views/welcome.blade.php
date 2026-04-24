@@ -519,7 +519,7 @@
                                     'sm:hidden': !expandedPromo && {{ $loop->index }} >= 4,
                                     'block': expandedPromo || {{ $loop->index }} < 2 
                                 }"
-                                class="p-4 sm:p-6 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] backdrop-blur-md shadow-sm border border-emerald-500/10 rounded-2xl hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 ease-out group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[{{ $loop->index * 100 }}ms]">
+                                class="p-4 sm:p-6 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] backdrop-blur-md shadow-sm border border-emerald-500/30 rounded-2xl hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 ease-out group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[{{ $loop->index * 100 }}ms]">
                                 
                                 <!-- Living Glow Blobs (Moving) -->
                                 <div class="absolute -right-12 -top-12 w-32 h-32 bg-emerald-400/15 rounded-full blur-3xl animate-pulse group-hover:bg-emerald-400/25 transition-all duration-500 ease-in-out z-0"></div>
