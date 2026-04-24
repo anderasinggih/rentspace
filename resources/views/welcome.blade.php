@@ -443,10 +443,11 @@
 
                     <div class="flex w-full sm:w-auto mt-2 sm:mt-0 relative z-10 sm:ml-0">
                         <a href="{{ route('public.check-order') }}" wire:navigate
-                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl border border-input text-xs font-bold px-5 py-2.5 transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap group-hover:scale-105"
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl text-xs font-bold px-5 py-2.5 transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap group-hover:scale-105 group-hover:shadow-lg"
                             :class="{
-                                        'bg-background hover:bg-muted text-foreground group-hover:border-primary/50': status !== 'red',
-                                        'bg-red-500 border-red-500 text-white hover:bg-red-600 shadow-red-500/20 group-hover:shadow-lg': status === 'red'
+                                        'bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-500/20 group-hover:shadow-emerald-500/30': status === 'green',
+                                        'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-500/20 group-hover:shadow-amber-500/30': status === 'amber',
+                                        'bg-red-500 text-white hover:bg-red-600 shadow-red-500/20 group-hover:shadow-red-500/30': status === 'red'
                                     }">
                             Rincian Sewa
                         </a>
@@ -479,7 +480,7 @@
                     </div>
                     <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0 relative z-10">
                         <a href="{{ route('public.check-order') }}" wire:navigate
-                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-600 dark:text-blue-400 text-xs font-bold px-5 py-2.5 transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-blue-500/20">
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl bg-blue-600 text-white text-xs font-bold px-5 py-2.5 transition-all duration-300 shadow-sm shadow-blue-500/20 shrink-0 whitespace-nowrap hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 group-hover:scale-105">
                             Cek Riwayat
                         </a>
                     </div>
