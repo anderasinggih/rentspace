@@ -80,14 +80,16 @@ class TestDataSeeder extends Seeder
 
         // 5. Seed Staff Logs
         echo "Seeding Staff Logs...\n";
-        $admin = User::where('role', 'admin')->first();
-        if ($admin) {
-            for ($i = 1; $i <= 60; $i++) {
+        $staffs = User::whereIn('role', ['admin', 'staff'])->limit(5)->get();
+        if ($staffs->count() > 0) {
+            for ($i = 1; $i <= 100; $i++) {
+                $staff = $staffs->random();
                 StaffLog::create([
-                    'user_id' => $admin->id,
-                    'action' => 'Test Action ' . $i,
-                    'description' => 'Automatic logged action for testing pagination ' . $i,
-                    'created_at' => now()->subMinutes($i * 10),
+                    'user_id' => $staff->id,
+                    'action' => $i % 3 == 0 ? 'update_rental' : ($i % 5 == 0 ? 'cancel_booking' : 'edit_unit'),
+                    'description' => "Melakukan perubahan pada sistem (Log #$i)",
+                    'ip_address' => '127.0.0.1',
+                    'created_at' => now()->subHours(rand(1, 720)), // Random dates within last month
                 ]);
             }
         }
