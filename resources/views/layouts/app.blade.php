@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 
@@ -25,6 +25,14 @@
         // Re-apply after Livewire 3 attribute morphs the HTML tag
         document.addEventListener('livewire:navigated', applyTheme);
     </script>
+
+    <style>
+        html,
+        body {
+            touch-action: manipulation;
+            -webkit-text-size-adjust: 100%;
+        }
+    </style>
 </head>
 
 <body class="bg-background text-foreground antialiased font-sans flex flex-col min-h-screen">

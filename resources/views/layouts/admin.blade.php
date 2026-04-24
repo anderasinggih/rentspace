@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>{{ $title ?? 'Dashboard Admin' }} - {{ config('app.name', 'RentSpace') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -19,6 +19,13 @@
         applyTheme();
         document.addEventListener('livewire:navigated', applyTheme);
     </script>
+    <style>
+        html,
+        body {
+            touch-action: manipulation;
+            -webkit-text-size-adjust: 100%;
+        }
+    </style>
     <!-- Alpine.js is included via Vite/Livewire usually but handled automatically by Livewire 3 -->
 </head>
 
