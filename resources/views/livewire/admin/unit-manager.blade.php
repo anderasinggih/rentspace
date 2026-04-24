@@ -69,7 +69,7 @@
                             <option value="">Semua Status</option>
                             <option value="active">🟢 Aktif</option>
                             <option value="inactive">⚪ Nonaktif</option>
-                            <option value="deleted">🔴 Dihapus</option>
+                            <option value="trashed">🗑️ Terhapus</option>
                         </select>
                     </div>
                 </div>
@@ -173,6 +173,9 @@
                                                         @if(auth()->user()->role === 'admin')
                                                             <button wire:click="restoreUnit({{ $unit->id }})"
                                                                 class="inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors bg-emerald-100 text-emerald-700 hover:bg-emerald-200 h-7 sm:h-8 px-2 sm:px-4">Pulihkan</button>
+                                                            <button wire:click="forceDelete({{ $unit->id }})"
+                                                                onclick="confirm('Yakin ingin menghapus PERMANEN unit ini?') || event.stopImmediatePropagation()"
+                                                                class="inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors bg-red-100 text-red-700 hover:bg-red-200 h-7 sm:h-8 px-2 sm:px-4">Hapus Permanen</button>
                                                         @endif
                                                     @else
                                                         @if(auth()->user()->role === 'admin')
@@ -180,7 +183,7 @@
                                                                 class="text-primary hover:underline text-xs sm:text-sm font-semibold">Edit</button>
                                                             <button wire:click="delete({{ $unit->id }})"
                                                                 class="text-destructive hover:underline text-xs sm:text-sm font-semibold"
-                                                                onclick="confirm('Yakin ingin menghapus unit ini?') || event.stopImmediatePropagation()">Hapus</button>
+                                                                onclick="confirm('Yakin ingin membuang unit ini ke tempat sampah?') || event.stopImmediatePropagation()">Hapus</button>
                                                         @endif
                                                     @endif
                                                 </div>
