@@ -101,14 +101,14 @@
                                 <tbody class="divide-y divide-border">
                                     @foreach($units as $unit)
                                         <tr
-                                            class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5 opacity-60 grayscale' : (!$unit->is_active ? 'opacity-50' : '') }}">
+                                            class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5' : (!$unit->is_active ? 'opacity-50' : '') }}">
                                             <td class="px-3 sm:px-6 py-3 sm:py-4 align-middle">
                                                 <div
-                                                    class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'line-through text-muted-foreground' : '' }}">
+                                                    class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'text-red-900 dark:text-red-300' : '' }}">
                                                     {{ $unit->seri }}
                                                     @if($unit->category)
                                                         <x-ui.badge
-                                                            variant="{{ str_contains(strtolower($unit->category->slug), 'iphone') ? 'blue' : 'purple' }}"
+                                                            variant="{{ $unit->trashed() ? 'red' : (str_contains(strtolower($unit->category->slug), 'iphone') ? 'blue' : 'purple') }}"
                                                             class="ml-1 text-[10px] uppercase font-medium">
                                                             {{ $unit->category->name }}
                                                         </x-ui.badge>
@@ -130,13 +130,13 @@
                                             </td>
                                             <td class="hidden sm:table-cell px-6 py-4 align-middle">
                                                 @if($unit->category && str_contains(strtolower($unit->category->slug), 'iphone'))
-                                                    <div class="text-sm">{{ $unit->warna }} - {{ $unit->memori }}</div>
+                                                    <div class="text-sm {{ $unit->trashed() ? 'text-red-800/70 dark:text-red-400/70' : '' }}">{{ $unit->warna }} - {{ $unit->memori }}</div>
                                                 @else
                                                     @if($unit->specs && count($unit->specs) > 0)
                                                         <div class="space-y-0.5">
                                                             @foreach($unit->specs as $key => $val)
                                                                 @if($val)
-                                                                    <div class="text-[11px]"><span
+                                                                    <div class="text-[11px] {{ $unit->trashed() ? 'text-red-800/70 dark:text-red-400/70' : '' }}"><span
                                                                             class="font-semibold text-muted-foreground uppercase text-[9px]">{{ $key }}:</span>
                                                                         {{ $val }}</div>
                                                                 @endif
@@ -153,14 +153,14 @@
                                                 @endif
                                             </td>
                                             <td class="hidden sm:table-cell px-6 py-4 align-middle">
-                                                <div class="text-sm font-semibold">Rp
+                                                <div class="text-sm font-semibold {{ $unit->trashed() ? 'text-red-900/80 dark:text-red-300/80' : '' }}">Rp
                                                     {{ number_format($unit->harga_per_hari, 0, ',', '.') }} / hari</div>
                                                 <div class="text-xs text-muted-foreground">Rp
                                                     {{ number_format($unit->harga_per_jam, 0, ',', '.') }} / jam</div>
                                             </td>
                                             <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle">
                                                 @if($unit->trashed())
-                                                    <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Dihapus</x-ui.badge>
+                                                    <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Terhapus</x-ui.badge>
                                                 @elseif($unit->is_active)
                                                     <x-ui.badge variant="green" class="text-[10px] sm:text-xs">Aktif</x-ui.badge>
                                                 @else
@@ -168,14 +168,28 @@
                                                 @endif
                                             </td>
                                             <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle text-right h-full">
-                                                <div class="flex items-center justify-end w-full gap-2 sm:gap-4">
+                                                <div class="flex items-center justify-end w-full gap-2 transition-all">
                                                     @if($unit->trashed())
                                                         @if(auth()->user()->role === 'admin')
+                                                            {{-- Restore Button --}}
                                                             <button wire:click="restoreUnit({{ $unit->id }})"
-                                                                class="inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors bg-emerald-100 text-emerald-700 hover:bg-emerald-200 h-7 sm:h-8 px-2 sm:px-4">Pulihkan</button>
+                                                                wire:confirm="Pulihkan unit ini ke daftar aktif?"
+                                                                class="flex h-8 w-8 items-center justify-center rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all active:scale-95"
+                                                                title="Pulihkan Unit">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                                                                </svg>
+                                                            </button>
+
+                                                            {{-- Force Delete Button --}}
                                                             <button wire:click="forceDelete({{ $unit->id }})"
-                                                                onclick="confirm('Yakin ingin menghapus PERMANEN unit ini?') || event.stopImmediatePropagation()"
-                                                                class="inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors bg-red-100 text-red-700 hover:bg-red-200 h-7 sm:h-8 px-2 sm:px-4">Hapus Permanen</button>
+                                                                wire:confirm="PERINGATAN: Unit ini akan dihapus PERMANEN dari database. Lanjutkan?"
+                                                                class="flex h-8 w-8 items-center justify-center rounded-lg text-red-600 hover:bg-red-100 dark:hover:bg-red-950 transition-all active:scale-95"
+                                                                title="Hapus Permanen">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="m10 11 4 4"/><path d="m14 11-4 4"/>
+                                                                </svg>
+                                                            </button>
                                                         @endif
                                                     @else
                                                         @if(auth()->user()->role === 'admin')
