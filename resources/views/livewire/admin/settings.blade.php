@@ -119,63 +119,64 @@
                 <!-- Hero Photo Setting -->
                 <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm">
                     <div class="p-4 border-b border-border bg-muted/30">
-                        <h2 class="text-lg font-semibold">1:1 Foto Beranda (Hero)</h2>
-                        <p class="text-xs text-muted-foreground">Unggah foto beranda (hero) yang akan ditampilkan di halaman
-                            awal web.</p>
+                        <h2 class="text-lg font-semibold">Slide Foto Beranda (Hero)</h2>
+                        <p class="text-xs text-muted-foreground">Unggah 3 foto beranda yang akan ditampilkan secara otomatis (auto-slide) di halaman awal. Gunakan rasio 21:9 atau 16:9 untuk hasil terbaik.</p>
                     </div>
                     <div class="p-4">
-                        <div x-data="{ heroName: null, heroPreview: null }" class="w-full">
-                            <div class="mb-4 flex items-center justify-center">
-                                <div
-                                    class="w-48 h-48 bg-muted border border-dashed border-border rounded-lg flex items-center justify-center relative overflow-hidden">
-                                    <!-- New Photo Preview -->
-                                    <div x-show="heroPreview" style="display: none;" class="absolute inset-0 z-20">
-                                        <span class="block w-full h-full bg-cover bg-no-repeat bg-center"
-                                            x-bind:style="'background-image: url(\'' + heroPreview + '\');'"></span>
-                                    </div>
+                        @if (session()->has('hero_message'))
+                            <div class="mb-4 p-3 text-xs font-bold text-emerald-600 bg-emerald-50 rounded-lg border border-emerald-100 animate-in fade-in slide-in-from-top-2">{{ session('hero_message') }}</div>
+                        @endif
 
-                                    <!-- Current Photo -->
-                                    <div x-show="!heroPreview" class="absolute inset-0 z-10">
-                                        <img src="/uploads/{{ $hero }}?t={{ time() }}"
-                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                                            class="w-full h-full object-cover">
-                                        <div style="display:none;"
-                                            class="w-full h-full flex items-center justify-center bg-muted text-muted-foreground text-xs font-medium">
-                                            Logo Kosong</div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            @for($i = 1; $i <= 3; $i++)
+                                @php 
+                                    $photoProp = "hero" . ($i == 1 ? "" : $i) . "_photo";
+                                    $keyName = "hero" . ($i == 1 ? "" : $i);
+                                    $currentVal = $this->$keyName;
+                                @endphp
+                                <div class="space-y-3" x-data="{ preview: null }">
+                                    <div class="flex items-center justify-between px-1">
+                                        <span class="text-[10px] font-bold tracking-tight text-muted-foreground">Slide #{{ $i }}</span>
+                                    </div>
+                                    
+                                    <div class="relative aspect-[16/9] bg-muted rounded-xl border border-dashed border-border overflow-hidden flex items-center justify-center shadow-inner group">
+                                        <!-- Preview -->
+                                        <template x-if="preview">
+                                            <img :src="preview" class="absolute inset-0 w-full h-full object-cover">
+                                        </template>
+                                        <template x-if="!preview">
+                                            <img src="/uploads/{{ $currentVal }}?t={{ time() }}" 
+                                                 class="absolute inset-0 w-full h-full object-cover"
+                                                 onerror="this.src='https://placehold.co/800x450/18181b/ffffff?text=Slide+{{ $i }}'">
+                                        </template>
+
+                                        <!-- Overlay info -->
+                                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span class="text-white text-[10px] font-bold tracking-tight">Pilih Foto Baru</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-2">
+                                        <input type="file" wire:model="hero{{ $i == 1 ? '' : $i }}_photo" accept="image/*"
+                                            x-on:change="const reader = new FileReader(); reader.onload = (e) => { preview = e.target.result; }; reader.readAsDataURL($event.target.files[0])"
+                                            class="block w-full text-[10px] text-muted-foreground file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer">
+                                        
+                                        @error('hero'.($i == 1 ? '' : $i).'_photo') 
+                                            <span class="text-red-500 text-[9px] font-bold block">{{ $message }}</span> 
+                                        @enderror
+
+                                        <div wire:loading wire:target="hero{{ $i == 1 ? '' : $i }}_photo" class="text-[9px] text-primary animate-pulse font-bold">Memproses file...</div>
+
+                                        @if(auth()->user()->role === 'admin')
+                                            <button wire:click="saveHero({{ $i }})" wire:loading.attr="disabled"
+                                                class="w-full h-8 flex items-center justify-center rounded-lg bg-primary text-primary-foreground text-[10px] font-bold tracking-tight hover:bg-primary/90 active:scale-95 transition-all shadow-sm">
+                                                <span wire:loading.remove wire:target="saveHero({{ $i }})">Simpan Slide {{ $i }}</span>
+                                                <span wire:loading wire:target="saveHero({{ $i }})">Menyimpan...</span>
+                                            </button>
+                                        @endif
                                     </div>
                                 </div>
-                            </div>
-
-                            <form wire:submit="saveHero" class="flex flex-col gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">Unggah Foto (Rekomendasi 1:1, Max 2MB)</label>
-                                    <input type="file" x-ref="heroInput" x-on:change="
-                heroName = $refs.heroInput.files[0].name;
-                const reader = new FileReader();
-                reader.onload = (e) => { heroPreview = e.target.result; };
-                reader.readAsDataURL($refs.heroInput.files[0]);
-            " wire:model="hero_photo" accept="image/*"
-                                        class="w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors">
-
-                                    <div wire:loading wire:target="hero_photo"
-                                        class="text-xs text-red-600 dark:text-red-400 font-semibold mt-1 animate-pulse">
-                                        Sedang memproses file ke server... Jangan klik simpan dulu.
-                                    </div>
-                                    @error('hero_photo') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                @if(auth()->user()->role === 'admin')
-                                <button type="submit" wire:confirm="Ganti foto beranda utama?"
-                                    class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
-                                    wire:loading.attr="disabled">
-                                    <span wire:loading.remove wire:target="saveHero">Simpan Foto Beranda</span>
-                                    <span wire:loading wire:target="saveHero">Menyimpan...</span>
-                                </button>
-                                @else
-                                <div class="w-full h-9 flex items-center justify-center rounded-md border border-dashed border-border text-[10px] font-bold text-muted-foreground uppercase opacity-50">Mode Viewer (Read Only)</div>
-                                @endif
-                            </form>
+                            @endfor
                         </div>
                     </div>
                 </div>

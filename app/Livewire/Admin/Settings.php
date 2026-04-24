@@ -13,8 +13,12 @@ class Settings extends Component
 
     public $qris_photo;
     public $hero_photo;
+    public $hero2_photo;
+    public $hero3_photo;
     public $qris;
     public $hero;
+    public $hero2;
+    public $hero3;
     public $perPage = 10;
 
     public $editingUserId = null;
@@ -86,6 +90,8 @@ class Settings extends Component
 
         $this->qris = \App\Models\Setting::getVal('qris', 'default.jpg');
         $this->hero = \App\Models\Setting::getVal('hero', 'default.jpg');
+        $this->hero2 = \App\Models\Setting::getVal('hero2', 'default2.jpg');
+        $this->hero3 = \App\Models\Setting::getVal('hero3', 'default3.jpg');
         $this->min_payout = \App\Models\Setting::getVal('min_payout', 50000);
 
         $this->social_ig_url = \App\Models\Setting::getVal('social_ig_url', '');
@@ -326,37 +332,39 @@ class Settings extends Component
         session()->flash('faq_message', 'Konten Halaman Tentang (FAQ) berhasil disimpan.');
     }
 
-    public function saveHero()
+    public function saveHero($slot = 1)
     {
         if (auth()->user()->role !== 'admin')
             return;
 
+        $photoProp = $slot == 1 ? 'hero_photo' : ($slot == 2 ? 'hero2_photo' : 'hero3_photo');
+        $keyName = $slot == 1 ? 'hero' : ($slot == 2 ? 'hero2' : 'hero3');
+
         $this->validate([
-            'hero_photo' => 'required|image|max:3072|mimes:jpg,jpeg,png,webp',
+            $photoProp => 'required|image|max:6144|mimes:jpg,jpeg,png,webp',
         ]);
 
-        $filename = 'hero_' . time() . '.' . $this->hero_photo->getClientOriginalExtension();
+        $filename = 'hero' . $slot . '_' . time() . '.' . $this->$photoProp->getClientOriginalExtension();
 
         // Menggunakan DOCUMENT_ROOT untuk langsung mengarah ke 'htdocs' di InfinityFree
         $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/uploads';
 
-        // Buat folder jika belum ada (0755 lebih disarankan untuk keamanan hosting)
         if (!file_exists($uploadPath)) {
             mkdir($uploadPath, 0755, true);
         }
 
-        // Pindahkan file foto dari direktori temporary Livewire ke htdocs/uploads
         $destination = $uploadPath . '/' . $filename;
-        file_put_contents($destination, file_get_contents($this->hero_photo->getRealPath()));
+        file_put_contents($destination, file_get_contents($this->$photoProp->getRealPath()));
 
         \App\Models\Setting::updateOrCreate(
-            ['key' => 'hero'],
+            ['key' => $keyName],
             ['value' => $filename]
         );
 
-        $this->hero = $filename;
+        $this->$keyName = $filename;
+        $this->reset($photoProp);
 
-        session()->flash('hero_message', '1:1 Foto Beranda berhasil diperbarui!');
+        session()->flash('hero_message', "Hero foto slot $slot berhasil diperbarui!");
     }
 
     public function saveQris()

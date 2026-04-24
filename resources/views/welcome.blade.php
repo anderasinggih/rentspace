@@ -59,15 +59,53 @@
         @endphp
 
         <!-- Hero section -->
-        <section
+        <section x-data="{ 
+                activeSlide: 0,
+                slides: [
+                    '/uploads/{{ \App\Models\Setting::getVal('hero', 'default.jpg') }}?t={{ time() }}',
+                    '/uploads/{{ \App\Models\Setting::getVal('hero2', 'default2.jpg') }}?t={{ time() }}',
+                    '/uploads/{{ \App\Models\Setting::getVal('hero3', 'default3.jpg') }}?t={{ time() }}'
+                ],
+                init() {
+                    setInterval(() => {
+                        this.activeSlide = (this.activeSlide + 1) % this.slides.length;
+                    }, 6000);
+                }
+            }"
             class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-8 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl">
-            <!-- Background Image -->
-            <div class="absolute inset-0 z-0 bg-zinc-950">
-                <img src="/uploads/{{ \App\Models\Setting::getVal('hero', 'default.jpg') }}?t={{ time() }}"
-                    onerror="this.style.opacity='0.1'"
-                    class="w-full h-full object-cover opacity-60 transition-transform duration-1000 scale-105">
-                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent"></div>
-                <div class="absolute inset-0 bg-black/20"></div>
+            
+            <!-- Background Image Slideshow -->
+            <div class="absolute inset-0 z-0 bg-zinc-950 overflow-hidden">
+                @for($i = 0; $i < 3; $i++)
+                    @php
+                        $key = $i == 0 ? 'hero' : 'hero' . ($i + 1);
+                        $image = \App\Models\Setting::getVal($key, 'default.jpg');
+                    @endphp
+                    <div x-show="activeSlide === {{ $i }}"
+                         x-transition:enter="transition transform opacity duration-[2500ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                         x-transition:enter-start="translate-y-full opacity-0"
+                         x-transition:enter-end="translate-y-0 opacity-100"
+                         x-transition:leave="transition transform opacity duration-[2500ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                         x-transition:leave-start="translate-y-0 opacity-100"
+                         x-transition:leave-end="-translate-y-full opacity-0"
+                         class="absolute inset-0 w-full h-full transform-gpu will-change-[transform,opacity]">
+                        <img src="/uploads/{{ $image }}" 
+                             class="w-full h-full object-cover opacity-60"
+                             onerror="this.style.opacity='0.1'">
+                    </div>
+                @endfor
+                
+                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent z-20"></div>
+                <div class="absolute inset-0 bg-black/40 z-20"></div>
+
+                <!-- Slide Indicators -->
+                <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-30">
+                    @for($i = 0; $i < 3; $i++)
+                        <button @click="activeSlide = {{ $i }}" 
+                            class="h-1.5 rounded-full transition-all duration-700"
+                            :class="activeSlide === {{ $i }} ? 'w-10 bg-white' : 'w-2 bg-white/30'"></button>
+                    @endfor
+                </div>
             </div>
 
             <!-- Teks -->
