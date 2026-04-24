@@ -4,18 +4,19 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
 
 class Settings extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     public $qris_photo;
     public $hero_photo;
     public $qris;
     public $hero;
+    public $perPage = 10;
 
-    public $users = [];
     public $editingUserId = null;
     public $isEditMode = false;
     public $name = '', $email = '', $password = '', $role = 'admin';
@@ -23,6 +24,17 @@ class Settings extends Component
     public $sortField = 'created_at';
     public $sortDirection = 'desc';
     public $activeTab = 'akun';
+    public $search = '';
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedActiveTab()
+    {
+        $this->resetPage();
+    }
 
     // Affiliator Profile Fields
     public $affiliate_no_hp = '', $affiliate_nik = '', $affiliate_alamat = '';
@@ -55,8 +67,6 @@ class Settings extends Component
         if (!in_array(auth()->user()->role, ['admin', 'viewer'])) {
             abort(403, 'Akses ditolak.');
         }
-
-        $this->loadUsers();
         $this->home_title = \App\Models\Setting::getVal('home_title', 'Sewa iPhone Mudah, Cepat, dan Aman');
         $this->home_description = \App\Models\Setting::getVal('home_description', 'Pilih tipe iPhone sesuai kebutuhan Anda. Bebas atur jadwal sewa, harga bersahabat, tanpa syarat ribet!');
         $this->late_tolerance_minutes = \App\Models\Setting::getVal('late_tolerance_minutes', 60);
@@ -87,10 +97,7 @@ class Settings extends Component
         $this->maintenance_message = \App\Models\Setting::getVal('maintenance_message', 'Kami akan segera kembali! Saat ini sistem sedang dalam pemeliharaan rutin untuk meningkatkan layanan kami.');
     }
 
-    public function loadUsers()
-    {
-        $this->users = \App\Models\User::orderBy($this->sortField, $this->sortDirection)->get();
-    }
+    // Removed loadUsers() to use paginate in render()
 
     public function sortBy($field)
     {
@@ -100,7 +107,7 @@ class Settings extends Component
             $this->sortField = $field;
             $this->sortDirection = 'asc';
         }
-        $this->loadUsers();
+        $this->resetPage();
     }
 
     public function createUser()
@@ -133,7 +140,6 @@ class Settings extends Component
         }
 
         $this->reset(['name', 'email', 'password', 'role']);
-        $this->loadUsers();
         session()->flash('user_message', 'Akun berhasil ditambahkan');
     }
 
@@ -230,7 +236,6 @@ class Settings extends Component
         }
 
         $this->cancelEdit();
-        $this->loadUsers();
         session()->flash('user_message', 'Akun berhasil diperbarui.');
     }
 
@@ -249,7 +254,6 @@ class Settings extends Component
 
         if (\App\Models\User::count() > 1 && auth()->id() != $id) {
             \App\Models\User::findOrFail($id)->delete();
-            $this->loadUsers();
             session()->flash('user_message', 'Akun berhasil dihapus.');
         } else {
             session()->flash('user_error', 'Tidak bisa menghapus akun sendiri atau admin terakhir.');
@@ -482,6 +486,15 @@ class Settings extends Component
 
     public function render()
     {
-        return view('livewire.admin.settings')->layout('layouts.admin');
+        $usersQuery = \App\Models\User::query()
+            ->when($this->search, function ($query) {
+                $query->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('email', 'like', '%' . $this->search . '%');
+            })
+            ->orderBy($this->sortField, $this->sortDirection);
+        
+        return view('livewire.admin.settings', [
+            'users' => $usersQuery->paginate($this->perPage)
+        ])->layout('layouts.admin');
     }
 }

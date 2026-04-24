@@ -73,6 +73,8 @@
                         </select>
                     </div>
                 </div>
+
+                </div>
             </div>
 
             <div class="mt-4 flow-root">
@@ -212,18 +214,53 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="mt-4 px-4 pb-4">
-                            {{ $units->links() }}
+                        <div class="p-4 border-t border-border">
+                             <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
+                                <!-- Left: Rows & Info -->
+                                <div class="flex items-center gap-6 order-2 md:order-1">
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
+                                        <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm uppercase">
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                        </select>
+                                    </div>
+                                    <div class="hidden sm:block">
+                                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none opacity-70">
+                                            Showing {{ $units->firstItem() ?? 0 }}-{{ $units->lastItem() ?? 0 }} of {{ $units->total() }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Navigation -->
+                                <div class="flex items-center gap-3 order-1 md:order-2">
+                                    <button wire:click="previousPage('unitsPage')" @disabled($units->onFirstPage())
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                    </button>
+                                    
+                                    <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
+                                        <span class="text-xs font-black text-foreground">{{ $units->currentPage() }}</span>
+                                        <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
+                                        <span class="text-xs font-black text-foreground">{{ $units->lastPage() }}</span>
+                                    </div>
+
+                                    <button wire:click="nextPage('unitsPage')" @disabled(!$units->hasMorePages())
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         @else
-            <!-- Search Category -->
-            <div class="mt-8 flex items-center justify-between">
-                <div class="relative flex-1 max-w-sm">
+            <div class="mt-8 flex items-center justify-between gap-4">
+                <div class="relative flex-1 max-w-sm group">
                     <div
-                        class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+                        class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8" />
@@ -231,8 +268,10 @@
                         </svg>
                     </div>
                     <input type="text" wire:model.live.debounce.300ms="search"
-                        class="block w-full h-9 pl-10 pr-3 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        class="block w-full h-9 pl-10 pr-3 text-sm rounded-md border border-input bg-background shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary"
                         placeholder="Cari kategori...">
+                </div>
+
                 </div>
             </div>
 
@@ -287,6 +326,44 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                                           <div class="p-4 border-t border-border mt-4">
+                            <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
+                                <!-- Left: Rows & Info -->
+                                <div class="flex items-center gap-6 order-2 md:order-1">
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
+                                        <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm uppercase">
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                        </select>
+                                    </div>
+                                    <div class="hidden sm:block">
+                                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none opacity-70">
+                                            Showing {{ $categories->firstItem() ?? 0 }}-{{ $categories->lastItem() ?? 0 }} of {{ $categories->total() }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Navigation -->
+                                <div class="flex items-center gap-3 order-1 md:order-2">
+                                    <button wire:click="previousPage('catsPage')" @disabled($categories->onFirstPage())
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                    </button>
+                                    
+                                    <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
+                                        <span class="text-xs font-black text-foreground">{{ $categories->currentPage() }}</span>
+                                        <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
+                                        <span class="text-xs font-black text-foreground">{{ $categories->lastPage() }}</span>
+                                    </div>
+
+                                    <button wire:click="nextPage('catsPage')" @disabled(!$categories->hasMorePages())
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

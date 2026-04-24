@@ -252,8 +252,8 @@ class UnitManager extends Component
             ->orderBy('seri', 'asc');
 
         return view('livewire.admin.unit-manager', [
-            'units' => $unitsQuery->paginate($this->perPage),
-            'categories' => $categoriesQuery->get(),
+            'units' => $unitsQuery->paginate($this->perPage, ['*'], 'unitsPage'),
+            'categories' => $categoriesQuery->paginate($this->perPage, ['*'], 'catsPage'),
             'all_categories' => \App\Models\Category::orderBy('name')->get() // For the dropdowns
         ])->layout('layouts.admin');
     }

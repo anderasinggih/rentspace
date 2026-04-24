@@ -5,12 +5,13 @@
             <h1 class="text-2xl font-bold text-foreground">Customer Insights</h1>
             <p class="mt-2 text-sm text-muted-foreground">Monitor customer loyalty, frequency, and lifetime value across all rentals.</p>
         </div>
-        <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-            <div class="relative w-full md:w-80">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <div class="mt-4 sm:ml-16 sm:mt-0 flex flex-col md:flex-row items-center gap-4">
+            <div class="relative w-full md:w-80 group">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari pelanggan..." 
-                    class="flex h-9 w-full rounded-md border border-input bg-background px-9 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all">
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-9 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm">
             </div>
+            
         </div>
     </div>
 
@@ -84,44 +85,46 @@
                 </tbody>
             </table>
         </div>
-        @if($customers->hasPages())
-            <div class="px-6 py-4 border-t flex items-center justify-between bg-muted/10">
-                <div class="text-xs text-muted-foreground">
-                    Menampilkan <span class="font-bold text-foreground">{{ $customers->firstItem() }}</span> ke <span class="font-bold text-foreground">{{ $customers->lastItem() }}</span> dari <span class="font-bold text-foreground">{{ $customers->total() }}</span> pelanggan
+        <div class="p-4 border-t border-border">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
+                <!-- Left: Rows & Info -->
+                <div class="flex items-center gap-6 order-2 md:order-1">
+                    <div class="flex items-center gap-2">
+                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
+                        <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm uppercase">
+                            <option value="15">15</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="hidden sm:block">
+                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none opacity-70">
+                            Showing {{ $customers->firstItem() ?? 0 }}-{{ $customers->lastItem() ?? 0 }} of {{ $customers->total() }}
+                        </p>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    {{-- Previous Page --}}
-                    @if ($customers->onFirstPage())
-                        <button class="h-8 w-8 flex items-center justify-center rounded-md border border-input bg-background opacity-50 cursor-not-allowed text-muted-foreground shadow-sm" disabled>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                        </button>
-                    @else
-                        <button wire:click="previousPage" wire:loading.attr="disabled"
-                            class="h-8 w-8 flex items-center justify-center rounded-md border border-input bg-background text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                        </button>
-                    @endif
 
-                    <div class="flex items-center gap-1.5 px-3">
+                <!-- Right: Navigation -->
+                <div class="flex items-center gap-3 order-1 md:order-2">
+                    <button wire:click="previousPage" @disabled($customers->onFirstPage())
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    
+                    <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
                         <span class="text-xs font-black text-foreground">{{ $customers->currentPage() }}</span>
-                        <span class="text-xs font-medium text-muted-foreground/50">/</span>
-                        <span class="text-xs font-bold text-muted-foreground">{{ $customers->lastPage() }}</span>
+                        <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
+                        <span class="text-xs font-black text-foreground">{{ $customers->lastPage() }}</span>
                     </div>
 
-                    {{-- Next Page --}}
-                    @if ($customers->hasMorePages())
-                        <button wire:click="nextPage" wire:loading.attr="disabled"
-                            class="h-8 w-8 flex items-center justify-center rounded-md border border-input bg-background text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                        </button>
-                    @else
-                        <button class="h-8 w-8 flex items-center justify-center rounded-md border border-input bg-background opacity-50 cursor-not-allowed text-muted-foreground shadow-sm" disabled>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                        </button>
-                    @endif
+                    <button wire:click="nextPage" @disabled(!$customers->hasMorePages())
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
                 </div>
             </div>
-        @endif
+        </div>
     </div>
 
     <!-- Customer Detail Dialog (Modal with Shadcn style) -->

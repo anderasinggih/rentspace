@@ -351,7 +351,27 @@
                         </form>
                     @endif
 
-                    <div class="border rounded-lg overflow-hidden bg-background">
+                    <div class="mb-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="relative w-full md:w-64 group">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            </div>
+                            <input wire:model.live.debounce.300ms="search" type="text" 
+                                class="block w-full pl-9 pr-3 h-8 border border-border rounded-lg bg-background text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" 
+                                placeholder="Cari admin/staff...">
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
+                            <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="border rounded-lg overflow-hidden bg-background shadow-sm">
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm text-left shadow-sm">
                                 <thead
@@ -511,6 +531,43 @@
                                 @endforeach
                             </tbody>
                         </table>
+                               <div class="p-3 border-t border-border">
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
+                             <!-- Left: Rows & Info -->
+                             <div class="flex items-center gap-6 order-2 md:order-1">
+                                <div class="flex items-center gap-2">
+                                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
+                                    <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm uppercase">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                                <div class="hidden sm:block">
+                                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none opacity-70">
+                                        Total {{ $users->total() }} results
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Right: Navigation -->
+                            <div class="flex items-center gap-3 order-1 md:order-2">
+                                <button wire:click="previousPage" @disabled($users->onFirstPage())
+                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                </button>
+                                
+                                <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
+                                    <span class="text-xs font-black text-foreground">{{ $users->currentPage() }}</span>
+                                    <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
+                                    <span class="text-xs font-black text-foreground">{{ $users->lastPage() }}</span>
+                                </div>
+
+                                <button wire:click="nextPage" @disabled(!$users->hasMorePages())
+                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                            </div>
                     </div>
                 </div>
             </div>

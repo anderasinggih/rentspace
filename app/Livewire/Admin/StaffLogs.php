@@ -13,6 +13,11 @@ class StaffLogs extends Component
     public $search = '';
     public $perPage = 50;
 
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
     public function mount()
     {
         if (auth()->user()->role !== 'admin') {
