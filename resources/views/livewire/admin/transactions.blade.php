@@ -78,10 +78,10 @@
                                 <tr class="bg-muted/50">
                                     <th scope="col"
                                         class="py-3 pl-3 pr-3 text-left text-xs sm:text-sm font-semibold text-foreground sm:pl-6 cursor-pointer hover:bg-muted transition-colors"
-                                        wire:click="sortBy('id')">
+                                        wire:click="sortBy('booking_code')">
                                         <div class="flex items-center gap-1">
-                                            Invoice & Customer
-                                            @if($sortField === 'id')
+                                            Booking Code & Customer
+                                            @if($sortField === 'booking_code')
                                                 <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
                                             @endif
                                         </div>
@@ -149,9 +149,9 @@
                                                                 <tr wire:click="openInspect({{ $trx->id }})"
                                                                     class="cursor-pointer hover:bg-muted/40 transition-colors group/row">
                                                                     <td class="whitespace-nowrap py-1.5 pl-3 pr-3 text-xs sm:pl-6">
-                                                                        <div class="flex flex-col gap-1">
-                                                                            <div class="font-semibold text-foreground">INV-{{ str_pad($trx->id, 5, '0', STR_PAD_LEFT) }}</div>
-                                                                            <div class="font-mono text-[10px] text-muted-foreground uppercase opacity-80">{{ $trx->booking_code }}</div>
+                                                                        <div class="flex flex-col gap-0.5">
+                                                                            <div class="font-bold text-primary text-sm tracking-tight uppercase">{{ $trx->booking_code }}</div>
+                                                                            <div class="text-[9px] text-muted-foreground opacity-50">TX-{{ str_pad($trx->id, 5, '0', STR_PAD_LEFT) }}</div>
                                                                         </div>
                                                                         <div class="text-muted-foreground mt-1">{{ $trx->nama }} <br /> <a
                                                                                 href="https://wa.me/{{ preg_replace('/^0/', '62', $trx->no_wa) }}"
@@ -677,8 +677,8 @@
                     class="bg-background rounded-xl shadow-2xl w-full max-w-2xl border border-border flex flex-col max-h-[90vh]">
                     <div class="p-4 border-b border-border flex items-center justify-between">
                         <h3 class="text-lg font-bold flex flex-col">
-                            <span>Edit Transaksi INV-{{ str_pad($editTrxId, 5, '0', STR_PAD_LEFT) }}</span>
-                            <span class="text-xs font-mono text-muted-foreground uppercase leading-none mt-1">Payment Code: {{ \App\Models\Rental::find($editTrxId)?->booking_code }}</span>
+                            <span class="text-primary">{{ $this->isEditingTrx ? \App\Models\Rental::find($editTrxId)?->booking_code : '' }}</span>
+                            <span class="text-[10px] font-medium text-muted-foreground uppercase leading-none mt-1">Sistem ID: {{ $editTrxId }}</span>
                         </h3>
                         <button wire:click="closeEditModal" class="text-muted-foreground hover:text-foreground">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"

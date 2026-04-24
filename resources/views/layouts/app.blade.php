@@ -31,7 +31,7 @@
     <livewire:front.global-announcement placement="top" />
 
     @Unless ($hideNavbar ?? false)
-        <livewire:navbar />
+    <livewire:navbar />
     @endUnless
     <main class="flex-1 w-full flex flex-col">
         {{ $slot }}

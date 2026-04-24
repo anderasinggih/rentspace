@@ -316,8 +316,14 @@
                             @if($rental->units->isEmpty()) Terhapus @endif
                         </td>
                         <td class="px-4 py-3">
-                            <span class="font-medium text-foreground">{{ $rental->nama }}</span><br>
-                            <span class="text-[10px] text-muted-foreground">{{ $rental->no_wa }}</span>
+                            <div class="flex flex-col">
+                                <span class="font-medium text-foreground">{{ $rental->nama }}</span>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[9px] font-bold text-primary uppercase tracking-tighter">{{ $rental->booking_code }}</span>
+                                    <span class="text-[9px] text-muted-foreground/60">•</span>
+                                    <span class="text-[9px] text-muted-foreground">{{ $rental->no_wa }}</span>
+                                </div>
+                            </div>
                         </td>
                         <td class="px-4 py-3">{{ $end->format('d M, H:i') }}</td>
                         <td class="px-4 py-3 text-right">
