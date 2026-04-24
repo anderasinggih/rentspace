@@ -31,24 +31,26 @@
 
                     <!-- Dropdown Produk (Unit & Promo) -->
                     <div x-data="{ open: false }" @click.away="open = false" class="relative">
-                        <button @click="open = !open" 
+                        <button @click="open = !open"
                             class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.units') || request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                             Produk
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200" :class="open ? 'rotate-180' : ''"><path d="m6 9 6 6 6-6"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round" class="transition-transform duration-200"
+                                :class="open ? 'rotate-180' : ''">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
                         </button>
-                        
-                        <div x-show="open" 
-                            x-transition:enter="transition ease-out duration-100"
-                            x-transition:enter-start="opacity-0 scale-95"
-                            x-transition:enter-end="opacity-100 scale-100"
+
+                        <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                             x-transition:leave="transition ease-in duration-75"
-                            x-transition:leave-start="opacity-100 scale-100"
-                            x-transition:leave-end="opacity-0 scale-95"
+                            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                             class="absolute left-0 mt-1 w-48 rounded-xl bg-background border border-border shadow-xl py-1.5 z-[110]"
                             x-cloak>
                             <a href="{{ route('admin.units') }}" wire:navigate
                                 class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.units') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
-                                Unit (Inventaris)
+                                Unit
                             </a>
                             <a href="{{ route('admin.promo') }}" wire:navigate
                                 class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.promo') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
@@ -65,22 +67,24 @@
                         class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                         Monitoring
                     </a>
-                    
-                    <!-- Dropdown Database (Pelanggan & Affiliate) -->
+
+                    <!-- Dropdown Database (Pelanggan, Affiliate, Settings) -->
                     <div x-data="{ open: false }" @click.away="open = false" class="relative">
-                        <button @click="open = !open" 
-                            class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.customers') || request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        <button @click="open = !open"
+                            class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.customers') || request()->routeIs('admin.affiliate') || request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
                             Database
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200" :class="open ? 'rotate-180' : ''"><path d="m6 9 6 6 6-6"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round" class="transition-transform duration-200"
+                                :class="open ? 'rotate-180' : ''">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
                         </button>
-                        
-                        <div x-show="open" 
-                            x-transition:enter="transition ease-out duration-100"
-                            x-transition:enter-start="opacity-0 scale-95"
-                            x-transition:enter-end="opacity-100 scale-100"
+
+                        <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                             x-transition:leave="transition ease-in duration-75"
-                            x-transition:leave-start="opacity-100 scale-100"
-                            x-transition:leave-end="opacity-0 scale-95"
+                            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                             class="absolute left-0 mt-1 w-48 rounded-xl bg-background border border-border shadow-xl py-1.5 z-[110]"
                             x-cloak>
                             <a href="{{ route('admin.customers') }}" wire:navigate
@@ -92,16 +96,14 @@
                                     class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.affiliate') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
                                     Affiliate
                                 </a>
+                                <div class="h-px bg-border/50 my-1 mx-2"></div>
+                                <a href="{{ route('admin.settings') }}" wire:navigate
+                                    class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.settings') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
+                                    Pengaturan
+                                </a>
                             @endif
                         </div>
                     </div>
-
-                    @if(auth()->user()->role === 'admin')
-                        <a href="{{ route('admin.settings') }}" wire:navigate
-                            class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
-                            Pengaturan
-                        </a>
-                    @endif
                 </div>
             </div>
 
@@ -190,25 +192,20 @@
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Transaksi</a>
         <a href="{{ route('admin.monitoring') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Monitoring</a>
-        
+
         <div class="h-px bg-border/50 my-2 mx-3"></div>
         <div class="text-[10px] font-bold uppercase text-muted-foreground px-3 mb-1 tracking-widest">Database</div>
-        
+
         <a href="{{ route('admin.customers') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pelanggan</a>
         @if(auth()->user()->role === 'admin')
             <a href="{{ route('admin.affiliate') }}" wire:navigate
                 class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Affiliate</a>
-        @endif
-
-        <div class="h-px bg-border/50 my-2 mx-3"></div>
-
-        @if(auth()->user()->role === 'admin')
             <a href="{{ route('admin.settings') }}" wire:navigate
                 class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pengaturan</a>
         @endif
 
-        <div class="h-px bg-border my-4"></div>
+        <div class="h-px bg-border/50 my-4 mx-3"></div>
 
         <div class="flex items-center justify-between">
             <span class="text-sm font-medium">{{ auth()->user()->name ?? 'Administrator' }}</span>
