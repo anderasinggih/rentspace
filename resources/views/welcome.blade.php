@@ -960,7 +960,7 @@
                     x-transition:leave="transition ease-in duration-500"
                     x-transition:leave-start="opacity-100 translate-x-0 scale-100"
                     x-transition:leave-end="opacity-0 -translate-x-10 scale-90"
-                    class="group relative flex items-center gap-3 sm:gap-4 bg-white/5 dark:bg-zinc-950/20 backdrop-blur-[8px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/60 border-r border-b border-zinc-950/30 p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),inset_0_-1px_1px_rgba(0,0,0,0.1)] pointer-events-auto overflow-hidden">
+                    class="group relative flex items-center gap-3 sm:gap-4 bg-white/5 dark:bg-zinc-950/20 backdrop-blur-[3px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/60 border-r border-b border-zinc-950/30 p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),inset_0_-1px_1px_rgba(0,0,0,0.1)] pointer-events-auto overflow-hidden">
                     
                     <!-- 3D Bevel Shine -->
                     <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none rounded-2xl z-20"></div>
