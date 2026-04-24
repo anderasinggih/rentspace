@@ -381,7 +381,19 @@
                     { name: 'Omset Kotor', data: @json($chartRevenue) },
                     { name: 'Omset Bersih', data: @json($chartNetRevenue) }
                 ],
-                chart: { type: 'area', height: 300, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
+                chart: { 
+                    type: 'area', height: 300, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10,
+                    events: {
+                        mouseMove: function(event, chartContext, config) {
+                            if (config.dataPointIndex !== -1 && typeof window.navigator.vibrate === 'function') {
+                                if (window.lastVibratePoint !== config.dataPointIndex) {
+                                    window.navigator.vibrate(10);
+                                    window.lastVibratePoint = config.dataPointIndex;
+                                }
+                            }
+                        }
+                    }
+                },
                 dataLabels: { enabled: false },
                 stroke: { curve: 'smooth', width: 2, colors: ['#6366f1', '#10b981'] },
                 xaxis: {
@@ -389,12 +401,12 @@
                     tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
                     labels: { 
                         hideOverlappingLabels: true,
-                        rotate: -45,
+                        rotate: 0,
                         rotateAlways: false,
-                        minHeight: 30,
+                        minHeight: 20,
                         style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
                     },
-                    tickAmount: 'auto'
+                    tickAmount: window.innerWidth < 640 ? 4 : 8
                 },
                 yaxis: {
                     labels: {
@@ -425,28 +437,26 @@
                 },
                 colors: ['#6366f1', '#10b981'],
                 theme: { mode: colors.isDark ? 'dark' : 'light' },
-                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } },
-                chart: {
-                    type: 'area', height: 300, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10,
-                    events: {
-                        mouseMove: function(event, chartContext, config) {
-                            // Haptic feedback when moving over points
-                            if (config.dataPointIndex !== -1 && typeof window.navigator.vibrate === 'function') {
-                                if (window.lastVibratePoint !== config.dataPointIndex) {
-                                    window.navigator.vibrate(10);
-                                    window.lastVibratePoint = config.dataPointIndex;
-                                }
-                            }
-                        }
-                    }
-                }
+                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } }
             });
             revChart.render();
 
             // ── 2. TRANSACTIONS BAR CHART ──────────────────────────────────────────
             var trxChart = new ApexCharts(document.querySelector("#transactionsChart"), {
                 series: [{ name: 'Jml Sewa', data: @json($chartTransactions) }],
-                chart: { type: 'bar', height: 300, fontFamily: 'inherit', toolbar: { show: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
+                chart: { 
+                    type: 'bar', height: 300, fontFamily: 'inherit', toolbar: { show: false }, background: 'transparent', offsetX: -10, offsetY: 10,
+                    events: {
+                        mouseMove: function(event, chartContext, config) {
+                            if (config.dataPointIndex !== -1 && typeof window.navigator.vibrate === 'function') {
+                                if (window.lastVibratePointTrx !== config.dataPointIndex) {
+                                    window.navigator.vibrate(10);
+                                    window.lastVibratePointTrx = config.dataPointIndex;
+                                }
+                            }
+                        }
+                    }
+                },
                 plotOptions: { bar: { borderRadius: 4, columnWidth: '40%' } },
                 dataLabels: { enabled: false },
                 colors: ['#10b981'],
@@ -455,12 +465,12 @@
                     tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
                     labels: { 
                         hideOverlappingLabels: true,
-                        rotate: -45,
+                        rotate: 0,
                         rotateAlways: false,
-                        minHeight: 30,
+                        minHeight: 20,
                         style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
                     },
-                    tickAmount: 'auto'
+                    tickAmount: window.innerWidth < 640 ? 4 : 8
                 },
                 yaxis: {
                     labels: {
@@ -474,20 +484,7 @@
                     padding: { top: 0, right: 0, bottom: 0, left: 10 }
                 },
                 theme: { mode: colors.isDark ? 'dark' : 'light' },
-                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => val + " Orders" }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } },
-                chart: {
-                    type: 'bar', height: 300, fontFamily: 'inherit', toolbar: { show: false }, background: 'transparent', offsetX: -10, offsetY: 10,
-                    events: {
-                        mouseMove: function(event, chartContext, config) {
-                            if (config.dataPointIndex !== -1 && typeof window.navigator.vibrate === 'function') {
-                                if (window.lastVibratePointTrx !== config.dataPointIndex) {
-                                    window.navigator.vibrate(10);
-                                    window.lastVibratePointTrx = config.dataPointIndex;
-                                }
-                            }
-                        }
-                    }
-                }
+                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => val + " Orders" }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } }
             });
             trxChart.render();
 
