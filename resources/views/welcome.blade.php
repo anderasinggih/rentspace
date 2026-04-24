@@ -142,9 +142,9 @@
             </div>
 
             {{-- Dynamic Greeting Badge (Top Position) --}}
-            <div class="relative z-40 -mt-16 sm:-mt-24 mb-6 sm:mb-8 animate-in fade-in slide-in-from-top-4 duration-1000">
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-[2px] border border-white/10 shadow-sm transition-all hover:bg-white/10 group cursor-default">
-                    <p class="text-[10px] sm:text-xs font-semibold text-white/90 tracking-wide lowercase">{{ $greeting }}</p>
+            <div class="relative z-40 -mt-16 sm:-mt-24 mb-6 sm:mb-8 px-5 w-full flex justify-center animate-in fade-in slide-in-from-top-4 duration-1000">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-[2px] backdrop-saturate-[150%] border-t border-l border-white/20 border-r border-b border-white/5 shadow-sm transition-all hover:bg-white/10 group cursor-default max-w-full">
+                    <p class="text-[10px] sm:text-xs font-semibold text-white/90 tracking-wide lowercase text-center line-clamp-2 md:line-clamp-none">{{ $greeting }}</p>
                 </div>
             </div>
 
