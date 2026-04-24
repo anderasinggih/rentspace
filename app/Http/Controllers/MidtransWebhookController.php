@@ -17,7 +17,7 @@ class MidtransWebhookController extends Controller
             'ip' => $request->ip(),
             'payload' => $request->all()
         ]);
-        
+
         $payload = $request->all();
         $order_id = trim($payload['order_id'] ?? '');
 
@@ -25,18 +25,18 @@ class MidtransWebhookController extends Controller
             Log::warning("MIDTRANS WEBHOOK: Order ID kosong");
             return response()->json(['message' => 'Empty Order ID'], 200);
         }
-        
+
         // 2. Ekstrak Booking Code (Format: CODE-TIMESTAMP)
         $parts = explode('-', $order_id);
         $booking_code = trim($parts[0]);
-        
+
         $status = strtolower(trim($payload['transaction_status'] ?? ''));
         $type = $payload['payment_type'] ?? '';
         $fraud = strtolower(trim($payload['fraud_status'] ?? ''));
 
         // 3. Cari Data Rental di Database
         $rental = Rental::where('booking_code', $booking_code)->first();
-        
+
         if (!$rental) {
             Log::error("MIDTRANS WEBHOOK: Rental tidak ditemukan", ['code' => $booking_code, 'id' => $order_id]);
             // Tetap kasih 200 biar Midtrans berhenti "teriak"

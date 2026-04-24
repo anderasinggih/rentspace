@@ -171,13 +171,41 @@
                     <div class="p-5 bg-muted/40 rounded-xl border border-border/50 text-center text-sm">
                         @if($selectedChannel === 'qris')
                             <p class="font-semibold text-muted-foreground mb-4">Silakan scan kode QRIS</p>
-                            @if(isset($paymentInfo['actions']))
-                                @php $qrAction = collect($paymentInfo['actions'])->where('name', 'generate-qr-code')->first(); @endphp
-                                @if($qrAction)
-                                    <div class="inline-block p-4 bg-white rounded-xl border border-border shadow-xl">
-                                        <img src="{{ $qrAction['url'] }}" alt="QRIS" class="w-56 h-56 mx-auto">
+                            @php
+                                $qrUrl = null;
+                                if (isset($paymentInfo['actions'])) {
+                                    $qrAction = collect($paymentInfo['actions'])->where('name', 'generate-qr-code')->first();
+                                    $qrUrl = $qrAction['url'] ?? null;
+                                }
+                                
+                                // FALLBACK: Jika action ga ada, tapi ada qr_string, kita pake generator luar
+                                if (!$qrUrl && isset($paymentInfo['qr_string'])) {
+                                    $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . $paymentInfo['qr_string'];
+                                }
+                            @endphp
+
+                            @if($qrUrl)
+                                <div class="inline-block p-4 bg-white rounded-xl border border-border shadow-xl">
+                                    <img src="{{ $qrUrl }}" alt="QRIS" class="w-56 h-56 mx-auto">
+                                </div>
+
+                                {{-- FITUR KOPI UNTUK SIMULATOR (Khusus Sandbox) --}}
+                                @if(!config('midtrans.is_production') && isset($paymentInfo['qr_string']))
+                                    <div class="mt-4 p-3 bg-muted/50 rounded-lg border border-dashed border-border group">
+                                        <p class="text-[9px] font-bold text-muted-foreground uppercase mb-1">Raw QR String (Untuk Simulator)</p>
+                                        <div class="flex items-center gap-2">
+                                            <code class="text-[10px] bg-background px-1.5 py-0.5 rounded border flex-1 truncate">{{ $paymentInfo['qr_string'] }}</code>
+                                            <button onclick="navigator.clipboard.writeText('{{ $paymentInfo['qr_string'] }}'); alert('Teks QR berhasil disalin! Pindahkan ke Simulator.')" 
+                                                class="h-7 px-2 bg-primary text-white text-[10px] font-bold rounded hover:opacity-90 transition-all shrink-0">
+                                                Copy
+                                            </button>
+                                        </div>
                                     </div>
                                 @endif
+                            @else
+                                <div class="p-4 bg-red-50 text-red-600 rounded-lg text-xs italic">
+                                    Gagal memuat Kode QR. Pastikan metode QRIS sudah aktif di Dashboard Midtrans Anda.
+                                </div>
                             @endif
                         @else
                             <div class="space-y-4">

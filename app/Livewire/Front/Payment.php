@@ -218,6 +218,7 @@ class Payment extends Component
             ],
             'customer_details' => [
                 'first_name' => $this->rental->nama,
+                'email' => $this->rental->nik . '@rentspace.com', // Dummy email as Core API often requires it
                 'phone' => $this->rental->no_wa,
             ],
             'item_details' => array_merge($item_details, [
