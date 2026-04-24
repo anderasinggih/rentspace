@@ -60,6 +60,17 @@
             }
             lastTouchEnd = now;
         }, false);
+
+        // Haptic Feedback Utility
+        window.haptic = {
+            vibrate: (ms) => {
+                if (navigator.vibrate) navigator.vibrate(ms);
+            },
+            light: () => haptic.vibrate(10),
+            medium: () => haptic.vibrate(25),
+            success: () => haptic.vibrate([10, 40, 10]),
+            warning: () => haptic.vibrate([50, 100, 50])
+        };
     </script>
 </head>
 
@@ -272,7 +283,8 @@
                     class="inline-flex items-center rounded-full border-t border-l border-white/40 bg-white/10 dark:bg-white/5 backdrop-blur-md text-white px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]">
                     <span class="relative z-10">RENT SPACE PURWOKERTO</span>
                 </div>
-                <h1 @mouseenter="spotlight = true" @mouseleave="spotlight = false"
+                <h1 @mouseenter="spotlight = true; haptic.light()" @mouseleave="spotlight = false"
+                    @touchstart="haptic.light()"
                     class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl transition-all duration-700 cursor-pointer relative z-40"
                     :class="spotlight ? 'drop-shadow-[0_0_60px_rgba(255,255,255,0.7)]' : ''">
                     {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda Lebih Mudah & Cepat"))) !!}
@@ -286,6 +298,7 @@
                     
                     <!-- Button SEWA SEKARANG (Liquid Glass) -->
                     <a href="{{ route('public.booking') }}" wire:navigate
+                        @mousedown="haptic.success()" @touchstart="haptic.success()"
                         class="group/btn relative w-full sm:w-auto inline-flex items-center justify-center rounded-2xl font-bold transition-all bg-white/15 dark:bg-white/10 backdrop-blur-[4px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/50 border-r border-b border-white/20 text-foreground shadow-[0_8px_32px_rgba(255,255,255,0.1)] hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
                         <!-- Liquid Shine Overlay -->
                         <div class="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/btn:opacity-100 opacity-60"></div>
@@ -295,6 +308,7 @@
                     <!-- Button Hubungi Admin (Liquid Glass) -->
                     <a href="https://wa.me/{{ \App\Models\Setting::getVal('admin_wa', '6281234567890') }}"
                         target="_blank" rel="noopener"
+                        @mousedown="haptic.medium()" @touchstart="haptic.medium()"
                         class="group/wa relative w-full sm:w-auto inline-flex items-center justify-center rounded-2xl font-bold transition-all bg-zinc-950/30 dark:bg-white/10 backdrop-blur-[4px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/40 border-r border-b border-zinc-950/20 text-foreground hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
                         <!-- Liquid Shine Overlay -->
                         <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/wa:opacity-100 opacity-40"></div>
@@ -323,7 +337,8 @@
                 <!-- Specular Reflection Overlay -->
                 <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none z-20"></div>
                 <!-- Total Transaksi -->
-                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-3 sm:py-5 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-3 sm:py-5 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] cursor-pointer" 
+                     @mousedown="haptic.light()" @touchstart="haptic.light()"
                      x-data="{ 
                          target: {{ $statsTotalRentals }}, 
                          display: '0', 
@@ -352,7 +367,8 @@
                 </div>
 
                 <!-- Pelanggan -->
-                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-3 sm:py-5 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-3 sm:py-5 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] cursor-pointer" 
+                     @mousedown="haptic.light()" @touchstart="haptic.light()"
                      x-data="{ 
                          target: {{ $statsTotalUsers }}, 
                          display: '0', 
@@ -381,7 +397,8 @@
                 </div>
 
                 <!-- Jam Disewa -->
-                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-3 sm:py-5 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-3 sm:py-5 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] cursor-pointer" 
+                     @mousedown="haptic.light()" @touchstart="haptic.light()"
                      x-data="{ 
                          target: {{ $statsTotalHours }}, 
                          display: '0', 
@@ -631,6 +648,7 @@
                         </div>
                     </div>
                     <a href="{{ route('customer.login') }}" wire:navigate
+                        @mousedown="haptic.medium()" @touchstart="haptic.medium()"
                         class="relative z-20 inline-flex items-center justify-center rounded-2xl bg-white/10 border border-white/20 text-foreground text-xs font-black px-6 py-2.5 hover:bg-white hover:text-zinc-950 hover:scale-105 active:scale-95 transition-all shadow-lg w-full sm:w-auto uppercase tracking-wider">
                         Masuk
                     </a>
