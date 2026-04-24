@@ -425,7 +425,21 @@
                 },
                 colors: ['#6366f1', '#10b981'],
                 theme: { mode: colors.isDark ? 'dark' : 'light' },
-                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } }
+                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } },
+                chart: {
+                    type: 'area', height: 300, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10,
+                    events: {
+                        mouseMove: function(event, chartContext, config) {
+                            // Haptic feedback when moving over points
+                            if (config.dataPointIndex !== -1 && typeof window.navigator.vibrate === 'function') {
+                                if (window.lastVibratePoint !== config.dataPointIndex) {
+                                    window.navigator.vibrate(10);
+                                    window.lastVibratePoint = config.dataPointIndex;
+                                }
+                            }
+                        }
+                    }
+                }
             });
             revChart.render();
 
@@ -460,7 +474,20 @@
                     padding: { top: 0, right: 0, bottom: 0, left: 10 }
                 },
                 theme: { mode: colors.isDark ? 'dark' : 'light' },
-                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => val + " Orders" }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } }
+                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => val + " Orders" }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } },
+                chart: {
+                    type: 'bar', height: 300, fontFamily: 'inherit', toolbar: { show: false }, background: 'transparent', offsetX: -10, offsetY: 10,
+                    events: {
+                        mouseMove: function(event, chartContext, config) {
+                            if (config.dataPointIndex !== -1 && typeof window.navigator.vibrate === 'function') {
+                                if (window.lastVibratePointTrx !== config.dataPointIndex) {
+                                    window.navigator.vibrate(10);
+                                    window.lastVibratePointTrx = config.dataPointIndex;
+                                }
+                            }
+                        }
+                    }
+                }
             });
             trxChart.render();
 
