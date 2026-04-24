@@ -22,48 +22,63 @@
                     RENT<span class="text-primary/80">SPACE</span>
                 </a>
 
-                <!-- Desktop Links (Premium Iconic View) -->
-                <div class="hidden md:flex items-center space-x-2 ml-4">
-                    <a href="{{ route('admin.dashboard') }}" wire:navigate title="Dashboard"
-                        class="relative p-2.5 rounded-2xl transition-all duration-300 group {{ request()->routeIs('admin.dashboard') ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-                        @if(request()->routeIs('admin.dashboard')) <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div> @endif
+                <!-- Desktop Links -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="{{ route('admin.dashboard') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Dashboard
                     </a>
-                    <a href="{{ route('admin.units') }}" wire:navigate title="Unit & Stok"
-                        class="relative p-2.5 rounded-2xl transition-all duration-300 group {{ request()->routeIs('admin.units') ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-                        @if(request()->routeIs('admin.units')) <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div> @endif
+                    <a href="{{ route('admin.units') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Unit
                     </a>
-                    <a href="{{ route('admin.promo') }}" wire:navigate title="Manajemen Promo"
-                        class="relative p-2.5 rounded-2xl transition-all duration-300 group {{ request()->routeIs('admin.promo') ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9V5.25A2.25 2.25 0 0 1 4.25 3H20a2 2 0 0 1 2 2v4a2 2 0 0 0-2 2 2 2 0 0 0 2 2v4a2 2 0 0 1-2 2H4.25A2.25 2.25 0 0 1 2 18.75V15a2 2 0 0 0 2-2 2 2 0 0 0-2-2Z"/><path d="m15 9-6 6"/><path d="M9 9h.01"/><path d="M15 15h.01"/></svg>
-                        @if(request()->routeIs('admin.promo')) <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div> @endif
+                    <a href="{{ route('admin.promo') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Promo
                     </a>
-                    <a href="{{ route('admin.transactions') }}" wire:navigate title="Daftar Transaksi"
-                        class="relative p-2.5 rounded-2xl transition-all duration-300 group {{ request()->routeIs('admin.transactions') ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5V18.5"/><path d="M12 5.5V6.5"/></svg>
-                        @if(request()->routeIs('admin.transactions')) <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div> @endif
+                    <a href="{{ route('admin.transactions') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Transaksi
                     </a>
-                    <a href="{{ route('admin.monitoring') }}" wire:navigate title="Monitoring & Timeline"
-                        class="relative p-2.5 rounded-2xl transition-all duration-300 group {{ request()->routeIs('admin.monitoring') ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                        @if(request()->routeIs('admin.monitoring')) <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div> @endif
+                    <a href="{{ route('admin.monitoring') }}" wire:navigate
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                        Monitoring
                     </a>
-                    <a href="{{ route('admin.customers') }}" wire:navigate title="Data Pelanggan"
-                        class="relative p-2.5 rounded-2xl transition-all duration-300 group {{ request()->routeIs('admin.customers') ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        @if(request()->routeIs('admin.customers')) <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div> @endif
-                    </a>
+                    
+                    <!-- Dropdown Database (Pelanggan & Affiliate) -->
+                    <div x-data="{ open: false }" @click.away="open = false" class="relative">
+                        <button @click="open = !open" 
+                            class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.customers') || request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                            Database
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200" :class="open ? 'rotate-180' : ''"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        
+                        <div x-show="open" 
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="opacity-0 scale-95"
+                            x-transition:enter-end="opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="opacity-100 scale-100"
+                            x-transition:leave-end="opacity-0 scale-95"
+                            class="absolute left-0 mt-1 w-48 rounded-xl bg-background border border-border shadow-xl py-1.5 z-[110]"
+                            x-cloak>
+                            <a href="{{ route('admin.customers') }}" wire:navigate
+                                class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.customers') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
+                                Pelanggan
+                            </a>
+                            @if(auth()->user()->role === 'admin')
+                                <a href="{{ route('admin.affiliate') }}" wire:navigate
+                                    class="block px-4 py-2 text-sm transition-colors hover:bg-muted {{ request()->routeIs('admin.affiliate') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
+                                    Affiliate
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
                     @if(auth()->user()->role === 'admin')
-                        <a href="{{ route('admin.affiliate') }}" wire:navigate title="Affiliate Manager"
-                            class="relative p-2.5 rounded-2xl transition-all duration-300 group {{ request()->routeIs('admin.affiliate') ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5' }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
-                            @if(request()->routeIs('admin.affiliate')) <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div> @endif
-                        </a>
-                        <a href="{{ route('admin.settings') }}" wire:navigate title="Pengaturan Sistem"
-                            class="relative p-2.5 rounded-2xl transition-all duration-300 group {{ request()->routeIs('admin.settings') ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5' }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1-1 1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                            @if(request()->routeIs('admin.settings')) <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div> @endif
+                        <a href="{{ route('admin.settings') }}" wire:navigate
+                            class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                            Pengaturan
                         </a>
                     @endif
                 </div>
@@ -152,11 +167,20 @@
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Transaksi</a>
         <a href="{{ route('admin.monitoring') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Monitoring</a>
+        
+        <div class="h-px bg-border/50 my-2 mx-3"></div>
+        <div class="text-[10px] font-bold uppercase text-muted-foreground px-3 mb-1 tracking-widest">Database</div>
+        
         <a href="{{ route('admin.customers') }}" wire:navigate
             class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pelanggan</a>
         @if(auth()->user()->role === 'admin')
             <a href="{{ route('admin.affiliate') }}" wire:navigate
                 class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Affiliate</a>
+        @endif
+
+        <div class="h-px bg-border/50 my-2 mx-3"></div>
+
+        @if(auth()->user()->role === 'admin')
             <a href="{{ route('admin.settings') }}" wire:navigate
                 class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pengaturan</a>
         @endif
