@@ -11,7 +11,7 @@
     @livewireStyles
 </head>
 
-<body class="font-sans antialiased min-h-screen bg-background text-foreground flex flex-col">
+<body class="font-sans antialiased min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/10 selection:text-primary">
     <livewire:front.global-announcement />
 
     <!-- Navbar Publik Baru yang identik dengan Admin Navbar -->
@@ -62,9 +62,9 @@
         <section x-data="{ 
                 activeSlide: 0,
                 slides: [
-                    '/uploads/{{ \App\Models\Setting::getVal('hero', 'default.jpg') }}?t={{ time() }}',
-                    '/uploads/{{ \App\Models\Setting::getVal('hero2', 'default2.jpg') }}?t={{ time() }}',
-                    '/uploads/{{ \App\Models\Setting::getVal('hero3', 'default3.jpg') }}?t={{ time() }}'
+                    '/uploads/{{ \App\Models\Setting::getVal('hero', 'default.jpg') }}',
+                    '/uploads/{{ \App\Models\Setting::getVal('hero2', 'default2.jpg') }}',
+                    '/uploads/{{ \App\Models\Setting::getVal('hero3', 'default3.jpg') }}'
                 ],
                 init() {
                     setInterval(() => {
@@ -72,10 +72,13 @@
                     }, 6000);
                 }
             }"
-            class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-8 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl">
+            class="relative w-full overflow-hidden flex flex-col items-center text-center py-20 sm:py-32 mb-12 sm:rounded-[2.5rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-8 border border-border/50 shadow-2xl">
+            
+            <!-- Shadcn Grid Pattern -->
+            <div class="absolute inset-0 z-0 opacity-[0.15] dark:opacity-[0.1] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:24px_24px]"></div>
             
             <!-- Background Image Slideshow -->
-            <div class="absolute inset-0 z-0 bg-white dark:bg-zinc-950 overflow-hidden text-zinc-950 dark:text-white">
+            <div class="absolute inset-0 z-0 bg-white dark:bg-zinc-950 overflow-hidden">
                 @for($i = 0; $i < 3; $i++)
                     @php
                         $key = $i == 0 ? 'hero' : 'hero' . ($i + 1);
@@ -163,30 +166,30 @@
                     </div>
                 @endif
                 <div
-                    class="inline-flex items-center rounded-full border border-zinc-950/20 dark:border-white/20 bg-zinc-950/10 dark:bg-white/10 backdrop-blur-md text-zinc-950/90 dark:text-white/90 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase">
+                    class="inline-flex items-center rounded-full border border-zinc-950/10 dark:border-white/10 bg-zinc-950/5 dark:bg-white/5 backdrop-blur-md text-zinc-950/70 dark:text-white/70 px-4 py-1.5 text-[10px] font-bold mb-8 cursor-default tracking-[0.2em] uppercase transition-all hover:bg-zinc-950/10 dark:hover:bg-white/10">
                     RENT SPACE PURWOKERTO
                 </div>
                 <h1
-                    class="text-4xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl drop-shadow-md">
+                    class="text-4xl font-extrabold tracking-tighter sm:text-6xl xl:text-7xl text-zinc-950 dark:text-white uppercase max-w-5xl leading-[0.9] drop-shadow-sm">
                     {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda\nLebih Mudah &
                     Terjangkau."))) !!}
                 </h1>
-                <p class="mt-6 text-lg sm:text-xl leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl drop-shadow-sm">
+                <p class="mt-8 text-base sm:text-lg leading-relaxed text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl">
                     {{ \App\Models\Setting::getVal('home_description', 'Pilihan terbaik untuk merasakan pengalaman
                     menggunakan produk Apple original tanpa harus membeli baru. Proses cepat, stok terlihat transparan,
                     dan langsung transaksi!') }}
                 </p>
                 <div
-                    class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center">
+                    class="mt-12 flex flex-col sm:flex-row items-center gap-4 w-full px-4 sm:px-0 justify-center group/buttons">
                     <a href="{{ route('public.booking') }}" wire:navigate
-                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-white text-zinc-950 shadow-[0_4px_24px_rgba(255,255,255,0.2)] hover:bg-zinc-100 hover:scale-[1.03] hover:shadow-[0_4px_32px_rgba(255,255,255,0.3)] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
+                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl font-bold transition-all bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 active:scale-95 min-w-0 sm:min-w-[220px] h-14 px-8 text-sm sm:text-base tracking-tight ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                         SEWA SEKARANG
                     </a>
                     <a href="https://wa.me/{{ \App\Models\Setting::getVal('admin_wa', '6281234567890') }}"
                         target="_blank" rel="noopener"
-                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all border border-zinc-950/20 dark:border-white/20 bg-zinc-950/10 dark:bg-white/10 backdrop-blur-md text-zinc-950 dark:text-white hover:bg-zinc-950/20 dark:hover:bg-white/20 hover:scale-[1.03] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
+                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl font-bold transition-all border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl text-zinc-950 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 active:scale-95 min-w-0 sm:min-w-[220px] h-14 px-8 text-sm sm:text-base tracking-tight ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                         @php
-                            $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                                                                                                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                                                                                                                             stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0">
                                                                                                                                             <path
@@ -206,7 +209,7 @@
         <!-- Public Stats Widget -->
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20 mb-10">
             <div
-                class="grid grid-cols-3 divide-x divide-border bg-card/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden py-4 sm:py-6">
+                class="grid grid-cols-3 divide-x divide-border bg-card/60 backdrop-blur-xl border border-border shadow-[0_32px_64px_-15px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden py-6 sm:py-10">
                 <!-- Total Transaksi -->
                 <div class="flex flex-col items-center text-center px-1 sm:px-4" x-data="{ 
                          target: {{ $statsTotalRentals }}, 
@@ -637,7 +640,7 @@
                                     @endphp
                                     <div
                                         :class="{ 'hidden sm:flex': !expanded && {{ $loop->index }} >= 4, 'flex': expanded || {{ $loop->index }} < 4 }"
-                                        class="group relative bg-background border border-border rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex-col justify-between overflow-hidden">
+                                        class="group relative bg-card border border-border/60 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex-col justify-between overflow-hidden">
                                         <!-- Subtle background decoration -->
                                         <div
                                             class="absolute -right-4 -top-4 w-12 h-12 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors">
