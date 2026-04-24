@@ -142,11 +142,13 @@
             </div>
 
             {{-- Dynamic Greeting Badge (Top Position) --}}
-            <div class="absolute top-4 sm:top-6 left-0 w-full flex justify-center z-40 px-5 animate-in fade-in slide-in-from-top-4 duration-1000">
-                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-[2px] backdrop-saturate-[150%] border-t border-l border-white/20 border-r border-b border-white/5 shadow-sm transition-all hover:bg-white/10 group cursor-default max-w-full">
-                    <p class="text-[10px] sm:text-xs font-semibold text-white/90 tracking-wide lowercase text-center line-clamp-2 md:line-clamp-none">{{ $greeting }}</p>
+            @if(\App\Models\Setting::getVal('is_greeting_active', '1') == '1')
+                <div class="absolute top-4 sm:top-6 left-0 w-full flex justify-center z-40 px-5 animate-in fade-in slide-in-from-top-4 duration-1000">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-[2px] backdrop-saturate-[150%] border-t border-l border-white/20 border-r border-b border-white/5 shadow-sm transition-all hover:bg-white/10 group cursor-default max-w-full">
+                        <p class="text-[10px] sm:text-xs font-semibold text-white/90 tracking-wide lowercase text-center line-clamp-2 md:line-clamp-none">{{ $greeting }}</p>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             <!-- Teks -->
             <div class="relative z-30 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8 cursor-default" x-data="{ spotlight: false }" @mouseenter="spotlight = true" @mouseleave="spotlight = false">

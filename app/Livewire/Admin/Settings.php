@@ -66,6 +66,7 @@ class Settings extends Component
 
     // Greetings Properties
     public $greeting_morning = '', $greeting_day = '', $greeting_afternoon = '', $greeting_evening = '', $greeting_night = '';
+    public $is_greeting_active = true;
 
     public $importFile;
 
@@ -111,6 +112,7 @@ class Settings extends Component
         $this->greeting_afternoon = \App\Models\Setting::getVal('greeting_afternoon', 'Sore Bos! ☁️ Purwokerto mulai sejuk nih, asik banget buat bikin konten cinematic.');
         $this->greeting_evening = \App\Models\Setting::getVal('greeting_evening', 'Malam Bos! ✨ Butuh iPhone buat dinner atau event keren malam ini? Kami ready!');
         $this->greeting_night = \App\Models\Setting::getVal('greeting_night', 'Masih bangun Bos? 🌙 Lagi nyari unit buat dipake besok ya? Langsung sikat!');
+        $this->is_greeting_active = \App\Models\Setting::getVal('is_greeting_active', '1') == '1';
     }
 
     // Removed loadUsers() to use paginate in render()
@@ -325,6 +327,7 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'greeting_afternoon'], ['value' => $this->greeting_afternoon]);
         \App\Models\Setting::updateOrCreate(['key' => 'greeting_evening'], ['value' => $this->greeting_evening]);
         \App\Models\Setting::updateOrCreate(['key' => 'greeting_night'], ['value' => $this->greeting_night]);
+        \App\Models\Setting::updateOrCreate(['key' => 'is_greeting_active'], ['value' => $this->is_greeting_active ? '1' : '0']);
 
         session()->flash('greeting_message', 'Sapaan Beranda berhasil diperbarui!');
     }

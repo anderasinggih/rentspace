@@ -188,7 +188,14 @@
                             <h2 class="text-lg font-semibold italic text-primary">Sapaan Kontekstual Beranda</h2>
                             <p class="text-xs text-muted-foreground">Sesuaikan sapaan akrab yang muncul di beranda berdasarkan waktu kunjungan pelanggan.</p>
                         </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground opacity-30"><path d="m5 8 6 6 6-6"/></svg>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{{ $is_greeting_active ? 'Status: Aktif' : 'Status: Non-Aktif' }}</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" wire:model.live="is_greeting_active" class="sr-only peer">
+                                <div class="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner">
+                                </div>
+                            </label>
+                        </div>
                     </div>
                     <div class="p-5">
                         @if (session()->has('greeting_message'))
