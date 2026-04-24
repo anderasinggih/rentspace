@@ -13,7 +13,7 @@
     }
 }" class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12">
     <nav
-        class="flex items-center justify-between w-full h-14 border border-white/10 bg-background/10 backdrop-blur-[2px] backdrop-saturate-[150%] shadow-md rounded-full px-4 transition-all">
+        class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-blur-[4px] backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all overflow-hidden">
         <!-- Left Side: Logo & Links -->
         <div class="flex items-center">
             <!-- Logo Box -->
