@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-layouts.app>
     <main class="flex-1 w-full">
         @php
             \Carbon\Carbon::setLocale('id');
@@ -1026,4 +1026,4 @@
         </div>
     @endif
     </main>
-</x-app-layout>
+</x-layouts.app>
