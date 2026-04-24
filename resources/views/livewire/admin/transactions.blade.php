@@ -149,14 +149,14 @@
                                                                 <tr wire:click="openInspect({{ $trx->id }})"
                                                                     class="cursor-pointer hover:bg-muted/40 transition-colors group/row">
                                                                     <td class="whitespace-nowrap py-1.5 pl-3 pr-3 text-xs sm:pl-6">
-                                                                        <div class="flex flex-col gap-0.5">
-                                                                            <div class="font-bold text-primary text-sm tracking-tight uppercase">{{ $trx->booking_code }}</div>
-                                                                            <div class="text-[9px] text-muted-foreground opacity-50">TX-{{ str_pad($trx->id, 5, '0', STR_PAD_LEFT) }}</div>
+                                                                        <div class="flex flex-col gap-0">
+                                                                            <div class="font-bold text-foreground text-sm tracking-tight">{{ $trx->nama }}</div>
+                                                                            <div class="text-[10px] text-primary font-bold uppercase tracking-tighter">{{ $trx->booking_code }}</div>
                                                                         </div>
-                                                                        <div class="text-muted-foreground mt-1">{{ $trx->nama }} <br /> <a
-                                                                                href="https://wa.me/{{ preg_replace('/^0/', '62', $trx->no_wa) }}"
-                                                                                target="_blank" wire:click.stop class="text-primary hover:underline font-medium">{{ $trx->no_wa
-                                                                                                                }}</a></div>
+                                                                        <div class="text-muted-foreground mt-1 text-[10px]">
+                                                                            <a href="https://wa.me/{{ preg_replace('/^0/', '62', $trx->no_wa) }}"
+                                                                                target="_blank" wire:click.stop class="hover:underline font-medium opacity-70">{{ $trx->no_wa }}</a>
+                                                                        </div>
                                                                     </td>
                                                                     <td
                                                                         class="hidden sm:table-cell whitespace-nowrap px-3 py-1.5 text-xs text-muted-foreground">
