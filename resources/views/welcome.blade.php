@@ -735,15 +735,15 @@
                                     @endphp
                                     <div
                                         :class="{ 'hidden sm:flex': !expanded && {{ $loop->index }} >= 4, 'flex': expanded || {{ $loop->index }} < 4 }"
-                                        class="group relative bg-background border border-border rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex-col justify-between overflow-hidden">
-                                        <!-- Subtle background decoration -->
-                                        <div
-                                            class="absolute -right-4 -top-4 w-12 h-12 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors">
-                                        </div>
-
-                                        <div class="relative">
+                                        class="group relative bg-emerald-500/[0.01] dark:bg-emerald-500/[0.01] backdrop-blur-md border border-emerald-500/20 rounded-2xl p-3 shadow-sm hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 ease-out flex-col justify-between overflow-hidden">
+                                        
+                                        <!-- Subtle Glow Blobs -->
+                                        <div class="absolute -right-8 -top-8 w-20 h-20 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/15 transition-all duration-500 ease-in-out z-0"></div>
+                                        <div class="absolute -left-8 -bottom-8 w-20 h-20 bg-green-500/5 rounded-full blur-2xl group-hover:bg-green-500/10 transition-all duration-500 ease-in-out z-0"></div>
+                                        
+                                        <div class="relative z-10">
                                             <h4
-                                                class="font-bold text-foreground text-sm group-hover:text-primary transition-colors leading-tight mb-1">
+                                                class="font-bold text-foreground text-sm group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-tight mb-1">
                                                 {{ $unit->seri }}
                                             </h4>
                                             <div class="mt-1 space-y-0.5">
