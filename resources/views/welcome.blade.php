@@ -97,7 +97,7 @@
             </div>
 
             <!-- Teks -->
-            <div class="relative z-10 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8">
+            <div class="relative z-10 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8 group cursor-default">
                 @if($isCustomerLoggedIn && $closestActiveRental)
                     @php
                         $selesaiHeroTimestamp = $closestActiveRental->waktu_selesai->timestamp * 1000;
@@ -163,18 +163,16 @@
                     </div>
                 @endif
                 <div
-                    class="inline-flex items-center rounded-full border border-zinc-950/20 dark:border-white/20 bg-zinc-950/10 dark:bg-white/10 backdrop-blur-md text-zinc-950/90 dark:text-white/90 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase">
+                    class="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md text-emerald-600 dark:text-emerald-400 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700 group-hover:scale-95 group-hover:opacity-50">
                     RENT SPACE PURWOKERTO
                 </div>
                 <h1
-                    class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl drop-shadow-md">
-                    {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda\nLebih Mudah &
-                    Terjangkau."))) !!}
+                    class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl transition-all duration-700 group-hover:scale-[1.03] group-hover:drop-shadow-[0_0_30px_rgba(52,211,153,0.3)] dark:group-hover:drop-shadow-[0_0_30px_rgba(52,211,153,0.5)]">
+                    {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda Lebih Mudah & Cepat"))) !!}
                 </h1>
-                <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl drop-shadow-sm">
+                <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl transition-all duration-700 group-hover:opacity-60 group-hover:scale-95">
                     {{ \App\Models\Setting::getVal('home_description', 'Pilihan terbaik untuk merasakan pengalaman
-                    menggunakan produk Apple original tanpa harus membeli baru. Proses cepat, stok terlihat transparan,
-                    dan langsung transaksi!') }}
+                    menggunakan produk Apple original tanpa harus membeli baru. Aman, transparan dan terpercaya.') }}
                 </p>
                 <div
                     class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center">
