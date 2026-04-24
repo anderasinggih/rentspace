@@ -15,10 +15,13 @@
     }
 }" 
 x-init="window.addEventListener('scroll', () => { 
-    showNavbar = window.scrollY < lastScrollY || window.scrollY < 50;
-    lastScrollY = window.scrollY;
+    let currentScrollY = window.scrollY;
+    if (Math.abs(currentScrollY - lastScrollY) > 10) {
+        showNavbar = currentScrollY < lastScrollY || currentScrollY < 120;
+        lastScrollY = currentScrollY;
+    }
 })"
-class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-all duration-700 ease-in-out"
+class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]"
 :class="showNavbar ? 'translate-y-0 opacity-100 blur-none' : '-translate-y-32 opacity-0 blur-sm pointer-events-none'"
 >
     <nav
