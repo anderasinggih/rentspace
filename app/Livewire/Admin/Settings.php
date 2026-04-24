@@ -112,7 +112,7 @@ class Settings extends Component
             'name' => 'required|min:2',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:4',
-            'role' => 'required|in:admin,viewer,affiliator'
+            'role' => 'required|in:admin,viewer,affiliator,staff'
         ]);
 
         $user = \App\Models\User::create([
@@ -185,7 +185,7 @@ class Settings extends Component
         $rules = [
             'name' => 'required|min:2',
             'email' => 'required|email|unique:users,email,' . $this->editingUserId,
-            'role' => 'required|in:admin,viewer,affiliator',
+            'role' => 'required|in:admin,viewer,affiliator,staff',
             'password' => 'nullable|min:4'
         ];
 

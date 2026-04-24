@@ -234,6 +234,7 @@
                                     <select wire:model.live="role"
                                         class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                         <option value="admin">Admin</option>
+                                        <option value="staff">Staff (Operasional)</option>
                                         <option value="viewer">Viewer (View Only)</option>
                                     </select>
                                     @error('role') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
@@ -475,6 +476,8 @@
                                                 <div class="flex flex-wrap gap-1.5">
                                                     @if($user->role === 'admin')
                                                         <x-ui.badge variant="purple">Admin</x-ui.badge>
+                                                    @elseif($user->role === 'staff')
+                                                        <x-ui.badge variant="orange">Staff</x-ui.badge>
                                                     @elseif($user->role === 'viewer')
                                                         <x-ui.badge variant="zinc">Viewer</x-ui.badge>
                                                     @endif
