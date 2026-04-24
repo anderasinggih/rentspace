@@ -79,12 +79,19 @@ class Payment extends Component
         }
 
         // 5. Load: Siapkan variabel layar
-        if ($this->rental->status === 'pending') {
+        // 4. Load: Ambil data dari DB kalau memang sudah pernah milih bank (Bukan sedang pemilihan/online)
+        if ($this->rental->metode_pembayaran !== 'online') {
             $this->paymentInfo = $this->rental->payment_details;
+            
             if ($this->paymentInfo) {
                 $this->selectedChannel = $this->rental->metode_pembayaran;
                 $this->paymentFee = data_get($this->paymentInfo, 'payment_fee', 0);
                 $this->paymentFeeLabel = data_get($this->paymentInfo, 'payment_fee_label', '');
+                
+                // Sync status jika data masih mentah
+                if (isset($this->paymentInfo['order_id']) && count($this->paymentInfo) <= 1) {
+                    $this->checkStatus();
+                }
             }
         }
     }
