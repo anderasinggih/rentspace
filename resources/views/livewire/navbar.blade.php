@@ -13,21 +13,16 @@
             localStorage.theme = 'light';
         }
     }
-}" 
-x-init="window.addEventListener('scroll', () => { 
+}" x-init="window.addEventListener('scroll', () => { 
     let currentScrollY = window.scrollY;
     if (Math.abs(currentScrollY - lastScrollY) > 20) {
         showNavbar = currentScrollY < lastScrollY || currentScrollY < 180;
         lastScrollY = currentScrollY;
     }
-})"
-class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
-:class="showNavbar ? 'translate-y-0' : '-translate-y-48 pointer-events-none'"
->
-    <nav
-        class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all duration-700 overflow-hidden"
-        :class="showNavbar ? 'backdrop-blur-[4px]' : 'backdrop-blur-[12px]'"
-    >
+})" class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-all duration-[1100ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
+    :class="showNavbar ? 'translate-y-0' : '-translate-y-48 pointer-events-none'">
+    <nav class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all duration-700 overflow-hidden"
+        :class="showNavbar ? 'backdrop-blur-[4px]' : 'backdrop-blur-[12px]'">
         <!-- Left Side: Logo & Links -->
         <div class="flex items-center">
             <!-- Logo Box -->
