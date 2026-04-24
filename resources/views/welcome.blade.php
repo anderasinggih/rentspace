@@ -61,6 +61,7 @@
         <!-- Hero section -->
         <section x-data="{ 
                 activeSlide: 0,
+                spotlight: false,
                 slides: [
                     '/uploads/{{ \App\Models\Setting::getVal('hero', 'default.jpg') }}?t={{ time() }}',
                     '/uploads/{{ \App\Models\Setting::getVal('hero2', 'default2.jpg') }}?t={{ time() }}',
@@ -72,7 +73,7 @@
                     }, 6000);
                 }
             }"
-            class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-8 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl group">
+            class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-8 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl">
             
             <!-- Background Image Slideshow -->
             <div class="absolute inset-0 z-0 bg-white dark:bg-zinc-950 overflow-hidden text-zinc-950 dark:text-white">
@@ -92,7 +93,8 @@
                 @endfor
                 
                 <div class="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent dark:from-zinc-950 dark:via-zinc-950/50 z-20"></div>
-                <div class="absolute inset-0 bg-white/40 dark:bg-black/40 z-20 transition-colors duration-700 group-hover:bg-black/70"></div>
+                <div class="absolute inset-0 bg-white/40 dark:bg-black/40 z-20 transition-all duration-700"
+                    :class="spotlight ? 'bg-black/80 backdrop-blur-[2px]' : ''"></div>
 
             </div>
 
@@ -163,19 +165,23 @@
                     </div>
                 @endif
                 <div
-                    class="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md text-emerald-600 dark:text-emerald-400 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700 group-hover:opacity-40">
+                    class="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md text-emerald-600 dark:text-emerald-400 px-4 py-1.5 text-xs font-semibold mb-8 cursor-default tracking-widest uppercase transition-all duration-700"
+                    :class="spotlight ? 'opacity-30 translate-y-2' : ''">
                     RENT SPACE PURWOKERTO
                 </div>
-                <h1
-                    class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl transition-all duration-700 group-hover:drop-shadow-[0_0_40px_rgba(52,211,153,0.6)] dark:group-hover:drop-shadow-[0_0_50px_rgba(52,211,153,0.8)]">
+                <h1 @mouseenter="spotlight = true" @mouseleave="spotlight = false"
+                    class="text-3xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-zinc-950 dark:text-white uppercase max-w-4xl transition-all duration-700 cursor-pointer relative z-40"
+                    :class="spotlight ? 'drop-shadow-[0_0_50px_rgba(52,211,153,0.8)] scale-[1.02]' : ''">
                     {!! nl2br(e(\App\Models\Setting::getVal('home_title', "Sewa iPhone Impian Anda Lebih Mudah & Cepat"))) !!}
                 </h1>
-                <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl transition-all duration-700 group-hover:opacity-50">
+                <p class="mt-6 text-base sm:text-xl leading-relaxed sm:leading-8 text-zinc-600 dark:text-zinc-300 font-medium max-w-2xl transition-all duration-700"
+                    :class="spotlight ? 'opacity-40 scale-95 translate-y-[-10px]' : ''">
                     {{ \App\Models\Setting::getVal('home_description', 'Pilihan terbaik untuk merasakan pengalaman
                     menggunakan produk Apple original tanpa harus membeli baru. Aman, transparan dan terpercaya.') }}
                 </p>
                 <div
-                    class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center transition-all duration-700 group-hover:opacity-30">
+                    class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center transition-all duration-700"
+                    :class="spotlight ? 'opacity-20 translate-y-4' : ''">
                     <a href="{{ route('public.booking') }}" wire:navigate
                         class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-white text-zinc-950 shadow-[0_4px_24px_rgba(255,255,255,0.2)] hover:bg-zinc-100 hover:scale-[1.03] hover:shadow-[0_4px_32px_rgba(255,255,255,0.3)] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
                         SEWA SEKARANG
