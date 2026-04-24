@@ -675,13 +675,16 @@
                             }
                         @endphp
                         @foreach($finalFeedbacks as $item)
-                            <div class="inline-block w-[260px] sm:w-[320px] bg-card border border-border/50 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-primary">
+                            <div class="group relative inline-block w-[260px] sm:w-[320px] bg-violet-500/[0.02] dark:bg-violet-500/[0.01] backdrop-blur-md border border-violet-500/20 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] transition-all duration-300 hover:border-violet-500/50 hover:shadow-2xl hover:shadow-violet-500/10 overflow-hidden">
+                                <!-- Violet Glow Blob -->
+                                <div class="absolute -right-8 -top-8 w-20 h-20 bg-violet-500/10 rounded-full blur-2xl group-hover:bg-violet-500/20 transition-all duration-500 z-0"></div>
+                                
+                                <div class="relative z-10 flex items-center gap-3 mb-3">
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-violet-500/20 border border-violet-500/20 flex items-center justify-center text-[10px] sm:text-[12px] font-bold text-violet-600 dark:text-violet-400">
                                         {{ substr($item->nama, 0, 2) }}
                                     </div>
                                     <div>
-                                        <p class="text-[11px] sm:text-xs font-bold text-foreground leading-tight">{{ $item->nama }}</p>
+                                        <p class="text-[11px] sm:text-xs font-bold text-foreground leading-tight group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{{ $item->nama }}</p>
                                         <div class="flex gap-0.5">
                                             @for($s=1; $s<=5; $s++)
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="{{ $item->rating >= $s ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2.5" class="{{ $item->rating >= $s ? 'text-amber-400' : 'text-zinc-300' }} sm:w-2.5 sm:h-2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -689,7 +692,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-[11px] sm:text-xs text-muted-foreground leading-relaxed whitespace-normal line-clamp-3">"{{ $item->feedback }}"</p>
+                                <p class="relative z-10 text-[11px] sm:text-xs text-muted-foreground leading-relaxed whitespace-normal line-clamp-3">"{{ $item->feedback }}"</p>
                             </div>
                         @endforeach
                     </div>
