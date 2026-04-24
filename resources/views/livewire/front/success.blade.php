@@ -303,9 +303,14 @@
                     scale: 3, 
                     useCORS: true,
                     letterRendering: true,
-                    // Sembunyikan elemen dengan class no-pdf
+                    // Sembunyikan elemen dengan class no-pdf dan buat di tengah
                     onclone: (clonedDoc) => {
                         clonedDoc.querySelectorAll('.no-pdf').forEach(el => el.remove());
+                        const inv = clonedDoc.getElementById('invoice-content');
+                        if(inv) {
+                            inv.style.margin = '0 auto';
+                            inv.style.float = 'none';
+                        }
                     }
                 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
