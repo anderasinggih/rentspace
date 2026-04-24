@@ -693,6 +693,46 @@
                     </form>
                 </div>
             </div>
+
+            @if(auth()->user()->role === 'admin')
+            <div class="mt-6 bg-background rounded-xl border border-border overflow-hidden shadow-sm">
+                <div class="p-4 border-b border-border bg-amber-500/5">
+                    <h2 class="text-sm font-bold flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="m12 14 4-4"/><path d="m3 3 3 3"/><path d="m21 3-3 3"/><path d="M21 21-3-3"/><path d="m3 21 3-3"/><polyline points="15 6 9 6 9 12"/><path d="M12 12V6"/></svg>
+                        Akses Cepat Fitur Tersembunyi (Khusus Admin)
+                    </h2>
+                </div>
+                <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <a href="{{ route('admin.campaign') }}" 
+                        class="group p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.1 12.9a1.9 1.9 0 0 0 0 2.2l3 3.2a2 2 0 0 0 3 0l3-3.2a1.9 1.9 0 0 0 0-2.2L14.4 9a2 2 0 0 0-3 0Z"/><path d="M12 12V3"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold">Campaign Manager</h3>
+                                <p class="text-[10px] text-muted-foreground uppercase leading-none mt-1">Kelola Pengumuman Web</p>
+                            </div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                    </a>
+
+                    <a href="{{ route('admin.staff-logs') }}" 
+                        class="group p-4 rounded-xl border border-border hover:border-amber-500/50 hover:bg-amber-500/5 transition-all flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-amber-500/10 text-amber-500 rounded-lg group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold">Staff Activity Logs</h3>
+                                <p class="text-[10px] text-muted-foreground uppercase leading-none mt-1">Audit Trail & Tracking</p>
+                            </div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+            @endif
         @endif
 
         @if($activeTab === 'faq')
