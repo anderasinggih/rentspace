@@ -519,11 +519,16 @@
                                     'sm:hidden': !expandedPromo && {{ $loop->index }} >= 4,
                                     'block': expandedPromo || {{ $loop->index }} < 2 
                                 }"
-                                class="p-4 sm:p-5 bg-background shadow-sm border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all group">
-                                <div class="flex items-start gap-4">
+                                class="p-4 sm:p-6 bg-card/60 backdrop-blur-md shadow-sm border border-border/50 rounded-2xl hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-700 ease-in-out group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-[{{ $loop->index * 100 }}ms]">
+                                
+                                <!-- Blur Gradations (Emerald/Green) -->
+                                <div class="absolute -right-12 -top-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700 ease-in-out z-0"></div>
+                                <div class="absolute -left-12 -bottom-12 w-32 h-32 bg-green-500/10 rounded-full blur-3xl group-hover:bg-green-500/20 transition-all duration-700 ease-in-out z-0"></div>
+
+                                <div class="relative z-10 flex items-start gap-4">
                                     <div class="flex-1">
-                                        <div class="flex items-center justify-between mb-2 gap-3">
-                                            <h3 class="font-bold text-foreground text-sm sm:text-base truncate">
+                                        <div class="flex items-center justify-between mb-3 gap-3">
+                                            <h3 class="font-bold text-foreground text-sm sm:text-base truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-700 ease-in-out">
                                                 {{ $promo->nama_promo }}</h3>
                                             <x-ui.badge variant="green"
                                                 class="uppercase tracking-tight text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 shrink-0">Promo
@@ -576,8 +581,8 @@
                                             @endif
                                         </div>
 
-                                        <div class="flex items-center justify-between gap-4">
-                                            <span class="font-semibold text-primary/90 text-[11px] sm:text-xs block truncate">{{ $promoText }}</span>
+                                        <div class="flex items-center justify-between gap-4 mt-2">
+                                            <span class="font-semibold text-primary/90 text-xs sm:text-sm block truncate tracking-tight">{{ $promoText }}</span>
                                             @if($promo->start_date || $promo->end_date)
                                                 <div class="text-[8px] sm:text-[9px] text-muted-foreground font-medium shrink-0 leading-none">
                                                     {{ $promo->start_date ? \Carbon\Carbon::parse($promo->start_date)->format('d M') : 'Sekarang' }}
