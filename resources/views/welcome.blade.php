@@ -72,7 +72,7 @@
                     }, 6000);
                 }
             }"
-            class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-8 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl">
+            class="relative w-full overflow-hidden flex flex-col items-center text-center py-24 sm:py-36 mb-8 sm:rounded-[2rem] sm:mx-6 lg:max-w-7xl lg:mx-auto mt-0 sm:mt-6 shadow-2xl group">
             
             <!-- Background Image Slideshow -->
             <div class="absolute inset-0 z-0 bg-white dark:bg-zinc-950 overflow-hidden text-zinc-950 dark:text-white">
@@ -97,7 +97,7 @@
             </div>
 
             <!-- Teks -->
-            <div class="relative z-30 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8 group cursor-default">
+            <div class="relative z-30 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8 cursor-default">
                 @if($isCustomerLoggedIn && $closestActiveRental)
                     @php
                         $selesaiHeroTimestamp = $closestActiveRental->waktu_selesai->timestamp * 1000;
@@ -175,7 +175,7 @@
                     menggunakan produk Apple original tanpa harus membeli baru. Aman, transparan dan terpercaya.') }}
                 </p>
                 <div
-                    class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center">
+                    class="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-4 w-full px-2 sm:px-0 justify-center transition-all duration-700 group-hover:opacity-30">
                     <a href="{{ route('public.booking') }}" wire:navigate
                         class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-white text-zinc-950 shadow-[0_4px_24px_rgba(255,255,255,0.2)] hover:bg-zinc-100 hover:scale-[1.03] hover:shadow-[0_4px_32px_rgba(255,255,255,0.3)] min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">
                         SEWA SEKARANG
