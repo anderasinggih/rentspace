@@ -519,19 +519,19 @@
                                     'sm:hidden': !expandedPromo && {{ $loop->index }} >= 4,
                                     'block': expandedPromo || {{ $loop->index }} < 2 
                                 }"
-                                class="p-4 sm:p-6 bg-card/60 backdrop-blur-md shadow-sm border border-border/50 rounded-2xl hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 ease-out group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[{{ $loop->index * 100 }}ms]">
+                                class="p-4 sm:p-6 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] backdrop-blur-md shadow-sm border border-emerald-500/10 rounded-2xl hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 ease-out group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[{{ $loop->index * 100 }}ms]">
                                 
-                                <!-- Blur Gradations (Emerald/Green) -->
-                                <div class="absolute -right-12 -top-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-300 ease-out z-0"></div>
-                                <div class="absolute -left-12 -bottom-12 w-32 h-32 bg-green-500/10 rounded-full blur-3xl group-hover:bg-green-500/20 transition-all duration-300 ease-out z-0"></div>
+                                <!-- Living Glow Blobs (Moving) -->
+                                <div class="absolute -right-12 -top-12 w-32 h-32 bg-emerald-400/15 rounded-full blur-3xl animate-pulse group-hover:bg-emerald-400/25 transition-all duration-500 ease-in-out z-0"></div>
+                                <div class="absolute -left-12 -bottom-12 w-32 h-32 bg-green-500/10 rounded-full blur-3xl animate-bounce [animation-duration:8s] group-hover:bg-green-500/20 transition-all duration-500 ease-in-out z-0"></div>
 
                                 <div class="relative z-10 flex items-start gap-4">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between mb-3 gap-3">
-                                            <h3 class="font-bold text-foreground text-sm sm:text-base truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 ease-out">
+                                            <h3 class="font-bold text-foreground text-sm sm:text-base truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                                                 {{ $promo->nama_promo }}</h3>
                                             <x-ui.badge variant="green"
-                                                class="uppercase tracking-tight text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 shrink-0">Promo
+                                                class="uppercase tracking-tight text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 shrink-0 animate-pulse">Promo
                                                 Aktif</x-ui.badge>
                                         </div>
 
