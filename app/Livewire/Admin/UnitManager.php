@@ -7,6 +7,7 @@ use Livewire\Component;
 
 class UnitManager extends Component
 {
+    use \App\Traits\LogsStaffActivity;
     public $unit_id, $seri, $imei, $memori, $warna, $kondisi;
     public $category_id, $harga_per_jam, $harga_per_hari;
     public $specs = []; // Dynamic specifications
@@ -28,7 +29,7 @@ class UnitManager extends Component
 
     public function create()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing']);
         $this->category_id = '';
         $this->is_active = true;
@@ -37,7 +38,7 @@ class UnitManager extends Component
 
     public function edit($id)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $unit = Unit::findOrFail($id);
         $this->unit_id = $unit->id;
         $this->category_id = $unit->category_id;
@@ -56,7 +57,7 @@ class UnitManager extends Component
 
     public function save()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $selectedCat = \App\Models\Category::find($this->category_id);
         $isIphone = $selectedCat && str_contains(strtolower($selectedCat->slug), 'iphone');
 
@@ -78,7 +79,7 @@ class UnitManager extends Component
 
         $this->validate($rules);
 
-        Unit::updateOrCreate(
+        $unit = Unit::updateOrCreate(
             ['id' => $this->unit_id],
             [
                 'category_id' => $this->category_id,
@@ -93,6 +94,9 @@ class UnitManager extends Component
                 'is_active' => $this->is_active,
             ]
         );
+
+        $action = $this->unit_id ? 'edit_unit' : 'create_unit';
+        $this->logActivity($action, $unit, "Mengelola data unit: {$unit->seri}");
 
         $this->showModal = false;
     }
@@ -125,14 +129,14 @@ class UnitManager extends Component
 
     public function createCat()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $this->reset(['cat_id', 'cat_name', 'cat_slug', 'cat_icon', 'cat_fields', 'isEditingCat']);
         $this->showCatModal = true;
     }
 
     public function editCat($id)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $category = \App\Models\Category::findOrFail($id);
         $this->cat_id = $category->id;
         $this->cat_name = $category->name;
@@ -145,20 +149,20 @@ class UnitManager extends Component
 
     public function addCatField()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $this->cat_fields[] = '';
     }
 
     public function removeCatField($index)
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         unset($this->cat_fields[$index]);
         $this->cat_fields = array_values($this->cat_fields);
     }
 
     public function saveCat()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $this->validate([
             'cat_name' => 'required|string|max:255',
             'cat_slug' => 'required|string|max:255|unique:categories,slug,' . $this->cat_id,
@@ -168,7 +172,7 @@ class UnitManager extends Component
 
         $fields = array_values(array_filter($this->cat_fields, fn($f) => !empty($f)));
 
-        \App\Models\Category::updateOrCreate(
+        $cat = \App\Models\Category::updateOrCreate(
             ['id' => $this->cat_id],
             [
                 'name' => $this->cat_name,
@@ -177,6 +181,8 @@ class UnitManager extends Component
                 'custom_fields' => $fields,
             ]
         );
+
+        $this->logActivity('manage_category', $cat, "Mengelola kategori: {$cat->name}");
 
         $this->showCatModal = false;
         session()->flash('message', 'Kategori berhasil disimpan.');

@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/customers', CustomerManager::class)->name('admin.customers');
         Route::get('/admin/settings', Settings::class)->name('admin.settings');
         Route::get('/admin/affiliate', AffiliateManager::class)->name('admin.affiliate');
+        Route::get('/admin/stafflogs', \App\Livewire\Admin\StaffLogs::class)->name('admin.staff-logs');
     });
     
     // Affiliate Dashboard
