@@ -148,7 +148,7 @@
                                 @forelse ($transactions as $trx)
                                                                 <tr wire:click="openInspect({{ $trx->id }})"
                                                                     class="cursor-pointer hover:bg-muted/40 transition-colors group/row">
-                                                                    <td class="whitespace-nowrap py-1.5 pl-3 pr-3 text-xs sm:pl-6">
+                                                                    <td class="whitespace-nowrap py-3 pl-3 pr-3 text-xs sm:pl-6">
                                                                         <div class="flex flex-col gap-0 tracking-tight">
                                                                             <div class="font-bold text-foreground text-sm tracking-tight">{{ $trx->nama }}</div>
                                                                             <div class="text-[10px] text-muted-foreground font-bold uppercase flex items-center gap-1">
@@ -160,12 +160,12 @@
                                                                         </div>
                                                                     </td>
                                                                     <td
-                                                                        class="hidden sm:table-cell whitespace-nowrap px-3 py-1.5 text-xs text-muted-foreground">
+                                                                        class="hidden sm:table-cell whitespace-nowrap px-3 py-3 text-xs text-muted-foreground">
                                                                         {{ $trx->created_at->format('d M Y') }}<br />
                                                                         <span class="opacity-70">{{ $trx->created_at->format('H:i') }} WIB</span>
                                                                     </td>
                                                                     <td
-                                                                        class="hidden sm:table-cell whitespace-nowrap px-3 py-1.5 text-muted-foreground">
+                                                                        class="hidden sm:table-cell whitespace-nowrap px-3 py-3 text-muted-foreground">
                                                                         <div class="flex flex-col gap-0">
                                                                             @foreach($trx->units->take(2) as $u)
                                                                                 <span
@@ -182,13 +182,13 @@
                                                                         </div>
                                                                     </td>
                                                                     <td
-                                                                        class="hidden md:table-cell whitespace-nowrap px-3 py-1.5 text-muted-foreground text-[10px] leading-tight">
+                                                                        class="hidden md:table-cell whitespace-nowrap px-3 py-3 text-muted-foreground text-[10px] leading-tight">
                                                                         {{ \Carbon\Carbon::parse($trx->waktu_mulai)->format('d/m/y H:i')
                                                                                                         }}<br />
                                                                         {{ \Carbon\Carbon::parse($trx->waktu_selesai)->format('d/m/y H:i') }}
                                                                     </td>
                                                                     <td
-                                                                        class="hidden md:table-cell whitespace-nowrap px-3 py-1.5 text-muted-foreground leading-tight">
+                                                                        class="hidden md:table-cell whitespace-nowrap px-3 py-3 text-muted-foreground leading-tight">
                                                                         Rp {{ number_format($trx->subtotal_harga, 0, ',', '.') }}<br />
                                                                         <span class="text-xs text-red-500">Diskon: -Rp {{
                                         number_format($trx->potongan_diskon, 0, ',', '.') }}</span>
@@ -217,7 +217,7 @@
                                                                             </span>
                                                                         </div>
                                                                     </td>
-                                                                    <td class="whitespace-nowrap px-2 sm:px-3 py-1.5">
+                                                                    <td class="whitespace-nowrap px-2 sm:px-3 py-3">
                                                                         @if($trx->status === 'pending')
                                                                             <x-ui.badge variant="amber" class="text-[9px]">Pending</x-ui.badge>
                                                                         @elseif($trx->status === 'paid')
@@ -227,7 +227,7 @@
                                                                         @else
                                                                             <x-ui.badge variant="red" class="text-[9px]">Batal</x-ui.badge>
                                                                         @endif
-                                                                                                              <td class="relative whitespace-nowrap py-1.5 pl-2 pr-2 sm:pr-6 text-right">
+                                                                                                              <td class="relative whitespace-nowrap py-3 pl-2 pr-2 sm:pr-6 text-right">
                                                                         <div class="flex items-center justify-end gap-2">
                                                                             @if($filterStatus === 'trashed')
                                                                                 @if(auth()->user()->role === 'admin')
