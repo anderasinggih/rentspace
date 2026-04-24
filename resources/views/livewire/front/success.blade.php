@@ -208,7 +208,6 @@
                         </a>
                     @endif
 
-                     @endif
 
                     <div class="grid grid-cols-2 gap-2 mt-2">
                         <a href="{{ route('public.check-order') }}" wire:navigate
@@ -279,8 +278,4 @@
             </p>
         </div>
     </div>
-
-        </div>
-    </div>
-</div>
 </div>
