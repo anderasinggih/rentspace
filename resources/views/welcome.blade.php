@@ -249,18 +249,18 @@
                     
                     <!-- Button SEWA SEKARANG (Liquid Glass) -->
                     <a href="{{ route('public.booking') }}" wire:navigate
-                        class="group/btn relative w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-white/15 dark:bg-white/10 backdrop-blur-md backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/50 border-r border-b border-white/20 text-foreground shadow-[0_8px_32px_rgba(255,255,255,0.1)] hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
+                        class="group/btn relative w-full sm:w-auto inline-flex items-center justify-center rounded-2xl font-bold transition-all bg-white/15 dark:bg-white/10 backdrop-blur-[4px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/50 border-r border-b border-white/20 text-foreground shadow-[0_8px_32px_rgba(255,255,255,0.1)] hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
                         <!-- Liquid Shine Overlay -->
-                        <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/btn:opacity-100 opacity-60"></div>
+                        <div class="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/btn:opacity-100 opacity-60"></div>
                         <span class="relative z-10 tracking-wider">SEWA SEKARANG</span>
                     </a>
 
                     <!-- Button Hubungi Admin (Liquid Glass) -->
                     <a href="https://wa.me/{{ \App\Models\Setting::getVal('admin_wa', '6281234567890') }}"
                         target="_blank" rel="noopener"
-                        class="group/wa relative w-full sm:w-auto inline-flex items-center justify-center rounded-xl font-bold transition-all bg-zinc-950/30 dark:bg-white/10 backdrop-blur-md backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/30 border-r border-b border-zinc-950/10 text-foreground hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
+                        class="group/wa relative w-full sm:w-auto inline-flex items-center justify-center rounded-2xl font-bold transition-all bg-zinc-950/30 dark:bg-white/10 backdrop-blur-[4px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/40 border-r border-b border-zinc-950/20 text-foreground hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
                         <!-- Liquid Shine Overlay -->
-                        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/wa:opacity-100 opacity-40"></div>
+                        <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/wa:opacity-100 opacity-40"></div>
                         <span class="relative z-10 flex items-center justify-center tracking-wider">
                             @php
                                 $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -570,24 +570,31 @@
                 {{-- Login CTA for guests --}}
                 <div x-data="{ visible: false }" x-intersect.once="visible = true"
                     :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
-                    class="mb-8 rounded-2xl border border-border bg-card/50 px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 transition-all duration-1000 ease-out">
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class="text-primary">
+                    class="group/login relative mb-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[4px] px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 transition-all duration-500 hover:border-white/40 hover:shadow-2xl hover:shadow-white/10 overflow-hidden">
+                    
+                    <!-- Liquid Glow Blob (White Theme) -->
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 group-hover:scale-150 transition-all duration-1000 z-0"></div>
+
+                    <!-- Specular Highlight -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none z-10"></div>
+                    
+                    <div class="flex items-center gap-3 flex-1 min-w-0 relative z-20">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/10 shrink-0 group-hover/login:scale-110 transition-transform duration-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="text-foreground/80">
                                 <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                                 <circle cx="12" cy="7" r="4" />
                             </svg>
                         </div>
                         <div>
-                            <p class="font-semibold text-foreground text-sm">Sudah pernah booking?</p>
-                            <p class="text-xs text-muted-foreground mt-0.5">Masuk untuk melihat status pesanan dan
+                            <p class="font-bold text-foreground text-sm transition-colors">Sudah pernah booking?</p>
+                            <p class="text-xs text-muted-foreground mt-0.5 transition-colors">Masuk untuk melihat status pesanan dan
                                 notifikasi pembayaran Anda.</p>
                         </div>
                     </div>
                     <a href="{{ route('customer.login') }}" wire:navigate
-                        class="inline-flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xs font-semibold px-4 py-2.5 hover:bg-primary/90 transition-colors shadow-sm w-full sm:w-auto ">
+                        class="relative z-20 inline-flex items-center justify-center rounded-2xl bg-white/10 border border-white/20 text-foreground text-xs font-black px-6 py-2.5 hover:bg-white hover:text-zinc-950 hover:scale-105 active:scale-95 transition-all shadow-lg w-full sm:w-auto uppercase tracking-wider">
                         Masuk
                     </a>
                 </div>

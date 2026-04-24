@@ -11,8 +11,9 @@
             localStorage.theme = 'light';
         }
     }
-}" class="sticky top-2 z-50 mx-auto px-4 w-full max-w-6xl mb-12">
-    <nav class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-blur-[4px] backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all duration-700 overflow-hidden">
+}" class="sticky top-4 z-50 mx-auto px-4 w-full max-w-6xl mb-12">
+    <nav
+        class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-blur-[4px] backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all duration-700 overflow-hidden">
         <!-- Left Side: Logo & Links -->
         <div class="flex items-center">
             <!-- Logo Box -->
@@ -114,7 +115,11 @@
 
     <!-- Mobile Dropdown -->
     <div x-show="publicMenuOpen" x-transition x-cloak style="display: none;"
-        class="md:hidden absolute top-[110%] left-0 right-0 p-4 bg-background border border-border shadow-lg rounded-2xl flex flex-col gap-2 mx-1">
+        class="md:hidden absolute top-[115%] left-0 right-0 p-4 bg-background/20 backdrop-blur-[4px] backdrop-saturate-[180%] border border-white/10 border-t-white/30 border-l-white/20 shadow-2xl rounded-3xl flex flex-col gap-2 mx-1 overflow-hidden">
+        <!-- Shine Overlay -->
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none">
+        </div>
         <a href="/" wire:navigate
             class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->is('/') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">Beranda</a>
         <a href="{{ route('public.timeline') }}" wire:navigate
