@@ -215,7 +215,7 @@
                             </table>
                         </div>
                         <div class="p-4 border-t border-border">
-                             <div class="flex flex-col sm:flex-row items-center justify-between gap-6 px-2">
+                             <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
                                 <!-- Left: Rows & Info -->
                                 <div class="flex items-center gap-6 order-2 md:order-1">
                                     <div class="flex items-center gap-2">
@@ -327,7 +327,7 @@
                                 </tbody>
                             </table>
                                            <div class="p-4 border-t border-border mt-4">
-                            <div class="flex flex-col sm:flex-row items-center justify-between gap-6 px-2">
+                            <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
                                 <!-- Left: Rows & Info -->
                                 <div class="flex items-center gap-6 order-2 md:order-1">
                                     <div class="flex items-center gap-2">
