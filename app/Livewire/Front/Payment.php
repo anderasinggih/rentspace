@@ -63,9 +63,9 @@ class Payment extends Component
             $this->rental->refresh();
         }
 
-        // 4. GARI POLISI: Baru cek apakah sudah basi (Hanya jika masih pending)
+        // 4. GARIS POLISI: Baru cek apakah sudah basi (Hanya jika masih pending & BUKAN cash)
         $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
-        if ($this->rental->status === 'pending' && $isExpired) {
+        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && $isExpired) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -139,8 +139,8 @@ class Payment extends Component
             } catch (\Exception $e) { }
         }
 
-        // 2. CEK TIMER (Hanya jika di Midtrans memang belum dibayar)
-        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
+        // 2. CEK TIMER (Hanya jika di Midtrans memang belum dibayar & BUKAN cash)
+        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
