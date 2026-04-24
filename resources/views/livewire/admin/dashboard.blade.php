@@ -401,10 +401,11 @@
                     type: 'area', height: 300, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10,
                     events: {
                         mouseMove: function (event, chartContext, config) {
-                            if (config.dataPointIndex !== -1 && typeof window.navigator.vibrate === 'function') {
-                                if (window.lastVibratePoint !== config.dataPointIndex) {
-                                    window.navigator.vibrate(10);
-                                    window.lastVibratePoint = config.dataPointIndex;
+                            const pointIndex = config.dataPointIndex;
+                            if (pointIndex !== -1 && pointIndex !== undefined && typeof window.navigator.vibrate === 'function') {
+                                if (window.lastVibratePoint !== pointIndex) {
+                                    window.navigator.vibrate(5);
+                                    window.lastVibratePoint = pointIndex;
                                 }
                             }
                         }
@@ -453,14 +454,6 @@
                 },
                 colors: ['#6366f1', '#10b981'],
                 theme: { mode: colors.isDark ? 'dark' : 'light' },
-                legend: {
-                    show: true,
-                    position: 'bottom',
-                    horizontalAlign: 'left',
-                    offsetY: 8,
-                    itemMargin: { horizontal: 10, vertical: 5 },
-                    labels: { colors: colors.textColor, useSeriesColors: false }
-                },
                 tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } }
             });
             revChart.render();
@@ -498,14 +491,6 @@
                     padding: { top: 0, right: 0, bottom: 0, left: 10 }
                 },
                 theme: { mode: colors.isDark ? 'dark' : 'light' },
-                legend: {
-                    show: true,
-                    position: 'bottom',
-                    horizontalAlign: 'left',
-                    offsetY: 8,
-                    itemMargin: { horizontal: 10, vertical: 5 },
-                    labels: { colors: colors.textColor, useSeriesColors: false }
-                },
                 tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => val + " Orders" }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } }
             });
             trxChart.render();
