@@ -524,131 +524,133 @@
                     </div>
                 </button>
             
-                </div> <!-- END STEP 3 -->
+                </div> <!-- END STEP 3            </form>
+        </div>
+    </div>
 
+    <!-- Sticky Summary & Navigation Bar (Mobile) -->
+    <div x-cloak x-show="step < 3 && selectedIds.length > 0 && subtotal > 0 && !keyboardOpen" 
+        wire:key="sticky-booking-summary"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="translate-y-full"
+        x-transition:enter-end="translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-y-0"
+        x-transition:leave-end="translate-y-full"
+        class="fixed bottom-0 left-0 right-0 z-[60] sm:hidden">
+        
+        <!-- Backdrop/Overlay -->
+        <div x-show="summaryExpanded" 
+            @click="summaryExpanded = false"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-black/40 z-[-1]"></div>
 
-
-            </form>
-
-            <!-- Sticky Summary & Navigation Bar (Mobile) -->
-            <div x-cloak x-show="step < 3 && selectedIds.length > 0 && subtotal > 0" 
-                wire:key="sticky-booking-summary"
-                class="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
+        <div class="bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-15px_40px_rgba(0,0,0,0.15)] transition-all duration-500 ease-in-out"
+            x-bind:class="summaryExpanded ? 'rounded-t-[2.5rem]' : ''">
+            <!-- Expandable Content -->
+            <div x-show="summaryExpanded" 
+                x-transition:enter="transition-all ease-out duration-250"
+                x-transition:enter-start="max-h-0 opacity-0 translate-y-4"
+                x-transition:enter-end="max-h-[60vh] opacity-100 translate-y-0"
+                x-transition:leave="transition-all ease-in duration-200"
+                x-transition:leave-start="max-h-[60vh] opacity-100 translate-y-0"
+                x-transition:leave-end="max-h-0 opacity-0 translate-y-4"
+                class="overflow-y-auto px-4 py-6 space-y-6">
                 
-                <!-- Backdrop/Overlay -->
-                <div x-show="summaryExpanded" 
-                    @click="summaryExpanded = false"
-                    x-transition:enter="transition ease-out duration-300"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-200"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    class="fixed inset-0 bg-black/40 z-[-1]"></div>
-
-                <div class="bg-background/10 backdrop-blur-sm border-t border-border shadow-[0_-15px_40px_rgba(0,0,0,0.15)] transition-all duration-500 ease-in-out"
-                    x-bind:class="summaryExpanded ? 'rounded-t-[2.5rem]' : ''">
-                    <!-- Expandable Content -->
-                    <div x-show="summaryExpanded" 
-                        x-transition:enter="transition-all ease-out duration-250"
-                        x-transition:enter-start="max-h-0 opacity-0 translate-y-4"
-                        x-transition:enter-end="max-h-[60vh] opacity-100 translate-y-0"
-                        x-transition:leave="transition-all ease-in duration-200"
-                        x-transition:leave-start="max-h-[60vh] opacity-100 translate-y-0"
-                        x-transition:leave-end="max-h-0 opacity-0 translate-y-4"
-                        class="overflow-y-auto px-4 py-6 space-y-6">
-                        
-                        <!-- Unit Details -->
-                        <div>
-                            <div class="space-y-1 max-h-[185px] overflow-y-auto pr-1 scrollbar-hide">
-                                @php 
-                                    $allUnits = collect($available_units);
-                                @endphp
-                                <template x-for="id in selectedIds" :key="id">
-                                    <div class="flex items-start justify-between py-2 border-b border-border/40 last:border-0">
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-[11px] font-bold text-foreground leading-tight truncate" x-text="unitPrices[id]?.seri || 'Unit #' + id"></p>
-                                            <div class="flex items-center gap-1.5 text-[9px] text-muted-foreground mt-0.5">
-                                                <span x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(unitPrices[id]?.day || 0) + '/hari'"></span>
-                                                <span x-show="duration.days > 0" x-text="'x ' + duration.days + ' h'"></span>
-                                                <span x-show="duration.hours > 0" x-text="'+ ' + duration.hours + ' j'"></span>
-                                            </div>
-                                        </div>
-                                        <div class="text-right ml-4">
-                                            <p class="text-[10px] font-black text-primary">
-                                                Rp <span x-text="new Intl.NumberFormat('id-ID').format((duration.days * (unitPrices[id]?.day || 0)) + (duration.hours * (unitPrices[id]?.hour || 0)))"></span>
-                                            </p>
-                                            <p class="text-[8px] text-muted-foreground leading-none mt-1" x-show="unitPrices[id]?.warna || unitPrices[id]?.memori">
-                                                <span x-text="unitPrices[id]?.warna || ''"></span>
-                                                <span x-show="unitPrices[id]?.warna && unitPrices[id]?.memori"> • </span>
-                                                <span x-text="unitPrices[id]?.memori || ''"></span>
-                                            </p>
-                                        </div>
+                <!-- Unit Details -->
+                <div>
+                    <div class="space-y-1 max-h-[185px] overflow-y-auto pr-1 scrollbar-hide">
+                        <template x-for="id in selectedIds" :key="id">
+                            <div class="flex items-start justify-between py-2 border-b border-border/40 last:border-0">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[11px] font-bold text-foreground leading-tight truncate" x-text="unitPrices[id]?.seri || 'Unit #' + id"></p>
+                                    <div class="flex items-center gap-1.5 text-[9px] text-muted-foreground mt-0.5">
+                                        <span x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(unitPrices[id]?.day || 0) + '/hari'"></span>
+                                        <span x-show="duration.days > 0" x-text="'x ' + duration.days + ' h'"></span>
+                                        <span x-show="duration.hours > 0" x-text="'+ ' + duration.hours + ' j'"></span>
                                     </div>
-                                </template>
+                                </div>
+                                <div class="text-right ml-4">
+                                    <p class="text-[10px] font-black text-primary">
+                                        Rp <span x-text="new Intl.NumberFormat('id-ID').format((duration.days * (unitPrices[id]?.day || 0)) + (duration.hours * (unitPrices[id]?.hour || 0)))"></span>
+                                    </p>
+                                    <p class="text-[8px] text-muted-foreground leading-none mt-1" x-show="unitPrices[id]?.warna || unitPrices[id]?.memori">
+                                        <span x-text="unitPrices[id]?.warna || ''"></span>
+                                        <span x-show="unitPrices[id]?.warna && unitPrices[id]?.memori"> • </span>
+                                        <span x-text="unitPrices[id]?.memori || ''"></span>
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-
-                        <!-- Price Breakdown -->
-                        <div class="bg-muted/30 rounded-xl p-4 space-y-2 border border-border">
-                            <div class="flex justify-between text-[11px]">
-                                <span class="text-muted-foreground">Harga Sewa Dasar</span>
-                                <span class="font-bold" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal)"></span>
-                            </div>
-                            <div x-show="$wire.potongan_diskon > 0" class="flex justify-between text-[11px] text-green-600">
-                                <span>Potongan Diskon</span>
-                                <span class="font-bold">- Rp <span x-text="new Intl.NumberFormat('id-ID').format($wire.potongan_diskon)"></span></span>
-                            </div>
-                            <div x-show="$wire.hari_bonus > 0" class="flex justify-between text-[11px] text-blue-600">
-                                <span>Bonus Hari Gratis</span>
-                                <span class="font-bold">+<span x-text="$wire.hari_bonus"></span> Hari</span>
-                            </div>
-                            <div x-show="$wire.jam_bonus > 0" class="flex justify-between text-[11px] text-purple-600">
-                                <span>Bonus Jam Gratis</span>
-                                <span class="font-bold">+<span x-text="$wire.jam_bonus"></span> Jam</span>
-                            </div>
-                            <div class="pt-2 border-t border-border flex justify-between items-center">
-                                <span class="text-xs font-bold text-foreground">Total Estimasi</span>
-                                <span class="text-base font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
-                            </div>
-                        </div>
+                        </template>
                     </div>
+                </div>
 
-                    <!-- Bottom Bar (Always Visible) -->
-                    <div class="px-4 py-4 flex items-center justify-between relative z-10">
-                        <div class="flex-1 flex flex-col gap-0.5 cursor-pointer select-none" @click="summaryExpanded = !summaryExpanded">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest" x-text="selectedIds.length + ' Unit Terpilih'"></span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" 
-                                    class="text-muted-foreground transition-transform duration-500"
-                                    x-bind:class="summaryExpanded ? 'rotate-180' : ''">
-                                    <path d="m18 15-6-6-6 6"/>
-                                </svg>
-                            </div>
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="text-sm font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
-                                
-                                <span x-show="$wire.potongan_diskon > 0" 
-                                    class="inline-flex items-center rounded-full border border-transparent bg-green-500/10 px-1.5 py-0.5 text-[9px] font-bold text-green-600 dark:text-green-400">
-                                    -Rp<span x-text="new Intl.NumberFormat('id-ID').format($wire.potongan_diskon)"></span>
-                                </span>
-                                <span x-show="$wire.hari_bonus > 0" 
-                                    class="inline-flex items-center rounded-full border border-transparent bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 dark:text-blue-400">
-                                    +<span x-text="$wire.hari_bonus"></span> Hari
-                                </span>
-                                <span x-show="$wire.jam_bonus > 0" 
-                                    class="inline-flex items-center rounded-full border border-transparent bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-bold text-purple-600 dark:text-purple-400">
-                                    +<span x-text="$wire.jam_bonus"></span> Jam
-                                </span>
-                            </div>
-                        </div>
-                        <button type="button" @click.prevent="nextStep()" class="bg-primary text-primary-foreground font-bold px-6 py-2.5 rounded-xl shadow-lg active:scale-95 transition-all text-sm">Lanjut</button>
+                <!-- Price Breakdown -->
+                <div class="bg-muted/30 rounded-xl p-4 space-y-2 border border-border">
+                    <div class="flex justify-between text-[11px]">
+                        <span class="text-muted-foreground">Harga Sewa Dasar</span>
+                        <span class="font-bold" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal)"></span>
                     </div>
-
-                    <!-- Safe Area spacer -->
-                    <div class="h-[env(safe-area-inset-bottom)] w-full"></div>
+                    <div x-show="$wire.potongan_diskon > 0" class="flex justify-between text-[11px] text-green-600">
+                        <span>Potongan Diskon</span>
+                        <span class="font-bold">- Rp <span x-text="new Intl.NumberFormat('id-ID').format($wire.potongan_diskon)"></span></span>
+                    </div>
+                    <div x-show="$wire.hari_bonus > 0" class="flex justify-between text-[11px] text-blue-600">
+                        <span>Bonus Hari Gratis</span>
+                        <span class="font-bold">+<span x-text="$wire.hari_bonus"></span> Hari</span>
+                    </div>
+                    <div x-show="$wire.jam_bonus > 0" class="flex justify-between text-[11px] text-purple-600">
+                        <span>Bonus Jam Gratis</span>
+                        <span class="font-bold">+<span x-text="$wire.jam_bonus"></span> Jam</span>
+                    </div>
+                    <div class="pt-2 border-t border-border flex justify-between items-center">
+                        <span class="text-xs font-bold text-foreground">Total Estimasi</span>
+                        <span class="text-base font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Bottom Bar (Always Visible) -->
+            <div class="px-4 py-4 flex items-center justify-between relative z-10">
+                <div class="flex-1 flex flex-col gap-0.5 cursor-pointer select-none" @click="summaryExpanded = !summaryExpanded">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest" x-text="selectedIds.length + ' Unit Terpilih'"></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" 
+                            class="text-muted-foreground transition-transform duration-500"
+                            x-bind:class="summaryExpanded ? 'rotate-180' : ''">
+                            <path d="m18 15-6-6-6 6"/>
+                        </svg>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-sm font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
+                        
+                        <span x-show="$wire.potongan_diskon > 0" 
+                            class="inline-flex items-center rounded-full border border-transparent bg-green-500/10 px-1.5 py-0.5 text-[9px] font-bold text-green-600 dark:text-green-400">
+                            -Rp<span x-text="new Intl.NumberFormat('id-ID').format($wire.potongan_diskon)"></span>
+                        </span>
+                        <span x-show="$wire.hari_bonus > 0" 
+                            class="inline-flex items-center rounded-full border border-transparent bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 dark:text-blue-400">
+                            +<span x-text="$wire.hari_bonus"></span> Hari
+                        </span>
+                        <span x-show="$wire.jam_bonus > 0" 
+                            class="inline-flex items-center rounded-full border border-transparent bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-bold text-purple-600 dark:text-purple-400">
+                            +<span x-text="$wire.jam_bonus"></span> Jam
+                        </span>
+                    </div>
+                </div>
+                <button type="button" @click.prevent="nextStep()" class="bg-primary text-primary-foreground font-bold px-6 py-2.5 rounded-xl shadow-lg active:scale-95 transition-all text-sm">Lanjut</button>
+            </div>
+
+            <!-- Safe Area spacer -->
+            <div class="h-[env(safe-area-inset-bottom)] w-full"></div>
+        </div>
+    </div>
+   </div>
 
             <!-- Desktop Navigation Buttons -->
             <div x-cloak x-show="step < 3" class="hidden sm:flex justify-end mt-6 gap-3 border-t border-border pt-6">
@@ -669,6 +671,7 @@
     Alpine.data('bookingForm', () => ({
         step: 1,
         summaryExpanded: false,
+        keyboardOpen: false,
         selectedIds: @entangle('selected_unit_ids'),
         selectedPromoIds: @entangle('selected_promo_ids'),
         unitPrices: {!! $unitPricesJson !!},
@@ -722,6 +725,35 @@
                 }
             });
             return total;
+        },
+
+        init() {
+            // Keyboard Visibility Detection
+            const handleFocus = (e) => {
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+                    this.keyboardOpen = true;
+                }
+            };
+            const handleBlur = () => {
+                // Delay blur to prevent flickering
+                setTimeout(() => {
+                    const activeTag = document.activeElement.tagName;
+                    if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) {
+                        this.keyboardOpen = false;
+                    }
+                }, 100);
+            };
+
+            document.addEventListener('focusin', handleFocus);
+            document.addEventListener('focusout', handleBlur);
+
+            // Robust VisualViewport handling for modern iOS/Android
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', () => {
+                    const isKeyboard = window.visualViewport.height < window.innerHeight * 0.85;
+                    this.keyboardOpen = isKeyboard;
+                });
+            }
         }
     }));
 
