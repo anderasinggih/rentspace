@@ -368,14 +368,13 @@
             </table>
         </div>
     </div>
-</div>
 
 @script
 <script>
     if (typeof ApexCharts !== 'undefined') {
         const initCharts = () => {
             const chartDom = document.querySelector("#revenueChart");
-            if (!chartDom) return; // Not on dashboard or not ready
+            if (!chartDom) return;
 
             function getChartColors() {
                 const isDark = document.documentElement.classList.contains('dark');
@@ -390,153 +389,119 @@
             }
 
             let colors = getChartColors();
+            let revChart, trxChart, donutChart;
+
+            const chartOptions = {
+                chart: { fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent' },
+                dataLabels: { enabled: false },
+                theme: { mode: colors.isDark ? 'dark' : 'light' }
+            };
 
             // ── 1. REVENUE AREA CHART ──────────────────────────────────────────────
-            var revChart = new ApexCharts(document.querySelector("#revenueChart"), {
+            revChart = new ApexCharts(document.querySelector("#revenueChart"), {
+                ...chartOptions,
                 series: [
                     { name: 'Omset Kotor', data: @json($chartRevenue) },
                     { name: 'Omset Bersih', data: @json($chartNetRevenue) }
                 ],
-                chart: {
-                    type: 'area', height: 300, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10,
-                    events: {
-                        mouseMove: function (event, chartContext, config) {
-                            const pointIndex = config.dataPointIndex;
-                            if (pointIndex !== -1 && pointIndex !== undefined && navigator.vibrate) {
-                                if (window.lastVibratePoint !== pointIndex) {
-                                    navigator.vibrate(10);
-                                    window.lastVibratePoint = pointIndex;
-                                }
-                            }
-                        }
-                    }
-                },
-                dataLabels: { enabled: false },
+                chart: { ...chartOptions.chart, type: 'area', height: 300, offsetX: -10, offsetY: 10 },
                 stroke: { curve: 'smooth', width: 2, colors: ['#6366f1', '#10b981'] },
                 xaxis: {
                     categories: @json($chartCategories),
                     tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
-                    labels: {
-                        hideOverlappingLabels: true,
-                        rotate: 0,
-                        rotateAlways: false,
-                        minHeight: 20,
-                        style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' }
-                    },
+                    labels: { hideOverlappingLabels: true, rotate: 0, style: { colors: colors.textColor, fontSize: '9px' } },
                     tickAmount: window.innerWidth < 640 ? 4 : 8
                 },
                 yaxis: {
                     labels: {
-                        formatter: (val) => {
-                            if (val >= 1000000) return (val / 1000000).toFixed(1).replace('.', ',') + ' jt';
-                            if (val >= 1000) return (val / 1000).toFixed(0) + ' rb';
-                            return val;
-                        },
-                        style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '10px' }
+                        formatter: (val) => val >= 1000 ? (val / 1000).toFixed(0) + ' rb' : val,
+                        style: { colors: colors.textColor, fontSize: '10px' }
                     }
                 },
-                grid: {
-                    borderColor: colors.borderColor, strokeDashArray: 0,
-                    yaxis: { lines: { show: true } }, xaxis: { lines: { show: false } },
-                    padding: { top: 0, right: 0, bottom: 0, left: 20 }
-                },
-                fill: {
-                    type: 'gradient',
-                    gradient: {
-                        shadeIntensity: 1, opacityFrom: 0.2, opacityTo: 0.01, stops: [0, 100],
-                        colorStops: [
-                            { offset: 0, color: '#6366f1', opacity: 0.2 },
-                            { offset: 100, color: '#6366f1', opacity: 0 },
-                            { offset: 0, color: '#10b981', opacity: 0.1 },
-                            { offset: 100, color: '#10b981', opacity: 0 }
-                        ]
-                    }
-                },
+                grid: { borderColor: colors.borderColor, padding: { left: 20 } },
+                fill: { type: 'gradient', gradient: { opacityFrom: 0.2, opacityTo: 0.01 } },
                 colors: ['#6366f1', '#10b981'],
-                theme: { mode: colors.isDark ? 'dark' : 'light' },
-                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: true } }
+                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => "Rp " + val.toLocaleString("id-ID") } }
             });
             revChart.render();
 
             // ── 2. TRANSACTIONS BAR CHART ──────────────────────────────────────────
-            var trxChart = new ApexCharts(document.querySelector("#transactionsChart"), {
+            trxChart = new ApexCharts(document.querySelector("#transactionsChart"), {
+                ...chartOptions,
                 series: [{ name: 'Jml Sewa', data: @json($chartTransactions) }],
-                chart: {
-                    type: 'bar', height: 300, fontFamily: 'inherit', toolbar: { show: false }, background: 'transparent', offsetX: -10, offsetY: 10
-                },
+                chart: { ...chartOptions.chart, type: 'bar', height: 300, offsetX: -10, offsetY: 10 },
                 plotOptions: { bar: { borderRadius: 4, columnWidth: '40%' } },
-                dataLabels: { enabled: false },
                 colors: ['#10b981'],
                 xaxis: {
                     categories: @json($chartCategories),
-                    tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false },
-                    labels: {
-                        hideOverlappingLabels: true,
-                        rotate: 0,
-                        rotateAlways: false,
-                        minHeight: 20,
-                        style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' }
-                    },
+                    labels: { style: { colors: colors.textColor, fontSize: '9px' } },
                     tickAmount: window.innerWidth < 640 ? 4 : 8
                 },
-                yaxis: {
-                    labels: {
-                        formatter: (val) => Math.round(val),
-                        style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '10px' }
-                    }
-                },
-                grid: {
-                    borderColor: colors.borderColor,
-                    yaxis: { lines: { show: true } }, xaxis: { lines: { show: false } },
-                    padding: { top: 0, right: 0, bottom: 0, left: 10 }
-                },
-                theme: { mode: colors.isDark ? 'dark' : 'light' },
-                tooltip: { theme: colors.tooltipTheme, y: { formatter: (val) => val + " Orders" }, style: { fontSize: '11px', fontFamily: 'inherit' }, marker: { show: false } }
+                yaxis: { labels: { style: { colors: colors.textColor, fontSize: '10px' } } },
+                grid: { borderColor: colors.borderColor, padding: { left: 10 } },
+                tooltip: { theme: colors.tooltipTheme }
             });
             trxChart.render();
 
             // ── 3. PAYMENT METHOD DONUT CHART ─────────────────────────────────────
-            var donutChart = new ApexCharts(document.querySelector("#paymentDonutChart"), {
+            donutChart = new ApexCharts(document.querySelector("#paymentDonutChart"), {
+                ...chartOptions,
                 series: @json($paymentCounts),
                 labels: @json($paymentLabels),
-                chart: { type: 'donut', height: 220, fontFamily: 'inherit', background: 'transparent' },
+                chart: { ...chartOptions.chart, type: 'donut', height: 220 },
                 colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                dataLabels: { enabled: true, style: { fontSize: '11px', fontFamily: 'inherit', colors: [colors.isDark ? '#fff' : '#111'] } },
-                legend: {
-                    position: 'bottom',
-                    fontSize: '10px',
-                    fontFamily: 'inherit',
-                    labels: { colors: colors.textColor },
-                    itemMargin: { horizontal: 8, vertical: 4 }
-                },
-                plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: 'Total', color: colors.textColor, fontSize: '14px', fontWeight: 600, fontFamily: 'inherit' } } } } },
-                theme: { mode: colors.isDark ? 'dark' : 'light' },
-                tooltip: { theme: colors.tooltipTheme, style: { fontSize: '11px', fontFamily: 'inherit' } }
+                dataLabels: { enabled: true, style: { fontSize: '11px', colors: [colors.isDark ? '#fff' : '#111'] } },
+                legend: { position: 'bottom', fontSize: '10px', labels: { colors: colors.textColor } },
+                plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, color: colors.textColor } } } } },
+                tooltip: { theme: colors.tooltipTheme }
             });
             donutChart.render();
 
             // ── Livewire data updates ──────────────────────────────────────────────
-            Livewire.on('chartDataUpdated', (data) => {
+            const handleUpdate = (data) => {
+                if (!document.querySelector("#revenueChart")) return;
                 const d = Array.isArray(data) ? data[0] : data;
-                revChart.updateOptions({ xaxis: { categories: d.categories } });
-                revChart.updateSeries([
-                    { name: 'Omset Kotor', data: d.revenue },
-                    { name: 'Omset Bersih', data: d.netRevenue }
-                ]);
-                trxChart.updateOptions({ xaxis: { categories: d.categories } });
-                trxChart.updateSeries([{ name: 'Jml Sewa', data: d.transactions }]);
-            });
+                revChart?.updateOptions({ xaxis: { categories: d.categories } });
+                revChart?.updateSeries([{ name: 'Omset Kotor', data: d.revenue }, { name: 'Omset Bersih', data: d.netRevenue }]);
+                trxChart?.updateOptions({ xaxis: { categories: d.categories } });
+                trxChart?.updateSeries([{ name: 'Jml Sewa', data: d.transactions }]);
+            };
+            Livewire.on('chartDataUpdated', handleUpdate);
 
             // ── Theme toggle observer ─────────────────────────────────────────────
             const observer = new MutationObserver(() => {
+                if (!document.querySelector("#revenueChart")) {
+                    observer.disconnect();
+                    return;
+                }
                 const c = getChartColors();
-                const xStyle = { labels: { style: { colors: c.textColor, fontFamily: 'inherit', fontSize: '10px' } } };
-                const yStyle = { labels: { style: { colors: c.textColor, fontFamily: 'inherit', fontSize: '10px' } } };
                 const mode = { mode: c.isDark ? 'dark' : 'light' };
-                revChart.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: xStyle, yaxis: yStyle, grid: { borderColor: c.borderColor } });
-                trxChart.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: xStyle, yaxis: yStyle, grid: { borderColor: c.borderColor } });
-                donutChart.updateOptions({
+                const labelStyle = { labels: { style: { colors: c.textColor } } };
+                
+                revChart?.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: labelStyle, yaxis: labelStyle, grid: { borderColor: c.borderColor } });
+                trxChart?.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: labelStyle, yaxis: labelStyle, grid: { borderColor: c.borderColor } });
+                donutChart?.updateOptions({
                     theme: mode, tooltip: { theme: c.tooltipTheme }, legend: { labels: { colors: c.textColor } },
+                    plotOptions: { pie: { donut: { labels: { total: { color: c.textColor } } } } },
+                    dataLabels: { style: { colors: [c.isDark ? '#fff' : '#111'] } }
+                });
+            });
+            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+            // Cleanup on navigation
+            document.addEventListener('livewire:navigating', () => {
+                observer.disconnect();
+                revChart?.destroy();
+                trxChart?.destroy();
+                donutChart?.destroy();
+            }, { once: true });
+        };
+
+        initCharts();
+    }
+</script>
+@endscript
+{ theme: c.tooltipTheme }, legend: { labels: { colors: c.textColor } },
                     plotOptions: { pie: { donut: { labels: { total: { color: c.textColor } } } } },
                     dataLabels: { style: { colors: [c.isDark ? '#fff' : '#111'] } }
                 });
