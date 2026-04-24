@@ -93,6 +93,10 @@ class Payment extends Component
                     $this->checkStatus();
                 }
             }
+        } else {
+            // PAKSA KOSONG kalau statusnya 'online' (User harus milih bank)
+            $this->paymentInfo = null;
+            $this->selectedChannel = null;
         }
     }
 
