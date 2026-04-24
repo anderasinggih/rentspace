@@ -307,7 +307,10 @@
                 {{-- Pending Payment Banner (Amber) --}}
                 <div x-data="{ visible: false }" x-intersect.once="visible = true"
                     :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
-                    class="mb-8 rounded-2xl border border-border bg-card shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-1000 ease-out">
+                    class="group relative mb-8 rounded-2xl border border-amber-500/20 bg-amber-500/[0.01] dark:bg-amber-500/[0.01] backdrop-blur-md shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-500/10 overflow-hidden">
+                    
+                    <!-- Amber Glow Blob -->
+                    <div class="absolute -right-8 -top-8 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/15 transition-all duration-500 z-0"></div>
                     <div class="flex items-center gap-3 shrink-0">
                         <div
                             class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10 shrink-0 border border-amber-500/20">
@@ -329,9 +332,9 @@
                             </p>
                         </div>
                     </div>
-                    <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0">
+                    <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0 relative z-10">
                         <a href="{{ route('public.check-order') }}" wire:navigate
-                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl bg-amber-500 text-white text-xs font-bold px-5 py-2.5 hover:bg-amber-600 transition-colors shadow-sm shrink-0 whitespace-nowrap">
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl bg-amber-500 text-white text-xs font-bold px-5 py-2.5 hover:bg-amber-600 transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-amber-500/20">
                             {{ $onlinePendingTotal > 0 ? 'Bayar Sekarang' : 'Lihat Rincian' }}
                         </a>
                     </div>
@@ -376,9 +379,19 @@
                                 }
                             }" x-init="tick(); setInterval(() => tick(), 1000)" x-intersect.once="visible = true" :class="[
                             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16',
-                            status === 'red' ? 'border-red-500/30 bg-red-500/5' : ''
+                            status === 'red' ? 'border-red-500/30 bg-red-500/5 hover:border-red-500/60 hover:shadow-red-500/20' : '',
+                            status === 'green' ? 'border-emerald-500/20 bg-emerald-500/[0.01] hover:border-emerald-500/50 hover:shadow-emerald-500/10' : '',
+                            status === 'amber' ? 'border-amber-500/20 bg-amber-500/[0.01] hover:border-amber-500/50 hover:shadow-amber-500/10' : ''
                         ]"
-                    class="mb-8 rounded-2xl border border-border bg-card shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 relative overflow-hidden transition-all duration-1000 ease-out">
+                    class="group relative mb-8 rounded-2xl border backdrop-blur-md shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 overflow-hidden transition-all duration-300">
+                    
+                    <!-- Dynamic Glow Blob -->
+                    <div class="absolute -right-8 -top-8 w-24 h-24 rounded-full blur-2xl transition-all duration-500 z-0"
+                         :class="{
+                             'bg-emerald-500/5 group-hover:bg-emerald-500/15': status === 'green',
+                             'bg-amber-500/5 group-hover:bg-amber-500/15': status === 'amber',
+                             'bg-red-500/10 group-hover:bg-red-500/20': status === 'red'
+                         }"></div>
                     <div class="flex items-center gap-3 shrink-0 relative z-10 w-full sm:w-auto">
                         <div class="flex h-10 w-10 items-center justify-center rounded-full shrink-0 relative border transition-colors duration-500"
                             :class="{
@@ -430,10 +443,10 @@
 
                     <div class="flex w-full sm:w-auto mt-2 sm:mt-0 relative z-10 sm:ml-0">
                         <a href="{{ route('public.check-order') }}" wire:navigate
-                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl border border-input text-xs font-bold px-5 py-2.5 transition-all shadow-sm shrink-0 whitespace-nowrap"
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl border border-input text-xs font-bold px-5 py-2.5 transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap group-hover:scale-105"
                             :class="{
-                                        'bg-background hover:bg-muted text-foreground': status !== 'red',
-                                        'bg-red-500 border-red-500 text-white hover:bg-red-600 shadow-red-500/20': status === 'red'
+                                        'bg-background hover:bg-muted text-foreground group-hover:border-primary/50': status !== 'red',
+                                        'bg-red-500 border-red-500 text-white hover:bg-red-600 shadow-red-500/20 group-hover:shadow-lg': status === 'red'
                                     }">
                             Rincian Sewa
                         </a>
@@ -443,7 +456,10 @@
                 {{-- Logged In but No Active/Pending Banner (Blue) --}}
                 <div x-data="{ visible: false }" x-intersect.once="visible = true"
                     :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
-                    class="mb-8 rounded-2xl border border-border bg-card shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-1000 ease-out">
+                    class="group relative mb-8 rounded-2xl border border-blue-500/20 bg-blue-500/[0.01] dark:bg-blue-500/[0.01] backdrop-blur-md shadow-sm px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 overflow-hidden">
+                    
+                    <!-- Blue Glow Blob -->
+                    <div class="absolute -right-8 -top-8 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/15 transition-all duration-500 z-0"></div>
                     <div class="flex items-center gap-3 shrink-0">
                         <div
                             class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 shrink-0">
@@ -461,9 +477,9 @@
                             </p>
                         </div>
                     </div>
-                    <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0">
+                    <div class="flex sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0 relative z-10">
                         <a href="{{ route('public.check-order') }}" wire:navigate
-                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl border border-input bg-background hover:bg-muted text-foreground text-xs font-bold px-5 py-2.5 transition-colors shadow-sm shrink-0 whitespace-nowrap">
+                            class="inline-flex flex-1 sm:flex-initial items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-600 dark:text-blue-400 text-xs font-bold px-5 py-2.5 transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-blue-500/20">
                             Cek Riwayat
                         </a>
                     </div>
