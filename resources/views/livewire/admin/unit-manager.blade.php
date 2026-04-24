@@ -102,7 +102,7 @@
                                     @foreach($units as $unit)
                                         <tr
                                             class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5' : (!$unit->is_active ? 'opacity-50' : '') }}">
-                                            <td class="px-3 sm:px-6 py-3 sm:py-4 align-middle">
+                                            <td class="px-3 sm:px-6 py-1.5 sm:py-2 align-middle">
                                                 <div
                                                     class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'text-red-900 dark:text-red-300' : '' }}">
                                                     {{ $unit->seri }}
@@ -128,7 +128,7 @@
                                                         {{ number_format($unit->harga_per_jam, 0, ',', '.') }}/jam</div>
                                                 </div>
                                             </td>
-                                            <td class="hidden sm:table-cell px-6 py-4 align-middle">
+                                            <td class="hidden sm:table-cell px-6 py-2 align-middle">
                                                 @if($unit->category && str_contains(strtolower($unit->category->slug), 'iphone'))
                                                     <div class="text-sm {{ $unit->trashed() ? 'text-red-800/70 dark:text-red-400/70' : '' }}">{{ $unit->warna }} - {{ $unit->memori }}</div>
                                                 @else
@@ -152,13 +152,13 @@
                                                         {{ $unit->kondisi }}</div>
                                                 @endif
                                             </td>
-                                            <td class="hidden sm:table-cell px-6 py-4 align-middle">
+                                            <td class="hidden sm:table-cell px-6 py-2 align-middle">
                                                 <div class="text-sm font-semibold {{ $unit->trashed() ? 'text-red-900/80 dark:text-red-300/80' : '' }}">Rp
                                                     {{ number_format($unit->harga_per_hari, 0, ',', '.') }} / hari</div>
                                                 <div class="text-xs text-muted-foreground">Rp
                                                     {{ number_format($unit->harga_per_jam, 0, ',', '.') }} / jam</div>
                                             </td>
-                                            <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle">
+                                            <td class="px-2 sm:px-6 py-1.5 sm:py-2 align-middle">
                                                 @if($unit->trashed())
                                                     <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Terhapus</x-ui.badge>
                                                 @elseif($unit->is_active)
@@ -167,7 +167,7 @@
                                                     <x-ui.badge variant="zinc" class="text-[10px] sm:text-xs">Nonaktif</x-ui.badge>
                                                 @endif
                                             </td>
-                                            <td class="px-2 sm:px-6 py-3 sm:py-4 align-middle text-right h-full">
+                                            <td class="px-2 sm:px-6 py-1.5 sm:py-2 align-middle text-right h-full">
                                                 <div class="flex items-center justify-end w-full gap-2 transition-all">
                                                     @if($unit->trashed())
                                                         @if(auth()->user()->role === 'admin')
