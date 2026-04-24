@@ -224,7 +224,7 @@
 
             <!-- Admin Panel (Keep as requested) -->
             @if(auth()->check() && auth()->user()->role === 'admin')
-                @if($rental->metode_pembayaran == 'online')
+                @if($rental->metode_pembayaran == 'online' && $rental->status === 'pending')
                 <div class="py-10 flex flex-col items-center justify-center text-center px-4">
                     <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary animate-pulse"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -232,7 +232,7 @@
                     <h3 class="text-sm font-bold text-foreground">Metode Belum Dipilih</h3>
                     <p class="text-[10px] text-muted-foreground mt-1 max-w-[200px]">Silakan klik tombol di bawah untuk memilih bank atau QRIS.</p>
                 </div>
-            @elseif($rental->metode_pembayaran != 'cash')
+            @elseif($rental->metode_pembayaran != 'cash' && $rental->status === 'pending')
                 <!-- VA Detail -->
                 <div class="flex flex-col items-center p-6 bg-muted/20">
                     <p class="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">{{ str_replace('_', ' ', $rental->metode_pembayaran) }}</p>

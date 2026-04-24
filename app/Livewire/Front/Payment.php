@@ -338,7 +338,10 @@ class Payment extends Component
             $this->selectedChannel = $channel;
             
         } catch (\Exception $e) {
-            // JIKA AKUN DIBLOKIR CORE API, PAKAI POPUP SEBAGAI PANCINGAN
+            // LOG ERROR BIAR KELIHATAN DI LARAVEL.LOG
+            \Log::error('Midtrans Core API Error: ' . $e->getMessage());
+            
+            // JIKA AKUN DIBLOKIR CORE API, ATAU KUNCI SALAH (SANDBOX VS PRODUCTION), PAKAI POPUP SEBAGAI PANCINGAN
             try {
                 $snapParams = $params;
                 $mapping = ['bca' => 'bca_va', 'mandiri' => 'echannel', 'bni' => 'bni_va', 'bri' => 'bri_va', 'permata' => 'permata_va', 'qris' => 'qris', 'bsi' => 'bsi_va', 'cimb' => 'cimb_va'];
@@ -350,7 +353,8 @@ class Payment extends Component
                 $this->rental->update(['payment_details' => ['order_id' => $uniqueOrderId], 'metode_pembayaran' => $channel]);
                 $this->dispatch('pay-with-snap', token: $this->snapToken);
             } catch (\Exception $e2) {
-                session()->flash('error', 'Gagal memulai pembayaran: ' . $e2->getMessage());
+                \Log::error('Midtrans Snap Fallback Error: ' . $e2->getMessage());
+                session()->flash('error', 'Gagal memulai pembayaran: ' . $e2->getMessage() . ' (Core API Error: ' . $e->getMessage() . ')');
             }
         }
     }
