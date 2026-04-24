@@ -620,19 +620,10 @@
                         ->take(10)
                         ->get();
                 }
-
-                $dummyFeedbacks = [
-                    ['nama' => 'Ahmad R.', 'rating' => 5, 'feedback' => 'Sewa iPhone 15 Pro di sini gampang banget, kondisinya mulus kayak baru!'],
-                    ['nama' => 'Siti Aminah', 'rating' => 5, 'feedback' => 'CS-nya ramah, tanya-tanya dilayani dengan baik. Langganan deh.'],
-                    ['nama' => 'Budi Santoso', 'rating' => 4, 'feedback' => 'Proses booking online sat-set, tinggal ambil di kantor. Mantap!'],
-                    ['nama' => 'Lestari Wahyu', 'rating' => 5, 'feedback' => 'Harganya paling kompetitif di Purwokerto. Recommended!'],
-                    ['nama' => 'Rizky Fadillah', 'rating' => 5, 'feedback' => 'Baru kali ini sewa unit tapi dapet pelayanan kayak beli baru. Jos!'],
-                ];
-
-                $allFeedbacks = $realFeedbacks->count() > 0 ? $realFeedbacks->toArray() : $dummyFeedbacks;
             @endphp
 
             <!-- Testimonials Marquee Section -->
+            @if($realFeedbacks->count() > 0)
             <div x-data="{ visible: false }" x-intersect.once="visible = true"
                 :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
                 class="mt-12 transition-all duration-1000 ease-out">
@@ -645,27 +636,28 @@
                     <!-- Infinite Marquee Row 1 -->
                     <div class="flex flex-nowrap gap-6 animate-marquee whitespace-nowrap mb-6">
                         @php
-                            // Teknik buat mastiin marquee penuh & gak ada gap
-                            $loopCount = count($allFeedbacks) <= 2 ? 6 : (count($allFeedbacks) <= 5 ? 3 : 2);
+                            $loopCount = $realFeedbacks->count() <= 2 ? 6 : ($realFeedbacks->count() <= 5 ? 3 : 2);
                             $finalFeedbacks = [];
-                            for($i=0; $i<$loopCount; $i++) { $finalFeedbacks = array_merge($finalFeedbacks, $allFeedbacks); }
+                            for($i=0; $i<$loopCount; $i++) { 
+                                foreach($realFeedbacks as $fb) { $finalFeedbacks[] = $fb; }
+                            }
                         @endphp
                         @foreach($finalFeedbacks as $item)
                             <div class="inline-block w-[320px] bg-card border border-border/50 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow">
                                 <div class="flex items-center gap-3 mb-3">
                                     <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                                        {{ substr($item['nama'], 0, 2) }}
+                                        {{ substr($item->nama, 0, 2) }}
                                     </div>
                                     <div>
-                                        <p class="text-xs font-bold text-foreground">{{ $item['nama'] }}</p>
+                                        <p class="text-xs font-bold text-foreground">{{ $item->nama }}</p>
                                         <div class="flex gap-0.5">
                                             @for($s=1; $s<=5; $s++)
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="{{ $item['rating'] >= $s ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" class="{{ $item['rating'] >= $s ? 'text-amber-400' : 'text-zinc-300' }}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="{{ $item->rating >= $s ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" class="{{ $item->rating >= $s ? 'text-amber-400' : 'text-zinc-300' }}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                                         @endfor
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-xs text-muted-foreground leading-relaxed whitespace-normal line-clamp-2">"{{ $item['feedback'] }}"</p>
+                                <p class="text-xs text-muted-foreground leading-relaxed whitespace-normal line-clamp-2">"{{ $item->feedback }}"</p>
                             </div>
                         @endforeach
                     </div>
@@ -675,6 +667,7 @@
                     <div class="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"></div>
                 </div>
             </div>
+            @endif
 
             <style>
                 @keyframes marquee {
