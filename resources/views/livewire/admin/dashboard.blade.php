@@ -381,7 +381,7 @@
                     { name: 'Omset Kotor', data: @json($chartRevenue) },
                     { name: 'Omset Bersih', data: @json($chartNetRevenue) }
                 ],
-                chart: { type: 'area', height: 220, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
+                chart: { type: 'area', height: 300, fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
                 dataLabels: { enabled: false },
                 stroke: { curve: 'smooth', width: 2, colors: ['#6366f1', '#10b981'] },
                 xaxis: {
@@ -394,7 +394,7 @@
                         minHeight: 30,
                         style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
                     },
-                    tickAmount: window.innerWidth < 640 ? 3 : 6
+                    tickAmount: 'auto'
                 },
                 yaxis: {
                     labels: {
@@ -432,7 +432,7 @@
             // ── 2. TRANSACTIONS BAR CHART ──────────────────────────────────────────
             var trxChart = new ApexCharts(document.querySelector("#transactionsChart"), {
                 series: [{ name: 'Jml Sewa', data: @json($chartTransactions) }],
-                chart: { type: 'bar', height: 220, fontFamily: 'inherit', toolbar: { show: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
+                chart: { type: 'bar', height: 300, fontFamily: 'inherit', toolbar: { show: false }, background: 'transparent', offsetX: -10, offsetY: 10 },
                 plotOptions: { bar: { borderRadius: 4, columnWidth: '40%' } },
                 dataLabels: { enabled: false },
                 colors: ['#10b981'],
@@ -446,7 +446,7 @@
                         minHeight: 30,
                         style: { colors: colors.textColor, fontFamily: 'inherit', fontSize: '9px' } 
                     },
-                    tickAmount: window.innerWidth < 640 ? 3 : 6 // Density reduction
+                    tickAmount: 'auto'
                 },
                 yaxis: {
                     labels: {
