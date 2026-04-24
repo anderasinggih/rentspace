@@ -252,7 +252,7 @@
                                                                                 @endif
                                                                             @else
                                                                                 @if($trx->status === 'pending')
-                                                                                    @if(auth()->user()->role === 'admin')
+                                                                                    @if(in_array(auth()->user()->role, ['admin', 'staff']))
                                                                                         {{-- Validasi --}}
                                                                                         <x-ui.button wire:click.stop="markAsPaid({{ $trx->id }})"
                                                                                             wire:confirm="Transaksi ini sudah valid transfer?"
@@ -288,7 +288,7 @@
                                                                                         $tolerance = (int) \App\Models\Setting::getVal('late_tolerance_minutes', 60);
                                                                                         $isLate = (\Carbon\Carbon::parse($trx->waktu_selesai)->addMinutes($tolerance) < now());
                                                                                     @endphp
-                                                                                    @if(auth()->user()->role === 'admin')
+                                                                                    @if(in_array(auth()->user()->role, ['admin', 'staff']))
                                                                                         <x-ui.button wire:click.stop="openDendaModal({{ $trx->id }})"
                                                                                             wire:loading.attr="disabled"
                                                                                             wire:target="openDendaModal({{ $trx->id }})" :variant="$isLate ? 'destructive' : 'default'" size="sm" class="gap-1.5 shadow-lg">
@@ -456,7 +456,7 @@
                                                                                                                         {{-- Footer: Actions (Theme Aware) --}}
                                                                                                                         <div class="flex flex-col md:flex-row md:items-center justify-between mt-10 pt-6 border-t border-border gap-4">
                                                                                                                             <div class="flex flex-wrap items-center gap-3">
-                                                                                                                                @if(auth()->user()->role === 'admin')
+                                                                                                                                @if(in_array(auth()->user()->role, ['admin', 'staff']))
                                                                                                                                     @if($inspectTrx->status === 'pending')
                                                                                                                                         <x-ui.button wire:click="markAsPaid({{ $inspectTrx->id }})" wire:confirm="Validasi?" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Validasi Pembayaran</x-ui.button>
                                                                                                                                         <x-ui.button wire:click="cancel({{ $inspectTrx->id }})" wire:confirm="Batal?" variant="destructive" size="sm" class="px-6">Batalkan</x-ui.button>

@@ -28,18 +28,20 @@ class CheckOrder extends Component
 
     private function saveToSession()
     {
-        session(['check_order_cache' => [
-            'nik' => $this->nik,
-            'no_wa' => $this->no_wa,
-            'expires_at' => now()->addMinutes(5)->timestamp
-        ]]);
+        session([
+            'check_order_cache' => [
+                'nik' => $this->nik,
+                'no_wa' => $this->no_wa,
+                'expires_at' => now()->addMinutes(5)->timestamp
+            ]
+        ]);
 
         // Also create/update persistent customer session (6 hours)
         session()->put('customer_session', [
-            'nik'          => $this->nik,
-            'no_wa'        => $this->no_wa,
+            'nik' => $this->nik,
+            'no_wa' => $this->no_wa,
             'logged_in_at' => now()->toISOString(),
-            'expires_at'   => now()->addHours(6)->timestamp,
+            'expires_at' => now()->addHours(6)->timestamp,
         ]);
     }
 
@@ -59,14 +61,16 @@ class CheckOrder extends Component
 
     public function getTotalBillingProperty()
     {
-        if (!$this->orders) return 0;
+        if (!$this->orders)
+            return 0;
         return $this->orders->whereIn('status', ['pending', 'paid', 'completed'])->sum('grand_total');
     }
 
     public function getActiveRentalsCountProperty()
     {
-        if (!$this->orders) return 0;
-        return $this->orders->where('status', 'paid')->filter(function($order) {
+        if (!$this->orders)
+            return 0;
+        return $this->orders->where('status', 'paid')->filter(function ($order) {
             return now()->isBetween($order->waktu_mulai, $order->waktu_selesai);
         })->count();
     }

@@ -65,7 +65,7 @@ class Transactions extends Component
 
     public function markAsPaid($id)
     {
-        if (auth()->user()->role !== 'admin')
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'pending') {
@@ -76,7 +76,7 @@ class Transactions extends Component
 
     public function cancel($id)
     {
-        if (auth()->user()->role !== 'admin')
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid'])) {
@@ -86,7 +86,7 @@ class Transactions extends Component
 
     public function openDendaModal($id)
     {
-        if (auth()->user()->role !== 'admin')
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $trx = Rental::findOrFail($id);
         $this->completingTrxId = $id;
@@ -120,7 +120,7 @@ class Transactions extends Component
 
     public function confirmDenda()
     {
-        if (auth()->user()->role !== 'admin') return;
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
 
         $this->validate([
             'dendaAmount' => 'required|numeric|min:0',
@@ -150,7 +150,7 @@ class Transactions extends Component
 
     public function finishWithoutDenda($id)
     {
-        if (auth()->user()->role !== 'admin')
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid'])) {
@@ -285,7 +285,7 @@ class Transactions extends Component
 
     public function editTrx($id)
     {
-        if (auth()->user()->role !== 'admin')
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $trx = Rental::findOrFail($id);
         $this->editTrxId = $trx->id;
@@ -313,7 +313,7 @@ class Transactions extends Component
 
     public function updateTrx()
     {
-        if (auth()->user()->role !== 'admin')
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
 
         $this->validate([
