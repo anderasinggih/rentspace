@@ -25,7 +25,7 @@
                 </div>
 
                 <!-- STEP 1: Jadwal & Unit -->
-                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-16 sm:pb-0">
+                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-12 sm:pb-0">
                     <!-- 1. Jadwal Sewa -->
                     <div>
                         <div class="flex items-center justify-between gap-4 mb-4">
@@ -252,7 +252,7 @@
                 </div> <!-- END STEP 1 -->
 
                 <!-- STEP 2: Data Diri & Promo -->
-                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-16 sm:pb-0">
+                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-12 sm:pb-0">
 <!-- 5. Data Diri -->
                 <div>
                     <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">{{ (!empty($selected_unit_ids) && $waktu_mulai &&
