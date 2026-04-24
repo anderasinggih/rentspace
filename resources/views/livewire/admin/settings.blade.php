@@ -182,8 +182,8 @@
                 </div>
 
             <!-- Contextual Greetings Setting -->
-            <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm mt-6">
-                <div class="p-4 border-b border-border bg-muted/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm mt-6 w-full">
+                <div class="p-5 border-b border-border bg-muted/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
                         <h2 class="text-lg font-semibold text-foreground">Sapaan Kontekstual Beranda</h2>
                         <p class="text-xs text-muted-foreground">Sesuaikan sapaan akrab yang muncul di beranda berdasarkan waktu kunjungan pelanggan.</p>
@@ -259,9 +259,9 @@
                                     Perubahan akan langsung diterapkan ke halaman Beranda secara *real-time*.
                                 </p>
                                 <button type="submit" 
-                                    class="w-full md:w-auto px-6 h-10 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2">
+                                    class="w-full md:w-auto px-10 h-10 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                                    Simpan Sapaan
+                                    Simpan
                                 </button>
                             </div>
                         @endif
