@@ -687,8 +687,8 @@
                                         <p class="text-[11px] sm:text-xs font-bold text-foreground leading-tight group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{{ $item->nama }}</p>
                                         <div class="flex gap-0.5">
                                             @for($s=1; $s<=5; $s++)
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="{{ $item->rating >= $s ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2.5" class="{{ $item->rating >= $s ? 'text-amber-400' : 'text-zinc-300' }} sm:w-2.5 sm:h-2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                        @endfor
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="{{ $item->rating >= $s ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2.5" class="{{ $item->rating >= $s ? 'text-amber-500/50 group-hover:text-amber-400 transition-colors duration-300' : 'text-zinc-300/30' }} sm:w-2.5 sm:h-2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                            @endfor
                                         </div>
                                     </div>
                                 </div>
