@@ -362,7 +362,7 @@
                                 <p class="font-bold text-foreground text-sm flex items-center gap-2"
                                     x-text="status === 'red' ? 'Masa Sewa Mau Habis' : 'Penyewaan Berlangsung'"></p>
                                 <p class="text-xs text-muted-foreground mt-0.5 truncate pr-2 sm:pr-0">
-                                    Sewa <span
+                                    KODE <span
                                         class="font-bold text-primary uppercase tracking-tighter">{{ $closestActiveRental->booking_code }}</span>
                                 </p>
                             </div>
