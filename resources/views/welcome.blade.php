@@ -779,6 +779,20 @@
                 </div>
 
                 @php
+                    $occupiedUnits = \App\Models\Rental::where('status', 'paid')
+                        ->where('waktu_selesai', '>', now())
+                        ->with('units')
+                        ->get()
+                        ->flatMap(function($r) {
+                            return $r->units->map(function($u) use ($r) {
+                                return [
+                                    'id' => $u->id,
+                                    'returns_at' => $r->waktu_selesai
+                                ];
+                            });
+                        })
+                        ->pluck('returns_at', 'id');
+
                     $categorizedUnits = \App\Models\Unit::with('category')
                         ->where('is_active', true)
                         ->orderBy('category_id')
@@ -817,6 +831,28 @@
                                     <div
                                         :class="{ 'hidden sm:flex': !expanded && {{ $loop->index }} >= 4, 'flex': expanded || {{ $loop->index }} < 4 }"
                                         class="group relative bg-blue-500/[0.005] dark:bg-blue-500/[0.002] backdrop-blur-[4px] border-t border-l border-blue-500/30 rounded-2xl p-3 shadow-xl hover:border-blue-500/60 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 ease-out flex-col justify-between overflow-hidden">
+                                        
+                                        @php
+                                            $returnsAt = $occupiedUnits->get($unit->id);
+                                            $isReady = !$returnsAt;
+                                        @endphp
+
+                                        <!-- Availability Badge (Liquid) -->
+                                        <div class="absolute top-2 right-2 z-30 pointer-events-none">
+                                            @if($isReady)
+                                                <div class="px-2 py-0.5 rounded-full border-t border-l border-emerald-500/50 bg-emerald-500/10 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] flex items-center gap-1">
+                                                    <span class="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                    <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">READY</span>
+                                                </div>
+                                            @else
+                                                <div class="px-2 py-0.5 rounded-full border-t border-l border-rose-500/50 bg-rose-500/10 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] flex items-center gap-1">
+                                                    <span class="flex h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                                                    <span class="text-[9px] font-bold text-rose-600 dark:text-rose-400 tracking-tight">
+                                                        TERSEWA <span class="opacity-70 font-medium">({{ $returnsAt->format('H:i') }})</span>
+                                                    </span>
+                                                </div>
+                                            @endif
+                                        </div>
                                         
                                         <!-- Specular Highlight Overlay -->
                                         <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none z-10"></div>
