@@ -64,10 +64,17 @@
         // Advanced Haptic Engine (Dialed.gg style)
         window.hapticEngine = {
             canVibrate: !!navigator.vibrate,
-            isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
-            
+            audioCtx: null,
+
+            initAudio: function() {
+                if (!this.audioCtx) {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+
             trigger: function(type = 'light') {
                 try {
+                    // Try Native Vibration
                     if (this.canVibrate) {
                         const patterns = {
                             light: 10,
@@ -78,16 +85,30 @@
                         };
                         navigator.vibrate(patterns[type] || 10);
                     }
-                    
-                    // console.log('Haptic Triggered:', type);
+
+                    // Try Audio Context Fallback (for iOS/Safari)
+                    this.initAudio();
+                    if (this.audioCtx) {
+                        const osc = this.audioCtx.createOscillator();
+                        const gain = this.audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(10, this.audioCtx.currentTime); // Low frequency
+                        gain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.01);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.1);
+                        osc.connect(gain);
+                        gain.connect(this.audioCtx.destination);
+                        osc.start();
+                        osc.stop(this.audioCtx.currentTime + 0.1);
+                    }
                 } catch (e) {
-                    // Silently fail if blocked
+                    // Silently fail
                 }
             }
         };
 
-        // Global click listener for any element with data-haptic
-        document.addEventListener('pointerdown', (e) => {
+        // Click listener for haptics (more reliable than pointerdown for initial user gesture)
+        document.addEventListener('click', (e) => {
             const target = e.target.closest('[data-haptic]');
             if (target) {
                 window.hapticEngine.trigger(target.dataset.haptic);
