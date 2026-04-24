@@ -209,9 +209,9 @@
 
         <!-- Public Stats Widget -->
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20 mb-10">
-            <div class="grid grid-cols-3 divide-x divide-white/10 bg-white/[0.03] dark:bg-white/[0.02] backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden py-4 sm:py-6">
+            <div class="grid grid-cols-3 divide-x divide-white/10 bg-white/[0.03] dark:bg-white/[0.02] backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden py-0">
                 <!-- Total Transaksi -->
-                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-4 sm:py-8 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-2 sm:py-4 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
                      x-data="{ 
                          target: {{ $statsTotalRentals }}, 
                          display: '0', 
@@ -240,7 +240,7 @@
                 </div>
 
                 <!-- Pelanggan -->
-                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-4 sm:py-8 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-2 sm:py-4 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
                      x-data="{ 
                          target: {{ $statsTotalUsers }}, 
                          display: '0', 
@@ -269,7 +269,7 @@
                 </div>
 
                 <!-- Jam Disewa -->
-                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-4 sm:py-8 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 py-2 sm:py-4 transition-all duration-300 hover:bg-white/5 hover:z-30 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]" 
                      x-data="{ 
                          target: {{ $statsTotalHours }}, 
                          display: '0', 
