@@ -208,10 +208,10 @@
         </section>
 
         <!-- Public Stats Widget -->
-        <div class="max-w-5xl mx-auto px-2 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20 mb-10 overflow-visible">
-            <div class="grid grid-cols-3 gap-2 sm:gap-6 px-1 sm:px-0">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20 mb-10">
+            <div class="grid grid-cols-3 divide-x divide-red-500/20 bg-red-500/[0.02] dark:bg-red-500/[0.01] backdrop-blur-xl border border-red-500/20 shadow-2xl rounded-3xl overflow-hidden py-4 sm:py-6">
                 <!-- Total Transaksi -->
-                <div class="group relative bg-red-500/[0.02] dark:bg-red-500/[0.01] backdrop-blur-xl border border-red-500/20 shadow-xl rounded-2xl sm:rounded-3xl overflow-hidden py-4 sm:py-8 transition-all duration-300 hover:border-red-500/50 hover:shadow-red-500/10 flex flex-col items-center text-center" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 transition-all duration-300 hover:bg-red-500/5" 
                      x-data="{ 
                          target: {{ $statsTotalRentals }}, 
                          display: '0', 
@@ -233,16 +233,14 @@
                          } 
                      }" x-intersect.once="run()">
                     <!-- Red Glow Blob -->
-                    <div class="absolute -right-8 -top-8 w-20 h-20 bg-red-500/10 rounded-full blur-2xl group-hover:bg-red-500/20 transition-all duration-500 z-0"></div>
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-500/10 rounded-full blur-xl group-hover:bg-red-500/20 transition-all duration-500 z-0"></div>
                     
-                    <div class="relative z-10 flex flex-col items-center">
-                        <span class="text-[9px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-red-500 transition-colors">Transaksi</span>
-                        <span class="text-lg sm:text-4xl font-black text-foreground group-hover:scale-110 transition-transform duration-300"><span x-text="display"></span><span class="text-red-500 text-sm sm:text-2xl ml-0.5">+</span></span>
-                    </div>
+                    <span class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-red-500 transition-colors">Transaksi</span>
+                    <span class="text-xl sm:text-4xl font-black text-foreground group-hover:scale-110 transition-transform duration-300"><span x-text="display"></span><span class="text-red-500 text-base sm:text-2xl ml-0.5">+</span></span>
                 </div>
 
                 <!-- Pelanggan -->
-                <div class="group relative bg-red-500/[0.02] dark:bg-red-500/[0.01] backdrop-blur-xl border border-red-500/20 shadow-xl rounded-2xl sm:rounded-3xl overflow-hidden py-4 sm:py-8 transition-all duration-300 hover:border-red-500/50 hover:shadow-red-500/10 flex flex-col items-center text-center" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 transition-all duration-300 hover:bg-red-500/5" 
                      x-data="{ 
                          target: {{ $statsTotalUsers }}, 
                          display: '0', 
@@ -263,17 +261,15 @@
                              requestAnimationFrame(animate);
                          } 
                      }" x-intersect.once="run()">
-                     <!-- Red Glow Blob -->
-                    <div class="absolute -right-8 -top-8 w-20 h-20 bg-red-500/10 rounded-full blur-2xl group-hover:bg-red-500/20 transition-all duration-500 z-0"></div>
+                    <!-- Red Glow Blob -->
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-500/10 rounded-full blur-xl group-hover:bg-red-500/20 transition-all duration-500 z-0"></div>
 
-                    <div class="relative z-10 flex flex-col items-center">
-                        <span class="text-[9px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-red-500 transition-colors">Pelanggan</span>
-                        <span class="text-lg sm:text-4xl font-black text-foreground group-hover:scale-110 transition-transform duration-300"><span x-text="display"></span><span class="text-red-500 text-sm sm:text-2xl ml-0.5">+</span></span>
-                    </div>
+                    <span class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-red-500 transition-colors">Pelanggan</span>
+                    <span class="text-xl sm:text-4xl font-black text-foreground group-hover:scale-110 transition-transform duration-300"><span x-text="display"></span><span class="text-red-500 text-base sm:text-2xl ml-0.5">+</span></span>
                 </div>
 
                 <!-- Jam Disewa -->
-                <div class="group relative bg-red-500/[0.02] dark:bg-red-500/[0.01] backdrop-blur-xl border border-red-500/20 shadow-xl rounded-2xl sm:rounded-3xl overflow-hidden py-4 sm:py-8 transition-all duration-300 hover:border-red-500/50 hover:shadow-red-500/10 flex flex-col items-center text-center" 
+                <div class="group relative flex flex-col items-center text-center px-1 sm:px-4 transition-all duration-300 hover:bg-red-500/5" 
                      x-data="{ 
                          target: {{ $statsTotalHours }}, 
                          display: '0', 
@@ -294,13 +290,11 @@
                              requestAnimationFrame(animate);
                          } 
                      }" x-intersect.once="run()">
-                     <!-- Red Glow Blob -->
-                    <div class="absolute -right-8 -top-8 w-20 h-20 bg-red-500/10 rounded-full blur-2xl group-hover:bg-red-500/20 transition-all duration-500 z-0"></div>
+                    <!-- Red Glow Blob -->
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-500/10 rounded-full blur-xl group-hover:bg-red-500/20 transition-all duration-500 z-0"></div>
 
-                    <div class="relative z-10 flex flex-col items-center">
-                        <span class="text-[9px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-red-500 transition-colors">Jam Disewa</span>
-                        <span class="text-lg sm:text-4xl font-black text-foreground group-hover:scale-110 transition-transform duration-300"><span x-text="display"></span><span class="text-red-500 text-sm sm:text-2xl ml-0.5">+</span></span>
-                    </div>
+                    <span class="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-red-500 transition-colors">Jam Disewa</span>
+                    <span class="text-xl sm:text-4xl font-black text-foreground group-hover:scale-110 transition-transform duration-300"><span x-text="display"></span><span class="text-red-500 text-base sm:text-2xl ml-0.5">+</span></span>
                 </div>
             </div>
         </div>
