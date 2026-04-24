@@ -716,7 +716,7 @@
                             class="transition-all duration-1000 ease-out">
                             <div class="flex items-center gap-4 mb-6 mt-6">
                                 <h3
-                                    class="text-xl font-bold text-foreground whitespace-nowrap px-4 py-1.5 bg-muted/50 rounded-lg border border-border">
+                                    class="text-xl font-bold text-foreground whitespace-nowrap px-4 py-1.5 bg-violet-500/5 rounded-xl border border-violet-500/30">
                                     @if($category && $category->icon)
                                         <span class="mr-1">{{ $category->icon }}</span>
                                     @else
@@ -735,15 +735,15 @@
                                     @endphp
                                     <div
                                         :class="{ 'hidden sm:flex': !expanded && {{ $loop->index }} >= 4, 'flex': expanded || {{ $loop->index }} < 4 }"
-                                        class="group relative bg-emerald-500/[0.01] dark:bg-emerald-500/[0.01] backdrop-blur-md border border-emerald-500/20 rounded-2xl p-3 shadow-sm hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 ease-out flex-col justify-between overflow-hidden">
+                                        class="group relative bg-violet-500/[0.01] dark:bg-violet-500/[0.01] backdrop-blur-md border border-violet-500/20 rounded-2xl p-3 shadow-sm hover:border-violet-500/50 hover:shadow-2xl hover:shadow-violet-500/10 transition-all duration-300 ease-out flex-col justify-between overflow-hidden">
                                         
-                                        <!-- Subtle Glow Blobs -->
-                                        <div class="absolute -right-8 -top-8 w-20 h-20 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/15 transition-all duration-500 ease-in-out z-0"></div>
-                                        <div class="absolute -left-8 -bottom-8 w-20 h-20 bg-green-500/5 rounded-full blur-2xl group-hover:bg-green-500/10 transition-all duration-500 ease-in-out z-0"></div>
+                                        <!-- Subtle Glow Blobs (Purple) -->
+                                        <div class="absolute -right-8 -top-8 w-20 h-20 bg-violet-500/5 rounded-full blur-2xl group-hover:bg-violet-500/15 transition-all duration-500 ease-in-out z-0"></div>
+                                        <div class="absolute -left-8 -bottom-8 w-20 h-20 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-all duration-500 ease-in-out z-0"></div>
                                         
                                         <div class="relative z-10">
                                             <h4
-                                                class="font-bold text-foreground text-sm group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-tight mb-1">
+                                                class="font-bold text-foreground text-sm group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors leading-tight mb-1">
                                                 {{ $unit->seri }}
                                             </h4>
                                             <div class="mt-1 space-y-0.5">
@@ -785,7 +785,7 @@
                             @if($units->count() > 4)
                                 <div class="mt-6 flex justify-center sm:hidden">
                                     <button @click="expanded = !expanded" 
-                                        class="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-2 px-6 rounded-full border border-border bg-muted/20">
+                                        class="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-violet-600 dark:hover:text-violet-400 transition-colors py-2.5 px-6 rounded-full border border-violet-500/20 bg-violet-500/5">
                                         <span x-text="expanded ? 'Sembunyikan' : 'Lihat Lebih Lengkap (+' + {{ $units->count() - 4 }} + ')'"></span>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{ 'rotate-180': expanded }">
                                             <path d="m6 9 6 6 6-6"/>
