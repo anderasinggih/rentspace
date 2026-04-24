@@ -8,9 +8,9 @@
         </div>
 
         <div x-data="bookingForm()" 
-            class="bg-background rounded-2xl shadow-sm border border-border sm:p-8 transition-all duration-300"
+            class="bg-background rounded-2xl shadow-sm border border-border sm:p-8"
             :class="keyboardOpen ? 'p-4 pb-2' : 'p-6'">
-            <form wire:submit.prevent="submit" class="space-y-8">
+            <form wire:submit.prevent="submit" class="space-y-6 sm:space-y-8">
 
                 <!-- Progress Bar -->
                 <div class="mb-8 border-b border-border pb-4">
@@ -753,11 +753,15 @@
             document.addEventListener('focusin', handleFocus);
             document.addEventListener('focusout', handleBlur);
 
-            // Robust VisualViewport handling for modern iOS/Android
+            // Robust VisualViewport handling for modern iOS/Android with simple debounce
             if (window.visualViewport) {
+                let resizeTimer;
                 window.visualViewport.addEventListener('resize', () => {
-                    const isKeyboard = window.visualViewport.height < window.innerHeight * 0.85;
-                    this.keyboardOpen = isKeyboard;
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        const isKeyboard = window.visualViewport.height < (window.innerHeight * 0.9);
+                        this.keyboardOpen = isKeyboard;
+                    }, 50);
                 });
             }
         }
