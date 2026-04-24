@@ -144,7 +144,7 @@
                 <p class="text-xs text-muted-foreground mt-1">Pendapatan kotor selama periode yang dipilih</p>
             </div>
             <div class="p-3">
-                <div id="revenueChart" class="w-full h-[260px]" wire:ignore></div>
+                <div id="revenueChart" class="w-full h-[260px] select-none" wire:ignore></div>
             </div>
         </div>
 
@@ -155,7 +155,7 @@
                 <p class="text-xs text-muted-foreground mt-1">Jumlah penyewaan selesai / lunas</p>
             </div>
             <div class="p-3">
-                <div id="transactionsChart" class="w-full h-[260px]" wire:ignore></div>
+                <div id="transactionsChart" class="w-full h-[260px] select-none" wire:ignore></div>
             </div>
         </div>
 
@@ -166,7 +166,7 @@
                 <p class="text-xs text-muted-foreground mt-1">Distribusi metode bayar periode ini</p>
             </div>
             <div class="p-3">
-                <div id="paymentDonutChart" class="w-full h-[260px]" wire:ignore></div>
+                <div id="paymentDonutChart" class="w-full h-[260px] select-none" wire:ignore></div>
             </div>
         </div>
     </div>
