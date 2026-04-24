@@ -1,5 +1,4 @@
-<div class="py-0 px-4 sm:py-16 flex flex-col items-center" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
-    <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-4">
+    <div id="invoice-content" class="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-4">
 
         <!-- Header -->
         <div class="p-6 text-center border-b border-border/50 bg-muted/20">
@@ -59,7 +58,7 @@
                         this.status = this.seconds < 10 ? 'red' : (this.seconds < 30 ? 'amber' : 'green');
                         this.seconds--;
                     }
-                }" x-init="update(); setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center min-h-[60px] justify-center">
+                }" x-init="update(); setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center min-h-[60px] justify-center no-pdf">
                     <span class="text-[9px] text-muted-foreground mb-0.5 uppercase font-bold tracking-widest">Batas Waktu Pembayaran</span>
                     <div x-text="timeLeft" 
                         class="text-3xl font-black font-mono tracking-tighter transition-all duration-500 min-w-[120px] text-center"
@@ -75,7 +74,7 @@
             <p class="text-xs text-muted-foreground mt-3 font-medium">{{ $rental->nama }} &bull; <span class="bg-muted px-1.5 py-0.5 rounded text-foreground font-bold tracking-tight">{{ $rental->booking_code }}</span></p>
 
             @if($debugError && auth()->check() && auth()->user()->role === 'admin')
-                <div class="mt-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-[10px] text-red-600 font-mono text-left">
+                <div class="mt-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-[10px] text-red-600 font-mono text-left no-pdf">
                     Debug Error: {{ $debugError }}
                 </div>
             @endif
@@ -92,7 +91,7 @@
                     </div>
                 @endforeach
                 @if($rental->status == 'pending' && $rental->metode_pembayaran != 'cash')
-                    <div class="mt-4 pt-4 border-t border-dashed border-border/50">
+                    <div class="mt-4 pt-4 border-t border-dashed border-border/50 no-pdf">
                         <a href="{{ route('public.payment', $rental->booking_code) }}?change=1" 
                             class="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                             ← Ubah Metode Pembayaran
@@ -160,9 +159,8 @@
             </div>
 
             <!-- Conditional Actions Based on Ownership and Status -->
-            <!-- Conditional Actions Based on Ownership and Status -->
             @if($isOwner)
-                <div class="space-y-3 pt-4">
+                <div class="space-y-3 pt-4 no-pdf">
                     @if($rental->status === 'pending')
                         {{-- Jika Online, kasih tombol Bayar Sekarang --}}
                         @if($rental->metode_pembayaran !== 'cash')
@@ -175,7 +173,7 @@
                                 <a href="{{ route('public.payment', ['booking_code' => $rental->booking_code, 'change' => 1]) }}"
                                    class="text-[10px] font-bold text-muted-foreground hover:text-foreground transition-all uppercase tracking-widest border-b border-muted hover:border-foreground pb-0.5">
                                    Ganti Metode Pembayaran
-                                </a>
+                                 </a>
                             </div>
                         @endif
 
@@ -195,7 +193,7 @@
                             <div class="p-1 bg-emerald-500 rounded-full text-white mt-0.5">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                             </div>
-                            <p class="text-xs text-emerald-800 leading-relaxed font-medium">Lunas! Silakan <span class="font-bold underline">SCREENSHOT</span> halaman ini dan tunjukkan saat pengambilan unit.</p>
+                            <p class="text-xs text-emerald-800 leading-relaxed font-medium">Lunas! Silakan <span class="font-bold underline">SCREENSHOT</span> atau simpan invoice ini untuk ditunjukkan saat pengambilan.</p>
                         </div>
                         <a href="{{ $waUrl }}" target="_blank"
                             class="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-zinc-900 text-white text-sm font-bold transition-all">
@@ -208,6 +206,15 @@
                             Sewa Unit Lain
                         </a>
                     @endif
+
+                    <!-- Invoice Button -->
+                     @if($rental->status !== 'cancelled')
+                        <button onclick="downloadInvoice()"
+                            class="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-white text-zinc-900 text-xs font-bold border border-zinc-200 hover:bg-zinc-50 transition-all shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Simpan Invoice (PDF)
+                        </button>
+                     @endif
 
                     <div class="grid grid-cols-2 gap-2 mt-2">
                         <a href="{{ route('public.check-order') }}" wire:navigate
@@ -225,23 +232,23 @@
             <!-- Admin Panel (Keep as requested) -->
             @if(auth()->check() && auth()->user()->role === 'admin')
                 @if($rental->metode_pembayaran == 'online' && $rental->status === 'pending')
-                <div class="py-10 flex flex-col items-center justify-center text-center px-4">
-                    <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary animate-pulse"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <div class="py-10 flex flex-col items-center justify-center text-center px-4 no-pdf">
+                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary animate-pulse"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-foreground">Metode Belum Dipilih</h3>
+                        <p class="text-[10px] text-muted-foreground mt-1 max-w-[200px]">Silakan klik tombol di bawah untuk memilih bank atau QRIS.</p>
                     </div>
-                    <h3 class="text-sm font-bold text-foreground">Metode Belum Dipilih</h3>
-                    <p class="text-[10px] text-muted-foreground mt-1 max-w-[200px]">Silakan klik tombol di bawah untuk memilih bank atau QRIS.</p>
-                </div>
-            @elseif($rental->metode_pembayaran != 'cash' && $rental->status === 'pending')
-                <!-- VA Detail -->
-                <div class="flex flex-col items-center p-6 bg-muted/20">
-                    <p class="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">{{ str_replace('_', ' ', $rental->metode_pembayaran) }}</p>
-                    @if(isset($rental->payment_details['va_numbers']))
-                        <p class="text-2xl font-mono font-bold tracking-tighter">{{ $rental->payment_details['va_numbers'][0]['va_number'] }}</p>
-                    @endif
-                </div>
-            @endif
-                <div class="pt-6 border-t border-border mt-6 space-y-3">
+                @elseif($rental->metode_pembayaran != 'cash' && $rental->status === 'pending')
+                    <!-- VA Detail -->
+                    <div class="flex flex-col items-center p-6 bg-muted/20 no-pdf">
+                        <p class="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">{{ str_replace('_', ' ', $rental->metode_pembayaran) }}</p>
+                        @if(isset($rental->payment_details['va_numbers']))
+                            <p class="text-2xl font-mono font-bold tracking-tighter">{{ $rental->payment_details['va_numbers'][0]['va_number'] }}</p>
+                        @endif
+                    </div>
+                @endif
+                <div class="pt-6 border-t border-border mt-6 space-y-3 no-pdf">
                     <div class="flex items-center justify-between">
                         <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Admin Control</p>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $rental->status === 'paid' ? 'bg-emerald-500/10 text-emerald-600' : ($rental->status === 'cancelled' ? 'bg-rose-500/10 text-rose-600' : 'bg-amber-500/10 text-amber-600') }}">
@@ -278,4 +285,33 @@
             </p>
         </div>
     </div>
+
+    <!-- html2pdf Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        function downloadInvoice() {
+            const element = document.getElementById('invoice-content');
+            const bookingCode = '{{ $rental->booking_code }}';
+            
+            // Konfigurasi PDF
+            const opt = {
+                margin:       [10, 10],
+                filename:     `Invoice-${bookingCode}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 3, 
+                    useCORS: true,
+                    letterRendering: true,
+                    // Sembunyikan elemen dengan class no-pdf
+                    onclone: (clonedDoc) => {
+                        clonedDoc.querySelectorAll('.no-pdf').forEach(el => el.remove());
+                    }
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Jalankan Generate
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
 </div>
