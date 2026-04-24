@@ -142,7 +142,14 @@
             </div>
 
             <!-- Teks -->
-            <div class="relative z-30 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8 cursor-default">
+            <div class="relative z-30 w-full flex flex-col items-center text-center px-4 sm:px-6 lg:px-8 cursor-default" x-data="{ spotlight: false }" @mouseenter="spotlight = true" @mouseleave="spotlight = false">
+                {{-- Dynamic Greeting Badge --}}
+                <div class="mb-4 animate-in fade-in slide-in-from-top-4 duration-1000">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-[2px] border border-white/10 shadow-sm transition-all hover:bg-white/10 group cursor-default">
+                        <span class="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <p class="text-[10px] sm:text-xs font-semibold text-white/90 tracking-wide">{{ $greeting }}</p>
+                    </div>
+                </div>
                 @if($isCustomerLoggedIn && $closestActiveRental)
                     @php
                         $selesaiHeroTimestamp = $closestActiveRental->waktu_selesai->timestamp * 1000;
