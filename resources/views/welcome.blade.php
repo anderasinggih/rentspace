@@ -960,11 +960,10 @@
                     x-transition:leave="transition ease-in duration-500"
                     x-transition:leave-start="opacity-100 translate-x-0 scale-100"
                     x-transition:leave-end="opacity-0 -translate-x-10 scale-90"
-                    class="group relative flex items-center gap-3 sm:gap-4 bg-white/15 dark:bg-zinc-900/40 backdrop-blur-md backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/50 border-r border-b border-white/20 p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] pointer-events-auto overflow-hidden">
+                    class="group relative flex items-center gap-3 sm:gap-4 bg-white/5 dark:bg-zinc-950/20 backdrop-blur-[6px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/40 border-r border-b border-white/10 p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] pointer-events-auto overflow-hidden">
                     
-                    <!-- Liquid Shine Overlay (The Gloss) -->
-                    <div class="absolute inset-0 bg-gradient-to-br from-white/25 via-white/5 to-transparent pointer-events-none rounded-2xl z-20"></div>
-                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.15),transparent)] pointer-events-none z-20"></div>
+                    <!-- Lean Liquid Gloss -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent pointer-events-none rounded-2xl z-20"></div>
 
                     <div class="relative flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl overflow-hidden transition-colors duration-500"
                         :class="rentals[currentIndex].status === 'paid' ? 'bg-emerald-500/20 border border-emerald-500/30' : 'bg-amber-500/20 border border-amber-500/30'">
