@@ -11,7 +11,7 @@
             localStorage.theme = 'light';
         }
     }
-}" class="sticky top-3 z-50 mx-auto px-4 w-full max-w-6xl mb-8">
+}" class="fixed top-0 left-0 right-0 z-50 mx-auto px-4 w-full max-w-6xl">
     <nav class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-blur-[4px] backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all duration-700 overflow-hidden">
         <!-- Left Side: Logo & Links -->
         <div class="flex items-center">
