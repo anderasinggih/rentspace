@@ -476,13 +476,10 @@
                     return;
                 }
                 const c = getChartColors();
-                const mode = { mode: c.isDark ? 'dark' : 'light' };
-                const labelStyle = { labels: { style: { colors: c.textColor } } };
-                
-                revChart?.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: labelStyle, yaxis: labelStyle, grid: { borderColor: c.borderColor } });
-                trxChart?.updateOptions({ theme: mode, tooltip: { theme: c.tooltipTheme }, xaxis: labelStyle, yaxis: labelStyle, grid: { borderColor: c.borderColor } });
+                revChart?.updateOptions({ theme: { mode: c.isDark ? 'dark' : 'light' }, tooltip: { theme: c.tooltipTheme }, xaxis: { labels: { style: { colors: c.textColor } } }, yaxis: { labels: { style: { colors: c.textColor } } }, grid: { borderColor: c.borderColor } });
+                trxChart?.updateOptions({ theme: { mode: c.isDark ? 'dark' : 'light' }, tooltip: { theme: c.tooltipTheme }, xaxis: { labels: { style: { colors: c.textColor } } }, yaxis: { labels: { style: { colors: c.textColor } } }, grid: { borderColor: c.borderColor } });
                 donutChart?.updateOptions({
-                    theme: mode, tooltip: { theme: c.tooltipTheme }, legend: { labels: { colors: c.textColor } },
+                    theme: { mode: c.isDark ? 'dark' : 'light' }, tooltip: { theme: c.tooltipTheme }, legend: { labels: { colors: c.textColor } },
                     plotOptions: { pie: { donut: { labels: { total: { color: c.textColor } } } } },
                     dataLabels: { style: { colors: [c.isDark ? '#fff' : '#111'] } }
                 });
@@ -496,18 +493,6 @@
                 trxChart?.destroy();
                 donutChart?.destroy();
             }, { once: true });
-        };
-
-        initCharts();
-    }
-</script>
-@endscript
-{ theme: c.tooltipTheme }, legend: { labels: { colors: c.textColor } },
-                    plotOptions: { pie: { donut: { labels: { total: { color: c.textColor } } } } },
-                    dataLabels: { style: { colors: [c.isDark ? '#fff' : '#111'] } }
-                });
-            });
-            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         };
 
         initCharts();
