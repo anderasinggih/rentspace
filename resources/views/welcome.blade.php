@@ -61,53 +61,32 @@
             lastTouchEnd = now;
         }, false);
 
-        // Advanced Haptic Engine (Dialed.gg style)
+        // Advanced Haptic Engine (Native Feeling for Web)
         window.hapticEngine = {
             canVibrate: !!navigator.vibrate,
-            audioCtx: null,
+            hapticSwitch: null,
 
-            initAudio: function() {
-                if (!this.audioCtx) {
-                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
+            init: function() {
+                this.hapticSwitch = document.getElementById('ios-haptic-switch');
             },
 
             trigger: function(type = 'light') {
                 try {
-                    // Try Native Vibration
+                    // 1. Native Vibration (Android)
                     if (this.canVibrate) {
-                        const patterns = {
-                            light: 10,
-                            medium: 20,
-                            heavy: 50,
-                            success: [10, 30, 10],
-                            warning: [50, 100, 50]
-                        };
-                        navigator.vibrate(patterns[type] || 10);
+                        navigator.vibrate(type === 'success' ? [10, 30, 10] : 15);
                     }
 
-                    // Try Audio Context Fallback (for iOS/Safari)
-                    this.initAudio();
-                    if (this.audioCtx) {
-                        const osc = this.audioCtx.createOscillator();
-                        const gain = this.audioCtx.createGain();
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(10, this.audioCtx.currentTime); // Low frequency
-                        gain.gain.setValueAtTime(0, this.audioCtx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.01);
-                        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.1);
-                        osc.connect(gain);
-                        gain.connect(this.audioCtx.destination);
-                        osc.start();
-                        osc.stop(this.audioCtx.currentTime + 0.1);
+                    // 2. The Switch Trick (iOS Safari)
+                    if (this.hapticSwitch) {
+                        this.hapticSwitch.click(); // Programmatic click on a switch triggers system haptic
                     }
-                } catch (e) {
-                    // Silently fail
-                }
+                } catch (e) {}
             }
         };
 
-        // Click listener for haptics (more reliable than pointerdown for initial user gesture)
+        // Initialize and setup global listener
+        document.addEventListener('DOMContentLoaded', () => window.hapticEngine.init());
         document.addEventListener('click', (e) => {
             const target = e.target.closest('[data-haptic]');
             if (target) {
@@ -115,6 +94,9 @@
             }
         }, { passive: true });
     </script>
+
+    <!-- The "Secret Sauce" for iOS Haptics (Hidden Switch) -->
+    <input type="checkbox" id="ios-haptic-switch" aria-hidden="true" style="position: absolute; opacity: 0; pointer-events: none; left: -9999px;">
 </head>
 
 <body class="font-sans antialiased min-h-screen bg-background text-foreground flex flex-col">
