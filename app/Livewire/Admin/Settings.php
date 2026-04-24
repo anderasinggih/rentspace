@@ -61,8 +61,11 @@ class Settings extends Component
     public $about_faq_items = [];
     public $social_ig_url = '', $social_ig_name = '', $social_tiktok_url = '', $social_tiktok_name = '';
     public $min_payout = 50000;
-    public $is_maintenance = false;
+     public $is_maintenance = false;
     public $maintenance_message = 'Kami akan segera kembali!';
+
+    // Greetings Properties
+    public $greeting_morning = '', $greeting_day = '', $greeting_afternoon = '', $greeting_evening = '', $greeting_night = '';
 
     public $importFile;
 
@@ -101,6 +104,13 @@ class Settings extends Component
 
         $this->is_maintenance = \App\Models\Setting::getVal('is_maintenance', '0') == '1';
         $this->maintenance_message = \App\Models\Setting::getVal('maintenance_message', 'Kami akan segera kembali! Saat ini sistem sedang dalam pemeliharaan rutin untuk meningkatkan layanan kami.');
+
+        // Load Greetings
+        $this->greeting_morning = \App\Models\Setting::getVal('greeting_morning', 'Pagi Bos! ⚡️ Semangat harinya, jangan lupa bawa iPhone RentSpace buat momen spesialmu.');
+        $this->greeting_day = \App\Models\Setting::getVal('greeting_day', 'Siang Bos! ☀️ Panas ya? Tetep tampil kece & profesional bareng iPhone dari RentSpace.');
+        $this->greeting_afternoon = \App\Models\Setting::getVal('greeting_afternoon', 'Sore Bos! ☁️ Purwokerto mulai sejuk nih, asik banget buat bikin konten cinematic.');
+        $this->greeting_evening = \App\Models\Setting::getVal('greeting_evening', 'Malam Bos! ✨ Butuh iPhone buat dinner atau event keren malam ini? Kami ready!');
+        $this->greeting_night = \App\Models\Setting::getVal('greeting_night', 'Masih bangun Bos? 🌙 Lagi nyari unit buat dipake besok ya? Langsung sikat!');
     }
 
     // Removed loadUsers() to use paginate in render()
@@ -304,6 +314,19 @@ class Settings extends Component
     {
         if (auth()->user()->role !== 'admin') return;
         \App\Models\Setting::updateOrCreate(['key' => 'maintenance_message'], ['value' => $value]);
+    }
+
+    public function saveGreetings()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_morning'], ['value' => $this->greeting_morning]);
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_day'], ['value' => $this->greeting_day]);
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_afternoon'], ['value' => $this->greeting_afternoon]);
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_evening'], ['value' => $this->greeting_evening]);
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_night'], ['value' => $this->greeting_night]);
+
+        session()->flash('greeting_message', 'Sapaan Beranda berhasil diperbarui!');
     }
 
     public function addFaq()

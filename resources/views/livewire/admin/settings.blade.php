@@ -180,6 +180,83 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Contextual Greetings Setting -->
+                <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm mt-6">
+                    <div class="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold italic text-primary">Sapaan Kontekstual Beranda</h2>
+                            <p class="text-xs text-muted-foreground">Sesuaikan sapaan akrab yang muncul di beranda berdasarkan waktu kunjungan pelanggan.</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground opacity-30"><path d="m5 8 6 6 6-6"/></svg>
+                    </div>
+                    <div class="p-5">
+                        @if (session()->has('greeting_message'))
+                            <div class="mb-4 p-3 text-xs font-bold text-emerald-600 bg-emerald-50 rounded-lg border border-emerald-100 animate-in fade-in slide-in-from-top-2">
+                                {{ session('greeting_message') }}
+                            </div>
+                        @endif
+
+                        <form wire:submit="saveGreetings" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Morning -->
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-muted-foreground">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                        Sapaan Pagi (05:00 - 11:00)
+                                    </label>
+                                    <textarea wire:model="greeting_morning" rows="2" class="w-full text-sm rounded-xl border-border bg-muted/20 focus:ring-primary focus:border-primary transition-all" placeholder="Tulis sapaan pagi..."></textarea>
+                                </div>
+
+                                <!-- Day -->
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-muted-foreground">
+                                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                                        Sapaan Siang (11:00 - 15:00)
+                                    </label>
+                                    <textarea wire:model="greeting_day" rows="2" class="w-full text-sm rounded-xl border-border bg-muted/20 focus:ring-primary focus:border-primary transition-all" placeholder="Tulis sapaan siang..."></textarea>
+                                </div>
+
+                                <!-- Afternoon -->
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-muted-foreground">
+                                        <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                                        Sapaan Sore (15:00 - 18:00)
+                                    </label>
+                                    <textarea wire:model="greeting_afternoon" rows="2" class="w-full text-sm rounded-xl border-border bg-muted/20 focus:ring-primary focus:border-primary transition-all" placeholder="Tulis sapaan sore..."></textarea>
+                                </div>
+
+                                <!-- Evening -->
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-muted-foreground">
+                                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                        Sapaan Malam (18:00 - 00:00)
+                                    </label>
+                                    <textarea wire:model="greeting_evening" rows="2" class="w-full text-sm rounded-xl border-border bg-muted/20 focus:ring-primary focus:border-primary transition-all" placeholder="Tulis sapaan malam..."></textarea>
+                                </div>
+
+                                <!-- Night -->
+                                <div class="md:col-span-2 space-y-2">
+                                    <label class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-muted-foreground">
+                                        <span class="w-2 h-2 rounded-full bg-zinc-800 dark:bg-zinc-200"></span>
+                                        Sapaan Subuh / Begadang (00:00 - 05:00)
+                                    </label>
+                                    <textarea wire:model="greeting_night" rows="2" class="w-full text-sm rounded-xl border-border bg-muted/20 focus:ring-primary focus:border-primary transition-all" placeholder="Tulis sapaan subuh..."></textarea>
+                                </div>
+                            </div>
+
+                            @if(auth()->user()->role === 'admin')
+                                <div class="flex justify-end pt-2">
+                                    <button type="submit" 
+                                        class="px-6 h-10 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-95 transition-all flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                        Simpan Semua Sapaan
+                                    </button>
+                                </div>
+                            @endif
+                        </form>
+                    </div>
+                </div>
             </div>
         @endif
 
