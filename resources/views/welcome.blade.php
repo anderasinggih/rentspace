@@ -59,7 +59,7 @@
 
             // Social Proof Ticker Data
             $recentRentals = \App\Models\Rental::with('units')
-                ->where('status', 'paid')
+                ->whereIn('status', ['paid', 'pending'])
                 ->latest()
                 ->take(15)
                 ->get()
@@ -72,10 +72,14 @@
                         : $firstName . '***';
                     
                     $unitName = $r->units->first() ? $r->units->first()->seri : 'iPhone';
+                    $action = $r->status === 'paid' ? 'baru sewa' : 'sedang booking';
+                    
                     return [
                         'name' => $censoredName,
                         'unit' => $unitName,
                         'time' => $r->created_at->diffForHumans(),
+                        'action' => $action,
+                        'status' => $r->status,
                     ];
                 });
         @endphp
@@ -961,17 +965,21 @@
                     <!-- Specular Polish -->
                     <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none rounded-2xl"></div>
 
-                    <div class="relative flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30 overflow-hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-emerald-500 animate-pulse sm:w-6 sm:h-6">
+                    <div class="relative flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl overflow-hidden transition-colors duration-500"
+                        :class="rentals[currentIndex].status === 'paid' ? 'bg-emerald-500/20 border border-emerald-500/30' : 'bg-amber-500/20 border border-amber-500/30'">
+                        <svg x-show="rentals[currentIndex].status === 'paid'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-emerald-500 animate-pulse sm:w-6 sm:h-6">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                             <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        <svg x-show="rentals[currentIndex].status === 'pending'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-amber-500 animate-bounce sm:w-6 sm:h-6">
+                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                         </svg>
                     </div>
 
                     <div class="flex flex-col">
                         <p class="text-[10px] sm:text-xs font-bold text-foreground leading-tight">
-                            <span class="text-emerald-600 dark:text-emerald-400" x-text="rentals[currentIndex].name"></span>
-                            <span class="text-muted-foreground/80 font-medium">baru sewa</span>
+                            <span :class="rentals[currentIndex].status === 'paid' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'" x-text="rentals[currentIndex].name"></span>
+                            <span class="text-muted-foreground/80 font-medium" x-text="rentals[currentIndex].action"></span>
                         </p>
                         <p class="text-[11px] sm:text-[13px] font-black text-foreground mt-0.5 tracking-tight uppercase line-clamp-1" x-text="rentals[currentIndex].unit"></p>
                         <p class="text-[9px] sm:text-[10px] text-muted-foreground/60 mt-0.5 font-medium flex items-center gap-1">
@@ -981,8 +989,10 @@
                     </div>
 
                     <!-- Small Live Indicator -->
-                    <div class="absolute-inline flex h-2 w-2 rounded-full bg-emerald-500 ml-auto self-start mt-1">
-                        <span class="animate-ping absolute h-2 w-2 rounded-full bg-emerald-500 opacity-75"></span>
+                    <div class="absolute-inline flex h-2 w-2 rounded-full ml-auto self-start mt-1"
+                        :class="rentals[currentIndex].status === 'paid' ? 'bg-emerald-500' : 'bg-amber-500'">
+                        <span class="animate-ping absolute h-2 w-2 rounded-full opacity-75"
+                            :class="rentals[currentIndex].status === 'paid' ? 'bg-emerald-500' : 'bg-amber-500'"></span>
                     </div>
                 </div>
             </template>
