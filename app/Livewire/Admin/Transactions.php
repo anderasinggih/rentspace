@@ -11,7 +11,36 @@ class Transactions extends Component
     use WithPagination, \App\Traits\LogsStaffActivity;
 
     public $search = '';
-    public $filterStatus = '';
+    public $filterStatus = 'all';
+
+    public function getPaymentMethodsProperty()
+    {
+        $allMethods = [
+            'cash' => 'CASH / TUNAI',
+            'qris' => 'QRIS',
+            'bca' => 'BANK BCA',
+            'mandiri' => 'BANK MANDIRI',
+            'bni' => 'BANK BNI',
+            'bri' => 'BANK BRI',
+            'permata' => 'BANK PERMATA',
+            'bsi' => 'BANK BSI',
+            'cimb' => 'BANK CIMB',
+        ];
+
+        // Ambil pengaturan metode yang aktif
+        $savedPayment = \App\Models\Setting::getVal('payment_methods', '[]');
+        $activeMethods = json_decode($savedPayment, true) ?: [];
+
+        // Untuk Admin, kita tampilkan SEMUA metode master yang ada, 
+        // tapi kita bisa nambahin yang baru kalau memang terdaftar di settings tapi belum ada di master
+        foreach ($activeMethods as $id => $isActive) {
+            if (!isset($allMethods[$id])) {
+                $allMethods[$id] = strtoupper(str_replace('_', ' ', $id));
+            }
+        }
+
+        return $allMethods;
+    }
     public $dateStart = '';
     public $dateEnd = '';
     public $perPage = 25;
@@ -308,7 +337,7 @@ class Transactions extends Component
         $this->edit_denda_kerusakan = $trx->denda_kerusakan;
         $this->edit_catatan_kerusakan = $trx->catatan_kerusakan;
         $this->edit_status = $trx->status;
-        $this->edit_metode_pembayaran = $trx->metode_pembayaran;
+        $this->edit_metode_pembayaran = strtolower($trx->metode_pembayaran);
         $this->isEditingTrx = true;
     }
 
@@ -352,7 +381,7 @@ class Transactions extends Component
             'catatan_kerusakan' => $this->edit_catatan_kerusakan,
             'grand_total' => $grandTotal,
             'status' => $this->edit_status,
-            'metode_pembayaran' => $this->edit_metode_pembayaran,
+            'metode_pembayaran' => strtolower($this->edit_metode_pembayaran),
         ]);
 
         $this->logActivity('edit_transaction', $trx, "Mengedit data transaksi #{$trx->id}");
@@ -480,7 +509,7 @@ class Transactions extends Component
             ->orWhere('booking_code', 'like', '%' . $this->search . '%')
             ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
         })
-            ->when($this->filterStatus && $this->filterStatus !== 'trashed', function ($q) {
+            ->when($this->filterStatus && $this->filterStatus !== 'all' && $this->filterStatus !== 'trashed', function ($q) {
             $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
         })
             ->when($this->dateStart, function ($q) {
