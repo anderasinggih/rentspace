@@ -152,7 +152,7 @@
                                                                         <div class="flex flex-col gap-1 tracking-tight">
                                                                             <div class="font-bold text-foreground text-sm tracking-tight leading-none">{{ $trx->nama }}</div>
                                                                             <div class="flex items-center gap-2">
-                                                                                <span class="inline-flex items-center rounded border bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200/30 dark:border-blue-800/30 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-tight">
+                                                                                <span class="inline-flex items-center rounded border bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-tight">
                                                                                     {{ $trx->booking_code }}
                                                                                 </span>
                                                                                 <a href="https://wa.me/{{ preg_replace('/^0/', '62', $trx->no_wa) }}"
