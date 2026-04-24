@@ -133,7 +133,7 @@
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-1.5 flex-wrap">
                                             <span
-                                                class="text-xs font-black text-foreground">#{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</span>
+                                                class="text-xs font-black text-primary tracking-tight uppercase">{{ $order->booking_code }}</span>
                                             @if($isActiveRental)
                                                 <span
                                                     class="inline-flex items-center gap-1 px-1.5 py-0 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">

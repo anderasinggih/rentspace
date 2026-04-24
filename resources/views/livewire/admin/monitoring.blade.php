@@ -420,8 +420,7 @@
                                                     {{ $rental->units->pluck('seri')->join(', ') }}</h3>
                                             </div>
                                             <div class="flex items-center gap-1.5 mt-1">
-                                                <span
-                                                    class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', trim($rental->nama))[0] }}</span>
+                                                <span class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', trim($rental->nama))[0] }}</span>
                                                 <span class="hidden sm:inline-block h-1 w-1 rounded-full bg-border"></span>
                                                 <span class="text-[10px] sm:text-xs text-muted-foreground truncate">
                                                     {{ $rental->waktu_mulai->format('H:i') }} -
@@ -483,6 +482,11 @@
                                                         NIK</p>
                                                     <p class="text-[10px] sm:text-xs font-semibold text-foreground mt-0.5">
                                                         {{ $rental->nik }}</p>
+                                                </div>
+                                                <div>
+                                                    <p class="text-[8px] font-bold text-muted-foreground opacity-70">Kode Booking</p>
+                                                    <p class="text-[10px] sm:text-xs font-bold text-primary mt-0.5 uppercase tracking-wider">
+                                                        {{ $rental->booking_code }}</p>
                                                 </div>
                                                 <div class="pt-2">
                                                     <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}"
@@ -678,6 +682,11 @@
                                             <div class="space-y-2">
                                                 <p class="text-[10px] sm:text-xs font-semibold text-foreground">
                                                     {{ $rental->nik }}</p>
+                                                <div class="flex flex-col gap-1">
+                                                    <p class="text-[8px] font-bold text-muted-foreground opacity-70">Kode Booking</p>
+                                                    <p class="text-[10px] sm:text-xs font-black text-primary uppercase tracking-wider">
+                                                        {{ $rental->booking_code }}</p>
+                                                </div>
                                                 <div class="pt-1">
                                                     <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}"
                                                         target="_blank"
@@ -738,8 +747,8 @@
                 <div class="p-6 border-b border-border flex justify-between items-start bg-muted/5">
                     <div>
                         <h3 class="text-lg font-bold  text-foreground">Detail Transaksi</h3>
-                        <p class="text-[11px] text-muted-foreground mt-0.5 italic opacity-70">
-                            INV-{{ str_pad($r->id, 5, '0', STR_PAD_LEFT) }} • {{ $r->created_at->format('d M Y') }}</p>
+                        <p class="text-[11px] text-muted-foreground mt-0.5 italic opacity-70 uppercase">
+                            {{ $r->booking_code }} • {{ $r->created_at->format('d M Y') }}</p>
                     </div>
                     <button @click="modalOpen = false"
                         class="rounded-md p-1.5 hover:bg-muted transition-colors border border-border bg-background">
