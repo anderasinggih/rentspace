@@ -1,6 +1,6 @@
 
 
-<div class="py-1 px-4 sm:px-6 lg:px-8 bg-background min-h-[calc(100vh-4rem)]">
+<div class="py-1 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
 
     <div class="max-w-3xl mx-auto">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -25,7 +25,9 @@
                 </div>
 
                 <!-- STEP 1: Jadwal & Unit -->
-                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-12 sm:pb-0">
+                <div x-show="step === 1" x-transition.opacity.duration.300ms 
+                    class="space-y-8 sm:pb-0 font-sans" 
+                    :class="keyboardOpen ? 'pb-4' : 'pb-12'">
                     <!-- 1. Jadwal Sewa -->
                     <div>
                         <div class="flex items-center justify-between gap-4 mb-4">
@@ -252,7 +254,9 @@
                 </div> <!-- END STEP 1 -->
 
                 <!-- STEP 2: Data Diri & Promo -->
-                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-12 sm:pb-0">
+                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak 
+                    class="space-y-8 sm:pb-0 font-sans" 
+                    :class="keyboardOpen ? 'pb-4' : 'pb-12'">
 <!-- 5. Data Diri -->
                 <div>
                     <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">{{ (!empty($selected_unit_ids) && $waktu_mulai &&
