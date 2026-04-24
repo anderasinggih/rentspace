@@ -368,6 +368,7 @@
             </table>
         </div>
     </div>
+</div>
 
 @script
 <script>
