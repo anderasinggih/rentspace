@@ -104,13 +104,29 @@ class UnitManager extends Component
     public function delete($id)
     {
         if (auth()->user()->role !== 'admin') return;
-        Unit::findOrFail($id)->delete();
+        $unit = Unit::findOrFail($id);
+        $unit->delete();
+        $this->logActivity('delete_unit', $unit, "Memindahkan unit ke tempat sampah: {$unit->seri}");
+        session()->flash('message', 'Unit dipindahkan ke tempat sampah.');
     }
 
     public function restoreUnit($id)
     {
         if (auth()->user()->role !== 'admin') return;
-        Unit::withTrashed()->find($id)->restore();
+        $unit = Unit::withTrashed()->findOrFail($id);
+        $unit->restore();
+        $this->logActivity('restore_unit', $unit, "Memulihkan unit: {$unit->seri}");
+        session()->flash('message', 'Unit berhasil dipulihkan.');
+    }
+
+    public function forceDelete($id)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $unit = Unit::withTrashed()->findOrFail($id);
+        $name = $unit->seri;
+        $unit->forceDelete();
+        $this->logActivity('force_delete_unit', null, "Menghapus permanen unit: {$name}");
+        session()->flash('message', 'Unit dihapus secara permanen.');
     }
 
     // --- Category Management Methods ---
@@ -209,22 +225,24 @@ class UnitManager extends Component
             $categoriesQuery->where('name', 'like', '%' . $this->search . '%');
         }
 
-        $unitsQuery = Unit::withTrashed()
+        $unitsQuery = Unit::query()
             ->with('category')
-            ->when($this->search && $this->activeTab === 'units', fn($q) => $q->where('seri', 'like', '%' . $this->search . '%')
+            ->when($this->filterStatus === 'trashed', fn($q) => $q->onlyTrashed())
+            ->when($this->filterStatus !== 'trashed', fn($q) => $q->withoutTrashed())
+            ->when($this->search && $this->activeTab === 'units', fn($q) => $q->where(fn($qq) => 
+                $qq->where('seri', 'like', '%' . $this->search . '%')
                 ->orWhere('imei', 'like', '%' . $this->search . '%')
-                ->orWhere('warna', 'like', '%' . $this->search . '%'))
+                ->orWhere('warna', 'like', '%' . $this->search . '%')
+            ))
             ->when($this->filterKategori, fn($q) => $q->where('category_id', $this->filterKategori))
-            ->when($this->filterStatus !== '', function ($q) {
+            ->when($this->filterStatus !== '' && $this->filterStatus !== 'trashed', function ($q) {
                 if ($this->filterStatus === 'active')
-                    return $q->whereNull('deleted_at')->where('is_active', true);
+                    return $q->where('is_active', true);
                 if ($this->filterStatus === 'inactive')
-                    return $q->whereNull('deleted_at')->where('is_active', false);
-                if ($this->filterStatus === 'deleted')
-                    return $q->whereNotNull('deleted_at');
+                    return $q->where('is_active', false);
             })
-            ->orderBy('deleted_at', 'asc')
-            ->orderBy('is_active', 'desc');
+            ->orderBy('is_active', 'desc')
+            ->orderBy('seri', 'asc');
 
         return view('livewire.admin.unit-manager', [
             'units' => $unitsQuery->get(),
