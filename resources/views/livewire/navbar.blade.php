@@ -22,10 +22,12 @@ x-init="window.addEventListener('scroll', () => {
     }
 })"
 class="sticky top-6 z-50 mx-auto px-4 w-full max-w-6xl mb-12 transition-all duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
-:class="showNavbar ? 'translate-y-0 opacity-100 blur-none scale-100' : '-translate-y-32 opacity-0 blur-md scale-y-[1.1] pointer-events-none'"
+:class="showNavbar ? 'translate-y-0 opacity-100' : '-translate-y-32 opacity-0 scale-y-[1.1] pointer-events-none'"
 >
     <nav
-        class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-blur-[4px] backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all overflow-hidden">
+        class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all duration-700 overflow-hidden"
+        :class="showNavbar ? 'backdrop-blur-[4px]' : 'backdrop-blur-[12px]'"
+    >
         <!-- Left Side: Logo & Links -->
         <div class="flex items-center">
             <!-- Logo Box -->
