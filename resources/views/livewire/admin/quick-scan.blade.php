@@ -162,7 +162,7 @@
                                     <p class="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">IMEI: {{ $scannedUnit->imei }}</p>
                                 </div>
                                 <div class="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-colors {{ $activeRental && $activeRental->status === 'active' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' : ($activeRental ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' : 'bg-green-500/10 text-green-600 border-green-500/20') }}">
-                                    {{ $activeRental && $activeRental->status === 'active' ? 'In Hands' : ($activeRental ? 'Picked Up' : 'Available') }}
+                                    {{ $activeRental && $activeRental->status === 'active' ? 'Sedang Disewa' : ($activeRental ? 'Siap Diambil' : 'Tersedia') }}
                                 </div>
                             </div>
 
@@ -172,7 +172,7 @@
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold">{{ substr($activeRental->nama, 0, 1) }}</div>
                                             <div>
-                                                <p class="text-[9px] font-bold text-muted-foreground uppercase opacity-50">Customer</p>
+                                                <p class="text-[9px] font-bold text-muted-foreground uppercase opacity-50">Penyewa</p>
                                                 <p class="text-sm font-bold">{{ $activeRental->nama }}</p>
                                             </div>
                                         </div>
@@ -183,12 +183,14 @@
 
                                     <div class="grid grid-cols-2 gap-3">
                                         <div class="p-3 rounded-lg bg-muted/40 transition-colors">
-                                            <p class="text-[8px] font-bold text-muted-foreground uppercase mb-1">Due To</p>
+                                            <p class="text-[8px] font-bold text-muted-foreground uppercase mb-1">Jadwal Selesai</p>
                                             <p class="text-xs font-bold">{{ $activeRental->waktu_selesai->format('d M, H:i') }}</p>
                                         </div>
                                         <div class="p-3 rounded-lg bg-muted/40 transition-colors">
-                                            <p class="text-[8px] font-bold text-muted-foreground uppercase mb-1">Payment</p>
-                                            <p class="text-xs font-bold text-green-600">{{ in_array($activeRental->status, ['paid', 'active', 'completed']) ? 'Settled' : 'Unpaid' }}</p>
+                                            <p class="text-[8px] font-bold text-muted-foreground uppercase mb-1">Status Bayar</p>
+                                            <p class="text-xs font-bold {{ in_array($activeRental->status, ['paid', 'active', 'completed']) ? 'text-green-600' : 'text-orange-500' }}">
+                                                {{ in_array($activeRental->status, ['paid', 'active', 'completed']) ? 'Lunas' : 'Belum Bayar' }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
