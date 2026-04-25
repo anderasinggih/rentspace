@@ -882,6 +882,71 @@
                         </div>
                     </div>
 
+                    <!-- Location History Tracker -->
+                    <div class="space-y-4 pt-4 border-t border-border">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-[9px] font-black text-muted-foreground/70 uppercase tracking-widest">Real-time Tracking Log</h4>
+                            <span class="flex items-center gap-1.5 text-[8px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                <span class="h-1 w-1 rounded-full bg-emerald-500 animate-ping"></span> Active
+                            </span>
+                        </div>
+                        
+                        @php 
+                            $hasAnyLocation = $r->units->some(fn($u) => $u->locations->count() > 0);
+                        @endphp
+
+                        @if($hasAnyLocation)
+                            <div class="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
+                                @foreach($r->units as $u)
+                                    @if($u->locations->count() > 0)
+                                        <div class="space-y-2">
+                                            <p class="text-[9px] font-black text-primary px-2 py-0.5 bg-primary/5 rounded border border-primary/10 inline-block">{{ $u->seri }}</p>
+                                            <div class="grid grid-cols-1 gap-2">
+                                                @foreach($u->locations as $loc)
+                                                    <div class="p-3 bg-muted/30 rounded-xl border border-border/50 flex items-center justify-between group/loc hover:bg-muted/50 transition-all">
+                                                        <div class="flex items-center gap-3">
+                                                            <div class="shrink-0 h-8 w-8 rounded-lg bg-background border border-border flex items-center justify-center text-muted-foreground group-hover/loc:text-primary transition-colors">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                                            </div>
+                                                            <div class="min-w-0">
+                                                                <p class="text-[10px] font-black text-foreground">{{ $loc->created_at->format('H:i') }} <span class="text-muted-foreground font-medium ml-1">· {{ $loc->created_at->diffForHumans() }}</span></p>
+                                                                <p class="text-[9px] text-muted-foreground truncate max-w-[150px]">{{ $loc->lat }}, {{ $loc->lng }}</p>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="flex items-center gap-3">
+                                                            @if($loc->battery_level)
+                                                                <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-background border border-border">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="{{ (int)$loc->battery_level < 20 ? 'text-rose-500 animate-pulse' : 'text-emerald-500' }}">
+                                                                        <rect width="16" height="10" x="2" y="7" rx="2" ry="2"/>
+                                                                        <line x1="22" y1="11" x2="22" y2="13"/>
+                                                                        <line x1="6" y1="11" x2="6" y2="13"/>
+                                                                    </svg>
+                                                                    <span class="text-[9px] font-black {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500' }}">{{ (int)$loc->battery_level }}%</span>
+                                                                </div>
+                                                            @endif
+                                                            <a href="https://www.google.com/maps/search/?api=1&query={{ $loc->lat }},{{ $loc->lng }}" target="_blank" class="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="py-10 bg-muted/10 border border-dashed border-border rounded-2xl flex flex-col items-center justify-center text-center">
+                                <div class="h-10 w-10 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round opacity-30"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                </div>
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-tight">Belum ada riwayat lokasi</p>
+                                <p class="text-[9px] text-muted-foreground/60 mt-1 italic">Menunggu update data dari iPhone unit...</p>
+                            </div>
+                        @endif
+                    </div>
+
                     <!-- Financial Summary -->
                     <div class="space-y-4 pt-4 border-t border-border">
                         <h4 class="text-[9px] font-bold text-muted-foreground/70">Ikhtisar Pembayaran</h4>

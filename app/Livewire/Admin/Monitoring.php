@@ -64,7 +64,9 @@ class Monitoring extends Component
     public function getSelectedRentalProperty()
     {
         if (!$this->selectedRentalId) return null;
-        return Rental::with('units')->find($this->selectedRentalId);
+        return Rental::with(['units.locations' => function($q) {
+            $q->latest()->limit(50);
+        }])->find($this->selectedRentalId);
     }
 
     public function markAsPaid($id)

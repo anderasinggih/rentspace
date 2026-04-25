@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Rental;
 use App\Models\Unit;
 use Illuminate\Http\Request;
+use App\Models\UnitLocation;
 use Carbon\Carbon;
 
 class ShortcutController extends Controller
@@ -24,7 +25,7 @@ class ShortcutController extends Controller
         // 2. Validasi Input
         $request->validate([
             'unit_identifier' => 'required|string', // Bisa ID atau Seri Unit
-            'action' => 'required|string|in:complete,status'
+            'action' => 'required|string|in:complete,status,log_location'
         ]);
 
         // 3. Cari Unit (Cari by ID dulu, kalau gagal cari by Seri)
@@ -90,9 +91,26 @@ class ShortcutController extends Controller
             ]);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Aksi tidak dikenal.'
-        ], 400);
+        // 6. Eksekusi Aksi 'log_location'
+        if ($request->action === 'log_location') {
+            $request->validate([
+                'lat' => 'required',
+                'long' => 'required'
+            ]);
+
+            UnitLocation::create([
+                'unit_id' => $unit->id,
+                'lat' => $request->lat,
+                'lng' => $request->long,
+                'address' => $request->address,
+                'battery_level' => $request->battery_level
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Lokasi unit {$unit->seri} berhasil dicatat.",
+                'recorded_at' => Carbon::now()->format('H:i:s')
+            ]);
+        }
     }
 }
