@@ -14,46 +14,52 @@ class UnitLocationSeeder extends Seeder
     {
         // 1. Find active paid rentals with iPhone units
         $activeRentals = Rental::where('status', 'paid')
-            ->where('waktu_selesai', '>', now())
-            ->with('units.category')
+            ->with(['units' => function($q) {
+                $q->whereHas('category', function($cq) {
+                    $cq->where('name', 'like', '%iphone%');
+                });
+            }, 'units.category'])
             ->get();
 
         if ($activeRentals->isEmpty()) {
-            $this->command->warn('No active paid rentals found. Please create a rental first.');
+            $this->command->warn('No active paid rentals found for iPhone units.');
             return;
         }
 
         foreach ($activeRentals as $rental) {
             foreach ($rental->units as $unit) {
-                // Only seed for iPhones (Category ID 1 usually, or check name)
-                if ($unit->category && str_contains(strtolower($unit->category->name), 'iphone')) {
+                // Starting point: Purwokerto Base with slight random offset
+                $currentLat = -7.4243 + (rand(-500, 500) / 100000);
+                $currentLng = 109.2303 + (rand(-500, 500) / 100000);
+                $battery = rand(80, 100);
+
+                $this->command->info("Generating Advanced Path for {$unit->seri}...");
+
+                // Clean existing locations for this unit first if needed or just add more
+                // UnitLocation::where('unit_id', $unit->id)->delete();
+
+                // Generate 50 points (the limit of our radar)
+                for ($i = 50; $i >= 0; $i--) {
+                    // Small "directional" movement to make it look like a path
+                    $currentLat += (rand(-30, 30) / 100000);
+                    $currentLng += (rand(-30, 30) / 100000);
                     
-                    // Starting point (random-ish around a base coordinate, e.g., Purwokerto)
-                    $baseLat = -7.4243 + (rand(-100, 100) / 10000);
-                    $baseLng = 109.2303 + (rand(-100, 100) / 10000);
+                    // Slightly drain battery
+                    if ($i % 5 == 0 && $battery > 5) $battery--;
 
-                    $this->command->info("Seeding path for {$unit->seri} ({$rental->nama})...");
-
-                    // Generate a "walking" path of 20 points
-                    for ($i = 20; $i >= 0; $i--) {
-                        // Small increments to simulate movement
-                        $baseLat += (rand(-15, 15) / 100000);
-                        $baseLng += (rand(-15, 15) / 100000);
-
-                        UnitLocation::create([
-                            'unit_id' => $unit->id,
-                            'lat' => $baseLat,
-                            'lng' => $baseLng,
-                            'address' => 'Simulated Movement Path',
-                            'battery_level' => rand(20, 95),
-                            'created_at' => Carbon::now()->subMinutes($i * 5), // Points spaced 5 mins apart
-                            'updated_at' => Carbon::now()->subMinutes($i * 5),
-                        ]);
-                    }
+                    UnitLocation::create([
+                        'unit_id' => $unit->id,
+                        'lat' => $currentLat,
+                        'lng' => $currentLng,
+                        'address' => 'Simulated Movement Path V2',
+                        'battery_level' => $battery,
+                        'created_at' => Carbon::now()->subMinutes($i * 3), // Spaced 3 mins apart
+                        'updated_at' => Carbon::now()->subMinutes($i * 3),
+                    ]);
                 }
             }
         }
 
-        $this->command->info('Unit locations seeded successfully! 🚀');
+        $this->command->info('Advanced Unit locations seeded successfully! 🚀');
     }
 }
