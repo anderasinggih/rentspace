@@ -190,6 +190,23 @@
 
                 currentPolyline: null,
 
+                smoothPoints(points, iterations = 2) {
+                    if (points.length < 3) return points;
+                    let newPoints = points;
+                    for (let i = 0; i < iterations; i++) {
+                        let temp = [newPoints[0]];
+                        for (let j = 0; j < newPoints.length - 1; j++) {
+                            let p1 = newPoints[j];
+                            let p2 = newPoints[j+1];
+                            temp.push([0.75 * p1[0] + 0.25 * p2[0], 0.75 * p1[1] + 0.25 * p2[1]]);
+                            temp.push([0.25 * p1[0] + 0.75 * p2[0], 0.25 * p1[1] + 0.75 * p2[1]]);
+                        }
+                        temp.push(newPoints[newPoints.length - 1]);
+                        newPoints = temp;
+                    }
+                    return newPoints;
+                },
+
                 focusDevice(device) {
                     if (device.lat && device.lng) {
                         this.selectedId = device.id;
@@ -200,11 +217,13 @@
                         }
 
                         if (device.history && device.history.length > 1) {
-                            this.currentPolyline = L.polyline(device.history, {
+                            const smoothedPath = this.smoothPoints(device.history, 3);
+                            this.currentPolyline = L.polyline(smoothedPath, {
                                 color: '#0ea5e9',
-                                weight: 3,
+                                weight: 4,
                                 opacity: 0.4,
-                                lineJoin: 'round'
+                                lineJoin: 'round',
+                                lineCap: 'round'
                             }).addTo(this.map);
                         }
 
