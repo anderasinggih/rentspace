@@ -385,7 +385,7 @@
                         <h2 class="text-lg font-semibold">{{ $isEditing ? 'Edit Item Sewa' : 'Tambah Item Sewa Baru' }}</h2>
                         <form wire:submit="save" class="mt-6 space-y-4">
                             @php
-                                $selectedCat = $all_categories->find($category_id);
+                                $selectedCat = !empty($category_id) ? $all_categories->find($category_id) : null;
                                 $isIphone = $selectedCat && str_contains(strtolower($selectedCat->slug), 'iphone');
                             @endphp
                             <div>

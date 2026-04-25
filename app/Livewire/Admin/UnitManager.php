@@ -11,7 +11,7 @@ class UnitManager extends Component
 {
     use WithPagination, \App\Traits\LogsStaffActivity;
     public $perPage = 20;
-    public $unit_id, $seri, $imei, $memori, $warna, $kondisi;
+    public $unit_id, $seri, $imei, $memori, $warna, $kondisi, $is_active;
     public $category_id, $harga_per_jam, $harga_per_hari;
     public $specs = []; // Dynamic specifications
     public $isEditing = false;
@@ -37,8 +37,8 @@ class UnitManager extends Component
 
     public function create()
     {
-        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
-        $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing']);
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing', 'is_active']);
         $this->category_id = '';
         $this->is_active = true;
         $this->showModal = true;
@@ -46,7 +46,7 @@ class UnitManager extends Component
 
     public function edit($id)
     {
-        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $unit = Unit::findOrFail($id);
         $this->unit_id = $unit->id;
         $this->category_id = $unit->category_id;
@@ -65,7 +65,7 @@ class UnitManager extends Component
 
     public function save()
     {
-        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $selectedCat = \App\Models\Category::find($this->category_id);
         $isIphone = $selectedCat && str_contains(strtolower($selectedCat->slug), 'iphone');
 

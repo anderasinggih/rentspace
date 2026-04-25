@@ -660,11 +660,11 @@
                                                             update() {
                                                                 const now = Math.floor(Date.now() / 1000);
                                                                 const diff = this.startTime - now;
-                                                                if (diff <= 0) { this.timeleft = 'Starts'; return; }
+                                                                if (diff <= 0) { this.timeleft = 'Dimulai'; return; }
                                                                 const d = Math.floor(diff / 86400);
                                                                 const h = Math.floor((diff % 86400) / 3600);
                                                                 const m = Math.floor((diff % 3600) / 60);
-                                                                this.timeleft = d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`;
+                                                                this.timeleft = d > 0 ? `${d}h ${h}j` : `${h}j ${m}m`;
                                                             }
                                                         }" x-init="update(); setInterval(() => update(), 60000)">
                                             <p
