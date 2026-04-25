@@ -77,35 +77,47 @@
             border: none;
         }
         .marker-pin {
-            width: 32px;
-            height: 32px;
-            border-radius: 50% 50% 50% 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
             background: #0ea5e9;
-            position: absolute;
-            transform: rotate(-45deg);
-            left: 50%;
-            top: 50%;
-            margin: -16px 0 0 -16px;
-            box-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
             border: 2px solid white;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2), 0 4px 10px rgba(0,0,0,0.3);
+            position: relative;
         }
         .marker-pin::after {
             content: '';
-            width: 20px;
-            height: 20px;
-            margin: 0;
-            border-radius: 50%;
-            background: #09090b;
-        }
-        .marker-icon {
             position: absolute;
-            width: 14px;
-            height: 14px;
-            color: white;
-            z-index: 10;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border-radius: 50%;
+            border: 2px solid #0ea5e9;
+            animation: marker-pulse 2s infinite;
+            opacity: 0;
+        }
+        @keyframes marker-pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(3.5); opacity: 0; }
+        }
+        
+        /* Shadcn Style Popup Overrides */
+        .shadcn-popup .leaflet-popup-content-wrapper {
+            background: #09090b;
+            color: #fafafa;
+            border-radius: 12px;
+            padding: 0;
+            border: 1px solid #27272a;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .shadcn-popup .leaflet-popup-content {
+            margin: 0;
+            width: auto !important;
+        }
+        .shadcn-popup .leaflet-popup-tip {
+            background: #27272a;
+        }
+        .shadcn-popup .leaflet-popup-close-button {
+            color: #a1a1aa !important;
+            padding: 8px !important;
         }
     </style>
 
@@ -141,24 +153,36 @@
                             const marker = L.marker([device.lat, device.lng], {
                                 icon: L.divIcon({
                                     className: 'custom-div-icon',
-                                    html: iconHtml,
-                                    iconSize: [30, 42],
-                                    iconAnchor: [15, 42]
+                                    html: `<div class="marker-pin"></div>`,
+                                    iconSize: [24, 24],
+                                    iconAnchor: [12, 12]
                                 })
                             }).addTo(this.map);
 
                             marker.bindPopup(`
-                                <div class="p-2 min-w-[150px]">
-                                    <p class="text-xs font-black text-zinc-900 mb-1">${device.seri}</p>
-                                    <div class="flex flex-col gap-1">
-                                        <p class="text-[10px] text-zinc-500 font-bold uppercase">Peminjam: ${device.nama_peminjam}</p>
-                                        <p class="text-[10px] text-zinc-400">Last seen: ${device.last_seen}</p>
-                                    </div>
-                                    <div class="mt-2 pt-2 border-t border-zinc-100">
-                                        <span class="inline-flex px-2 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-700 uppercase leading-none">Status: ${device.status}</span>
+                                <div class="p-3 min-w-[180px] bg-background">
+                                    <div class="flex flex-col gap-3">
+                                        <div>
+                                            <p class="text-[10px] text-muted-foreground font-medium mb-1">Unit Device</p>
+                                            <p class="text-sm font-bold text-foreground leading-none">${device.seri}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] text-muted-foreground font-medium mb-1">Penyewa Aktif</p>
+                                            <p class="text-xs font-semibold text-foreground leading-none">${device.nama_peminjam}</p>
+                                        </div>
+                                        <div class="pt-2 border-t border-border flex items-center justify-between">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                <span class="text-[10px] text-muted-foreground font-medium">${device.last_seen}</span>
+                                            </div>
+                                            ${device.battery ? `<span class="text-[9px] font-bold ${device.battery < 20 ? 'text-red-500' : 'text-muted-foreground'}">${device.battery}%</span>` : ''}
+                                        </div>
                                     </div>
                                 </div>
-                            `);
+                            `, {
+                                className: 'shadcn-popup',
+                                maxWidth: 200
+                            });
 
                             this.markers[device.id] = marker;
                         }
