@@ -1074,4 +1074,22 @@
             </div>
         </div>
     </div>
+
+    {{-- Radar Lokasi Entry Point: Compact Edition --}}
+    <div class="max-w-[98vw] mx-auto px-2 sm:px-4 mt-8 mb-4">
+        <div class="bg-muted/30 border border-border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all hover:bg-muted/50 group">
+            <div class="flex items-center gap-4">
+                <div class="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-2.9 8.4-8.4 2.9 2.9-8.4 8.4-2.9z"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-foreground">Device Radar Center</h3>
+                    <p class="text-[10px] text-muted-foreground font-medium">Lacak posisi unit iPhone secara real-time di peta interaktif.</p>
+                </div>
+            </div>
+            <a href="{{ route('admin.radar') }}" class="w-full sm:w-auto h-10 px-6 inline-flex items-center justify-center gap-2 bg-foreground text-background dark:bg-white dark:text-black rounded-xl text-[11px] font-black hover:scale-[1.02] transition-all active:scale-95 shadow-sm">
+                BUKA RADAR
+            </a>
+        </div>
+    </div>
 </div>

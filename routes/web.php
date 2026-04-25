@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/stafflogs', \App\Livewire\Admin\StaffLogs::class)->name('admin.staff-logs');
         Route::get('/admin/ratings', \App\Livewire\Admin\RatingManager::class)->name('admin.ratings');
         Route::get('/admin/scan', \App\Livewire\Admin\QuickScan::class)->name('admin.scan');
+        Route::get('/admin/radar', \App\Livewire\Admin\RadarDevices::class)->name('admin.radar');
     });
     
     // Affiliate Dashboard
