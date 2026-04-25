@@ -159,23 +159,22 @@
                                     className: 'custom-div-icon',
                                     html: `
                                         <div class="flex flex-col items-center">
-                                            <div class="bg-card border border-border rounded-lg px-2.5 py-1.5 shadow-sm mb-1 whitespace-nowrap pointer-events-none translate-y-[-4px]">
-                                                <div class="flex flex-col gap-0.5">
-                                                    <p class="text-[11px] font-bold text-foreground leading-tight">${device.seri}</p>
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="text-[9px] text-muted-foreground font-medium">${device.nama_peminjam.split(' ')[0]}</span>
-                                                        <span class="text-[9px] text-muted-foreground opacity-40">•</span>
-                                                        <span class="text-[9px] text-muted-foreground">${device.last_seen.replace('ago', '')}</span>
-                                                    </div>
+                                            <div class="bg-card/70 backdrop-blur-md border border-border/50 rounded-lg px-2 py-1 shadow-2xl mb-1 whitespace-nowrap pointer-events-none translate-y-[-4px]">
+                                                <div class="flex flex-col gap-0">
+                                                    <p class="text-[10px] font-black text-foreground leading-tight">${device.seri}</p>
+                                                    <p class="text-[8px] text-muted-foreground font-medium leading-none mt-1 opacity-70">${device.nama_peminjam.split(' ')[0]} • ${device.last_seen.replace('ago', '')}</p>
                                                 </div>
                                             </div>
                                             <div class="marker-pin"></div>
                                         </div>
                                     `,
-                                    iconSize: [0, 0], // Let content define size
+                                    iconSize: [0, 0],
                                     iconAnchor: [0, 0]
                                 })
                             }).addTo(this.map);
+
+                            // Optional: Click on marker also triggers focus
+                            marker.on('click', () => this.focusDevice(device));
 
                             this.markers[device.id] = marker;
                         }
@@ -189,17 +188,38 @@
                     }
                 },
 
+                currentPolyline: null,
+
                 focusDevice(device) {
                     if (device.lat && device.lng) {
                         this.selectedId = device.id;
+                        
+                        // Handle Route Shadow (Polyline)
+                        if (this.currentPolyline) {
+                            this.map.removeLayer(this.currentPolyline);
+                        }
+
+                        if (device.history && device.history.length > 1) {
+                            this.currentPolyline = L.polyline(device.history, {
+                                color: '#0ea5e9',
+                                weight: 3,
+                                opacity: 0.5,
+                                dashArray: '5, 10',
+                                lineJoin: 'round'
+                            }).addTo(this.map);
+                        }
+
                         this.map.flyTo([device.lat, device.lng], 16, {
                             duration: 1.5
                         });
-                        this.markers[device.id].openPopup();
                     }
                 },
 
                 resetView() {
+                    if (this.currentPolyline) {
+                        this.map.removeLayer(this.currentPolyline);
+                        this.currentPolyline = null;
+                    }
                     const markerArray = Object.values(this.markers).map(m => m.getLatLng());
                     if (markerArray.length > 0) {
                         const bounds = L.latLngBounds(markerArray);
