@@ -167,9 +167,10 @@
         @if($showModal)
         <div class="relative z-50">
             <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"></div>
-            <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div
-                    class="relative w-full max-w-lg rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8">
+            <div class="fixed inset-0 z-50 overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4">
+                    <div
+                        class="relative w-full max-w-lg rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8 my-8">
                     <h2 class="text-lg font-semibold">{{ $isEditing ? 'Edit Rule' : 'Tambah Rule / Promo Baru' }}</h2>
                     <form wire:submit="save" class="mt-6 space-y-4">
                         <div class="grid grid-cols-2 gap-4">
