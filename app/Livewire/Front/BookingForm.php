@@ -10,7 +10,7 @@ use Livewire\Component;
 
 class BookingForm extends Component
 {
-    public $nik, $nama, $alamat, $no_wa;
+    public $nik, $nama, $alamat, $no_wa, $sosial_media;
     public $waktu_mulai, $waktu_selesai;
     public $unit_id; // Keeping for backward compat/initial select
     public $selected_unit_ids = [];
@@ -63,6 +63,7 @@ class BookingForm extends Component
             if ($lastRental) {
                 $this->nama = $lastRental->nama;
                 $this->alamat = $lastRental->alamat;
+                $this->sosial_media = $lastRental->sosial_media;
 
                 $firstName = explode(' ', $this->nama)[0];
                 $this->nikFoundMessage = "Halo {$firstName}, data otomatis terisi dari sesi Anda.";
@@ -480,6 +481,7 @@ class BookingForm extends Component
             'nik' => 'required|numeric',
             'nama' => 'required',
             'no_wa' => 'required|numeric',
+            'sosial_media' => 'required',
             'alamat' => 'required',
             'waktu_mulai' => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
@@ -520,6 +522,7 @@ class BookingForm extends Component
             'nik' => $this->nik,
             'nama' => strtoupper($this->nama),
             'alamat' => strtoupper($this->alamat),
+            'sosial_media' => $this->sosial_media,
             'no_wa' => $this->no_wa,
             'waktu_mulai' => $this->waktu_mulai,
             'waktu_selesai' => $finalWaktuSelesai,
@@ -582,6 +585,7 @@ class BookingForm extends Component
             $this->nama = $lastRental->nama;
             $this->no_wa = $lastRental->no_wa;
             $this->alamat = $lastRental->alamat;
+            $this->sosial_media = $lastRental->sosial_media;
             $firstName = explode(' ', $this->nama)[0];
             $this->nikFoundMessage = "Halo {$firstName}, data Anda berhasil ditemukan!";
             $this->nikFoundType = 'success';

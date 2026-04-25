@@ -296,6 +296,13 @@
                                 class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             @error('no_wa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
+                        <div>
+                            <label class="text-sm font-medium leading-none">Sosial Media (IG/TikTok)</label>
+                            <input type="text" wire:model="sosial_media"
+                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                placeholder="@username">
+                            @error('sosial_media') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
                         <div class="sm:col-span-2">
                             <label class="text-sm font-medium leading-none">Alamat Domisili lengkap</label>
                             <textarea wire:model="alamat" rows="3"
@@ -687,8 +694,9 @@
                 const nk = $wire.get('nik');
                 const nm = $wire.get('nama');
                 const wa = $wire.get('no_wa');
-                if(!nk || !nm || !wa) {
-                    alert('Harap lengkapi Data Diri (NIK, Nama, No. WhatsApp) terlebih dahulu.');
+                const sm = $wire.get('sosial_media');
+                if(!nk || !nm || !wa || !sm) {
+                    alert('Harap lengkapi Data Diri (NIK, Nama, No. WhatsApp, Sosial Media) terlebih dahulu.');
                     return;
                 }
                 this.step = 3;
@@ -789,7 +797,7 @@
         // Also save on any input change to be safe
         function saveToStorage() {
             const fields = [
-                'nik', 'nama', 'alamat', 'no_wa', 
+                'nik', 'nama', 'alamat', 'no_wa', 'sosial_media',
                 'waktu_mulai', 'waktu_selesai', 
                 'selected_unit_ids', 'selected_category_id'
             ];

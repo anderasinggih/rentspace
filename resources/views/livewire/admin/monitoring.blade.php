@@ -471,6 +471,9 @@
                                             <div class="flex items-center gap-2 mt-1.5">
                                                 <p class="text-sm font-bold text-white leading-tight">
                                                     {{ $rental->nama }}</p>
+                                                @if($rental->sosial_media)
+                                                    <span class="text-[10px] font-medium text-sky-400/60 transition-colors hover:text-sky-400 cursor-default">@ {{ $rental->sosial_media }}</span>
+                                                @endif
                                                 <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider">Active</x-ui.badge>
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
@@ -754,6 +757,9 @@
                                             <div class="flex items-center gap-2 mt-1.5">
                                                 <p class="text-sm font-bold text-white leading-tight">
                                                     {{ $rental->nama }}</p>
+                                                @if($rental->sosial_media)
+                                                    <span class="text-[10px] font-medium text-sky-400/60 transition-colors hover:text-sky-400 cursor-default">@ {{ $rental->sosial_media }}</span>
+                                                @endif
                                                 @if($rental->status === 'paid')
                                                     <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider">Paid</x-ui.badge>
                                                 @else

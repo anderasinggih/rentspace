@@ -341,128 +341,97 @@
                                                                                                             <div class="p-6 md:p-8 bg-background border-b border-border shadow-inner">
                                                                                                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-start">
 
-                                                                                                                    {{-- Col 1: Customer (Theme Aware) --}}
-                                                                                                                    <div class="space-y-6">
+                                                                                                                    {{-- Col 1: Customer --}}
+                                                                                                                    <div class="space-y-4">
                                                                                                                         <div>
-                                                                                                                            <p class="text-[11px] font-bold text-muted-foreground mb-3 uppercase tracking-wider">Informasi
-                                                                                                                                penyewa</p>
-                                                                                                                            <div class="space-y-1">
-                                                                                                                                <h4
-                                                                                                                                    class="text-base font-bold text-foreground tracking-tight">
-                                                                                                                                    {{ $inspectTrx->nama }}</h4>
-                                                                                                                                <p
-                                                                                                                                    class="text-xs text-muted-foreground font-medium">
-                                                                                                                                    {{ $inspectTrx->nik }}</p>
+                                                                                                                            <h4 class="text-lg font-bold text-foreground tracking-tight">{{ $inspectTrx->nama }}</h4>
+                                                                                                                            <p class="text-xs text-muted-foreground mt-0.5">{{ $inspectTrx->nik }}</p>
+                                                                                                                        </div>
+                                                                                                                        
+                                                                                                                        <div class="space-y-2 pt-2 border-t border-border/50">
+                                                                                                                            <div class="flex items-center gap-3 text-xs">
+                                                                                                                                <span class="text-muted-foreground w-24">Sosial Media</span>
+                                                                                                                                @if($inspectTrx->sosial_media)
+                                                                                                                                    <span class="text-sky-500 font-semibold italic">@ {{ $inspectTrx->sosial_media }}</span>
+                                                                                                                                @else
+                                                                                                                                    <span class="text-muted-foreground/50 italic font-medium">Belum diisi</span>
+                                                                                                                                @endif
                                                                                                                             </div>
-                                                                                                                            <div class="mt-4">
-                                                                                                                                <a href="https://wa.me/{{ $inspectTrx->no_wa }}"
-                                                                                                                                    target="_blank"
-                                                                                                                                    class="inline-flex items-center gap-2 text-xs font-bold text-primary hover:text-primary/80 transition-colors">
-                                                                                                                                    <div
-                                                                                                                                        class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14"
-                                                                                                                                            height="14" viewBox="0 0 24 24" fill="none"
-                                                                                                                                            stroke="currentColor" stroke-width="2.5"
-                                                                                                                                            stroke-linecap="round" stroke-linejoin="round">
-                                                                                                                                            <path
-                                                                                                                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                                                                                                                        </svg>
-                                                                                                                                    </div>
-                                                                                                                                    <span>{{ $inspectTrx->no_wa }}</span>
+                                                                                                                            <div class="flex items-center gap-3 text-xs">
+                                                                                                                                <span class="text-muted-foreground w-24">WhatsApp</span>
+                                                                                                                                <a href="https://wa.me/{{ $inspectTrx->no_wa }}" target="_blank" class="text-primary font-bold hover:underline">
+                                                                                                                                    {{ $inspectTrx->no_wa }}
                                                                                                                                 </a>
                                                                                                                             </div>
                                                                                                                         </div>
                                                                                                                     </div>
 
-                                                                                                                    {{-- Col 2: Units & Time (Theme Aware) --}}
-                                                                                                                    <div
-                                                                                                                        class="space-y-6 md:border-l border-border md:pl-12">
-                                                                                                                        <div>
-                                                                                                                            <p class="text-[11px] font-bold text-muted-foreground mb-3 uppercase tracking-wider">Detail sewa
-                                                                                                                            </p>
-                                                                                                                            <div class="space-y-2">
-                                                                                                                                <div class="flex items-center gap-3 text-xs">
-                                                                                                                                    <span class="text-muted-foreground w-12 shrink-0">Mulai</span>
-                                                                                                                                    <span
-                                                                                                                                        class="text-foreground font-semibold">{{ $inspectTrx->waktu_mulai->format('d M Y, H:i') }}</span>
-                                                                                                                                </div>
-                                                                                                                                <div class="flex items-center gap-3 text-xs">
-                                                                                                                                    <span class="text-muted-foreground w-12 shrink-0">Selesai</span>
-                                                                                                                                    <span
-                                                                                                                                        class="text-foreground font-semibold">{{ $inspectTrx->waktu_selesai->format('d M Y, H:i') }}</span>
-                                                                                                                                </div>
+                                                                                                                    {{-- Col 2: Units & Time --}}
+                                                                                                                    <div class="space-y-4 md:border-l border-border/50 md:pl-12">
+                                                                                                                        <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">Detail Sewa</p>
+                                                                                                                        <div class="space-y-2">
+                                                                                                                            <div class="flex items-center gap-3 text-xs">
+                                                                                                                                <span class="text-muted-foreground w-16">Mulai</span>
+                                                                                                                                <span class="text-foreground font-semibold">{{ $inspectTrx->waktu_mulai->format('d M Y, H:i') }}</span>
                                                                                                                             </div>
-                                                                                                                        </div>
-                                                                                                                        <div>
-                                                                                                                            <p class="text-[11px] font-bold text-muted-foreground mb-3 uppercase tracking-wider">Unit
-                                                                                                                                terdaftar</p>
-                                                                                                                            <div
-                                                                                                                                class="max-h-[90px] overflow-y-auto pr-2 flex flex-wrap gap-2 scrollbar-hide">
-                                                                                                                                @foreach($inspectTrx->units as $u)
-                                                                                                                                    <x-ui.badge variant="outline"
-                                                                                                                                        class="border-border text-muted-foreground bg-background hover:bg-muted">
-                                                                                                                                        {{ $u->seri }}
-                                                                                                                                    </x-ui.badge>
-                                                                                                                                @endforeach
+                                                                                                                            <div class="flex items-center gap-3 text-xs">
+                                                                                                                                <span class="text-muted-foreground w-16">Selesai</span>
+                                                                                                                                <span class="text-foreground font-semibold">{{ $inspectTrx->waktu_selesai->format('d M Y, H:i') }}</span>
+                                                                                                                            </div>
+                                                                                                                            <div class="pt-2">
+                                                                                                                                <div class="flex flex-wrap gap-1.5">
+                                                                                                                                    @foreach($inspectTrx->units as $u)
+                                                                                                                                        <span class="inline-flex items-center rounded-md border border-border bg-muted/30 px-2 py-0.5 text-[10px] font-semibold text-foreground">
+                                                                                                                                            {{ $u->seri }}
+                                                                                                                                        </span>
+                                                                                                                                    @endforeach
+                                                                                                                                </div>
                                                                                                                             </div>
                                                                                                                         </div>
                                                                                                                     </div>
 
-                                                                                                                    {{-- Col 3: Financials (Theme Aware) --}}
-                                                                                                                    <div
-                                                                                                                        class="space-y-6 md:border-l border-border md:pl-12">
-                                                                                                                        <p class="text-[11px] font-bold text-muted-foreground mb-3 uppercase tracking-wider">Keuangan</p>
-                                                                                                                        <div class="space-y-3">
-                                                                                                                            {{-- Harga Dasar --}}
+                                                                                                                    {{-- Col 3: Financials --}}
+                                                                                                                    <div class="space-y-4 md:border-l border-border/50 md:pl-12">
+                                                                                                                        <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">Rincian Pembayaran</p>
+                                                                                                                        <div class="space-y-2.5">
                                                                                                                             <div class="flex justify-between items-center text-xs">
                                                                                                                                 <span class="text-muted-foreground">Harga Dasar</span>
-                                                                                                                                <span class="font-semibold text-foreground">Rp {{ number_format($inspectTrx->subtotal_harga, 0, ',', '.') }}</span>
+                                                                                                                                <span class="font-medium text-foreground">Rp {{ number_format($inspectTrx->subtotal_harga, 0, ',', '.') }}</span>
                                                                                                                             </div>
 
-                                                                                                                            {{-- Biaya Bank --}}
                                                                                                                             @php 
-                                                                                                                                                                                                                            $details = $inspectTrx->payment_details;
+                                                                                                                                $details = $inspectTrx->payment_details;
                                                                                                                                 $paymentFee = is_array($details) ? ($details['payment_fee'] ?? 0) : data_get($details, 'payment_fee', 0);
                                                                                                                             @endphp
+
                                                                                                                             @if($paymentFee > 0)
                                                                                                                                 <div class="flex justify-between items-center text-xs">
                                                                                                                                     <span class="text-muted-foreground">Biaya Bank</span>
-                                                                                                                                    <span class="font-semibold text-foreground">Rp {{ number_format($paymentFee, 0, ',', '.') }}</span>
+                                                                                                                                    <span class="font-medium text-foreground">Rp {{ number_format($paymentFee, 0, ',', '.') }}</span>
                                                                                                                                 </div>
                                                                                                                             @endif
 
-                                                                                                                            {{-- Kode Unik --}}
                                                                                                                             @if($inspectTrx->kode_unik_pembayaran > 0)
                                                                                                                                 <div class="flex justify-between items-center text-xs">
                                                                                                                                     <span class="text-muted-foreground">Kode Unik</span>
-                                                                                                                                    <span class="font-semibold text-foreground">Rp {{ number_format($inspectTrx->kode_unik_pembayaran, 0, ',', '.') }}</span>
+                                                                                                                                    <span class="font-medium text-foreground">Rp {{ number_format($inspectTrx->kode_unik_pembayaran, 0, ',', '.') }}</span>
                                                                                                                                 </div>
                                                                                                                             @endif
 
-                                                                                                                            {{-- Potongan Diskon --}}
                                                                                                                             @if($inspectTrx->potongan_diskon > 0)
-                                                                                                                                <div class="flex justify-between items-center text-xs text-destructive font-bold">
-                                                                                                                                    <span>Potongan</span>
+                                                                                                                                <div class="flex justify-between items-center text-xs text-red-500 font-medium">
+                                                                                                                                    <span>Diskon</span>
                                                                                                                                     <span>- Rp {{ number_format($inspectTrx->potongan_diskon, 0, ',', '.') }}</span>
                                                                                                                                 </div>
                                                                                                                             @endif
 
-                                                                                                                            @if($inspectTrx->denda > 0 || $inspectTrx->denda_kerusakan > 0)
-                                                                                                                                <div class="flex justify-between items-center text-xs text-amber-600 font-bold">
-                                                                                                                                    <span>Total Denda</span>
-                                                                                                                                    <span>+ Rp {{ number_format($inspectTrx->denda + $inspectTrx->denda_kerusakan, 0, ',', '.') }}</span>
-                                                                                                                                </div>
-                                                                                                                            @endif
-                                                                                                                            <div
-                                                                                                                                class="pt-4 border-t border-border flex justify-between items-end">
-                                                                                                                                <span class="text-[11px] font-bold text-muted-foreground">Grand
-                                                                                                                                    total</span>
-                                                                                                                                <span class="text-xl font-black text-primary ">Rp {{ number_format($inspectTrx->grand_total, 0, ',', '.') }}</span>
-                                                                                                                                                                </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        </div>
-
-                                                                                                                                                    </div>
+                                                                                                                            <div class="pt-3 border-t border-border/50 flex justify-between items-baseline">
+                                                                                                                                <span class="text-[10px] font-bold text-muted-foreground/60 uppercase">Grand Total</span>
+                                                                                                                                <span class="text-lg font-black text-primary">Rp {{ number_format($inspectTrx->grand_total, 0, ',', '.') }}</span>
+                                                                                                                            </div>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                          </div>
 
                                                                                                                                                     {{-- Footer: Actions (Theme Aware) --}}
                                                                                                                                                     <div class="flex flex-col md:flex-row md:items-center justify-between mt-10 pt-6 border-t border-border gap-4">
