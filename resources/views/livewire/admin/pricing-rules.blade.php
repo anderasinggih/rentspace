@@ -164,13 +164,15 @@
             </div>
         </div>
 
+        <!-- Modal Form -->
         @if($showModal)
-        <div class="relative z-50">
-            <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"></div>
-            <div class="fixed inset-0 z-50 overflow-y-auto">
-                <div class="flex min-h-full items-center justify-center p-4">
-                    <div
-                        class="relative w-full max-w-lg rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8 my-8">
+        <div class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity" wire:click="$set('showModal', false)"></div>
+
+            <!-- Modal Content Wrapper -->
+            <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-background p-6 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-8 border border-border">
                     <h2 class="text-lg font-semibold">{{ $isEditing ? 'Edit Rule' : 'Tambah Rule / Promo Baru' }}</h2>
                     <form wire:submit="save" class="mt-6 space-y-4">
                         <div class="grid grid-cols-2 gap-4">
