@@ -30,11 +30,11 @@ class RadarDevices extends Component
         foreach($rentals as $rental) {
             foreach($rental->units as $unit) {
                 if($unit->category && str_contains(strtolower($unit->category->name), 'iphone')) {
-                    $locs = $unit->locations;
+                    $locs = $unit->locations; // Already limited to 50 in 'with'
                     $lastLoc = $locs->first();
                     
-                    // Format history for polyline
-                    $history = $locs->map(fn($l) => [$l->lat, $l->lng])->toArray();
+                    // Sort history from Oldest to Newest to draw a connected line in order
+                    $history = $locs->reverse()->map(fn($l) => [$l->lat, $l->lng])->values()->toArray();
 
                     $devices[] = [
                         'id' => $unit->id,
