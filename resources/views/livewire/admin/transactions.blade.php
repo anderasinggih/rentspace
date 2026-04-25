@@ -28,7 +28,7 @@
 
         <div class="mt-8 flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between">
             <div class="flex flex-1 flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <div class="relative flex-1 max-w-sm">
+                <div class="relative flex-1 max-w-sm group">
                     <div
                         class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -38,8 +38,17 @@
                         </svg>
                     </div>
                     <input type="text" wire:model.live.debounce.300ms="search"
-                        class="block w-full h-9 pl-10 pr-3 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        class="block w-full h-9 pl-10 pr-10 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         placeholder="Cari nama, invoice, atau WA...">
+                    
+                    @if($search)
+                        <button wire:click="$set('search', '')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    @endif
                 </div>
 
                 <div class="hidden sm:flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-end">
