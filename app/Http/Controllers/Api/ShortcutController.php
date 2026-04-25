@@ -8,6 +8,7 @@ use App\Models\Unit;
 use Illuminate\Http\Request;
 use App\Models\UnitLocation;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class ShortcutController extends Controller
 {
@@ -98,11 +99,34 @@ class ShortcutController extends Controller
                 'long' => 'required'
             ]);
 
+            $address = $request->address;
+
+            // Jika alamat kosong dari iPhone, coba cari di Web (Reverse Geocoding)
+            if (!$address && $request->lat && $request->long) {
+                try {
+                    $response = Http::withHeaders([
+                        'User-Agent' => 'RentSpace-App-v1'
+                    ])->get("https://nominatim.openstreetmap.org/reverse", [
+                        'format' => 'json',
+                        'lat' => $request->lat,
+                        'lon' => $request->long,
+                        'zoom' => 18,
+                        'addressdetails' => 1
+                    ]);
+
+                    if ($response->successful()) {
+                        $address = $response->json('display_name');
+                    }
+                } catch (\Exception $e) {
+                    // Silently fail if geocoding fails
+                }
+            }
+
             UnitLocation::create([
                 'unit_id' => $unit->id,
                 'lat' => $request->lat,
                 'lng' => $request->long,
-                'address' => $request->address,
+                'address' => $address,
                 'battery_level' => $request->battery_level
             ]);
 
