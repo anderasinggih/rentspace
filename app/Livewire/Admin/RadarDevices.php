@@ -22,7 +22,6 @@ class RadarDevices extends Component
         }, 'units.category'])
         ->where('status', 'paid')
         ->where('waktu_mulai', '<=', now())
-        ->where('waktu_selesai', '>=', now())
         ->get();
 
         // Map data for Leaflet
