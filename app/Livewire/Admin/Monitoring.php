@@ -11,12 +11,22 @@ use Carbon\Carbon;
 #[Title('Monitoring Timeline - Admin')]
 class Monitoring extends Component
 {
+    use \App\Traits\LogsStaffActivity;
+
     public $timeframe = '14'; 
     public $filterCategoryId = '';
     public $search = '';
     public $customStartDate;
     public $customEndDate;
     public $selectedRentalId = null;
+
+    // Completion/Denda Properties
+    public $completingTrxId = null;
+    public $dendaAmount = 0;
+    public $dendaKerusakanAmount = 0;
+    public $catatanKerusakan = '';
+    public $dendaMethod = 'cash';
+    public $lateDurationText = '';
 
     public function mount()
     {
@@ -55,6 +65,113 @@ class Monitoring extends Component
     {
         if (!$this->selectedRentalId) return null;
         return Rental::with('units')->find($this->selectedRentalId);
+    }
+
+    public function markAsPaid($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+        $rental = Rental::findOrFail($id);
+        if ($rental->status === 'pending') {
+            $rental->update(['status' => 'paid']);
+            $this->calculateAffiliateCommission($rental);
+            
+            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id} via Monitoring");
+        }
+    }
+
+    public function cancel($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+        $rental = Rental::findOrFail($id);
+        if (in_array($rental->status, ['pending', 'paid'])) {
+            $rental->update(['status' => 'cancelled']);
+            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id} via Monitoring");
+        }
+    }
+
+    public function openDendaModal($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+        $trx = Rental::findOrFail($id);
+        $this->completingTrxId = $id;
+        $this->dendaAmount = 0;
+        $this->dendaKerusakanAmount = 0;
+        $this->catatanKerusakan = '';
+        $this->dendaMethod = 'cash';
+
+        // Calculate late duration
+        $end = \Carbon\Carbon::parse($trx->waktu_selesai);
+        $diff = now()->diff($end);
+        if (now() > $end) {
+            $parts = [];
+            if ($diff->d > 0) $parts[] = $diff->d . ' hari';
+            if ($diff->h > 0) $parts[] = $diff->h . ' jam';
+            if ($diff->i > 0) $parts[] = $diff->i . ' menit';
+            $this->lateDurationText = implode(' ', $parts);
+        } else {
+            $this->lateDurationText = 'Tidak telat';
+        }
+    }
+
+    public function closeDendaModal()
+    {
+        $this->completingTrxId = null;
+    }
+
+    public function confirmDenda()
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $this->validate(['dendaAmount' => 'required|numeric|min:0', 'dendaKerusakanAmount' => 'required|numeric|min:0', 'dendaMethod' => 'required|in:cash,qris']);
+
+        if ($this->completingTrxId) {
+            $rental = Rental::findOrFail($this->completingTrxId);
+            if (in_array($rental->status, ['pending', 'paid'])) {
+                $newGrandTotal = $rental->grand_total + (int)$this->dendaAmount + (int)$this->dendaKerusakanAmount;
+                $rental->update([
+                    'status' => 'completed',
+                    'denda' => (int)$this->dendaAmount,
+                    'denda_kerusakan' => (int)$this->dendaKerusakanAmount,
+                    'catatan_kerusakan' => $this->catatanKerusakan,
+                    'grand_total' => $newGrandTotal,
+                    'denda_payment_method' => ($this->dendaAmount > 0 || $this->dendaKerusakanAmount > 0) ? $this->dendaMethod : null,
+                    'completed_at' => now(),
+                ]);
+                $this->calculateAffiliateCommission($rental);
+                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} via Monitoring");
+            }
+        }
+        $this->closeDendaModal();
+    }
+
+    public function finishWithoutDenda($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $rental = Rental::findOrFail($id);
+        if (in_array($rental->status, ['pending', 'paid'])) {
+            $rental->update(['status' => 'completed', 'denda' => 0, 'denda_payment_method' => null, 'completed_at' => now()]);
+            $this->calculateAffiliateCommission($rental);
+            $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} tanpa denda via Monitoring");
+        }
+    }
+
+    private function calculateAffiliateCommission($rental)
+    {
+        if ($rental->affiliator_id) {
+            $exists = \App\Models\AffiliateCommission::where('rental_id', $rental->id)->exists();
+            if ($exists) return;
+            $profile = \App\Models\AffiliatorProfile::where('user_id', $rental->affiliator_id)->first();
+            if ($profile && $profile->status === 'approved') {
+                $amount = $rental->subtotal_harga * ($profile->commission_rate / 100);
+                \App\Models\AffiliateCommission::create(['affiliator_id' => $rental->affiliator_id, 'rental_id' => $rental->id, 'amount' => $amount, 'status' => 'earned']);
+                $totalEarned = \App\Models\AffiliateCommission::where('affiliator_id', $rental->affiliator_id)->sum('amount');
+                $totalWithdrawn = \App\Models\AffiliatePayout::where('affiliator_id', $rental->affiliator_id)->sum('amount');
+                $profile->balance = $totalEarned - $totalWithdrawn;
+                $profile->save();
+            }
+        }
     }
 
     public function render()

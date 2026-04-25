@@ -1,9 +1,9 @@
 
 
-<div class="py-1 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
+<div class="pt-0 pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
 
     <div class="max-w-3xl mx-auto">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-8">
             <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Formulir Penyewaan</h1>
         </div>
 

@@ -357,7 +357,7 @@
         </div>
 
         <!-- STATUS CATEGORIES SECTION -->
-        <div class="mt-6 sm:mt-16 space-y-12 sm:space-y-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
+        <div class="mt-6 sm:mt-16 space-y-8 sm:space-y-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
 
             <!-- 1. ACTIVE RENTALS SECTION -->
             <div class="space-y-6">
@@ -465,74 +465,72 @@
 
                                 <!-- Accordion content -->
                                 <div x-show="expanded" x-collapse class="bg-muted/20 border-t border-border">
-                                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                        <div class="space-y-3">
-                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Informasi
-                                                Penyewa</h4>
-                                            <div class="space-y-2">
+                                    <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
+                                        {{-- Kolom 1: Data Diri --}}
+                                        <div class="space-y-4">
+                                            <div class="flex items-center gap-2 mt-1.5">
+                                                <p class="text-sm font-bold text-white leading-tight">
+                                                    {{ $rental->nama }}</p>
+                                                <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider">Active</x-ui.badge>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <p class="text-[8px] font-bold text-muted-foreground opacity-70">Alamat
-                                                        Lengkap</p>
-                                                    <p
-                                                        class="text-[10px] sm:text-xs font-semibold text-foreground mt-0.5 leading-relaxed">
-                                                        {{ $rental->alamat ?: '-' }}</p>
+                                                    <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">NIK / Identitas</p>
+                                                    <p class="text-xs font-medium text-white/90 mt-1.5">{{ $rental->nik }}</p>
                                                 </div>
                                                 <div>
-                                                    <p class="text-[8px] font-bold text-muted-foreground opacity-70">Identitas /
-                                                        NIK</p>
-                                                    <p class="text-[10px] sm:text-xs font-semibold text-foreground mt-0.5">
-                                                        {{ $rental->nik }}</p>
+                                                    <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">Booking Code</p>
+                                                    <div class="mt-1.5">
+                                                        <span class="inline-flex items-center rounded border bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-tight">
+                                                            {{ $rental->booking_code }}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p class="text-[8px] font-bold text-muted-foreground opacity-70">Kode Booking</p>
-                                                    <p class="text-[10px] sm:text-xs font-bold text-primary mt-0.5 uppercase tracking-wider">
-                                                        {{ $rental->booking_code }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">Alamat Lengkap</p>
+                                                <p class="text-xs font-medium text-white/90 leading-tight mt-1.5">
+                                                    {{ $rental->alamat ?: '-' }}</p>
+                                            </div>
+                                            <div class="pt-2 flex flex-wrap items-center gap-2">
+                                                @if ($rental->status_bayar === 'Menunggu')
+                                                    <button wire:click="markAsPaid({{ $rental->id }})"
+                                                        wire:loading.attr="disabled"
+                                                        class="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-sm">Validasi</button>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        {{-- Kolom 2: Waktu --}}
+                                        <div class="space-y-4">
+                                            <h4 class="text-[10px] font-bold text-white/40 tracking-widest uppercase mb-1">Jadwal Sewa</h4>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div class="flex items-stretch gap-2.5">
+                                                    <div class="w-1 bg-sky-500 rounded-full shrink-0 my-0.5 shadow-[0_0_8px_rgba(14,165,233,0.4)]"></div>
+                                                    <div class="flex flex-col justify-center">
+                                                        <p class="text-[9px] font-bold text-white/30 uppercase leading-none mb-1.5">Mulai</p>
+                                                        <p class="text-[11px] font-bold text-white leading-tight">
+                                                            {{ $rental->waktu_mulai->translatedFormat('d M, H:i') }}<br>
+                                                            <span class="text-[10px] font-semibold text-sky-400 uppercase tracking-tighter">{{ $rental->waktu_mulai->translatedFormat('l') }}</span>
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div class="pt-2">
-                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}"
-                                                        target="_blank"
-                                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white text-[11px] font-bold hover:bg-emerald-600 transition-colors shadow-sm">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                            <path
-                                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                                        </svg>
-                                                        Hubungi via WhatsApp
-                                                    </a>
+                                                <div class="flex items-stretch gap-2.5">
+                                                    <div class="w-1 bg-emerald-500 rounded-full shrink-0 my-0.5 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
+                                                    <div class="flex flex-col justify-center">
+                                                        <p class="text-[9px] font-bold text-white/30 uppercase leading-none mb-1.5">Selesai</p>
+                                                        <p class="text-[11px] font-bold text-white leading-tight">
+                                                            {{ $rental->waktu_selesai->translatedFormat('d M, H:i') }}<br>
+                                                            <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-tighter">{{ $rental->waktu_selesai->translatedFormat('l') }}</span>
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="space-y-3">
-                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Detail Waktu
-                                            </h4>
-                                            <div class="space-y-3">
-                                                <div class="flex items-start gap-3">
-                                                    <div class="h-8 w-1 bg-primary/20 rounded-full shrink-0"></div>
-                                                    <div>
-                                                        <p class="text-[8px] font-bold text-muted-foreground opacity-70">Waktu
-                                                            Mulai</p>
-                                                        <p class="text-[10px] font-bold text-foreground mt-0.5">
-                                                            {{ $rental->waktu_mulai->translatedFormat('d M Y, H:i') }} WIB</p>
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-start gap-3">
-                                                    <div class="h-8 w-1 bg-emerald-500/20 rounded-full shrink-0"></div>
-                                                    <div>
-                                                        <p class="text-[8px] font-bold text-muted-foreground opacity-70">Waktu
-                                                            Selesai</p>
-                                                        <p class="text-[10px] font-bold text-emerald-600 mt-0.5">
-                                                            {{ $rental->waktu_selesai->translatedFormat('d M Y, H:i') }} WIB</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="space-y-3">
-                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Ringkasan
-                                                Biaya</h4>
-                                            <div class="bg-background rounded-xl p-4 border border-border/50">
+                                        {{-- Kolom 3: Biaya --}}
+                                        <div class="space-y-4">
+                                            <div class="bg-background rounded-xl p-3 sm:p-4 border border-border/50">
                                                 <div class="space-y-2">
                                                     <div class="flex justify-between text-[11px]">
                                                         <span class="text-muted-foreground">Harga Sewa</span>
@@ -553,6 +551,19 @@
                                                             {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <!-- Action Button -->
+                                            <div class="pt-2 flex gap-2">
+                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}"
+                                                    target="_blank"
+                                                    class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/5 text-emerald-600 border border-emerald-500/10 text-[10px] font-bold hover:bg-emerald-500 hover:text-white transition-all">
+                                                    WhatsApp
+                                                </a>
+                                                <button wire:click="openDendaModal({{ $rental->id }})"
+                                                    class="flex-[2] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[10px] font-black hover:bg-blue-500 hover:text-white transition-all shadow-sm active:scale-95">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                                    Selesaikan Sewa
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -675,40 +686,74 @@
                                 </div>
 
                                 <div x-show="expanded" x-collapse class="bg-muted/20 border-t border-border">
-                                    <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                                        <div class="space-y-3">
-                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Informasi
-                                                Penyewa</h4>
-                                            <div class="space-y-2">
-                                                <p class="text-[10px] sm:text-xs font-semibold text-foreground">
-                                                    {{ $rental->nik }}</p>
-                                                <div class="flex flex-col gap-1">
-                                                    <p class="text-[8px] font-bold text-muted-foreground opacity-70">Kode Booking</p>
-                                                    <p class="text-[10px] sm:text-xs font-black text-primary uppercase tracking-wider">
-                                                        {{ $rental->booking_code }}</p>
+                                    <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
+                                        {{-- Kolom 1: Data Diri --}}
+                                        <div class="space-y-4">
+                                            <div class="flex items-center gap-2 mt-1.5">
+                                                <p class="text-sm font-bold text-white leading-tight">
+                                                    {{ $rental->nama }}</p>
+                                                @if($rental->status === 'paid')
+                                                    <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider">Paid</x-ui.badge>
+                                                @else
+                                                    <x-ui.badge variant="amber" class="text-[9px] uppercase tracking-wider">Pending</x-ui.badge>
+                                                @endif
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">NIK / Identitas</p>
+                                                    <p class="text-xs font-medium text-white/90 mt-1.5">{{ $rental->nik }}</p>
                                                 </div>
-                                                <div class="pt-1">
-                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}"
-                                                        target="_blank"
-                                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[9px] sm:text-[11px] font-bold hover:bg-emerald-600 transition-colors shadow-sm">WhatsApp</a>
+                                                <div>
+                                                    <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">Booking Code</p>
+                                                    <div class="mt-1.5">
+                                                        <span class="inline-flex items-center rounded border bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-tight">
+                                                            {{ $rental->booking_code }}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="space-y-3">
-                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Jadwal Sewa
-                                            </h4>
-                                            <p class="text-[10px] font-bold text-foreground">Durasi:
-                                                {{ $rental->waktu_mulai->diffInHours($rental->waktu_selesai) }} Jam</p>
-                                            <p class="text-[10px] text-muted-foreground">
-                                                {{ $rental->waktu_mulai->format('d M, H:i') }} s/d
-                                                {{ $rental->waktu_selesai->format('d M, H:i') }}</p>
+
+                                        {{-- Kolom 2: Jadwal --}}
+                                        <div class="space-y-4">
+                                            <h4 class="text-[10px] font-bold text-white/40 tracking-widest uppercase mb-1">Jadwal Sewa</h4>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div class="flex items-stretch gap-2.5">
+                                                    <div class="w-1 bg-sky-500 rounded-full shrink-0 my-0.5 shadow-[0_0_8px_rgba(14,165,233,0.4)]"></div>
+                                                    <div class="flex flex-col justify-center">
+                                                        <p class="text-[9px] font-bold text-white/30 uppercase leading-none mb-1.5">Mulai</p>
+                                                        <p class="text-[11px] font-bold text-white leading-tight">
+                                                            {{ $rental->waktu_mulai->translatedFormat('d M, H:i') }}<br>
+                                                            <span class="text-[10px] font-semibold text-sky-400 uppercase tracking-tighter">{{ $rental->waktu_mulai->translatedFormat('l') }}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-stretch gap-2.5">
+                                                    <div class="w-1 bg-emerald-500 rounded-full shrink-0 my-0.5 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
+                                                    <div class="flex flex-col justify-center">
+                                                        <p class="text-[9px] font-bold text-white/30 uppercase leading-none mb-1.5">Selesai</p>
+                                                        <p class="text-[11px] font-bold text-white leading-tight">
+                                                            {{ $rental->waktu_selesai->translatedFormat('d M, H:i') }}<br>
+                                                            <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-tighter">{{ $rental->waktu_selesai->translatedFormat('l') }}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="space-y-3 text-right">
-                                            <h4 class="text-[9px] font-bold text-muted-foreground tracking-widest">Pembayaran
-                                            </h4>
-                                            <span
-                                                class="inline-block px-2 py-1 bg-emerald-500/10 text-emerald-600 text-[9px] font-bold rounded-lg border border-emerald-500/20 tracking-widest">Paid
-                                                / Confirmed</span>
+
+                                        {{-- Kolom 3: Aksi --}}
+                                        <div class="space-y-4 text-right flex flex-col h-full justify-end">
+                                             @if($rental->status === 'paid')
+                                                <div class="flex flex-row gap-2">
+                                                    <button wire:click="openDendaModal({{ $rental->id }})" class="flex-1 py-2.5 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[10px] font-black hover:bg-blue-500 hover:text-white transition-all">LANGSUNG SELESAIKAN</button>
+                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-2.5 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all">BATALKAN</button>
+                                                </div>
+                                            @else
+                                                <div class="flex flex-row gap-2">
+                                                    <button wire:confirm="Yakin ingin validasi pembayaran?" wire:click="markAsPaid({{ $rental->id }})" class="flex-1 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-black hover:bg-emerald-500 hover:text-white transition-all active:scale-95">VALIDASI</button>
+                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-2.5 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all">BATALKAN</button>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -897,6 +942,63 @@
                         Server...</p>
                 </div>
             @endif
+        </div>
+    </div>
+
+    <!-- Completion / Denda Modal -->
+    <div x-show="$wire.completingTrxId" 
+        class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        x-cloak>
+        
+        <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-200">
+            <div class="p-6 border-b border-border bg-muted/5">
+                <h3 class="text-base font-black text-foreground uppercase tracking-tight">Selesaikan Sewa</h3>
+                <p class="text-[10px] text-muted-foreground mt-1">Konfirmasi pengembalian unit & cek denda.</p>
+            </div>
+            
+            <div class="p-6 space-y-5">
+                <!-- Info Telat -->
+                <div class="p-3 rounded-xl {{ str_contains($lateDurationText, 'Tidak telat') ? 'bg-emerald-500/5 border border-emerald-500/10' : 'bg-rose-500/5 border border-rose-500/10' }}">
+                    <p class="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Durasi Keterlambatan</p>
+                    <p class="text-sm font-black {{ str_contains($lateDurationText, 'Tidak telat') ? 'text-emerald-600' : 'text-rose-600' }} mt-1">{{ $lateDurationText }}</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Denda Keterlambatan (Rp)</label>
+                        <input type="number" wire:model.live="dendaAmount" class="w-full h-11 px-4 bg-muted border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Denda Kerusakan (Rp)</label>
+                        <input type="number" wire:model.live="dendaKerusakanAmount" class="w-full h-11 px-4 bg-muted border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Catatan Kondisi Barang</label>
+                        <textarea wire:model="catatanKerusakan" placeholder="Misal: lecet dikit, layar gores..." class="w-full p-4 bg-muted border border-border rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[80px]"></textarea>
+                    </div>
+                    
+                    @if($dendaAmount > 0 || $dendaKerusakanAmount > 0)
+                    <div>
+                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Metode Bayar Denda</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button @click="$wire.set('dendaMethod', 'cash')" class="py-2.5 rounded-xl border-2 text-[10px] font-black transition-all {{ $dendaMethod === 'cash' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-muted/5 text-muted-foreground' }}">TUNAI / CASH</button>
+                            <button @click="$wire.set('dendaMethod', 'qris')" class="py-2.5 rounded-xl border-2 text-[10px] font-black transition-all {{ $dendaMethod === 'qris' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-muted/5 text-muted-foreground' }}">QRIS / TRANSFER</button>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="p-6 bg-muted/5 border-t border-border flex gap-3">
+                <button @click="$wire.closeDendaModal()" class="flex-1 py-3 text-[11px] font-black text-muted-foreground hover:bg-muted rounded-xl transition-all uppercase tracking-widest">Batal</button>
+                <button wire:click="confirmDenda" class="flex-1 py-3 bg-primary text-primary-foreground text-[11px] font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest">Selesaikan</button>
+            </div>
         </div>
     </div>
 </div>

@@ -1,4 +1,4 @@
-<div class="py-0 px-4 sm:py-16 flex flex-col items-center font-sans tracking-normal" @if($rental->status === 'pending') wire:poll.15s="checkStatus" @endif>
+<div class="pt-0 pb-16 px-4 sm:pt-16 flex flex-col items-center font-sans tracking-normal" @if($rental->status === 'pending') wire:poll.15s="checkStatus" @endif>
     <!-- Processing Loading Overlay -->
     <div wire:loading wire:target="selectChannel" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex flex-col items-center w-full animate-in fade-in duration-300 px-6">
         <div class="bg-card p-5 rounded-2xl shadow-2xl flex flex-row items-center gap-4 text-left max-w-[320px] w-full border border-border/50 mt-[40vh]">
@@ -13,7 +13,7 @@
         </div>
     </div>
 
-    <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-4 animate-in fade-in duration-500">
+    <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-2 sm:mt-8 animate-in fade-in duration-500">
         
         <!-- Header -->
         <div class="p-4 text-center border-b border-border/50 bg-muted/10">
@@ -194,15 +194,15 @@
                             @endif
                         @elseif($selectedChannel === 'manual_qris')
                             <p class="font-bold text-foreground mb-4">Silakan Scan QRIS Berikut</p>
-                            <div class="inline-block p-4 bg-white rounded-xl border border-border shadow-2xl mb-4">
+                            <div class="inline-block p-4 bg-white rounded-xl border border-border shadow-xl mb-4">
                                 <img src="/uploads/{{ data_get($paymentInfo, 'qris_image', 'default.jpg') }}?t={{ time() }}" 
                                      alt="QRIS Statis" 
-                                     class="w-64 h-64 mx-auto object-contain"
+                                     class="w-56 h-56 mx-auto object-contain"
                                      onerror="this.src='https://placehold.co/300x300/18181b/ffffff?text=Scan+QRIS'">
                             </div>
 
-                            <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-xs font-medium mb-4">
-                                Setelah transfer berhasil, harap screenshot bukti bayar dan kirim ke WhatsApp Admin untuk konfirmasi.
+                            <div class="p-2.5 bg-emerald-500/[0.03] border border-emerald-500/10 rounded-xl text-emerald-700/80 text-[11px] font-bold mb-4 leading-tight">
+                                Silakan screenshot bukti transfer & kirim ke WhatsApp untuk konfirmasi.
                             </div>
 
                             @php
@@ -351,7 +351,7 @@
 
             @if($paymentInfo)
                 <div class="mt-3">
-                    <button wire:click="resetPayment" class="mt-16 w-full h-11 rounded-xl bg-white text-zinc-900 flex items-center justify-center gap-2 font-bold border border-zinc-200 hover:bg-zinc-50 transition-all text-sm active:scale-95 shadow-sm">
+                    <button wire:click="resetPayment" class="mt-4 w-full h-11 rounded-xl bg-white text-zinc-900 flex items-center justify-center gap-2 font-bold border border-zinc-200 hover:bg-zinc-50 transition-all text-sm active:scale-95 shadow-sm">
                         Ubah Metode Pembayaran
                     </button>
                 </div>
