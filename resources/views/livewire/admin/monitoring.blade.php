@@ -392,7 +392,7 @@
                 </div>
 
                 @if($activeRentals->count() > 0)
-                    <div class="grid grid-cols-1 gap-4">
+                    <div class="grid grid-cols-1 gap-2">
                         @foreach($activeRentals as $rental)
                             <div x-data="{ expanded: false }"
                                 class="bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-emerald-500/30"
@@ -570,58 +570,65 @@
                                             </div>
                                         </div>
 
-                                    <div class="px-3 pb-4 sm:px-6">
-                                        <div class="pt-4 border-t border-white/5">
-                                            <div class="space-y-1 max-h-[185px] overflow-y-auto pr-2 scrollbar-hide">
-                                                @foreach($rental->units as $u)
-                                                    @php 
-                                                        $logs = $u->locations()
-                                                            ->whereBetween('created_at', [$rental->waktu_mulai, $rental->waktu_selesai])
-                                                            ->latest()
-                                                            ->limit(50)
-                                                            ->get();
-                                                    @endphp
+                                    {{-- Log Lokasi: Hanya muncul jika ada iPhone dan ada datanya --}}
+                                    @php 
+                                        $iphoneUnits = $rental->units->filter(fn($u) => str_contains(strtolower($u->nama), 'iphone'));
+                                        $hasLogs = false;
+                                        if($iphoneUnits->isNotEmpty()) {
+                                            foreach($iphoneUnits as $u) {
+                                                if($u->locations()->whereBetween('created_at', [$rental->waktu_mulai, $rental->waktu_selesai])->exists()) {
+                                                    $hasLogs = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    @endphp
 
-                                                    @foreach($logs as $loc)
-                                                        <div class="py-1.5 px-2.5 bg-white/[0.02] rounded-xl border border-white/5 flex items-center justify-between group/loc hover:bg-white/5 transition-all mb-1 last:mb-0">
-                                                            <div class="min-w-0 flex-1">
-                                                                <div class="flex items-center gap-1.5 mb-0.5">
-                                                                    <span class="text-[10px] sm:text-xs font-semibold text-white/90 leading-none">{{ $loc->created_at->format('H:i') }}</span>
-                                                                    <span class="text-[8px] sm:text-[9px] font-medium text-white/30 leading-none tracking-tight">{{ $loc->created_at->translatedFormat('d M Y') }}</span>
-                                                                    <span class="text-[7px] sm:text-[8px] font-medium text-white/10 hidden sm:inline">· {{ $loc->created_at->diffForHumans() }}</span>
-                                                                </div>
-                                                                @if($loc->address)
-                                                                    <p class="text-[9px] sm:text-[10px] text-emerald-500/60 font-medium leading-tight truncate pr-2">{{ $loc->address }}</p>
-                                                                @else
-                                                                    <p class="text-[8px] sm:text-[9px] text-white/20 truncate italic font-light">{{ $loc->lat }}, {{ $loc->lng }}</p>
-                                                                @endif
-                                                            </div>
-                                                            
-                                                            <div class="flex items-center gap-3 shrink-0">
-                                                                @if($loc->battery_level)
-                                                                    <div class="flex flex-col items-center">
-                                                                        <span class="text-[9px] sm:text-[10px] font-semibold {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/40' }}">{{ (int)$loc->battery_level }}%</span>
+                                    @if($hasLogs)
+                                        <div class="px-3 pb-4 sm:px-6">
+                                            <div class="pt-4 border-t border-white/5">
+                                                <div class="space-y-1 max-h-[185px] overflow-y-auto pr-2 scrollbar-hide">
+                                                    @foreach($iphoneUnits as $u)
+                                                        @php 
+                                                            $logs = $u->locations()
+                                                                ->whereBetween('created_at', [$rental->waktu_mulai, $rental->waktu_selesai])
+                                                                ->latest()
+                                                                ->limit(50)
+                                                                ->get();
+                                                        @endphp
+
+                                                        @foreach($logs as $loc)
+                                                            <div class="py-1.5 px-2.5 bg-white/[0.02] rounded-xl border border-white/5 flex items-center justify-between group/loc hover:bg-white/5 transition-all mb-1 last:mb-0">
+                                                                <div class="min-w-0 flex-1">
+                                                                    <div class="flex items-center gap-1.5 mb-0.5">
+                                                                        <span class="text-[10px] sm:text-xs font-semibold text-white/90 leading-none">{{ $loc->created_at->format('H:i') }}</span>
+                                                                        <span class="text-[8px] sm:text-[9px] font-medium text-white/30 leading-none tracking-tight">{{ $loc->created_at->translatedFormat('d M Y') }}</span>
+                                                                        <span class="text-[7px] sm:text-[8px] font-medium text-white/10 hidden sm:inline">· {{ $loc->created_at->diffForHumans() }}</span>
                                                                     </div>
-                                                                @endif
-                                                                <a href="https://www.google.com/maps?q={{ $loc->lat }},{{ $loc->lng }}" target="_blank" class="h-7 w-7 rounded-lg bg-white/5 text-white/20 flex items-center justify-center hover:bg-emerald-500 hover:text-white border border-white/5 transition-all">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                                                                </a>
+                                                                    @if($loc->address)
+                                                                        <p class="text-[9px] sm:text-[10px] text-emerald-500/60 font-medium leading-tight truncate pr-2">{{ $loc->address }}</p>
+                                                                    @else
+                                                                        <p class="text-[8px] sm:text-[9px] text-white/20 truncate italic font-light">{{ $loc->lat }}, {{ $loc->lng }}</p>
+                                                                    @endif
+                                                                </div>
+                                                                
+                                                                <div class="flex items-center gap-3 shrink-0">
+                                                                    @if($loc->battery_level)
+                                                                        <div class="flex flex-col items-center">
+                                                                            <span class="text-[9px] sm:text-[10px] font-semibold {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/40' }}">{{ (int)$loc->battery_level }}%</span>
+                                                                        </div>
+                                                                    @endif
+                                                                    <a href="https://www.google.com/maps?q={{ $loc->lat }},{{ $loc->lng }}" target="_blank" class="h-7 w-7 rounded-lg bg-white/5 text-white/20 flex items-center justify-center hover:bg-emerald-500 hover:text-white border border-white/5 transition-all">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                                                    </a>
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        @endforeach
                                                     @endforeach
-
-                                                    @if($logs->isEmpty())
-                                                        <div class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-3xl bg-white/[0.02]">
-                                                            <div class="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center text-white/10 mb-3">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-20"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                                            </div>
-                                                            <p class="text-[10px] font-bold text-white/20">Belum ada riwayat lokasi</p>
-                                                        </div>
-                                                    @endif
-                                                @endforeach
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    @endif
                                 </div>
                             </div>
 
@@ -668,7 +675,7 @@
                     </div>
                 </div>
                 @if($upcomingRentals->count() > 0)
-                    <div class="grid grid-cols-1 gap-4">
+                    <div class="grid grid-cols-1 gap-2">
                         @foreach($upcomingRentals as $rental)
                             <div x-data="{ expanded: false }"
                                 class="bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-amber-500/30"
@@ -766,6 +773,11 @@
                                                         </span>
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <div>
+                                                <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">Alamat Lengkap</p>
+                                                <p class="text-xs font-medium text-white/90 leading-tight mt-1.5">
+                                                    {{ $rental->alamat ?: '-' }}</p>
                                             </div>
                                         </div>
 
