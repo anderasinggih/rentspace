@@ -525,9 +525,8 @@
                     </div>
                 </button>
             
-                </div> <!-- END STEP 3            </form>
-        </div>
-    </div>
+                </div> <!-- END STEP 3 -->
+            </form>
 
     <!-- Sticky Summary & Navigation Bar (Mobile) -->
     <div x-cloak x-show="step < 3 && selectedIds.length > 0 && subtotal > 0 && !keyboardOpen" 
@@ -651,7 +650,6 @@
             <div class="h-[env(safe-area-inset-bottom)] w-full"></div>
         </div>
     </div>
-   </div>
 
             <!-- Desktop Navigation Buttons -->
             <div x-cloak x-show="step < 3" class="hidden sm:flex justify-end mt-6 gap-3 border-t border-border pt-6">

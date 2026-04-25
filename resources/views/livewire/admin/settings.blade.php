@@ -760,8 +760,17 @@
                                     <input type="checkbox" wire:model="payment_methods.qris"
                                         class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
                                     <div>
-                                        <p class="text-sm font-medium">QRIS</p>
-                                        <p class="text-xs text-muted-foreground">Scan QR bayar langsung</p>
+                                        <p class="text-sm font-medium">QRIS (Midtrans)</p>
+                                        <p class="text-xs text-muted-foreground uppercase font-bold tracking-tighter">Otomatis</p>
+                                    </div>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 p-3 rounded-lg border border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors">
+                                    <input type="checkbox" wire:model="payment_methods.manual_qris"
+                                        class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                                    <div>
+                                        <p class="text-sm font-medium text-primary font-bold">QRIS Statis</p>
+                                        <p class="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter italic">Manual Upload</p>
                                     </div>
                                 </label>
                                 <label
@@ -770,7 +779,7 @@
                                         class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
                                     <div>
                                         <p class="text-sm font-medium">Tunai (Cash)</p>
-                                        <p class="text-xs text-muted-foreground">Bayar langsung di tempat</p>
+                                        <p class="text-xs text-muted-foreground">Bayar di tempat</p>
                                     </div>
                                 </label>
                                 @foreach(['bca' => 'BCA', 'mandiri' => 'Mandiri', 'bni' => 'BNI', 'bri' => 'BRI', 'permata' => 'Permata', 'bsi' => 'BSI', 'cimb' => 'CIMB'] as $id => $label)

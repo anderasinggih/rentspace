@@ -49,6 +49,7 @@ class Settings extends Component
     public $admin_wa = '', $admin_address = '', $terms_conditions = '';
     public $payment_methods = [
         'qris' => true, 
+        'manual_qris' => false,
         'cash' => true, 
         'bca' => true, 
         'mandiri' => true, 
@@ -83,7 +84,7 @@ class Settings extends Component
         $defaultTerms = "1. Penyewa wajib menjaga iPhone yang disewa dan bertanggung jawab atas kerusakan atau kehilangan selama masa sewa.\n2. Pembayaran dilakukan di awal sebelum unit diserahkan, sesuai total tagihan yang tertera.\n3. Keterlambatan pengembalian melewati batas toleransi waktu akan dikenakan denda yang ditentukan oleh pengelola.\n4. Pengelola berhak menolak penyewaan apabila dokumen identitas (NIK/KTP) tidak valid atau tidak sesuai.\n5. Pemesanan yang sudah terkonfirmasi tidak dapat dibatalkan secara sepihak oleh penyewa.";
         $this->terms_conditions = \App\Models\Setting::getVal('terms_conditions', $defaultTerms);
         $defaultPayments = json_encode([
-            'qris' => true, 'cash' => true, 'bca' => true, 'mandiri' => true, 
+            'qris' => true, 'manual_qris' => false, 'cash' => true, 'bca' => true, 'mandiri' => true, 
             'bni' => true, 'bri' => true, 'permata' => true, 'bsi' => true, 'cimb' => true
         ]);
         $savedPayment = \App\Models\Setting::getVal('payment_methods', $defaultPayments);

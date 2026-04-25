@@ -254,6 +254,28 @@ class Payment extends Component
             return redirect()->route('public.success', $this->rental->booking_code);
         }
 
+        // LOGIKA BAYAR QRIS STATIS (MANUAL)
+        if ($channel === 'manual_qris') {
+            sleep(1);
+            
+            $paymentInfo = [
+                'payment_type' => 'manual_qris',
+                'status_message' => 'Silakan scan QRIS di bawah ini dan konfirmasi ke Admin.',
+                'qris_image' => \App\Models\Setting::getVal('qris', 'default.jpg')
+            ];
+
+            $this->rental->update([
+                'metode_pembayaran' => 'manual_qris',
+                'kode_unik_pembayaran' => 0,
+                'grand_total' => $baseTotal,
+                'payment_details' => $paymentInfo
+            ]);
+
+            $this->paymentInfo = $paymentInfo;
+            $this->selectedChannel = $channel;
+            return;
+        }
+
         // --- JURUS ANTI-DUPLICATE ---
         // Kita hanya ambil dari database kalau datanya sudah "Lengkap" (paling tidak ada nomor VA/QRIS-nya)
         $existingDetails = $this->rental->payment_details;
