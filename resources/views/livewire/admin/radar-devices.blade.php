@@ -203,8 +203,7 @@
                             this.currentPolyline = L.polyline(device.history, {
                                 color: '#0ea5e9',
                                 weight: 3,
-                                opacity: 0.5,
-                                dashArray: '5, 10',
+                                opacity: 0.4,
                                 lineJoin: 'round'
                             }).addTo(this.map);
                         }
