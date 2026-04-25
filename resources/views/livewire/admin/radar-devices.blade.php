@@ -73,17 +73,21 @@
             filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
         }
         .custom-div-icon {
-            background: none;
-            border: none;
+            background: none !important;
+            border: none !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .marker-pin {
-            width: 14px;
-            height: 14px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: #0ea5e9;
             border: 2px solid white;
-            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2), 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2);
             position: relative;
+            z-index: 1;
         }
         .marker-pin::after {
             content: '';
@@ -153,36 +157,25 @@
                             const marker = L.marker([device.lat, device.lng], {
                                 icon: L.divIcon({
                                     className: 'custom-div-icon',
-                                    html: `<div class="marker-pin"></div>`,
-                                    iconSize: [24, 24],
-                                    iconAnchor: [12, 12]
+                                    html: `
+                                        <div class="flex flex-col items-center">
+                                            <div class="bg-card border border-border rounded-lg px-2.5 py-1.5 shadow-sm mb-1 whitespace-nowrap pointer-events-none translate-y-[-4px]">
+                                                <div class="flex flex-col gap-0.5">
+                                                    <p class="text-[11px] font-bold text-foreground leading-tight">${device.seri}</p>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-[9px] text-muted-foreground font-medium">${device.nama_peminjam.split(' ')[0]}</span>
+                                                        <span class="text-[9px] text-muted-foreground opacity-40">•</span>
+                                                        <span class="text-[9px] text-muted-foreground">${device.last_seen.replace('ago', '')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="marker-pin"></div>
+                                        </div>
+                                    `,
+                                    iconSize: [0, 0], // Let content define size
+                                    iconAnchor: [0, 0]
                                 })
                             }).addTo(this.map);
-
-                            marker.bindPopup(`
-                                <div class="p-3 min-w-[180px] bg-background">
-                                    <div class="flex flex-col gap-3">
-                                        <div>
-                                            <p class="text-[10px] text-muted-foreground font-medium mb-1">Unit Device</p>
-                                            <p class="text-sm font-bold text-foreground leading-none">${device.seri}</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-[10px] text-muted-foreground font-medium mb-1">Penyewa Aktif</p>
-                                            <p class="text-xs font-semibold text-foreground leading-none">${device.nama_peminjam}</p>
-                                        </div>
-                                        <div class="pt-2 border-t border-border flex items-center justify-between">
-                                            <div class="flex items-center gap-1.5">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                <span class="text-[10px] text-muted-foreground font-medium">${device.last_seen}</span>
-                                            </div>
-                                            ${device.battery ? `<span class="text-[9px] font-bold ${device.battery < 20 ? 'text-red-500' : 'text-muted-foreground'}">${device.battery}%</span>` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            `, {
-                                className: 'shadcn-popup',
-                                maxWidth: 200
-                            });
 
                             this.markers[device.id] = marker;
                         }
