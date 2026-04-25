@@ -567,54 +567,6 @@
                                                 </button>
                                             </div>
 
-                                            {{-- Log Lokasi --}}
-                                            <div class="pt-4 mt-2 border-t border-white/5">
-                                                <div class="flex items-center justify-between mb-3 px-1">
-                                                    <h4 class="text-[9px] font-black text-white/30 uppercase tracking-widest">Tracking Unit (Log Terakhir)</h4>
-                                                    <p class="text-[8px] font-bold text-emerald-500/50 uppercase tracking-tighter">Status: Active Log</p>
-                                                </div>
-                                                
-                                                <div class="space-y-2 max-h-[140px] overflow-y-auto pr-1 scrollbar-hide">
-                                                    @foreach($rental->units as $u)
-                                                        @php 
-                                                            $logs = $u->locations()
-                                                                ->whereBetween('created_at', [$rental->waktu_mulai, $rental->waktu_selesai])
-                                                                ->latest()
-                                                                ->limit(10)
-                                                                ->get();
-                                                        @endphp
-
-                                                        @foreach($logs as $loc)
-                                                            <div class="p-2 bg-white/[0.03] rounded-xl border border-white/5 flex items-center justify-between group/loc hover:bg-white/5 transition-all mb-1.5 last:mb-0">
-                                                                <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                                                                    <div class="shrink-0 h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500/60">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                                                    </div>
-                                                                    <div class="min-w-0">
-                                                                        <div class="flex items-center gap-2">
-                                                                            <span class="text-[9px] font-black text-white/90">{{ $loc->created_at->format('H:i') }}</span>
-                                                                            <span class="text-[8px] font-bold text-white/30 uppercase tracking-tighter">{{ $loc->created_at->diffForHumans() }}</span>
-                                                                        </div>
-                                                                        @if($loc->address)
-                                                                            <p class="text-[8px] text-emerald-500/80 font-bold truncate leading-none mt-0.5">{{ $loc->address }}</p>
-                                                                        @else
-                                                                            <p class="text-[8px] text-white/30 truncate leading-none mt-0.5">{{ $loc->lat }}, {{ $loc->lng }}</p>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                <div class="flex items-center gap-2 shrink-0">
-                                                                    @if($loc->battery_level)
-                                                                        <span class="text-[8px] font-black {{ (int)$loc->battery_level < 20 ? 'text-rose-500/80' : 'text-emerald-500/50' }}">{{ (int)$loc->battery_level }}%</span>
-                                                                    @endif
-                                                                    <a href="https://www.google.com/maps?q={{ $loc->lat }},{{ $loc->lng }}" target="_blank" class="h-7 w-7 rounded-lg bg-white/5 text-white/30 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        @endforeach
-                                                    @endforeach
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
