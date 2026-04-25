@@ -158,8 +158,8 @@
                                             <span class="h-2 w-2 rounded-full bg-orange-500"></span>
                                         @endif
                                     </div>
-                                    <h2 class="text-3xl font-black tracking-tight leading-none italic">{{ $scannedUnit->seri }}</h2>
-                                    <p class="text-[10px] text-muted-foreground font-medium">S/N: {{ $scannedUnit->imei }}</p>
+                                    <h2 class="text-3xl font-black tracking-tight leading-none">{{ $scannedUnit->seri }}</h2>
+                                    <p class="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">IMEI: {{ $scannedUnit->imei }}</p>
                                 </div>
                                 <div class="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-colors {{ $activeRental && $activeRental->status === 'active' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' : ($activeRental ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' : 'bg-green-500/10 text-green-600 border-green-500/20') }}">
                                     {{ $activeRental && $activeRental->status === 'active' ? 'In Hands' : ($activeRental ? 'Picked Up' : 'Available') }}

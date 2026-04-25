@@ -33,19 +33,27 @@ class QuickScan extends Component
 
     public function confirmHandover($id)
     {
-        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
 
         $rental = Rental::findOrFail($id);
         
-        // Hanya bisa validasi yang sudah lunas/confirmed tapi belum 'active'
         if (in_array($rental->status, ['paid', 'confirmed'])) {
-            $rental->update([
-                'status' => 'active',
-                // Kita bisa nambahin catatan atau field lain di sini kalau perlu
-            ]);
-
+            $rental->update(['status' => 'active']);
             $this->findUnit($this->scannedUnit->id);
-            session()->flash('message', 'Serah terima unit BERHASIL! Status unit sekarang ACTIVE.');
+            session()->flash('message', 'Serah terima unit BERHASIL! Unit sekarang dalam status SEWA.');
+        }
+    }
+
+    public function confirmReturn($id)
+    {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
+
+        $rental = Rental::findOrFail($id);
+        
+        if ($rental->status === 'active') {
+            $rental->update(['status' => 'completed']);
+            $this->findUnit($this->scannedUnit->id);
+            session()->flash('message', 'Pengembalian unit BERHASIL! Transaksi telah SELESAI.');
         }
     }
 
