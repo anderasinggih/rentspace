@@ -243,7 +243,9 @@ class Monitoring extends Component
         $categories = \App\Models\Category::orderBy('name')->get();
 
         // 3. Fetch Currently Rented Units (Active Now)
-        $activeRentalsQuery = Rental::with('units')
+        $activeRentalsQuery = Rental::with(['units.category', 'units.locations' => function($q) use ($startDate, $endDate) {
+            $q->latest()->limit(1);
+        }])
             ->where('status', 'paid')
             ->where('waktu_mulai', '<=', now())
             ->where('waktu_selesai', '>=', now());
@@ -259,7 +261,7 @@ class Monitoring extends Component
         $activeRentals = $activeRentalsQuery->orderBy('waktu_selesai', 'asc')->get();
 
         // 4. Fetch Upcoming Rentals (Booked for Future)
-        $upcomingRentalsQuery = Rental::with('units')
+        $upcomingRentalsQuery = Rental::with(['units.category'])
             ->whereIn('status', ['paid', 'pending'])
             ->where('waktu_mulai', '>', now());
 

@@ -575,7 +575,7 @@
 
                                     {{-- Log Lokasi: Hanya muncul jika ada iPhone dan ada datanya --}}
                                     @php 
-                                        $iphoneUnits = $rental->units->filter(fn($u) => str_contains(strtolower($u->nama), 'iphone'));
+                                        $iphoneUnits = $rental->units->filter(fn($u) => $u->category && str_contains(strtolower($u->category->name), 'iphone'));
                                         $hasLogs = false;
                                         if($iphoneUnits->isNotEmpty()) {
                                             foreach($iphoneUnits as $u) {
