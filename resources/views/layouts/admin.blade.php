@@ -3,12 +3,16 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{{ $title ?? 'Dashboard Admin' }} - {{ config('app.name', 'RentSpace') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script>
+        (function() {
+            const theme = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (theme) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+        
         function applyTheme() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
@@ -16,33 +20,37 @@
                 document.documentElement.classList.remove('dark');
             }
         }
-        applyTheme();
         document.addEventListener('livewire:navigated', applyTheme);
     </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>{{ $title ?? 'Dashboard Admin' }} - {{ config('app.name', 'RentSpace') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        html,
-        body {
-            touch-action: pan-x pan-y;
-            -webkit-text-size-adjust: 100%;
-        }
-
-        @media screen and (max-width: 768px) {
-            input,
-            select,
-            textarea {
-                font-size: 16px !important;
-            }
+        [x-cloak] { display: none !important; }
+        
+        /* Prevent Flash of Light Mode & Transitions */
+        .dark { color-scheme: dark; }
+        html.dark body { background-color: #09090b; } /* Same as bg-background in dark mode */
+        
+        /* Disable transition during page load/navigate to stop blinking */
+        .no-transitions * {
+            transition: none !important;
         }
     </style>
     <script>
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(event) {
-            let now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
+        document.documentElement.classList.add('no-transitions');
+        window.addEventListener('load', () => {
+            setTimeout(() => document.documentElement.classList.remove('no-transitions'), 100);
+        });
+        document.addEventListener('livewire:navigating', () => {
+             document.documentElement.classList.add('no-transitions');
+        });
+        document.addEventListener('livewire:navigated', () => {
+             applyTheme();
+             setTimeout(() => document.documentElement.classList.remove('no-transitions'), 100);
+        });
     </script>
 </head>
 
@@ -54,6 +62,11 @@
     <main class="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {{ $slot }}
     </main>
+
+    <script>
+         // Final safety check at end of body
+         applyTheme();
+    </script>
 
     <script>
         window.printQrLabel = function() {

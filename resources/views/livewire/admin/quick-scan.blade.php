@@ -7,6 +7,7 @@
             scanning: false,
             hasInteracted: false,
             errorMessage: '',
+            facingMode: 'environment',
             
             async startScan() {
                 try {
@@ -19,7 +20,7 @@
                     
                     this.scanning = true;
                     await this.html5QrCode.start(
-                        { facingMode: 'environment' }, 
+                        { facingMode: this.facingMode }, 
                         config, 
                         (decodedText) => {
                             this.scanning = false;
@@ -35,6 +36,17 @@
                 } catch (err) {
                     this.scanning = false;
                     this.errorMessage = 'Gagal mengakses kamera. Error: ' + err;
+                }
+            },
+            async toggleCamera() {
+                try {
+                    this.facingMode = this.facingMode === 'environment' ? 'user' : 'environment';
+                    if (this.html5QrCode && this.html5QrCode.getState() === 2) {
+                        await this.html5QrCode.stop().catch(() => {});
+                    }
+                    this.startScan();
+                } catch(e) {
+                    console.error('Gagal ganti kamera:', e);
                 }
             },
             async retry() {
@@ -90,14 +102,27 @@
                         </button>
                     </div>
 
-                    <!-- Overlay Laser (While Scanning) -->
-                    <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center" x-show="scanning">
+                    <!-- Overlay Laser & Mask (While Scanning) -->
+                    <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-4" x-show="scanning">
+                        <!-- Switch Camera Button (Actual clickable area) -->
+                        <div class="absolute top-4 right-4 z-20 pointer-events-auto">
+                            <button @click="toggleCamera()" class="p-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white shadow-xl active:scale-90 transition-all hover:bg-black/60">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+                            </button>
+                        </div>
+
                         <div class="relative w-2/3 aspect-square max-w-[280px]">
-                            <div class="absolute -top-1 -left-1 w-6 h-6 border-t-2 border-l-2 border-primary rounded-tl-lg"></div>
-                            <div class="absolute -top-1 -right-1 w-6 h-6 border-t-2 border-r-2 border-primary rounded-tr-lg"></div>
-                            <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-2 border-l-2 border-primary rounded-bl-lg"></div>
-                            <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-2 border-r-2 border-primary rounded-br-lg"></div>
-                            <div class="absolute inset-x-0 h-[1.5px] bg-primary animate-[scan_2.5s_ease-in-out_infinite]"></div>
+                            <!-- The Mask (Black Transparent outside) -->
+                            <div class="absolute inset-0 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"></div>
+                            
+                            <!-- Scanner Corners (Perfectly aligned with mask) -->
+                            <div class="absolute top-0 left-0 w-8 h-8 border-t-[2.5px] border-l-[2.5px] border-primary rounded-tl-xl z-10"></div>
+                            <div class="absolute top-0 right-0 w-8 h-8 border-t-[2.5px] border-r-[2.5px] border-primary rounded-tr-xl z-10"></div>
+                            <div class="absolute bottom-0 left-0 w-8 h-8 border-b-[2.5px] border-l-[2.5px] border-primary rounded-bl-xl z-10"></div>
+                            <div class="absolute bottom-0 right-0 w-8 h-8 border-b-[2.5px] border-r-[2.5px] border-primary rounded-br-xl z-10"></div>
+                            
+                            <!-- Laser Line -->
+                            <div class="absolute inset-x-0 h-[1.8px] bg-primary animate-[scan_2.5s_ease-in-out_infinite] z-10 shadow-[0_0_8px_rgba(var(--primary),0.5)]"></div>
                         </div>
                     </div>
 

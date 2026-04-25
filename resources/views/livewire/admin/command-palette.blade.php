@@ -12,8 +12,12 @@ x-on:keydown.window.enter.prevent="if(isOpen) { const activeLink = document.quer
 x-on:livewire:navigated.window="isOpen = false"
 class="relative z-[200]">
 
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+
     <!-- Modal Backdrop -->
-    <div x-show="isOpen" 
+    <div x-cloak x-show="isOpen" 
         x-transition:enter="duration-200 ease-out"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -25,7 +29,7 @@ class="relative z-[200]">
     </div>
 
     <!-- Modal Content -->
-    <div x-show="isOpen" 
+    <div x-cloak x-show="isOpen" 
         x-transition:enter="duration-200 ease-out"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
