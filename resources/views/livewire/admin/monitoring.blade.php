@@ -572,7 +572,7 @@
 
                                     <div class="px-4 pb-6 sm:px-6">
                                         <div class="pt-6 border-t border-white/5">
-                                            <div class="space-y-2 max-h-[185px] overflow-y-auto pr-2 scrollbar-hide">
+                                            <div class="space-y-1 max-h-[185px] overflow-y-auto pr-2 scrollbar-hide">
                                                 @foreach($rental->units as $u)
                                                     @php 
                                                         $logs = $u->locations()
@@ -583,34 +583,28 @@
                                                     @endphp
 
                                                     @foreach($logs as $loc)
-                                                        <div class="p-3 bg-white/[0.03] rounded-2xl border border-white/5 flex items-center justify-between group/loc hover:bg-white/5 transition-all mb-2 last:mb-0">
-                                                            <div class="flex items-center gap-4 min-w-0 flex-1">
-                                                                <div class="shrink-0 h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500/60 border border-emerald-500/20 group-hover/loc:bg-emerald-500 group-hover/loc:text-white transition-all">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                                        <div class="py-1.5 px-2.5 bg-white/[0.02] rounded-xl border border-white/5 flex items-center justify-between group/loc hover:bg-white/5 transition-all mb-1 last:mb-0">
+                                                            <div class="min-w-0 flex-1">
+                                                                <div class="flex items-center gap-1.5 mb-0.5">
+                                                                    <span class="text-[10px] sm:text-xs font-black text-white/90 leading-none">{{ $loc->created_at->format('H:i') }}</span>
+                                                                    <span class="text-[8px] sm:text-[9px] font-bold text-white/30 leading-none tracking-tight">{{ $loc->created_at->translatedFormat('d M Y') }}</span>
+                                                                    <span class="text-[7px] sm:text-[8px] font-medium text-white/10 hidden sm:inline">· {{ $loc->created_at->diffForHumans() }}</span>
                                                                 </div>
-                                                                <div class="min-w-0 flex-1">
-                                                                    <div class="flex items-center gap-2 mb-1">
-                                                                        <span class="text-xs font-black text-white/95">{{ $loc->created_at->format('H:i') }}</span>
-                                                                        <span class="text-[9px] font-bold text-white/30">{{ $loc->created_at->translatedFormat('d M Y') }}</span>
-                                                                        <span class="text-[8px] font-medium text-white/20">· {{ $loc->created_at->diffForHumans() }}</span>
-                                                                    </div>
-                                                                    @if($loc->address)
-                                                                        <p class="text-[10px] text-emerald-400/90 font-bold leading-tight line-clamp-1">{{ $loc->address }}</p>
-                                                                    @else
-                                                                        <p class="text-[10px] text-white/30 truncate">{{ $loc->lat }}, {{ $loc->lng }}</p>
-                                                                    @endif
-                                                                </div>
+                                                                @if($loc->address)
+                                                                    <p class="text-[9px] sm:text-[10px] text-emerald-500/70 font-bold leading-tight truncate pr-2">{{ $loc->address }}</p>
+                                                                @else
+                                                                    <p class="text-[8px] sm:text-[9px] text-white/20 truncate italic">{{ $loc->lat }}, {{ $loc->lng }}</p>
+                                                                @endif
                                                             </div>
                                                             
-                                                            <div class="flex items-center gap-4 shrink-0 pr-2">
+                                                            <div class="flex items-center gap-3 shrink-0">
                                                                 @if($loc->battery_level)
-                                                                    <div class="flex flex-col items-end">
-                                                                        <span class="text-[10px] font-black {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/60' }}">{{ (int)$loc->battery_level }}%</span>
-                                                                        <p class="text-[7px] font-bold text-white/20 tracking-tighter">Baterai</p>
+                                                                    <div class="flex flex-col items-center">
+                                                                        <span class="text-[9px] sm:text-[10px] font-black {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/50' }}">{{ (int)$loc->battery_level }}%</span>
                                                                     </div>
                                                                 @endif
-                                                                <a href="https://www.google.com/maps?q={{ $loc->lat }},{{ $loc->lng }}" target="_blank" class="h-9 w-9 rounded-xl bg-white/5 text-white/30 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-lg border border-white/5">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                                                <a href="https://www.google.com/maps?q={{ $loc->lat }},{{ $loc->lng }}" target="_blank" class="h-7 w-7 rounded-lg bg-white/5 text-white/20 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-white/5 transition-all">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                                                                 </a>
                                                             </div>
                                                         </div>
