@@ -14,9 +14,10 @@ class UnitManager extends Component
     public $unit_id, $seri, $imei, $memori, $warna, $kondisi;
     public $category_id, $harga_per_jam, $harga_per_hari;
     public $specs = []; // Dynamic specifications
-    public $is_active = true;
     public $isEditing = false;
     public $showModal = false;
+    public $showQrModal = false;
+    public $selectedUnitForQr = null;
 
     // Search & Filter
     public $search = '';
@@ -135,12 +136,19 @@ class UnitManager extends Component
         $this->logActivity('force_delete_unit', null, "Menghapus permanen unit: {$name}");
         session()->flash('message', 'Unit dihapus secara permanen.');
     }
+    public function showQr($id)
+    {
+        $this->selectedUnitForQr = Unit::withTrashed()->findOrFail($id);
+        $this->showQrModal = true;
+    }
 
     // --- Category Management Methods ---
     public function setTab($tab)
     {
         $this->activeTab = $tab;
         $this->search = '';
+        $this->resetPage('unitsPage');
+        $this->resetPage('catsPage');
     }
 
     public function updatedCatName($value)
@@ -236,11 +244,19 @@ class UnitManager extends Component
             ->with('category')
             ->when($this->filterStatus === 'trashed', fn($q) => $q->onlyTrashed())
             ->when($this->filterStatus !== 'trashed', fn($q) => $q->withoutTrashed())
-            ->when($this->search && $this->activeTab === 'units', fn($q) => $q->where(fn($qq) => 
-                $qq->where('seri', 'like', '%' . $this->search . '%')
-                ->orWhere('imei', 'like', '%' . $this->search . '%')
-                ->orWhere('warna', 'like', '%' . $this->search . '%')
-            ))
+            ->when($this->search && $this->activeTab === 'units', function($q) {
+                $search = $this->search;
+                return $q->where(function($qq) use ($search) {
+                    if (is_numeric($search)) {
+                        $qq->where('id', $search)
+                           ->orWhere('imei', 'like', '%' . $search . '%');
+                    } else {
+                        $qq->where('seri', 'like', '%' . $search . '%')
+                           ->orWhere('imei', 'like', '%' . $search . '%')
+                           ->orWhere('warna', 'like', '%' . $search . '%');
+                    }
+                });
+            })
             ->when($this->filterKategori, fn($q) => $q->where('category_id', $this->filterKategori))
             ->when($this->filterStatus !== '' && $this->filterStatus !== 'trashed', function ($q) {
                 if ($this->filterStatus === 'active')

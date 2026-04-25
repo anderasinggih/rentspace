@@ -39,7 +39,8 @@
 
 
         @if($activeTab === 'units')
-            <!-- Search + Filter -->
+            <div wire:key="tab-units-content">
+                <!-- Search + Filter -->
             <div class="mt-8 flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between">
                 <div class="flex flex-1 flex-col sm:flex-row gap-4 w-full sm:w-auto">
                     <div class="relative flex-1 max-w-sm">
@@ -73,8 +74,6 @@
                         </select>
                     </div>
                 </div>
-
-                </div>
             </div>
 
             <div class="mt-4 flow-root">
@@ -102,7 +101,7 @@
                                 </thead>
                                 <tbody class="divide-y divide-border">
                                     @foreach($units as $unit)
-                                        <tr
+                                        <tr wire:key="unit-row-{{ $unit->id }}"
                                             class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5' : (!$unit->is_active ? 'opacity-50' : '') }}">
                                             <td class="px-3 sm:px-6 py-1.5 sm:py-2 align-middle">
                                                 <div
@@ -138,7 +137,7 @@
                                                         <div class="space-y-0.5">
                                                             @foreach($unit->specs as $key => $val)
                                                                 @if($val)
-                                                                    <div class="text-[11px] {{ $unit->trashed() ? 'text-red-800/70 dark:text-red-400/70' : '' }}"><span
+                                                                    <div wire:key="unit-spec-{{ $unit->id }}-{{ $loop->index }}" class="text-[11px] {{ $unit->trashed() ? 'text-red-800/70 dark:text-red-400/70' : '' }}"><span
                                                                             class="font-semibold text-muted-foreground uppercase text-[9px]">{{ $key }}:</span>
                                                                         {{ $val }}</div>
                                                                 @endif
@@ -171,6 +170,13 @@
                                             </td>
                                             <td class="px-2 sm:px-6 py-1.5 sm:py-2 align-middle text-right h-full">
                                                 <div class="flex items-center justify-end w-full gap-2 transition-all">
+                                                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
+                                                        <button wire:click="showQr({{ $unit->id }})"
+                                                            class="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-all active:scale-95"
+                                                            title="Cetak Label QR">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h.01"/><path d="M7 12h.01"/><path d="M7 17h.01"/><path d="M12 7h.01"/><path d="M12 12h.01"/><path d="M12 17h.01"/><path d="M17 7h.01"/><path d="M17 12h.01"/><path d="M17 17h.01"/></svg>
+                                                        </button>
+                                                    @endif
                                                     @if($unit->trashed())
                                                         @if(auth()->user()->role === 'admin')
                                                             {{-- Restore Button --}}
@@ -257,6 +263,7 @@
                 </div>
             </div>
         @else
+            <div wire:key="tab-cats-content">
             <div class="mt-8 flex items-center justify-between gap-4">
                 <div class="relative flex-1 max-w-sm group">
                     <div
@@ -270,8 +277,6 @@
                     <input type="text" wire:model.live.debounce.300ms="search"
                         class="block w-full h-9 pl-10 pr-3 text-sm rounded-md border border-input bg-background shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary"
                         placeholder="Cari kategori...">
-                </div>
-
                 </div>
             </div>
 
@@ -297,7 +302,7 @@
                                 </thead>
                                 <tbody class="divide-y divide-border">
                                     @foreach($categories as $cat)
-                                        <tr class="hover:bg-muted/50">
+                                        <tr wire:key="cat-row-{{ $cat->id }}" class="hover:bg-muted/50">
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">{{ $cat->name }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                                 <code class="text-[11px] px-1.5 py-0.5 rounded bg-muted">/{{ $cat->slug }}</code>
@@ -309,7 +314,7 @@
                                                 @if($cat->custom_fields)
                                                     <div class="flex flex-wrap gap-1">
                                                         @foreach($cat->custom_fields as $field)
-                                                            <span class="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[10px] font-medium text-muted-foreground">{{ $field }}</span>
+                                                            <span wire:key="cat-field-{{ $cat->id }}-{{ $loop->index }}" class="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[10px] font-medium text-muted-foreground">{{ $field }}</span>
                                                         @endforeach
                                                     </div>
                                                 @else
@@ -367,6 +372,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         @endif
 
@@ -560,6 +566,46 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- QR Modal -->
+        @if($showQrModal && $selectedUnitForQr)
+            <div class="relative z-50 no-print" wire:key="qr-modal-{{ $selectedUnitForQr->id }}">
+                <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity" wire:click="$set('showQrModal', false)"></div>
+                <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div class="relative w-full max-w-md rounded-2xl border border-border bg-background p-8 shadow-2xl text-center transition-all">
+                        <div class="flex items-center justify-between mb-6 no-print">
+                            <h3 class="text-sm font-black uppercase tracking-widest text-muted-foreground">Label QR Unit</h3>
+                            <button wire:click="$set('showQrModal', false)" class="text-muted-foreground hover:text-foreground">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                        </div>
+                        
+                        <div id="qr-label" class="bg-white p-6 rounded-xl border-4 border-dashed border-muted mx-auto inline-block print:border-none print:shadow-none">
+                            <div class="mb-4 text-center text-zinc-900">
+                                <div class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1 leading-none print-title">RENT SPACE</div>
+                                <div class="text-xl font-black leading-tight print-seri">{{ $selectedUnitForQr->seri }}</div>
+                                <div class="text-[10px] font-bold text-zinc-500 print-cat">{{ $selectedUnitForQr->category->name ?? '' }}</div>
+                            </div>
+
+                            <div class="bg-white p-4 border-2 border-zinc-100 rounded-2xl inline-block shadow-sm">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={{ $selectedUnitForQr->id }}" 
+                                     alt="QR Code Unit" 
+                                     class="w-56 h-56 mx-auto object-contain print-qr aspect-square overflow-hidden bg-white">
+                                <div class="mt-4 text-[10px] font-black text-zinc-300 font-mono tracking-widest uppercase print-id">UNIT ID: {{ str_pad($selectedUnitForQr->id, 4, '0', STR_PAD_LEFT) }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 flex flex-col gap-3 no-print">
+                            <button onclick="printQrLabel()" class="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-6 py-4 text-base font-black text-primary-foreground shadow-lg transition-all hover:bg-primary/90 active:scale-95">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect width="12" height="8" x="6" y="14" rx="1"/></svg>
+                                Cetak Label
+                            </button>
+                            <button wire:click="$set('showQrModal', false)" class="text-sm text-muted-foreground hover:underline font-bold">Kembali</button>
+                        </div>
                     </div>
                 </div>
             </div>

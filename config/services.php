@@ -34,5 +34,8 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'shortcut' => [
+        'token' => env('ADMIN_SHORTCUT_TOKEN'),
+    ],
 
 ];

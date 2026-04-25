@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class AdminNavbar extends Component
 {
+    public $showScanner = false;
+
     public function logout()
     {
         Auth::logout();
@@ -14,6 +16,11 @@ class AdminNavbar extends Component
         session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    public function toggleScanner()
+    {
+        $this->showScanner = !$this->showScanner;
     }
 
     public function render()

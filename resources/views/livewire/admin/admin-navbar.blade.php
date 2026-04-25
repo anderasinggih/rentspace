@@ -100,6 +100,15 @@
                 <a href="/" wire:navigate
                     class="hidden xl:inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
                     Lihat Web Publik ↗
+                </a>                <!-- Quick Scan Button -->
+                <a href="{{ route('admin.scan') }}" wire:navigate
+                    class="p-2 flex items-center justify-center rounded-md hover:bg-primary/10 text-primary transition-all hover:scale-110 active:scale-95 focus:outline-none {{ request()->routeIs('admin.scan') ? 'bg-primary/20 bg-primary shadow-sm' : '' }}"
+                    title="Quick Scan QR">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                        <rect width="7" height="7" x="7" y="7" rx="1"/>
+                        <path d="M10 17h.01"/><path d="M17 10h.01"/><path d="M17 17h.01"/>
+                    </svg>
                 </a>
 
                 <!-- Dark Mode Toggle Admin -->
@@ -139,7 +148,6 @@
                             <polyline points="16 17 21 12 16 7" />
                             <line x1="21" x2="9" y1="12" y2="12" />
                         </svg>
-                    </button>
                 </div>
 
                 <!-- Mobile Hamburger -->
