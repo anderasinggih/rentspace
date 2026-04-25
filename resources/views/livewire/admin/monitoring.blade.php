@@ -569,7 +569,6 @@
 
                                             </div>
                                         </div>
-                                    </div>
 
                                     <div class="px-4 pb-6 sm:px-6">
                                         <div class="pt-6 border-t border-white/5">
