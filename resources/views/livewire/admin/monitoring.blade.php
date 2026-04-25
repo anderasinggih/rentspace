@@ -357,10 +357,10 @@
         </div>
 
         <!-- STATUS CATEGORIES SECTION -->
-        <div class="mt-6 sm:mt-16 space-y-8 sm:space-y-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
+        <div class="mt-4 sm:mt-16 space-y-6 sm:space-y-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
 
             <!-- 1. ACTIVE RENTALS SECTION -->
-            <div class="space-y-6">
+            <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-border dark:border-white/10 pb-4">
                     <div class="flex items-center gap-3">
                         <div
@@ -400,7 +400,7 @@
 
                                 <!-- Accordion Header -->
                                 <div @click="expanded = !expanded"
-                                    class="p-3 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
+                                    class="p-2 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
                                     <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                                         <div class="flex -space-x-3 overflow-hidden shrink-0">
                                             @foreach($rental->units as $u)
@@ -465,7 +465,7 @@
 
                                 <!-- Accordion content -->
                                 <div x-show="expanded" x-collapse class="bg-muted/20 border-t border-border">
-                                    <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
+                                    <div class="p-3 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                                         {{-- Kolom 1: Data Diri --}}
                                         <div class="space-y-4">
                                             <div class="flex items-center gap-2 mt-1.5">
@@ -570,8 +570,8 @@
                                             </div>
                                         </div>
 
-                                    <div class="px-4 pb-6 sm:px-6">
-                                        <div class="pt-6 border-t border-white/5">
+                                    <div class="px-3 pb-4 sm:px-6">
+                                        <div class="pt-4 border-t border-white/5">
                                             <div class="space-y-1 max-h-[185px] overflow-y-auto pr-2 scrollbar-hide">
                                                 @foreach($rental->units as $u)
                                                     @php 
@@ -586,24 +586,24 @@
                                                         <div class="py-1.5 px-2.5 bg-white/[0.02] rounded-xl border border-white/5 flex items-center justify-between group/loc hover:bg-white/5 transition-all mb-1 last:mb-0">
                                                             <div class="min-w-0 flex-1">
                                                                 <div class="flex items-center gap-1.5 mb-0.5">
-                                                                    <span class="text-[10px] sm:text-xs font-black text-white/90 leading-none">{{ $loc->created_at->format('H:i') }}</span>
-                                                                    <span class="text-[8px] sm:text-[9px] font-bold text-white/30 leading-none tracking-tight">{{ $loc->created_at->translatedFormat('d M Y') }}</span>
+                                                                    <span class="text-[10px] sm:text-xs font-semibold text-white/90 leading-none">{{ $loc->created_at->format('H:i') }}</span>
+                                                                    <span class="text-[8px] sm:text-[9px] font-medium text-white/30 leading-none tracking-tight">{{ $loc->created_at->translatedFormat('d M Y') }}</span>
                                                                     <span class="text-[7px] sm:text-[8px] font-medium text-white/10 hidden sm:inline">· {{ $loc->created_at->diffForHumans() }}</span>
                                                                 </div>
                                                                 @if($loc->address)
-                                                                    <p class="text-[9px] sm:text-[10px] text-emerald-500/70 font-bold leading-tight truncate pr-2">{{ $loc->address }}</p>
+                                                                    <p class="text-[9px] sm:text-[10px] text-emerald-500/60 font-medium leading-tight truncate pr-2">{{ $loc->address }}</p>
                                                                 @else
-                                                                    <p class="text-[8px] sm:text-[9px] text-white/20 truncate italic">{{ $loc->lat }}, {{ $loc->lng }}</p>
+                                                                    <p class="text-[8px] sm:text-[9px] text-white/20 truncate italic font-light">{{ $loc->lat }}, {{ $loc->lng }}</p>
                                                                 @endif
                                                             </div>
                                                             
                                                             <div class="flex items-center gap-3 shrink-0">
                                                                 @if($loc->battery_level)
                                                                     <div class="flex flex-col items-center">
-                                                                        <span class="text-[9px] sm:text-[10px] font-black {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/50' }}">{{ (int)$loc->battery_level }}%</span>
+                                                                        <span class="text-[9px] sm:text-[10px] font-semibold {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/40' }}">{{ (int)$loc->battery_level }}%</span>
                                                                     </div>
                                                                 @endif
-                                                                <a href="https://www.google.com/maps?q={{ $loc->lat }},{{ $loc->lng }}" target="_blank" class="h-7 w-7 rounded-lg bg-white/5 text-white/20 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-white/5 transition-all">
+                                                                <a href="https://www.google.com/maps?q={{ $loc->lat }},{{ $loc->lng }}" target="_blank" class="h-7 w-7 rounded-lg bg-white/5 text-white/20 flex items-center justify-center hover:bg-emerald-500 hover:text-white border border-white/5 transition-all">
                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                                                                 </a>
                                                             </div>
@@ -676,7 +676,7 @@
 
                                 <!-- Accordion Header -->
                                 <div @click="expanded = !expanded"
-                                    class="p-3 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
+                                    class="p-2 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
                                     <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                                         <div class="flex -space-x-3 overflow-hidden shrink-0">
                                             @foreach($rental->units as $u)
