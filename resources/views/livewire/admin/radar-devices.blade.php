@@ -89,6 +89,10 @@
             position: relative;
             z-index: 1;
         }
+        .marker-pin.is-overdue {
+            background: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+        }
         .marker-pin::after {
             content: '';
             position: absolute;
@@ -97,6 +101,9 @@
             border: 2px solid #0ea5e9;
             animation: marker-pulse 2s infinite;
             opacity: 0;
+        }
+        .marker-pin.is-overdue::after {
+            border: 2px solid #ef4444;
         }
         @keyframes marker-pulse {
             0% { transform: scale(1); opacity: 0.8; }
@@ -159,13 +166,15 @@
                                     className: 'custom-div-icon',
                                     html: `
                                         <div class="flex flex-col items-center">
-                                            <div class="bg-card/70 backdrop-blur-md border border-border/50 rounded-lg px-2 py-1 shadow-2xl mb-1 whitespace-nowrap pointer-events-none translate-y-[-4px]">
-                                                <div class="flex flex-col gap-0">
-                                                    <p class="text-[10px] font-black text-foreground leading-tight">${device.seri}</p>
-                                                    <p class="text-[8px] text-muted-foreground font-medium leading-none mt-1 opacity-70">${device.nama_peminjam.split(' ')[0]} • ${device.last_seen.replace('ago', '')}</p>
+                                            <div class="${device.is_overdue ? 'bg-red-600/80 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'bg-card/70 border-border/50'} backdrop-blur-md border rounded-lg px-2 py-1 shadow-2xl mb-1 whitespace-nowrap pointer-events-none translate-y-[-4px]">
+                                                <div class="flex flex-col gap-0 text-center">
+                                                    <p class="text-[10px] font-black ${device.is_overdue ? 'text-white' : 'text-foreground'} leading-tight">${device.seri}</p>
+                                                    <p class="text-[8px] ${device.is_overdue ? 'text-white/80 font-bold' : 'text-muted-foreground font-medium'} leading-none mt-1 opacity-70">
+                                                        ${device.is_overdue ? '❌ TELAT: ' : ''}${device.nama_peminjam.split(' ')[0]} • ${device.last_seen.replace('ago', '')}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div class="marker-pin"></div>
+                                            <div class="marker-pin ${device.is_overdue ? 'is-overdue' : ''}"></div>
                                         </div>
                                     `,
                                     iconSize: [0, 0],

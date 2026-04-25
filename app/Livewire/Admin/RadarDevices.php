@@ -45,7 +45,8 @@ class RadarDevices extends Component
                         'battery' => $lastLoc ? $lastLoc->battery_level : null,
                         'last_seen' => $lastLoc ? $lastLoc->created_at->diffForHumans() : 'Unknown',
                         'status' => $rental->status,
-                        'history' => $history // Added history array
+                        'history' => $history,
+                        'is_overdue' => $rental->waktu_selesai < now() // Added overdue flag
                     ];
                 }
             }
