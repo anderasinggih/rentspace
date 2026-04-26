@@ -26,11 +26,11 @@
     {{-- Floating Device Panel --}}
     <div 
         class="absolute z-[1001]
-               lg:top-24 lg:left-6 lg:w-80 lg:h-[calc(100vh-220px)]
+               lg:bottom-6 lg:left-6 lg:w-80
                fixed bottom-4 left-4 right-4 
                transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
                lg:translate-y-0"
-        :class="isExpanded ? 'h-[480px]' : 'h-[100px] lg:h-[calc(100vh-220px)]'"
+        :class="isExpanded ? 'h-[480px]' : 'h-[100px] lg:h-[480px]'"
     >
         <div class="bg-background/80 lg:bg-background/70 backdrop-blur-2xl border border-white/15 rounded-2xl flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
             {{-- Apple Drag Handle (Mobile Only) --}}
