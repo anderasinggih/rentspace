@@ -29,6 +29,17 @@
         .text-stock-down {
             color: #ef4444;
         }
+
+        /* Ninja Style: Hide default tooltip while keeping interaction alive */
+        .apexcharts-tooltip {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        .apexcharts-xaxistooltip {
+            display: none !important;
+            visibility: hidden !important;
+        }
     </style>
 
     <!-- 1. Snapshot Grid -->
@@ -304,21 +315,12 @@
                 fill: { type: 'gradient', gradient: { opacityFrom: 0.15, opacityTo: 0 } },
                 markers: { size: 0 },
                 tooltip: { 
-                    enabled: false,
-                    enabledOnSeries: undefined,
+                    enabled: true,
                     shared: false,
-                    followCursor: false,
                     intersect: false,
-                    custom: undefined,
-                    fillSeriesColor: false,
-                    theme: false,
-                    style: { fontSize: '0px' },
-                    onDatasetHover: { highlightDataSeries: false },
-                    x: { show: false },
-                    y: { show: false },
                     marker: { show: false },
-                    items: { display: 'none' },
-                    fixed: { enabled: false }
+                    x: { show: false },
+                    y: { show: false }
                 },
                 xaxis: {
                     categories: @json($chartCategories),
