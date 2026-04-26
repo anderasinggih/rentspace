@@ -137,14 +137,21 @@
         <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[340px]">
             <!-- Dynamic Nominal Display -->
             <div class="absolute top-4 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
-                <h3 id="chart-nominal-label" class="text-[10px] font-semibold text-stock-label uppercase mb-1">
+                <h3 id="chart-nominal-label" class="text-[10px] font-semibold text-stock-label uppercase mb-2">
                     Pendapatan Bersih</h3>
-                <div class="flex items-baseline justify-center gap-1">
-                    <span class="text-xs font-semibold text-stock-up/50">Rp</span>
-                    <span id="chart-nominal-value" class="text-3xl font-semibold text-white leading-none">0k</span>
+                <div class="flex items-baseline justify-center gap-2">
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-xs font-semibold text-stock-up/50">Rp</span>
+                        <span id="chart-nominal-value" class="text-3xl font-semibold text-white leading-none">0k</span>
+                    </div>
+                    <!-- Gain Badge -->
+                    <div id="chart-nominal-gain" class="px-1.5 py-0.5 rounded text-[10px] font-bold {{ $gainNetRevenue >= 0 ? 'bg-stock-up/10 text-stock-up' : 'bg-stock-down/10 text-stock-down' }}">
+                        {{ $gainNetRevenue >= 0 ? '▲' : '▼' }} {{ abs($gainNetRevenue) }}%
+                    </div>
                 </div>
+                <!-- Date with Year -->
                 <p id="chart-nominal-date"
-                    class="text-[8px] font-semibold text-stock-label mt-2 opacity-0 transition-opacity">---</p>
+                    class="text-[9px] font-semibold text-stock-label mt-3 opacity-0 transition-opacity">---</p>
             </div>
 
             <!-- The Chart -->
@@ -286,6 +293,13 @@
             nValue.innerText = (latestValue / 1000).toLocaleString() + 'k';
 
             const c = { txt: 'rgba(255,255,255,0.2)', brd: 'rgba(255,255,255,0.05)' };
+            
+            // Format Categories with Year
+            const categories = @json($chartCategories);
+            const currentYear = new Date().getFullYear();
+            const formattedCategories = categories.map(cat => {
+                return (cat.includes(currentYear)) ? cat : cat + ' ' + currentYear;
+            });
 
             let rv = new ApexCharts(document.querySelector("#revenueChart"), {
                 series: [{ name: 'Bersih', data: netData }],
@@ -296,7 +310,7 @@
                             if (config.dataPointIndex !== -1 && chartContext && chartContext.w && chartContext.w.globals) {
                                 try {
                                     const val = chartContext.w.globals.series[0][config.dataPointIndex];
-                                    const label = chartContext.w.globals.categoryLabels[config.dataPointIndex];
+                                    const label = formattedCategories[config.dataPointIndex];
                                     if (val !== undefined && nValue) {
                                         nValue.innerText = (val / 1000).toLocaleString() + 'k';
                                         if (nDate) { nDate.innerText = label || '---'; nDate.style.opacity = '1'; }
@@ -309,6 +323,15 @@
                             if (nDate) nDate.style.opacity = '0';
                         }
                     }
+                },
+                grid: {
+                    show: true,
+                    borderColor: 'rgba(255,255,255,0.03)',
+                    strokeDashArray: 2,
+                    position: 'back',
+                    xaxis: { lines: { show: true } },
+                    yaxis: { lines: { show: true } },
+                    padding: { top: 0, right: 0, bottom: 0, left: 0 }
                 },
                 colors: ['#10b981'],
                 stroke: { width: 3, curve: 'smooth' },
@@ -340,7 +363,7 @@
                     y: { show: false }
                 },
                 xaxis: {
-                    categories: @json($chartCategories),
+                    categories: formattedCategories,
                     crosshairs: { 
                         show: true,
                         width: 1,
@@ -364,10 +387,10 @@
                     enabled: true, offsetY: -18,
                     style: { fontSize: '10px', colors: ["#10b981"], fontWeight: 600 }
                 },
-                xaxis: { categories: @json($chartCategories), labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+                xaxis: { categories: formattedCategories, labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
                 yaxis: { show: false },
                 grid: { show: false },
-                tooltip: { enabled: false } // Matikan tooltip di chart kedua juga
+                tooltip: { enabled: false }
             });
             tr.render();
 
@@ -397,7 +420,7 @@
                     }
                 },
                 stroke: { width: 1, colors: ['#000'] },
-                tooltip: { enabled: false } // Matikan tooltip di donut juga biar konsisten
+                tooltip: { enabled: false }
             });
             dn.render();
 
