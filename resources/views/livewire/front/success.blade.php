@@ -180,26 +180,16 @@
 
                         {{-- Jika Cash, tetap tombol WA --}}
                         @if($rental->metode_pembayaran === 'cash')
-                            <a href="{{ $waUrl }}" target="_blank"
-                                class="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-emerald-600 text-white text-sm font-bold border border-emerald-500/10 transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                                <span>Konfirmasi WhatsApp</span>
-                            </a>
+                            {{-- Tombol konfirmasi WA dihapus agar alur murni via email otomatis --}}
+                            <p class="text-[10px] text-center text-muted-foreground px-4 italic bg-muted/30 py-3 rounded-xl border border-dashed border-border/50">Admin telah menerima laporan pesanan Anda. Silakan datang ke lokasi sesuai jadwal.</p>
                         @else
                             <p class="text-[10px] text-center text-muted-foreground px-4">Setelah membayar, halaman ini akan otomatis berubah menjadi struk berhasil.</p>
                         @endif
                     @elseif($rental->status === 'paid')
                         <!-- Success Notifications -->
-                        <div class="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-xl flex items-start gap-3">
-                            <div class="p-1 bg-emerald-500 rounded-full text-white mt-0.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            </div>
-                            <p class="text-xs text-emerald-800 leading-relaxed font-medium">Lunas! Silakan <span class="font-bold underline">SCREENSHOT</span> atau simpan invoice ini untuk ditunjukkan saat pengambilan.</p>
-                        </div>
-                        <a href="{{ $waUrl }}" target="_blank"
-                            class="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-zinc-900 text-white text-sm font-bold transition-all">
-                            <span>Konfirmasi ke WhatsApp</span>
-                        </a>
+                        {{-- Peringatan screenshot dihapus karena digantikan sistem notifikasi email otomatis --}}
+                        {{-- Tombol konfirmasi WA lunas dihapus --}}
+                        <p class="text-[10px] text-center text-emerald-600/70 px-4 font-medium italic">Invoice digital telah dikirimkan ke email Anda.</p>
                     @else
                         <!-- Cancelled Case -->
                         <a href="{{ route('public.booking') }}" wire:navigate
@@ -292,7 +282,7 @@
                 <div class="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                 </div>
-                <h3 class="text-2xl font-black tracking-tight text-foreground italic">Gimana Servis Kami?</h3>
+                <h3 class="text-2xl font-bold tracking-tight text-foreground ">Gimana Servis Kami?</h3>
                 <p class="text-xs text-muted-foreground mt-2 px-4 leading-relaxed">Puas sama layanannya? Kasih bintang & feedback ya biar kami makin semangat!</p>
             </div>
 

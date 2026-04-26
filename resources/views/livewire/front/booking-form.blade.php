@@ -290,6 +290,13 @@
                             @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div>
+                            <label class="text-sm font-medium leading-none">Alamat Email (Untuk Terima Invoice)</label>
+                            <input type="email" wire:model="email"
+                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                placeholder="nama@email.com">
+                            @error('email') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
                             <label class="text-sm font-medium leading-none">Nomor Telepon / WhatsApp</label>
                             <input type="text" wire:model="no_wa" inputmode="numeric"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '');"
@@ -699,8 +706,9 @@
                 const nm = $wire.get('nama');
                 const wa = $wire.get('no_wa');
                 const sm = $wire.get('sosial_media');
-                if(!nk || !nm || !wa || !sm) {
-                    alert('Harap lengkapi Data Diri (NIK, Nama, No. WhatsApp, Sosial Media) terlebih dahulu.');
+                const em = $wire.get('email');
+                if(!nk || !nm || !wa || !sm || !em) {
+                    alert('Harap lengkapi Data Diri (NIK, Nama, Email, No. WhatsApp, Sosial Media) terlebih dahulu.');
                     return;
                 }
                 this.step = 3;

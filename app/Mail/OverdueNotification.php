@@ -8,12 +8,15 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Models\Setting;
 
-class NewOrderNotification extends Mailable
+class OverdueNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public $rental;
+    public $appName;
 
     /**
      * Create a new message instance.
@@ -21,6 +24,7 @@ class NewOrderNotification extends Mailable
     public function __construct(Rental $rental)
     {
         $this->rental = $rental->load(['units', 'items.unit']);
+        $this->appName = Setting::getVal('home_title', 'RENT SPACE');
     }
 
     /**
@@ -29,7 +33,7 @@ class NewOrderNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '📦 Pesanan Baru: #' . $this->rental->booking_code . ' - ' . strtoupper($this->rental->nama),
+            subject: 'PENTING: Waktu Sewa Anda Telah Habis - #' . $this->rental->booking_code,
         );
     }
 
@@ -39,7 +43,7 @@ class NewOrderNotification extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.new-order',
+            view: 'emails.overdue-notification',
         );
     }
 

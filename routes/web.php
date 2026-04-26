@@ -46,6 +46,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/ratings', \App\Livewire\Admin\RatingManager::class)->name('admin.ratings');
         Route::get('/admin/scan', \App\Livewire\Admin\QuickScan::class)->name('admin.scan');
         Route::get('/admin/radar', \App\Livewire\Admin\RadarDevices::class)->name('admin.radar');
+
+        // Email Preview Routes
+        Route::get('/admin/email-preview/{type}', function($type) {
+            $rental = \App\Models\Rental::latest()->first();
+            if (!$rental) return "Belum ada data rental di database untuk dijadikan contoh preview.";
+            
+            try {
+                return match($type) {
+                    'invoice' => new \App\Mail\NewOrderNotification($rental),
+                    'confirmed' => new \App\Mail\PaymentConfirmedNotification($rental),
+                    'reminder' => new \App\Mail\ReturnReminderNotification($rental),
+                    'overdue' => new \App\Mail\OverdueNotification($rental),
+                    default => abort(404),
+                };
+            } catch (\Exception $e) {
+                return "Gagal me-render email: " . $e->getMessage();
+            }
+        })->name('admin.email-preview');
     });
     
     // Affiliate Dashboard

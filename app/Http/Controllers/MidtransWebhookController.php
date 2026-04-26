@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rental;
+use App\Mail\PaymentConfirmedNotification;
+use App\Mail\OrderCancelledNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class MidtransWebhookController extends Controller
 {
@@ -55,12 +58,57 @@ class MidtransWebhookController extends Controller
                 } else {
                     $rental->update(['status' => 'paid']);
                     Log::info("MIDTRANS WEBHOOK: Pembayaran Berhasil untuk Booking Code: " . $booking_code);
+                    
+                    // Send Email Notification
+                    $this->sendEmailNotification($rental, 'paid');
                 }
             } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
                 $rental->update(['status' => 'cancelled']);
+                Log::info("MIDTRANS WEBHOOK: Pembayaran Gagal/Cancel untuk Booking Code: " . $booking_code);
+                
+                // Send Email Notification
+                $this->sendEmailNotification($rental, 'cancelled');
             }
         }
 
         return response()->json(['message' => 'OK']);
+    }
+
+    private function sendEmailNotification($rental, $type)
+    {
+        $isAdminEmailEnabled = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+        $isUserEmailEnabled = \App\Models\Setting::getVal('is_user_email_active', '1') == '1';
+        
+        if (!$isAdminEmailEnabled && !$isUserEmailEnabled) return;
+
+        try {
+            // 1. Prepare recipients
+            $emails = [];
+            
+            if ($isAdminEmailEnabled) {
+                $adminEmail = \App\Models\Setting::getVal('admin_email_recipients');
+                if (!$adminEmail) {
+                    $adminEmail = config('mail.admin_email') ?: config('mail.from.address');
+                }
+                if ($adminEmail) {
+                    $emails = array_merge($emails, array_map('trim', explode(',', $adminEmail)));
+                }
+            }
+            
+            if ($isUserEmailEnabled && $rental->email) {
+                $emails[] = $rental->email;
+            }
+
+            // 2. Send the right notification
+            if (!empty($emails)) {
+                if ($type === 'paid') {
+                    Mail::to($emails)->queue(new PaymentConfirmedNotification($rental));
+                } elseif ($type === 'cancelled') {
+                    Mail::to($emails)->queue(new OrderCancelledNotification($rental));
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("MIDTRANS WEBHOOK EMAIL FAILED: " . $e->getMessage());
+        }
     }
 }

@@ -12,7 +12,7 @@ use Livewire\Component;
 
 class BookingForm extends Component
 {
-    public $nik, $nama, $alamat, $no_wa, $sosial_media;
+    public $nik, $nama, $email, $alamat, $no_wa, $sosial_media;
     public $waktu_mulai, $waktu_selesai;
     public $unit_id; // Keeping for backward compat/initial select
     public $selected_unit_ids = [];
@@ -64,6 +64,7 @@ class BookingForm extends Component
 
             if ($lastRental) {
                 $this->nama = $lastRental->nama;
+                $this->email = $lastRental->email;
                 $this->alamat = $lastRental->alamat;
                 $this->sosial_media = $lastRental->sosial_media;
 
@@ -482,6 +483,7 @@ class BookingForm extends Component
         $this->validate([
             'nik' => 'required|numeric',
             'nama' => 'required',
+            'email' => 'required|email',
             'no_wa' => 'required|numeric',
             'sosial_media' => 'required',
             'alamat' => 'required',
@@ -523,6 +525,7 @@ class BookingForm extends Component
             'unit_id' => $this->selected_unit_ids[0] ?? null, // Backward compatibility
             'nik' => $this->nik,
             'nama' => strtoupper($this->nama),
+            'email' => strtolower($this->email),
             'alamat' => strtoupper($this->alamat),
             'sosial_media' => $this->sosial_media,
             'no_wa' => $this->no_wa,
@@ -567,20 +570,7 @@ class BookingForm extends Component
 
         $this->dispatch('booking-submitted');
 
-        // Send Email Notification to Admin
-        try {
-            $adminEmail = env('ADMIN_EMAIL');
-            if ($adminEmail) {
-                // Support multiple emails separated by comma
-                $emails = array_map('trim', explode(',', $adminEmail));
-                if (!empty($emails)) {
-                    Mail::to($emails)->send(new NewOrderNotification($rental));
-                }
-            }
-        } catch (\Exception $e) {
-            // Silently fail to not block customer redirect
-            \Illuminate\Support\Facades\Log::error("Email failed: " . $e->getMessage());
-        }
+
 
         return redirect()->route('public.payment', $rental->booking_code);
     }
@@ -600,6 +590,7 @@ class BookingForm extends Component
 
         if ($lastRental) {
             $this->nama = $lastRental->nama;
+            $this->email = $lastRental->email;
             $this->no_wa = $lastRental->no_wa;
             $this->alamat = $lastRental->alamat;
             $this->sosial_media = $lastRental->sosial_media;

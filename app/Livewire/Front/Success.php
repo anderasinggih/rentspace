@@ -4,6 +4,8 @@ namespace App\Livewire\Front;
 
 use App\Models\Rental;
 use App\Models\Setting;
+use App\Mail\NewOrderNotification;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Midtrans\Config;
 use Midtrans\Transaction;
@@ -80,6 +82,47 @@ class Success extends Component
             \Illuminate\Support\Facades\Schema::hasColumn('rentals', 'rating') && 
             !($this->rental->rating)) {
             $this->showFeedbackModal = true;
+        }
+
+        // SEND EMAIL NOTIFICATION TO ADMIN (ONLY ONCE)
+        $this->notifyAdmin();
+    }
+
+    private function notifyAdmin()
+    {
+        $isAdminEmailEnabled = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+        $isUserEmailEnabled = \App\Models\Setting::getVal('is_user_email_active', '1') == '1';
+        
+        if (!$isAdminEmailEnabled && !$isUserEmailEnabled) return;
+
+        if (!$this->rental->is_admin_notified) {
+            try {
+                // 1. Send to Admin(s)
+                if ($isAdminEmailEnabled) {
+                    $adminEmail = \App\Models\Setting::getVal('admin_email_recipients');
+                    if (!$adminEmail) {
+                        $adminEmail = config('mail.admin_email') ?: config('mail.from.address');
+                    }
+                    
+                    if ($adminEmail) {
+                        $emails = array_map('trim', explode(',', $adminEmail));
+                        if (!empty($emails)) {
+                            Mail::to($emails)->queue(new NewOrderNotification($this->rental));
+                        }
+                    }
+                }
+
+                // 2. Send to Customer
+                if ($isUserEmailEnabled && $this->rental->email) {
+                    Mail::to($this->rental->email)->queue(new NewOrderNotification($this->rental));
+                }
+                
+                $this->rental->update(['is_admin_notified' => true]);
+                Log::info("Notifikasi Berhasil Diproses (A:" . ($isAdminEmailEnabled?'ON':'OFF') . "/P:" . ($isUserEmailEnabled?'ON':'OFF') . ") untuk: " . $this->rental->booking_code);
+
+            } catch (\Exception $e) {
+                Log::error("Failed to notify admin/customer on Success page: " . $e->getMessage());
+            }
         }
     }
 

@@ -8,8 +8,9 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class NewOrderNotification extends Mailable
+class PaymentConfirmedNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -29,7 +30,7 @@ class NewOrderNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '📦 Pesanan Baru: #' . $this->rental->booking_code . ' - ' . strtoupper($this->rental->nama),
+            subject: 'Konfirmasi Pembayaran Berhasil: #' . $this->rental->booking_code,
         );
     }
 
@@ -39,7 +40,7 @@ class NewOrderNotification extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.new-order',
+            view: 'emails.payment-confirmed',
         );
     }
 

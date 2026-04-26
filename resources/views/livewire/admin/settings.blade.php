@@ -27,6 +27,12 @@
                 {{ $activeTab === 'umum' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
+            <button wire:click="$set('activeTab', 'email')"
+                title="Notifikasi Email"
+                class="flex-1 inline-flex items-center justify-center rounded-lg py-2 text-sm font-medium transition-all
+                {{ $activeTab === 'email' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </button>
             <button wire:click="$set('activeTab', 'faq')"
                 title="FAQ / Tentang"
                 class="flex-1 inline-flex items-center justify-center rounded-lg py-2 text-sm font-medium transition-all
@@ -102,14 +108,14 @@
                                 </div>
 
                                 @if(auth()->user()->role === 'admin')
-                                <button type="submit" wire:confirm="Simpan foto QRIS baru ini?"
-                                    class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
-                                    wire:loading.attr="disabled">
-                                    <span wire:loading.remove wire:target="saveQris">Simpan QRIS Baru</span>
-                                    <span wire:loading wire:target="saveQris">Menyimpan...</span>
-                                </button>
+                                    <button type="submit" wire:confirm="Simpan foto QRIS baru ini?"
+                                        class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
+                                        wire:loading.attr="disabled">
+                                        <span wire:loading.remove wire:target="saveQris">Simpan QRIS Baru</span>
+                                        <span wire:loading wire:target="saveQris">Menyimpan...</span>
+                                    </button>
                                 @else
-                                <div class="w-full h-9 flex items-center justify-center rounded-md border border-dashed border-border text-[10px] font-bold text-muted-foreground uppercase opacity-50">Mode Viewer (Read Only)</div>
+                                    <div class="w-full h-9 flex items-center justify-center rounded-md border border-dashed border-border text-[10px] font-bold text-muted-foreground uppercase opacity-50">Mode Viewer (Read Only)</div>
                                 @endif
                             </form>
                         </div>
@@ -130,7 +136,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             @for($i = 1; $i <= 3; $i++)
                                 @php 
-                                    $photoProp = "hero" . ($i == 1 ? "" : $i) . "_photo";
+                                                                                                                                                                                $photoProp = "hero" . ($i == 1 ? "" : $i) . "_photo";
                                     $keyName = "hero" . ($i == 1 ? "" : $i);
                                     $currentVal = $this->$keyName;
                                 @endphp
@@ -138,7 +144,7 @@
                                     <div class="flex items-center justify-between px-1">
                                         <span class="text-[10px] font-bold tracking-tight text-muted-foreground">Slide #{{ $i }}</span>
                                     </div>
-                                    
+
                                     <div class="relative aspect-[16/9] bg-muted rounded-xl border border-dashed border-border overflow-hidden flex items-center justify-center shadow-inner group">
                                         <!-- Preview -->
                                         <template x-if="preview">
@@ -155,13 +161,13 @@
                                             <span class="text-white text-[10px] font-bold tracking-tight">Pilih Foto Baru</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="space-y-2">
                                         <input type="file" wire:model="hero{{ $i == 1 ? '' : $i }}_photo" accept="image/*"
                                             x-on:change="const reader = new FileReader(); reader.onload = (e) => { preview = e.target.result; }; reader.readAsDataURL($event.target.files[0])"
                                             class="block w-full text-[10px] text-muted-foreground file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer">
-                                        
-                                        @error('hero'.($i == 1 ? '' : $i).'_photo') 
+
+                                        @error('hero' . ($i == 1 ? '' : $i) . '_photo') 
                                             <span class="text-red-500 text-[9px] font-bold block">{{ $message }}</span> 
                                         @enderror
 
@@ -273,394 +279,394 @@
         @endif
 
         @if($activeTab === 'akun')
-            <!-- Kelola Akun -->
-            <div
-                class="bg-background rounded-xl border border-border overflow-hidden shadow-sm flex flex-col">
-                <div class="p-4 border-b border-border bg-muted/30">
-                    <h2 class="text-lg font-semibold">{{ $isEditMode ? 'Edit Akun: ' . $name : 'Kelola Akun' }}</h2>
-                    <p class="text-xs text-muted-foreground">
-                        {{ $isEditMode ? 'Ubah informasi akun atau reset password.' : 'Tambah atau hapus akses masuk dasbor admin.' }}
-                        {{
-        auth()->user()->role !== 'admin' ? 'Fitur dikunci untuk Viewer.' : '' }}</p>
-                </div>
-                <div class="p-4 flex-1">
-                    @if (session()->has('user_message'))
-                                <div class="p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-100 border border-green-200">{{
-                        session('user_message') }}</div>
-                    @endif
-                    @if (session()->has('user_error'))
-                                <div class="p-3 mb-4 text-sm text-red-800 rounded-lg bg-red-100 border border-red-200">{{
-                        session('user_error') }}</div>
-                    @endif
-
-                    @if(auth()->user()->role === 'admin')
-                        <form wire:submit="{{ $isEditMode ? 'updateUser' : 'createUser' }}"
-                            class="mb-6 space-y-4 p-4 border rounded-xl bg-muted/20">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-muted-foreground mb-1">Nama Lengkap</label>
-                                    <input type="text" wire:model="name" placeholder="Misal: Budi Santoso"
-                                        class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                    @error('name') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-muted-foreground mb-1">Alamat Email</label>
-                                    <input type="email" wire:model="email" placeholder="email@contoh.com"
-                                        class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                    @error('email') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-muted-foreground mb-1">Password
-                                        {{ $isEditMode ? '(Kosongkan jika tidak diubah)' : '' }}</label>
-                                    <input type="password" wire:model="password"
-                                        placeholder="{{ $isEditMode ? '••••••••' : 'Password' }}"
-                                        class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                    @error('password') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-muted-foreground mb-1">Peran (Role)</label>
-                                    <select wire:model.live="role"
-                                        class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                        <option value="admin">Admin</option>
-                                        <option value="staff">Staff (Operasional)</option>
-                                        <option value="viewer">Viewer (View Only)</option>
-                                    </select>
-                                    @error('role') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-
-                            <div class="space-y-4">
-                                <div class="flex items-center space-x-2">
-                                    <button type="button"
-                                        wire:click="$set('is_also_affiliate', {{ !$is_also_affiliate ? 'true' : 'false' }})"
-                                        class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background {{ $is_also_affiliate ? 'bg-primary' : 'bg-input' }}">
-                                        <span
-                                            class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform {{ $is_also_affiliate ? 'translate-x-4' : 'translate-x-0' }}"></span>
-                                    </button>
-                                    <span class="text-sm font-medium text-foreground italic flex items-center gap-1.5">
-                                        Aktifkan sebagai Affiliator
-                                        @if($is_also_affiliate)
-                                            <span
-                                                class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">Aktif</span>
+                                <!-- Kelola Akun -->
+                                <div
+                                    class="bg-background rounded-xl border border-border overflow-hidden shadow-sm flex flex-col">
+                                    <div class="p-4 border-b border-border bg-muted/30">
+                                        <h2 class="text-lg font-semibold">{{ $isEditMode ? 'Edit Akun: ' . $name : 'Kelola Akun' }}</h2>
+                                        <p class="text-xs text-muted-foreground">
+                                            {{ $isEditMode ? 'Ubah informasi akun atau reset password.' : 'Tambah atau hapus akses masuk dasbor admin.' }}
+                                            {{
+            auth()->user()->role !== 'admin' ? 'Fitur dikunci untuk Viewer.' : '' }}</p>
+                                    </div>
+                                    <div class="p-4 flex-1">
+                                        @if (session()->has('user_message'))
+                                                                                                                                                        <div class="p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-100 border border-green-200">{{
+                                            session('user_message') }}</div>
                                         @endif
-                                    </span>
-                                </div>
-                            </div>
+                                        @if (session()->has('user_error'))
+                                                                                                                                                        <div class="p-3 mb-4 text-sm text-red-800 rounded-lg bg-red-100 border border-red-200">{{
+                                            session('user_error') }}</div>
+                                        @endif
 
-                            @if($role === 'affiliator' || $is_also_affiliate)
-                                <div class="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-4">
-                                    <h4 class="text-[11px] font-black tracking-widest text-primary">Detail Profil Affiliator</h4>
-
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-muted-foreground mb-1">Kode
-                                                Referral</label>
-                                            <input type="text" wire:model="affiliate_referral_code" placeholder="CONTOH: AB123"
-                                                class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm font-mono uppercase focus-visible:ring-primary">
-                                            @error('affiliate_referral_code') <span
-                                            class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-muted-foreground mb-1">Komisi (%)</label>
-                                            <input type="number" wire:model="affiliate_commission_rate" min="0" max="100"
-                                                class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:ring-primary">
-                                            @error('affiliate_commission_rate') <span
-                                            class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-muted-foreground mb-1">WhatsApp
-                                                (628...)</label>
-                                            <input type="text" wire:model="affiliate_no_hp" placeholder="628..."
-                                                class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:ring-primary">
-                                            @error('affiliate_no_hp') <span class="text-red-500 text-[10px]">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-muted-foreground mb-1">NIK (KTP)</label>
-                                            <input type="text" wire:model="affiliate_nik" placeholder="320..."
-                                                class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:ring-primary">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-muted-foreground mb-1">Alamat
-                                                Tinggal</label>
-                                            <input type="text" wire:model="affiliate_alamat" placeholder="Jl. Merdeka..."
-                                                class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:ring-primary">
-                                        </div>
-                                    </div>
-
-                                    <div class="pt-4 border-t border-primary/10">
-                                        <h5 class="text-[10px] font-bold text-muted-foreground mb-3 flex items-center gap-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                stroke-linejoin="round">
-                                                <rect width="20" height="14" x="2" y="5" rx="2" />
-                                                <line x1="2" x2="22" y1="10" y2="10" />
-                                            </svg>
-                                            Informasi Rekening Payout
-                                        </h5>
-                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                            <div>
-                                                <input type="text" wire:model="affiliate_bank_name"
-                                                    placeholder="Nama Bank (BCA, Mandiri, dll)"
-                                                    class="h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:ring-primary">
-                                            </div>
-                                            <div>
-                                                <input type="text" wire:model="affiliate_bank_account_number"
-                                                    placeholder="Nomor Rekening"
-                                                    class="h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:ring-primary">
-                                            </div>
-                                            <div>
-                                                <input type="text" wire:model="affiliate_bank_account_name"
-                                                    placeholder="Nama Pemilik Rekening"
-                                                    class="h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:ring-primary">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            <div class="flex gap-2">
-                                <button type="submit"
-                                    wire:confirm="{{ $isEditMode ? 'Simpan perubahan data akun ini?' : 'Tambah akun baru?' }}"
-                                    class="h-9 flex-1 rounded-md bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 text-sm font-bold transition-all">
-                                    {{ $isEditMode ? 'Simpan Perubahan' : 'Tambah Akun' }}
-                                </button>
-                                @if($isEditMode)
-                                    <button type="button" wire:click="cancelEdit"
-                                        wire:confirm="Batalkan pengeditan? Data yang diubah tidak akan disimpan."
-                                        class="h-9 px-4 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors">
-                                        Batal
-                                    </button>
-                                @endif
-                            </div>
-                        </form>
-                    @endif
-
-                    <div class="mb-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div class="relative w-full md:w-64 group">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                            </div>
-                            <input wire:model.live.debounce.300ms="search" type="text" 
-                                class="block w-full pl-9 pr-3 h-8 border border-border rounded-lg bg-background text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" 
-                                placeholder="Cari admin/staff...">
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <label class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
-                            <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all">
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="border rounded-lg overflow-hidden bg-background shadow-sm">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left shadow-sm">
-                                <thead
-                                    class="bg-muted/50 text-xs text-muted-foreground border-b border-border transition-colors">
-                                    <tr>
-                                        <th wire:click="sortBy('name')"
-                                            class="px-4 py-3 font-medium cursor-pointer hover:bg-muted/50 group">
-                                            <div class="flex items-center gap-1">
-                                                Nama & Email
-                                                <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    @if($sortField === 'name')
-                                                        @if($sortDirection === 'asc')
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                                class="lucide lucide-arrow-up">
-                                                                <path d="m5 12 7-7 7 7" />
-                                                                <path d="M12 19V5" />
-                                                            </svg>
-                                                        @else
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                                class="lucide lucide-arrow-down">
-                                                                <path d="M12 5v14" />
-                                                                <path d="m19 12-7 7-7-7" />
-                                                            </svg>
-                                                        @endif
-                                                    @else
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                            class="lucide lucide-chevrons-up-down">
-                                                            <path d="m7 15 5 5 5-5" />
-                                                            <path d="m7 9 5-5 5 5" />
-                                                        </svg>
-                                                    @endif
+                                        @if(auth()->user()->role === 'admin')
+                                            <form wire:submit="{{ $isEditMode ? 'updateUser' : 'createUser' }}"
+                                                class="mb-6 space-y-4 p-4 border rounded-xl bg-muted/20">
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-muted-foreground mb-1">Nama Lengkap</label>
+                                                        <input type="text" wire:model="name" placeholder="Misal: Budi Santoso"
+                                                            class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                                        @error('name') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-muted-foreground mb-1">Alamat Email</label>
+                                                        <input type="email" wire:model="email" placeholder="email@contoh.com"
+                                                            class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                                        @error('email') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </th>
-                                        <th wire:click="sortBy('role')"
-                                            class="px-4 py-3 font-medium cursor-pointer hover:bg-muted/50 group">
-                                            <div class="flex items-center gap-1">
-                                                Peran
-                                                <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    @if($sortField === 'role')
-                                                        @if($sortDirection === 'asc')
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                                class="lucide lucide-arrow-up">
-                                                                <path d="m5 12 7-7 7 7" />
-                                                                <path d="M12 19V5" />
-                                                            </svg>
-                                                        @else
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                                class="lucide lucide-arrow-down">
-                                                                <path d="M12 5v14" />
-                                                                <path d="m19 12-7 7-7-7" />
-                                                            </svg>
-                                                        @endif
-                                                    @else
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                            class="lucide lucide-chevrons-up-down">
-                                                            <path d="m7 15 5 5 5-5" />
-                                                            <path d="m7 9 5-5 5 5" />
-                                                        </svg>
-                                                    @endif
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-muted-foreground mb-1">Password
+                                                            {{ $isEditMode ? '(Kosongkan jika tidak diubah)' : '' }}</label>
+                                                        <input type="password" wire:model="password"
+                                                            placeholder="{{ $isEditMode ? '••••••••' : 'Password' }}"
+                                                            class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                                        @error('password') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-muted-foreground mb-1">Peran (Role)</label>
+                                                        <select wire:model.live="role"
+                                                            class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                                            <option value="admin">Admin</option>
+                                                            <option value="staff">Staff (Operasional)</option>
+                                                            <option value="viewer">Viewer (View Only)</option>
+                                                        </select>
+                                                        @error('role') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </th>
-                                        <th wire:click="sortBy('created_at')"
-                                            class="px-4 py-3 font-medium cursor-pointer hover:bg-muted/50 group hidden sm:table-cell">
-                                            <div class="flex items-center gap-1">
-                                                Tgl Terdaftar
-                                                <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    @if($sortField === 'created_at')
-                                                        @if($sortDirection === 'asc')
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                                class="lucide lucide-arrow-up">
-                                                                <path d="m5 12 7-7 7 7" />
-                                                                <path d="M12 19V5" />
-                                                            </svg>
-                                                        @else
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                                class="lucide lucide-arrow-down">
-                                                                <path d="M12 5v14" />
-                                                                <path d="m19 12-7 7-7-7" />
-                                                            </svg>
-                                                        @endif
-                                                    @else
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                            class="lucide lucide-chevrons-up-down">
-                                                            <path d="m7 15 5 5 5-5" />
-                                                            <path d="m7 9 5-5 5 5" />
-                                                        </svg>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </th>
-                                        <th class="px-4 py-3 text-right"><span class="sr-only">Aksi</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-border">
-                                    @foreach($users as $user)
-                                        <tr class="hover:bg-muted/30 {{ $editingUserId == $user->id ? 'bg-primary/5' : '' }}">
-                                            <td class="px-4 py-3">
-                                                <div class="font-medium text-foreground">{{ $user->name }}</div>
-                                                <div class="text-[11px] text-muted-foreground">{{ $user->email }}</div>
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <div class="flex flex-wrap gap-1.5">
-                                                    @if($user->role === 'admin')
-                                                        <x-ui.badge variant="purple">Admin</x-ui.badge>
-                                                    @elseif($user->role === 'staff')
-                                                        <x-ui.badge variant="orange">Staff</x-ui.badge>
-                                                    @elseif($user->role === 'viewer')
-                                                        <x-ui.badge variant="zinc">Viewer</x-ui.badge>
-                                                    @endif
 
-                                                    @if($user->affiliateProfile)
-                                                        <x-ui.badge variant="blue">Affiliator</x-ui.badge>
-                                                    @endif
+                                                <div class="space-y-4">
+                                                    <div class="flex items-center space-x-2">
+                                                        <button type="button"
+                                                            wire:click="$set('is_also_affiliate', {{ !$is_also_affiliate ? 'true' : 'false' }})"
+                                                            class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background {{ $is_also_affiliate ? 'bg-primary' : 'bg-input' }}">
+                                                            <span
+                                                                class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform {{ $is_also_affiliate ? 'translate-x-4' : 'translate-x-0' }}"></span>
+                                                        </button>
+                                                        <span class="text-sm font-medium text-foreground italic flex items-center gap-1.5">
+                                                            Aktifkan sebagai Affiliator
+                                                            @if($is_also_affiliate)
+                                                                <span
+                                                                    class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">Aktif</span>
+                                                            @endif
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </td>
-                                            <td class="px-4 py-3 text-xs text-muted-foreground hidden sm:table-cell">
-                                                {{ $user->created_at->format('d/m/y') }}
-                                            </td>
-                                            <td class="px-4 py-3 text-right">
-                                                <div class="flex items-center justify-end gap-3">
-                                                    @if(auth()->user()->role === 'admin')
-                                                        <button wire:click="editUser({{ $user->id }})"
-                                                            class="text-xs text-primary hover:underline">Edit</button>
 
-                                                    @if(auth()->id() !== $user->id)
-                                                        <button wire:click="deleteUser({{ $user->id }})"
-                                                            wire:confirm="Hapus admin ini?"
-                                                            class="text-xs text-red-500 hover:text-red-700 hover:underline">Hapus</button>
-                                                    @else
-                                                        <span
-                                                            class="text-[10px] text-muted-foreground italic bg-muted px-1.5 rounded">Anda</span>
-                                                    @endif
+                                                @if($role === 'affiliator' || $is_also_affiliate)
+                                                    <div class="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-4">
+                                                        <h4 class="text-[11px] font-black tracking-widest text-primary">Detail Profil Affiliator</h4>
+
+                                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                            <div>
+                                                                <label class="block text-[10px] font-bold text-muted-foreground mb-1">Kode
+                                                                    Referral</label>
+                                                                <input type="text" wire:model="affiliate_referral_code" placeholder="CONTOH: AB123"
+                                                                    class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm font-mono uppercase focus-visible:ring-primary">
+                                                                @error('affiliate_referral_code') <span
+                                                                class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                                            </div>
+                                                            <div>
+                                                                <label class="block text-[10px] font-bold text-muted-foreground mb-1">Komisi (%)</label>
+                                                                <input type="number" wire:model="affiliate_commission_rate" min="0" max="100"
+                                                                    class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:ring-primary">
+                                                                @error('affiliate_commission_rate') <span
+                                                                class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                                            </div>
+                                                            <div>
+                                                                <label class="block text-[10px] font-bold text-muted-foreground mb-1">WhatsApp
+                                                                    (628...)</label>
+                                                                <input type="text" wire:model="affiliate_no_hp" placeholder="628..."
+                                                                    class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:ring-primary">
+                                                                @error('affiliate_no_hp') <span class="text-red-500 text-[10px]">{{ $message }}</span>
+                                                                @enderror
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label class="block text-[10px] font-bold text-muted-foreground mb-1">NIK (KTP)</label>
+                                                                <input type="text" wire:model="affiliate_nik" placeholder="320..."
+                                                                    class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:ring-primary">
+                                                            </div>
+                                                            <div>
+                                                                <label class="block text-[10px] font-bold text-muted-foreground mb-1">Alamat
+                                                                    Tinggal</label>
+                                                                <input type="text" wire:model="affiliate_alamat" placeholder="Jl. Merdeka..."
+                                                                    class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:ring-primary">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="pt-4 border-t border-primary/10">
+                                                            <h5 class="text-[10px] font-bold text-muted-foreground mb-3 flex items-center gap-2">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                                    stroke-linejoin="round">
+                                                                    <rect width="20" height="14" x="2" y="5" rx="2" />
+                                                                    <line x1="2" x2="22" y1="10" y2="10" />
+                                                                </svg>
+                                                                Informasi Rekening Payout
+                                                            </h5>
+                                                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                                <div>
+                                                                    <input type="text" wire:model="affiliate_bank_name"
+                                                                        placeholder="Nama Bank (BCA, Mandiri, dll)"
+                                                                        class="h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:ring-primary">
+                                                                </div>
+                                                                <div>
+                                                                    <input type="text" wire:model="affiliate_bank_account_number"
+                                                                        placeholder="Nomor Rekening"
+                                                                        class="h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:ring-primary">
+                                                                </div>
+                                                                <div>
+                                                                    <input type="text" wire:model="affiliate_bank_account_name"
+                                                                        placeholder="Nama Pemilik Rekening"
+                                                                        class="h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:ring-primary">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 @endif
+
+                                                <div class="flex gap-2">
+                                                    <button type="submit"
+                                                        wire:confirm="{{ $isEditMode ? 'Simpan perubahan data akun ini?' : 'Tambah akun baru?' }}"
+                                                        class="h-9 flex-1 rounded-md bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 text-sm font-bold transition-all">
+                                                        {{ $isEditMode ? 'Simpan Perubahan' : 'Tambah Akun' }}
+                                                    </button>
+                                                    @if($isEditMode)
+                                                        <button type="button" wire:click="cancelEdit"
+                                                            wire:confirm="Batalkan pengeditan? Data yang diubah tidak akan disimpan."
+                                                            class="h-9 px-4 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors">
+                                                            Batal
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </form>
+                                        @endif
+
+                                        <div class="mb-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                                            <div class="relative w-full md:w-64 group">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                                </div>
+                                                <input wire:model.live.debounce.300ms="search" type="text" 
+                                                    class="block w-full pl-9 pr-3 h-8 border border-border rounded-lg bg-background text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" 
+                                                    placeholder="Cari admin/staff...">
                                             </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                               <div class="p-3 border-t border-border">
-                        <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
-                             <!-- Left: Rows & Info -->
-                             <div class="flex items-center gap-6 order-2 md:order-1">
-                                <div class="flex items-center gap-2">
-                                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
-                                    <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm uppercase">
-                                        <option value="10">10</option>
-                                        <option value="25">25</option>
-                                        <option value="50">50</option>
-                                    </select>
-                                </div>
-                                <div class="hidden sm:block">
-                                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none opacity-70">
-                                        Total {{ $users->total() }} results
-                                    </p>
-                                </div>
-                            </div>
 
-                            <!-- Right: Navigation -->
-                            <div class="flex items-center gap-3 order-1 md:order-2">
-                                <button wire:click="previousPage" @disabled($users->onFirstPage())
-                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                                </button>
-                                
-                                <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
-                                    <span class="text-xs font-black text-foreground">{{ $users->currentPage() }}</span>
-                                    <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
-                                    <span class="text-xs font-black text-foreground">{{ $users->lastPage() }}</span>
-                                </div>
+                                            <div class="flex items-center gap-2">
+                                                <label class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
+                                                <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                </select>
+                                            </div>
+                                        </div>
 
-                                <button wire:click="nextPage" @disabled(!$users->hasMorePages())
-                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                                </button>
-                            </div>
-                    </div>
-                </div>
-            </div>
+                                        <div class="border rounded-lg overflow-hidden bg-background shadow-sm">
+                                            <div class="overflow-x-auto">
+                                                <table class="w-full text-sm text-left shadow-sm">
+                                                    <thead
+                                                        class="bg-muted/50 text-xs text-muted-foreground border-b border-border transition-colors">
+                                                        <tr>
+                                                            <th wire:click="sortBy('name')"
+                                                                class="px-4 py-3 font-medium cursor-pointer hover:bg-muted/50 group">
+                                                                <div class="flex items-center gap-1">
+                                                                    Nama & Email
+                                                                    <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        @if($sortField === 'name')
+                                                                            @if($sortDirection === 'asc')
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                                    class="lucide lucide-arrow-up">
+                                                                                    <path d="m5 12 7-7 7 7" />
+                                                                                    <path d="M12 19V5" />
+                                                                                </svg>
+                                                                            @else
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                                    class="lucide lucide-arrow-down">
+                                                                                    <path d="M12 5v14" />
+                                                                                    <path d="m19 12-7 7-7-7" />
+                                                                                </svg>
+                                                                            @endif
+                                                                        @else
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                                class="lucide lucide-chevrons-up-down">
+                                                                                <path d="m7 15 5 5 5-5" />
+                                                                                <path d="m7 9 5-5 5 5" />
+                                                                            </svg>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </th>
+                                                            <th wire:click="sortBy('role')"
+                                                                class="px-4 py-3 font-medium cursor-pointer hover:bg-muted/50 group">
+                                                                <div class="flex items-center gap-1">
+                                                                    Peran
+                                                                    <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        @if($sortField === 'role')
+                                                                            @if($sortDirection === 'asc')
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                                    class="lucide lucide-arrow-up">
+                                                                                    <path d="m5 12 7-7 7 7" />
+                                                                                    <path d="M12 19V5" />
+                                                                                </svg>
+                                                                            @else
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                                    class="lucide lucide-arrow-down">
+                                                                                    <path d="M12 5v14" />
+                                                                                    <path d="m19 12-7 7-7-7" />
+                                                                                </svg>
+                                                                            @endif
+                                                                        @else
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                                class="lucide lucide-chevrons-up-down">
+                                                                                <path d="m7 15 5 5 5-5" />
+                                                                                <path d="m7 9 5-5 5 5" />
+                                                                            </svg>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </th>
+                                                            <th wire:click="sortBy('created_at')"
+                                                                class="px-4 py-3 font-medium cursor-pointer hover:bg-muted/50 group hidden sm:table-cell">
+                                                                <div class="flex items-center gap-1">
+                                                                    Tgl Terdaftar
+                                                                    <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        @if($sortField === 'created_at')
+                                                                            @if($sortDirection === 'asc')
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                                    class="lucide lucide-arrow-up">
+                                                                                    <path d="m5 12 7-7 7 7" />
+                                                                                    <path d="M12 19V5" />
+                                                                                </svg>
+                                                                            @else
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                                    class="lucide lucide-arrow-down">
+                                                                                    <path d="M12 5v14" />
+                                                                                    <path d="m19 12-7 7-7-7" />
+                                                                                </svg>
+                                                                            @endif
+                                                                        @else
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                                class="lucide lucide-chevrons-up-down">
+                                                                                <path d="m7 15 5 5 5-5" />
+                                                                                <path d="m7 9 5-5 5 5" />
+                                                                            </svg>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </th>
+                                                            <th class="px-4 py-3 text-right"><span class="sr-only">Aksi</span></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-border">
+                                                        @foreach($users as $user)
+                                                                <tr class="hover:bg-muted/30 {{ $editingUserId == $user->id ? 'bg-primary/5' : '' }}">
+                                                                    <td class="px-4 py-3">
+                                                                        <div class="font-medium text-foreground">{{ $user->name }}</div>
+                                                                        <div class="text-[11px] text-muted-foreground">{{ $user->email }}</div>
+                                                                    </td>
+                                                                    <td class="px-4 py-3">
+                                                                        <div class="flex flex-wrap gap-1.5">
+                                                                            @if($user->role === 'admin')
+                                                                                <x-ui.badge variant="purple">Admin</x-ui.badge>
+                                                                            @elseif($user->role === 'staff')
+                                                                                <x-ui.badge variant="orange">Staff</x-ui.badge>
+                                                                            @elseif($user->role === 'viewer')
+                                                                                <x-ui.badge variant="zinc">Viewer</x-ui.badge>
+                                                                            @endif
+
+                                                                            @if($user->affiliateProfile)
+                                                                                <x-ui.badge variant="blue">Affiliator</x-ui.badge>
+                                                                            @endif
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="px-4 py-3 text-xs text-muted-foreground hidden sm:table-cell">
+                                                                        {{ $user->created_at->format('d/m/y') }}
+                                                                    </td>
+                                                                    <td class="px-4 py-3 text-right">
+                                                                        <div class="flex items-center justify-end gap-3">
+                                                                            @if(auth()->user()->role === 'admin')
+                                                                                    <button wire:click="editUser({{ $user->id }})"
+                                                                                        class="text-xs text-primary hover:underline">Edit</button>
+
+                                                                                @if(auth()->id() !== $user->id)
+                                                                                    <button wire:click="deleteUser({{ $user->id }})"
+                                                                                        wire:confirm="Hapus admin ini?"
+                                                                                        class="text-xs text-red-500 hover:text-red-700 hover:underline">Hapus</button>
+                                                                                @else
+                                                                                    <span
+                                                                                        class="text-[10px] text-muted-foreground italic bg-muted px-1.5 rounded">Anda</span>
+                                                                                @endif
+                                                                            @endif
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                </tbody>
+                                            </table>
+                                                   <div class="p-3 border-t border-border">
+                                            <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
+                                                 <!-- Left: Rows & Info -->
+                                                 <div class="flex items-center gap-6 order-2 md:order-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
+                                                        <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm uppercase">
+                                                            <option value="10">10</option>
+                                                            <option value="25">25</option>
+                                                            <option value="50">50</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="hidden sm:block">
+                                                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none opacity-70">
+                                                            Total {{ $users->total() }} results
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Right: Navigation -->
+                                                <div class="flex items-center gap-3 order-1 md:order-2">
+                                                    <button wire:click="previousPage" @disabled($users->onFirstPage())
+                                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                                    </button>
+
+                                                    <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
+                                                        <span class="text-xs font-black text-foreground">{{ $users->currentPage() }}</span>
+                                                        <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
+                                                        <span class="text-xs font-black text-foreground">{{ $users->lastPage() }}</span>
+                                                    </div>
+
+                                                    <button wire:click="nextPage" @disabled(!$users->hasMorePages())
+                                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                                    </button>
+                                                </div>
+                                        </div>
+                                    </div>
+                                </div>
         @endif
 
         @if($activeTab === 'umum')
@@ -711,7 +717,7 @@
                         @endif
                     </div>
 
-                    <form wire:submit="saveGeneralSettings" class="flex flex-col gap-4 max-w-2xl">
+                    <form wire:submit="saveGeneralSettings" class="flex flex-col gap-4 ">
                         <div>
                             <label class="block text-sm font-medium mb-1">Judul Beranda (Mendukung Enter)</label>
                             <textarea wire:model="home_title" rows="2"
@@ -742,7 +748,7 @@
                             <label class="block text-sm font-medium mb-1">Nomor WhatsApp Pelayanan Admin (format
                                 628...)</label>
                             <input type="text" wire:model="admin_wa"
-                                class="h-9 w-full sm:w-1/2 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-1">Alamat Offline Toko (tampil di Footer Web
@@ -795,115 +801,255 @@
                                 @endforeach
                             </div>
                         </div>
+                        
                         <div>
                             <label class="block text-sm font-medium mb-2">Link Media Sosial <span
                                     class="text-xs text-muted-foreground">(Tampil di Footer)</span></label>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label
-                                        class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Instagram
-                                        URL</label>
-                                    <input type="url" wire:model="social_ig_url"
-                                        class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                        placeholder="https://instagram.com/namaakun">
+                                    <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Instagram URL</label>
+                                    <input type="url" wire:model="social_ig_url" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="https://instagram.com/namaakun">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Nama
-                                        Akun IG</label>
-                                    <input type="text" wire:model="social_ig_name"
-                                        class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                        placeholder="@namaakun">
+                                    <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Nama Akun IG</label>
+                                    <input type="text" wire:model="social_ig_name" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="@namaakun">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">TikTok
-                                        URL</label>
-                                    <input type="url" wire:model="social_tiktok_url"
-                                        class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                        placeholder="https://tiktok.com/@namaakun">
+                                    <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">TikTok URL</label>
+                                    <input type="url" wire:model="social_tiktok_url" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="https://tiktok.com/@namaakun">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Nama
-                                        Akun TikTok</label>
-                                    <input type="text" wire:model="social_tiktok_name"
-                                        class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                        placeholder="@namaakun">
+                                    <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Nama Akun TikTok</label>
+                                    <input type="text" wire:model="social_tiktok_name" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="@namaakun">
                                 </div>
                             </div>
                         </div>
+
                         <div>
-                            <label class="block text-sm font-medium mb-1">Syarat & Ketentuan Penyewaan <span
-                                    class="text-xs text-muted-foreground">(Ditampilkan di form booking, satu baris = satu
-                                    poin)</span></label>
-                            <textarea wire:model="terms_conditions" rows="8"
-                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono"
-                                placeholder="1. Penyewa wajib..."></textarea>
+                            <label class="block text-sm font-medium mb-1">Syarat & Ketentuan Penyewaan <span class="text-xs text-muted-foreground">(Satu baris = satu poin)</span></label>
+                            <textarea wire:model="terms_conditions" rows="8" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono" placeholder="1. Penyewa wajib..."></textarea>
                         </div>
+
                         @if(auth()->user()->role === 'admin')
-                        <button type="submit" wire:confirm="Simpan perubahan pengaturan umum?"
-                            class="mt-4 self-start inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
-                            wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="saveGeneralSettings">Simpan Pengaturan</span>
-                            <span wire:loading wire:target="saveGeneralSettings">Menyimpan...</span>
-                        </button>
+                            <button type="submit" wire:confirm="Simpan perubahan pengaturan umum?"
+                                class="mt-4 self-start inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 h-9 px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
+                                wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="saveGeneralSettings">Simpan Pengaturan Utama</span>
+                                <span wire:loading wire:target="saveGeneralSettings">Menyimpan...</span>
+                            </button>
+                        @endif
+                    </form>
+                </div>
+
+                @if(auth()->user()->role === 'admin')
+                    <div class="mt-6 border-t border-border">
+                        <div class="p-4 bg-amber-500/5">
+                            <h2 class="text-sm font-bold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="m12 14 4-4"/><path d="m3 3 3 3"/><path d="m21 3-3 3"/><path d="m21 21-3-3"/><path d="m3 21 3-3"/><polyline points="15 6 9 6 9 12"/><path d="M12 12V6"/></svg>
+                                Akses Cepat Fitur Tersembunyi (Khusus Admin)
+                            </h2>
+                        </div>
+                        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/10">
+                            <a href="{{ route('admin.campaign') }}" class="group p-4 rounded-xl border border-border bg-background hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2.5 bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.1 12.9a1.9 1.9 0 0 0 0 2.2l3 3.2a2 2 0 0 0 3 0l3-3.2a1.9 1.9 0 0 0 0-2.2L14.4 9a2 2 0 0 0-3 0Z"/><path d="M12 12V3"/></svg></div>
+                                    <div><h3 class="text-sm font-bold">Campaign Manager</h3><p class="text-[10px] text-muted-foreground uppercase leading-none mt-1">Kelola Pengumuman Web</p></div>
+                                </div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                            </a>
+                            <a href="{{ route('admin.staff-logs') }}" class="group p-4 rounded-xl border border-border bg-background hover:border-amber-500/50 hover:bg-amber-500/5 transition-all flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2.5 bg-amber-500/10 text-amber-500 rounded-lg group-hover:bg-amber-500 group-hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></div>
+                                    <div><h3 class="text-sm font-bold">Staff Activity Logs</h3><p class="text-[10px] text-muted-foreground uppercase leading-none mt-1">Audit Trail & Tracking</p></div>
+                                </div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
+
+        @if($activeTab === 'email')
+            <div class="bg-background rounded-xl border border-border shadow-sm flex flex-col overflow-hidden">
+                <div class="p-4 border-b border-border bg-muted/30">
+                    <h2 class="text-lg font-semibold">Pengaturan Notifikasi & Otomatisasi Email</h2>
+                    <p class="text-xs text-muted-foreground">Konfigurasi bagaimana sistem mengirimkan email otomatis ke Admin dan Pelanggan.</p>
+                </div>
+                
+                <div class="p-6">
+                    @if (session()->has('general_message'))
+                        <div class="p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-100 border border-green-200">
+                            {{ session('general_message') }}
+                        </div>
+                    @endif
+
+                    <form wire:submit="saveGeneralSettings" class="space-y-8">
+                        {{-- Section: Notifikasi & Otomatisasi --}}
+                        <div class="space-y-6">
+                            <div class="space-y-4 px-1">
+                                {{-- Baris 1: Notifikasi Admin --}}
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
+                                    <div class="max-w-md">
+                                        <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Email Notifikasi Tim Admin</h4>
+                                        <p class="text-[10px] text-muted-foreground mt-1">Admin akan dikirimi rincian setiap ada pesanan masuk.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                        <input type="checkbox" wire:model="is_email_active" class="sr-only peer">
+                                        <div class="w-10 h-5 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-sm"></div>
+                                    </label>
+                                </div>
+
+                                {{-- Baris 1.1: Daftar Email (Sub-item) --}}
+                                <div class="ml-4 pl-4 border-l-2 border-border/50 space-y-2 {{ !$is_email_active ? 'opacity-30 pointer-events-none' : '' }}">
+                                    <label class="text-[10px] font-bold text-muted-foreground uppercase leading-none">Daftar Penerima (Pisahkan dengan koma)</label>
+                                    <textarea wire:model="admin_email_recipients" rows="2"
+                                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus:ring-1 focus:ring-primary outline-none transition-all"
+                                        placeholder="admin@email.com, owner@email.com"></textarea>
+                                </div>
+
+                                {{-- Baris 2: Notifikasi Pelanggan --}}
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
+                                    <div class="max-w-md">
+                                        <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Email Salinan Invoice Pelanggan</h4>
+                                        <p class="text-[10px] text-muted-foreground mt-1">Pelanggan akan otomatis dikirimi struk belanja digital setelah booking.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                        <input type="checkbox" wire:model="is_user_email_active" class="sr-only peer">
+                                        <div class="w-10 h-5 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500 shadow-sm"></div>
+                                    </label>
+                                </div>
+
+                                {{-- Baris 3: Reminder Balik --}}
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
+                                    <div class="max-w-md">
+                                        <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Pengingat Waktu Pengembalian</h4>
+                                        <p class="text-[10px] text-muted-foreground mt-1">Email otomatis kepada penyewa sebelum masa sewa berakhir.</p>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex items-center gap-2 {{ !$is_reminder_active ? 'opacity-30' : '' }}">
+                                            <input type="number" wire:model="reminder_hours_before" class="w-16 h-9 rounded border border-input bg-background px-2 text-xs font-bold text-center outline-none focus:ring-1 focus:ring-primary transition-all">
+                                            <span class="text-[10px] font-bold text-muted-foreground uppercase">Jam Sebelum</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                            <input type="checkbox" wire:model="is_reminder_active" class="sr-only peer">
+                                            <div class="w-10 h-5 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500 shadow-sm"></div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {{-- Baris 4: Notifikasi Telat --}}
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
+                                    <div class="max-w-md">
+                                        <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Peringatan Keterlambatan</h4>
+                                        <p class="text-[10px] text-muted-foreground mt-1">Email teguran otomatis jika unit belum dikembalikan lewat dari jadwal.</p>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex items-center gap-2 {{ !$is_overdue_active ? 'opacity-30' : '' }}">
+                                            <input type="number" wire:model="overdue_minutes_after" class="w-16 h-9 rounded border border-input bg-background px-2 text-xs font-bold text-center outline-none focus:ring-1 focus:ring-primary transition-all">
+                                            <span class="text-[10px] font-bold text-muted-foreground uppercase">Menit Telat</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                            <input type="checkbox" wire:model="is_overdue_active" class="sr-only peer">
+                                            <div class="w-10 h-5 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500 shadow-sm"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Section: Preview Email --}}
+                        <div class="mt-8 bg-background rounded-xl overflow-hidden border border-border shadow-sm">
+                            <div class="p-4 border-b border-border bg-muted/30">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-primary/10 text-primary rounded-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-foreground">Pratinjau & Uji Coba Tampilan Email</h3>
+                                        <p class="text-[10px] text-muted-foreground mt-0.5">Lihat bagaimana pelanggan menerima email sistem Anda.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {{-- Invoice Preview --}}
+                                <a href="{{ route('admin.email-preview', 'invoice') }}" target="_blank"
+                                    class="group flex items-center justify-between p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-all">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 bg-emerald-500/10 text-emerald-600 rounded-lg group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold text-foreground">Invoice Baru</p>
+                                            <p class="text-[9px] text-muted-foreground uppercase tracking-tighter">Status: UNPAID</p>
+                                        </div>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:text-emerald-600 transition-colors"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </a>
+
+                                {{-- Confirmed Preview --}}
+                                <a href="{{ route('admin.email-preview', 'confirmed') }}" target="_blank"
+                                    class="group flex items-center justify-between p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-all">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 bg-blue-500/10 text-blue-600 rounded-lg group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z"/><path d="m9 12 2 2 4-4"/></svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold text-foreground">Invoice Lunas</p>
+                                            <p class="text-[9px] text-muted-foreground uppercase tracking-tighter">Status: PAID</p>
+                                        </div>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:text-blue-600 transition-colors"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </a>
+
+                                {{-- Reminder Preview --}}
+                                <a href="{{ route('admin.email-preview', 'reminder') }}" target="_blank"
+                                    class="group flex items-center justify-between p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-all">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 bg-amber-500/10 text-amber-600 rounded-lg group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326a1 1 0 0 0 .738 1.674h16a1 1 0 0 0 .738-1.674l-2-2.222A2 2 0 0 1 18 11.778V7a6 6 0 0 0-12 0v4.778a2 2 0 0 1-.738 1.326l-2 2.222Z"/></svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold text-foreground">Reminder Kembali</p>
+                                            <p class="text-[9px] text-muted-foreground uppercase tracking-tighter">Status: H-2 JAM</p>
+                                        </div>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:text-amber-600 transition-colors"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </a>
+
+                                {{-- Overdue Preview --}}
+                                <a href="{{ route('admin.email-preview', 'overdue') }}" target="_blank"
+                                    class="group flex items-center justify-between p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-all">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 bg-rose-500/10 text-rose-600 rounded-lg group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold text-foreground">Bayar Denda (Telat)</p>
+                                            <p class="text-[9px] text-muted-foreground uppercase tracking-tighter">Status: OVERDUE</p>
+                                        </div>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:text-rose-600 transition-colors"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </a>
+                            </div>
+                        </div>
+
+                        @if(auth()->user()->role === 'admin')
+                            <div class="flex justify-end pt-4 border-t border-border">
+                                <button type="submit" wire:confirm="Simpan seluruh perubahan pengaturan email?"
+                                    class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-8 text-sm font-bold transition-colors cursor-pointer"
+                                    wire:loading.attr="disabled">
+                                    <span wire:loading.remove wire:target="saveGeneralSettings">Simpan Pengaturan Email</span>
+                                    <span wire:loading wire:target="saveGeneralSettings">Menyimpan...</span>
+                                </button>
+                            </div>
                         @endif
                     </form>
                 </div>
             </div>
-
-            @if(auth()->user()->role === 'admin')
-            <div class="mt-6 bg-background rounded-xl border border-border overflow-hidden shadow-sm">
-                <div class="p-4 border-b border-border bg-amber-500/5">
-                    <h2 class="text-sm font-bold flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="m12 14 4-4"/><path d="m3 3 3 3"/><path d="m21 3-3 3"/><path d="M21 21-3-3"/><path d="m3 21 3-3"/><polyline points="15 6 9 6 9 12"/><path d="M12 12V6"/></svg>
-                        Akses Cepat Fitur Tersembunyi (Khusus Admin)
-                    </h2>
-                </div>
-                <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a href="{{ route('admin.campaign') }}" 
-                        class="group p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.1 12.9a1.9 1.9 0 0 0 0 2.2l3 3.2a2 2 0 0 0 3 0l3-3.2a1.9 1.9 0 0 0 0-2.2L14.4 9a2 2 0 0 0-3 0Z"/><path d="M12 12V3"/></svg>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold">Campaign Manager</h3>
-                                <p class="text-[10px] text-muted-foreground uppercase leading-none mt-1">Kelola Pengumuman Web</p>
-                            </div>
-                        </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
-                    </a>
-
-                    <a href="{{ route('admin.staff-logs') }}" 
-                        class="group p-4 rounded-xl border border-border hover:border-amber-500/50 hover:bg-amber-500/5 transition-all flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-amber-500/10 text-amber-500 rounded-lg group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold">Staff Activity Logs</h3>
-                                <p class="text-[10px] text-muted-foreground uppercase leading-none mt-1">Audit Trail & Tracking</p>
-                            </div>
-                        </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
-                    </a>
-
-                    <a href="{{ route('admin.ratings') }}" 
-                        class="group p-4 rounded-xl border border-border hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all flex items-center justify-between text-left">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-emerald-500/10 text-emerald-500 rounded-lg group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold">Database Rating & Feedback</h3>
-                                <p class="text-[10px] text-muted-foreground uppercase leading-none mt-1">Moderasi Ulasan Pelanggan</p>
-                            </div>
-                        </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
-                    </a>
-                </div>
-            </div>
-            @endif
         @endif
+
 
 
         @if($activeTab === 'faq')
@@ -916,7 +1062,7 @@
                 </div>
                 <div class="p-4">
                     @if (session()->has('faq_message'))
-                                <div class="p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-100 border border-green-200">{{
+                                                                                            <div class="p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-100 border border-green-200">{{
                         session('faq_message') }}</div>
                     @endif
 
@@ -924,15 +1070,15 @@
                         @foreach($about_faq_items as $index => $faq)
                             <div class="p-4 border border-border rounded-lg bg-muted/10 relative group">
                                 @if(auth()->user()->role === 'admin')
-                                <button type="button" wire:click="removeFaq({{ $index }})"
-                                    class="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M18 6 6 18" />
-                                        <path d="m6 6 12 12" />
-                                    </svg>
-                                </button>
+                                    <button type="button" wire:click="removeFaq({{ $index }})"
+                                        class="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M18 6 6 18" />
+                                            <path d="m6 6 12 12" />
+                                        </svg>
+                                    </button>
                                 @endif
                                 <div class="grid grid-cols-1 gap-4">
                                     <div>
@@ -960,26 +1106,26 @@
                         @endif
 
                         @if(auth()->user()->role === 'admin')
-                        <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
-                            <button type="button" wire:click="addFaq"
-                                class="inline-flex items-center justify-center rounded-md border border-input bg-background shadow-sm hover:bg-muted h-9 px-4 py-2 text-sm font-medium transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="mr-2">
-                                    <path d="M5 12h14" />
-                                    <path d="M12 5v14" />
-                                </svg>
-                                Tambah Item FAQ
-                            </button>
-                            <button type="button" wire:click="saveFaqSettings" wire:confirm="Simpan seluruh perubahan FAQ?"
-                                class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-6 py-2 text-sm font-bold transition-colors">
-                                Simpan Perubahan FAQ
-                            </button>
-                        </div>
+                            <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
+                                <button type="button" wire:click="addFaq"
+                                    class="inline-flex items-center justify-center rounded-md border border-input bg-background shadow-sm hover:bg-muted h-9 px-4 py-2 text-sm font-medium transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="mr-2">
+                                        <path d="M5 12h14" />
+                                        <path d="M12 5v14" />
+                                    </svg>
+                                    Tambah Item FAQ
+                                </button>
+                                <button type="button" wire:click="saveFaqSettings" wire:confirm="Simpan seluruh perubahan FAQ?"
+                                    class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-6 py-2 text-sm font-bold transition-colors">
+                                    Simpan Perubahan FAQ
+                                </button>
+                            </div>
                         @else
-                        <div class="pt-4 border-t border-border">
-                             <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs font-bold text-muted-foreground uppercase opacity-50">Fitur Kelola FAQ hanya tersedia untuk Admin</div>
-                        </div>
+                            <div class="pt-4 border-t border-border">
+                                 <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs font-bold text-muted-foreground uppercase opacity-50">Fitur Kelola FAQ hanya tersedia untuk Admin</div>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -1001,19 +1147,19 @@
                         <p class="text-xs text-muted-foreground leading-relaxed">Gunakan fitur ini untuk mendownload seluruh
                             data sistem Anda saat ini. Simpan file ini di tempat yang aman sebagai cadangan.</p>
                         @if(auth()->user()->role === 'admin')
-                        <button wire:click="exportData"
-                            class="inline-flex items-center justify-center rounded-md bg-sky-600 text-white shadow hover:bg-sky-700 h-10 px-6 text-sm font-bold transition-colors w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class="mr-2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" x2="12" y1="15" y2="3" />
-                            </svg>
-                            Ekspor ke .JSON
-                        </button>
+                            <button wire:click="exportData"
+                                class="inline-flex items-center justify-center rounded-md bg-sky-600 text-white shadow hover:bg-sky-700 h-10 px-6 text-sm font-bold transition-colors w-full sm:w-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="mr-2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" x2="12" y1="15" y2="3" />
+                                </svg>
+                                Ekspor ke .JSON
+                            </button>
                         @else
-                        <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs font-bold text-muted-foreground uppercase opacity-50">Backup Terkunci untuk Viewer</div>
+                            <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs font-bold text-muted-foreground uppercase opacity-50">Backup Terkunci untuk Viewer</div>
                         @endif
                     </div>
 
@@ -1035,10 +1181,10 @@
                         @endif
 
                         @if(auth()->user()->role === 'admin')
-                        <form wire:submit="importData" class="space-y-3">
+                            <form wire:submit="importData" class="space-y-3">
                         @else
-                        <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs font-bold text-muted-foreground uppercase opacity-50">Restore Terkunci untuk Viewer</div>
-                        <div class="hidden">
+                            <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs font-bold text-muted-foreground uppercase opacity-50">Restore Terkunci untuk Viewer</div>
+                            <div class="hidden">
                         @endif
                             <div class="relative">
                                 <input type="file" wire:model="importFile" accept=".json"

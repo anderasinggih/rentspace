@@ -3,6 +3,9 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Rental;
+use App\Mail\PaymentConfirmedNotification;
+use App\Mail\OrderCancelledNotification;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -102,6 +105,9 @@ class Transactions extends Component
             $this->calculateAffiliateCommission($rental);
             
             $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id}");
+
+            // Send Email Notification
+            $this->sendEmailNotification($rental, 'paid');
         }
     }
 
@@ -113,6 +119,47 @@ class Transactions extends Component
         if (in_array($rental->status, ['pending', 'paid'])) {
             $rental->update(['status' => 'cancelled']);
             $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id}");
+
+            // Send Email Notification
+            $this->sendEmailNotification($rental, 'cancelled');
+        }
+    }
+
+    private function sendEmailNotification($rental, $type)
+    {
+        $isAdminEmailEnabled = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+        $isUserEmailEnabled = \App\Models\Setting::getVal('is_user_email_active', '1') == '1';
+        
+        if (!$isAdminEmailEnabled && !$isUserEmailEnabled) return;
+
+        try {
+            // 1. Prepare recipients
+            $emails = [];
+            
+            if ($isAdminEmailEnabled) {
+                $adminEmail = \App\Models\Setting::getVal('admin_email_recipients');
+                if (!$adminEmail) {
+                    $adminEmail = config('mail.admin_email') ?: config('mail.from.address');
+                }
+                if ($adminEmail) {
+                    $emails = array_merge($emails, array_map('trim', explode(',', $adminEmail)));
+                }
+            }
+
+            if ($isUserEmailEnabled && $rental->email) {
+                $emails[] = $rental->email;
+            }
+
+            // 2. Send the right notification
+            if (!empty($emails)) {
+                if ($type === 'paid') {
+                    Mail::to($emails)->queue(new PaymentConfirmedNotification($rental));
+                } elseif ($type === 'cancelled') {
+                    Mail::to($emails)->queue(new OrderCancelledNotification($rental));
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("TRANSACTION EMAIL FAILED: " . $e->getMessage());
         }
     }
 

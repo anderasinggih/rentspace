@@ -64,6 +64,15 @@ class Settings extends Component
     public $min_payout = 50000;
      public $is_maintenance = false;
     public $maintenance_message = 'Kami akan segera kembali!';
+    public $is_email_active = true;
+    public $is_user_email_active = true;
+    public $admin_email_recipients = '';
+
+    // Reminder & Overdue Email Settings
+    public $is_reminder_active = true;
+    public $reminder_hours_before = 2;
+    public $is_overdue_active = true;
+    public $overdue_minutes_after = 15;
 
     // Greetings Properties
     public $greeting_morning = '', $greeting_day = '', $greeting_afternoon = '', $greeting_evening = '', $greeting_night = '';
@@ -113,6 +122,17 @@ class Settings extends Component
         $this->greeting_afternoon = \App\Models\Setting::getVal('greeting_afternoon', 'Sore Bos! ☁️ Purwokerto mulai sejuk nih, asik banget buat bikin konten cinematic.');
         $this->greeting_evening = \App\Models\Setting::getVal('greeting_evening', 'Malam Bos! ✨ Butuh iPhone buat dinner atau event keren malam ini? Kami ready!');
         $this->greeting_night = \App\Models\Setting::getVal('greeting_night', 'Masih bangun Bos? 🌙 Lagi nyari unit buat dipake besok ya? Langsung sikat!');
+        // Load Email Settings
+        $this->is_email_active = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+        $this->is_user_email_active = \App\Models\Setting::getVal('is_user_email_active', '1') == '1';
+        $this->admin_email_recipients = \App\Models\Setting::getVal('admin_email_recipients', config('mail.admin_email') ?: '');
+        
+        // Reminder Settings
+        $this->is_reminder_active = \App\Models\Setting::getVal('is_reminder_active', '1') == '1';
+        $this->reminder_hours_before = \App\Models\Setting::getVal('reminder_hours_before', '2');
+        $this->is_overdue_active = \App\Models\Setting::getVal('is_overdue_active', '1') == '1';
+        $this->overdue_minutes_after = \App\Models\Setting::getVal('overdue_minutes_after', '15');
+        
         $this->is_greeting_active = \App\Models\Setting::getVal('is_greeting_active', '1') == '1';
     }
 
@@ -302,6 +322,15 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'social_ig_name'], ['value' => $this->social_ig_name]);
         \App\Models\Setting::updateOrCreate(['key' => 'social_tiktok_url'], ['value' => $this->social_tiktok_url]);
         \App\Models\Setting::updateOrCreate(['key' => 'social_tiktok_name'], ['value' => $this->social_tiktok_name]);
+        \App\Models\Setting::updateOrCreate(['key' => 'is_email_active'], ['value' => $this->is_email_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'is_user_email_active'], ['value' => $this->is_user_email_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_email_recipients'], ['value' => $this->admin_email_recipients]);
+
+        // Save Reminder & Overdue Settings
+        \App\Models\Setting::updateOrCreate(['key' => 'is_reminder_active'], ['value' => $this->is_reminder_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'reminder_hours_before'], ['value' => $this->reminder_hours_before]);
+        \App\Models\Setting::updateOrCreate(['key' => 'is_overdue_active'], ['value' => $this->is_overdue_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'overdue_minutes_after'], ['value' => $this->overdue_minutes_after]);
 
         session()->flash('general_message', 'Pengaturan Umum berhasil disimpan.');
     }
