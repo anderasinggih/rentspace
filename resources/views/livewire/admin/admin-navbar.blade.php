@@ -11,9 +11,9 @@
             localStorage.theme = 'light';
         }
     }
-}" class="bg-background/10 sticky backdrop-blur-sm top-0 z-[100] shadow-sm">
+}" class="bg-background/5 sticky backdrop-blur-md top-0 z-[100] border-b border-white/10 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+        <div class="flex justify-between h-16 text-foreground">
             <!-- Left side Navigation -->
             <div class="flex items-center gap-6">
                 <!-- Logo -->
@@ -173,47 +173,47 @@
 
     <!-- Mobile Menu -->
     <div x-show="adminMenuOpen" x-transition x-cloak style="display: none;"
-        class="md:hidden border-t border-border bg-background px-4 py-4 space-y-2 pb-6">
+        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-background/5 backdrop-blur-md border border-white/10 border-t-white/20 shadow-2xl rounded-3xl mx-4 overflow-hidden flex flex-col gap-1 z-[110]">
+        
+        <!-- Shine Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none"></div>
 
-        <div class="text-[10px] font-bold uppercase text-muted-foreground px-3 mb-1 tracking-widest">Utama</div>
+        <div class="text-[10px] font-bold uppercase text-muted-foreground px-4 py-2 mt-2 tracking-widest opacity-60">Utama</div>
         <a href="{{ route('admin.dashboard') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted' }}">Dashboard</a>
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Dashboard</a>
         <a href="{{ route('admin.monitoring') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted' }}">Monitoring</a>
-        <div class="h-px bg-border/50 my-2 mx-3"></div>
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.monitoring') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Monitoring</a>
+        <div class="h-px bg-white/10 my-1 mx-4"></div>
         <a href="{{ route('admin.transactions') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted' }}">Transaksi</a>
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.transactions') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Transaksi</a>
 
-        <div class="h-px bg-border/50 my-2 mx-3"></div>
-        <div class="text-[10px] font-bold uppercase text-muted-foreground px-3 mb-1 tracking-widest">Database & Sistem
-        </div>
+        <div class="h-px bg-white/10 my-1 mx-4"></div>
+        <div class="text-[10px] font-bold uppercase text-muted-foreground px-4 py-2 tracking-widest opacity-60">Database & Sistem</div>
 
         <a href="{{ route('admin.units') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Unit</a>
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.units') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Unit</a>
         <a href="{{ route('admin.promo') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Promo
-            & Diskon</a>
-
-        <div class="h-px bg-border/40 my-1 mx-3"></div>
-
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.promo') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Promo & Diskon</a>
         <a href="{{ route('admin.customers') }}" wire:navigate
-            class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pelanggan</a>
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.customers') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Pelanggan</a>
+        
         @if(auth()->user()->role === 'admin')
             <a href="{{ route('admin.affiliate') }}" wire:navigate
-                class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Affiliate</a>
+                class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.affiliate') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Affiliate</a>
             <a href="{{ route('admin.settings') }}" wire:navigate
-                class="block px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted' }}">Pengaturan</a>
+                class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.settings') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Pengaturan</a>
         @endif
 
-        <div class="h-px bg-border/50 my-4 mx-3"></div>
+        <div class="h-px bg-white/10 my-2 mx-4"></div>
 
-        <div class="flex items-center justify-between">
-            <span class="text-sm font-medium">{{ auth()->user()->name ?? 'Administrator' }}</span>
+        <div class="flex items-center justify-between px-4 py-2">
+            <span class="text-xs font-semibold opacity-70">{{ auth()->user()->name ?? 'Administrator' }}</span>
             <button wire:click="logout"
-                class="text-sm text-destructive font-medium px-3 py-1.5 rounded-md hover:bg-destructive/10">Logout</button>
+                class="text-xs text-destructive font-bold px-3 py-1.5 rounded-lg hover:bg-destructive/10 transition-colors">Logout</button>
         </div>
         <a href="/" wire:navigate
-            class="block text-center mt-2 px-3 py-2 rounded-md text-sm font-medium bg-secondary text-secondary-foreground">Ke
-            Web Publik</a>
+            class="flex items-center justify-center rounded-2xl bg-foreground text-background text-sm font-semibold px-4 py-3.5 hover:bg-foreground/90 active:scale-95 transition-all mt-1">
+            Ke Web Publik
+        </a>
     </div>
 </nav>
