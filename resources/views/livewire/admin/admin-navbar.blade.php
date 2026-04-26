@@ -11,7 +11,8 @@
             localStorage.theme = 'light';
         }
     }
-}" class="bg-black/60 dark:bg-background/60 sticky backdrop-blur-xl top-0 z-[100] border-b border-white/10 shadow-sm" style="-webkit-backdrop-filter: blur(24px);">
+}" class="sticky top-0 z-[100] border-b border-white/10 shadow-sm" 
+    style="background: rgba(0,0,0,0.4); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16 text-foreground">
             <!-- Left side Navigation -->
@@ -173,8 +174,8 @@
 
     <!-- Mobile Menu -->
     <div x-show="adminMenuOpen" x-transition x-cloak style="display: none;"
-        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-black/80 dark:bg-background/80 backdrop-blur-xl border border-white/10 border-t-white/20 shadow-2xl rounded-3xl mx-4 overflow-hidden flex flex-col gap-1 z-[110]"
-        style="-webkit-backdrop-filter: blur(24px);">
+        class="md:hidden absolute top-[115%] left-0 right-0 p-3 border border-white/10 border-t-white/20 shadow-2xl rounded-3xl mx-4 overflow-hidden flex flex-col gap-1 z-[110]"
+        style="background: rgba(0,0,0,0.8); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);">
         
         <!-- Shine Overlay -->
         <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none"></div>
