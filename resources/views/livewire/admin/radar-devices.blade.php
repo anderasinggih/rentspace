@@ -1,4 +1,4 @@
-<div class="fixed inset-0 z-[0] bg-background overflow-hidden" 
+<div class="fixed inset-0 w-screen h-[100dvh] z-[0] bg-background overflow-hidden" 
      x-data="{ 
         ...radarMap(), 
         isExpanded: false,
@@ -9,7 +9,12 @@
         startY: 0,
         startH: 96,
         init() {
-            this.currentH = this.minH;
+            if (window.innerWidth >= 1024) {
+                this.isExpanded = true;
+                this.currentH = this.maxH;
+            } else {
+                this.currentH = this.minH;
+            }
             this.$nextTick(() => this.radarInit());
         },
         handleTouchStart(e) {
@@ -44,7 +49,8 @@
     <div id="radarMap" class="absolute inset-0 z-0 bg-card" wire:ignore></div>
 
     {{-- Top Overlay Header --}}
-    <div class="absolute top-44 lg:top-24 left-4 right-4 lg:left-12 lg:right-12 flex items-center justify-between z-[1002] pointer-events-none">
+    <div
+        class="absolute top-20 lg:top-24 left-4 right-4 lg:left-12 lg:right-12 flex items-center justify-between z-[1002] pointer-events-none">
         <div
             class="flex items-center gap-2 bg-background/60 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto">
             <h1 class="text-[13px] font-bold tracking-tight">Radar</h1>
@@ -61,7 +67,7 @@
     </div>
 
     {{-- Map Tools Overlay --}}
-    <div class="absolute top-64 lg:top-40 right-4 lg:right-12 flex flex-col gap-2 z-[1000] pointer-events-auto">
+    <div class="absolute top-36 lg:top-40 right-4 lg:right-12 flex flex-col gap-2 z-[1000] pointer-events-auto">
         <button @click="resetView()"
             class="p-3 bg-background/60 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl hover:bg-white/10 transition-all active:scale-95 group">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -75,8 +81,8 @@
 
     {{-- Floating Device Panel/Dock --}}
     <div class="absolute z-[1001]
-               lg:top-20 lg:bottom-12 lg:left-12 lg:w-[400px] lg:translate-x-0 lg:h-auto
-               fixed bottom-4 left-4 right-4 
+               lg:top-44 lg:bottom-12 lg:left-12 lg:w-[400px] lg:translate-x-0 lg:h-auto
+               fixed bottom-2 left-4 right-4 
                cubic-bezier(0.4, 0, 0.2, 1)"
         :class="isDragging ? 'transition-none' : 'transition-all duration-500'"
         :style="window.innerWidth < 1024 ? { height: currentH + 'px' } : {}">
@@ -102,8 +108,8 @@
                 </div>
             </div>
 
-            {{-- Scrollable List (Desktop: Max 9 units visible, Mobile: Flexible) --}}
-            <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1 lg:max-h-[600px] scrollbar-hide">
+            {{-- Scrollable List (Desktop: Max visibility, Mobile: Flexible) --}}
+            <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1 lg:max-h-[calc(100vh-320px)] scrollbar-hide">
                 @forelse($devices as $device)
                     <div class="w-full flex items-center px-3 py-2.5 rounded-xl border border-transparent hover:bg-white/5 transition-all group relative cursor-pointer"
                         :class="selectedId === {{ $device['id'] }} ? ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/20 border-red-500/30' : 'bg-white/10 border-white/10') : ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/10' : '')"
@@ -155,13 +161,8 @@
     <style>
         .leaflet-container {
             background: #020617 !important;
-        }
-
-        /* Hide Navbar on Mobile specifically for Radar View */
-        @media (max-width: 1023px) {
-            nav, .sticky.top-0 {
-                display: none !important;
-            }
+            height: 100% !important;
+            width: 100% !important;
         }
 
         .leaflet-tile {
