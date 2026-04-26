@@ -313,7 +313,12 @@
                 colors: ['#10b981'],
                 stroke: { width: 3, curve: 'smooth' },
                 fill: { type: 'gradient', gradient: { opacityFrom: 0.15, opacityTo: 0 } },
-                markers: { size: 0 },
+                markers: { 
+                    size: 0,
+                    strokeColors: '#10b981',
+                    strokeWidth: 2,
+                    hover: { size: 4 }
+                },
                 tooltip: { 
                     enabled: true,
                     shared: false,
@@ -324,7 +329,12 @@
                 },
                 xaxis: {
                     categories: @json($chartCategories),
-                    crosshairs: { show: false },
+                    crosshairs: { 
+                        show: true,
+                        width: 1,
+                        position: 'back',
+                        stroke: { color: 'rgba(255,255,255,0.1)', width: 1, dashArray: 4 }
+                    },
                     tooltip: { enabled: false }
                 },
                 yaxis: {
