@@ -12,7 +12,11 @@
         }
     }
 }" class="sticky top-0 z-[100] w-full">
-    <nav class="bg-background/20 backdrop-blur-md border-b border-white/10 shadow-sm relative z-50">
+    <!-- Main Nav with Separated Blur Layer to prevent nesting conflicts -->
+    <nav class="relative border-b border-white/10 shadow-sm z-50">
+        <!-- Separate Blur Layer -->
+        <div class="absolute inset-0 bg-background/40 backdrop-blur-md -z-10 pointer-events-none"></div>
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 text-foreground">
                 <!-- Left side Navigation -->
@@ -53,14 +57,13 @@
                                 </svg>
                             </button>
 
+                            <!-- Desktop Dropdown with Forced Blur -->
                             <div x-show="open" x-transition:enter="transition ease-out duration-100"
-                                x-transition:enter-start="opacity-0 scale-95"
-                                x-transition:enter-end="opacity-100 scale-100"
+                                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                                 x-transition:leave="transition ease-in duration-75"
-                                x-transition:leave-start="opacity-100 scale-100"
-                                x-transition:leave-end="opacity-0 scale-95"
-                                style="backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important;"
-                                class="absolute left-0 mt-1 w-52 rounded-2xl bg-background/60 border border-white/10 shadow-2xl py-2 z-[110] overflow-hidden"
+                                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                                style="backdrop-filter: blur(25px) !important; -webkit-backdrop-filter: blur(25px) !important;"
+                                class="absolute left-0 mt-1 w-52 rounded-2xl bg-background/70 border border-white/10 shadow-2xl py-2 z-[110] overflow-hidden"
                                 x-cloak>
                                 <div
                                     class="px-4 py-1.5 text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest">
@@ -125,13 +128,13 @@
                     <button @click="toggleTheme()"
                         class="p-2 items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors focus:outline-none">
                         <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
                             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
                         </svg>
-                        <svg x-cloak x-show="darkMode" style="display: none;" xmlns="http://www.w3.org/2000/svg"
-                            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg x-cloak x-show="darkMode" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18"
+                            height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="4" />
                             <path d="M12 2v2" />
                             <path d="M12 20v2" />
@@ -152,9 +155,8 @@
                         <button wire:click="logout"
                             class="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
                             title="Logout">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                                 <polyline points="16 17 21 12 16 7" />
                                 <line x1="21" x2="9" y1="12" y2="12" />
@@ -165,15 +167,15 @@
                     <button @click="adminMenuOpen = !adminMenuOpen"
                         class="md:hidden p-2 rounded-md hover:bg-muted text-foreground transition-colors focus:outline-none">
                         <svg x-show="!adminMenuOpen" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
                             <line x1="4" x2="20" y1="12" y2="12" />
                             <line x1="4" x2="20" y1="6" y2="6" />
                             <line x1="4" x2="20" y1="18" y2="18" />
                         </svg>
                         <svg x-show="adminMenuOpen" x-cloak style="display: none;" xmlns="http://www.w3.org/2000/svg"
-                            width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 6 6 18" />
                             <path d="m6 6 12 12" />
                         </svg>
@@ -183,20 +185,18 @@
         </div>
     </nav>
 
-    <!-- Mobile Menu Container (Sibling for clear backdrop filter) -->
+    <!-- Mobile Menu Container (Sibling for fixed blur) -->
     <div x-show="adminMenuOpen" x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 translate-y-[-10px]" x-transition:enter-end="opacity-100 translate-y-0"
         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 translate-y-[-10px]" x-cloak
-        style="display: none; backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(20px) !important;"
-        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-background/60 border border-white/10 border-t-white/20 shadow-2xl rounded-3xl mx-4 overflow-hidden flex flex-col gap-1 z-[110]">
-
+        style="display: none; backdrop-filter: blur(25px) !important; -webkit-backdrop-filter: blur(25px) !important;"
+        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-background/70 border border-white/10 border-t-white/20 shadow-2xl rounded-3xl mx-4 overflow-hidden flex flex-col gap-1 z-[110]">
+        
         <!-- Shine Overlay -->
-        <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none">
-        </div>
+        <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none"></div>
 
-        <div class="text-[10px] font-bold uppercase text-muted-foreground px-4 py-2 mt-2 tracking-widest opacity-60">
-            Utama</div>
+        <div class="text-[10px] font-bold uppercase text-muted-foreground px-4 py-2 mt-2 tracking-widest opacity-60">Utama</div>
         <a href="{{ route('admin.dashboard') }}" wire:navigate
             class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Dashboard</a>
         <a href="{{ route('admin.monitoring') }}" wire:navigate
@@ -206,17 +206,15 @@
             class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.transactions') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Transaksi</a>
 
         <div class="h-px bg-white/10 my-1 mx-4"></div>
-        <div class="text-[10px] font-bold uppercase text-muted-foreground px-4 py-2 tracking-widest opacity-60">Database
-            & Sistem</div>
+        <div class="text-[10px] font-bold uppercase text-muted-foreground px-4 py-2 tracking-widest opacity-60">Database & Sistem</div>
 
         <a href="{{ route('admin.units') }}" wire:navigate
             class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.units') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Unit</a>
         <a href="{{ route('admin.promo') }}" wire:navigate
-            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.promo') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Promo
-            & Diskon</a>
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.promo') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Promo & Diskon</a>
         <a href="{{ route('admin.customers') }}" wire:navigate
             class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.customers') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Pelanggan</a>
-
+        
         @if(auth()->user()->role === 'admin')
             <a href="{{ route('admin.affiliate') }}" wire:navigate
                 class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.affiliate') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Affiliate</a>
