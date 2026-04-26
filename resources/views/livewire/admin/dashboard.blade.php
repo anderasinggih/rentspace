@@ -21,58 +21,67 @@
         <h1 class="text-lg font-semibold text-white tracking-tight">Dashboard</h1>
         <div class="flex items-center gap-2">
             <div class="h-1 w-1 rounded-full bg-stock-up animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-            <span class="text-[9px] font-semibold text-stock-up tracking-wider">Real-time audit</span>
+            <span class="text-[9px] font-semibold text-stock-up tracking-wider italic">Real-time audit</span>
         </div>
     </div>
 
-    <!-- 1. Key Metrics: Elegant Grid (No Uppercase) -->
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 lg:gap-3 mb-6">
-        <!-- Card 1 -->
-        <div class="liquid-glass glass-highlight rounded-xl p-3.5 transition-all hover:bg-white/[0.02]">
-            <p class="text-[9px] font-semibold text-stock-label tracking-tight mb-1">Unit aktif</p>
+    <!-- 1. Snapshot Grid (Extreme Density - 6 Cards) -->
+    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 md:gap-3 mb-6">
+        <!-- Card 1: Assets -->
+        <div class="liquid-glass glass-highlight rounded-xl p-3 tranition-all hover:bg-white/[0.02]">
+            <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1">Unit aktif</p>
             <div class="flex items-baseline gap-1">
                 <span class="text-xl font-semibold text-white leading-none">{{ $activeUnits }}</span>
-                <span class="text-[10px] font-medium text-stock-label">/{{ $totalUnits }}</span>
+                <span class="text-[9px] font-medium text-stock-label">/{{ $totalUnits }}</span>
             </div>
         </div>
 
-        <!-- Card 2 -->
-        <div class="liquid-glass glass-highlight rounded-xl p-3.5 transition-all hover:bg-white/[0.02]">
-            <p class="text-[9px] font-semibold text-stock-label tracking-tight mb-1">Antrean order</p>
+        <!-- Card 2: Pending Count -->
+        <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-white/[0.02]">
+            <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1">Antrean order</p>
             <div class="flex items-baseline gap-1">
                 <span class="text-xl font-semibold text-white leading-none">{{ $pendingRentals }}</span>
-                <span class="text-[9px] font-semibold text-stock-label bg-white/5 px-1 rounded">trx</span>
+                <span class="text-[8px] font-semibold text-stock-label bg-white/5 px-1 rounded">trx</span>
             </div>
         </div>
 
-        <!-- Card 3: Unrealized -->
-        <div class="liquid-glass glass-highlight rounded-xl p-3.5 border-emerald-500/20 bg-emerald-500/5 transition-all hover:bg-emerald-500/10">
-            <p class="text-[9px] font-semibold text-stock-up tracking-tight mb-1">Unrealized income</p>
+        <!-- Card 3: Pending Nominal (NEW) -->
+        <div class="liquid-glass glass-highlight rounded-xl p-3 border-amber-500/20 bg-amber-500/5 transition-all hover:bg-amber-500/10">
+            <p class="text-[8px] md:text-[9px] font-semibold text-amber-600 mb-1">Pending balance</p>
             <div class="flex items-baseline gap-0.5">
-                <span class="text-[10px] font-medium text-stock-up/50">Rp</span>
-                <span class="text-xl font-semibold text-stock-up leading-none">{{ number_format($unrealizedRevenue/1000, 1) }}k</span>
+                <span class="text-[8px] font-medium text-amber-600/50">Rp</span>
+                <span class="text-xl font-semibold text-amber-600 leading-none">{{ number_format($pendingRevenue/1000, 0) }}k</span>
             </div>
         </div>
 
-        <!-- Card 4 -->
-        <div class="liquid-glass glass-highlight rounded-xl p-3.5 transition-all hover:bg-white/[0.02]">
-            <p class="text-[9px] font-semibold text-stock-label tracking-tight mb-1">Realized hari ini</p>
+        <!-- Card 4: Unrealized -->
+        <div class="liquid-glass glass-highlight rounded-xl p-3 border-emerald-500/20 bg-emerald-500/5 transition-all hover:bg-emerald-500/10">
+            <p class="text-[8px] md:text-[9px] font-semibold text-emerald-600 mb-1">Unrealized income</p>
+            <div class="flex items-baseline gap-0.5">
+                <span class="text-[8px] font-medium text-emerald-600/50">Rp</span>
+                <span class="text-xl font-semibold text-emerald-600 leading-none">{{ number_format($unrealizedRevenue/1000, 1) }}k</span>
+            </div>
+        </div>
+
+        <!-- Card 5: Realized Today -->
+        <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-white/[0.02]">
+            <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1">Realized today</p>
             <span class="text-xl font-semibold text-white leading-none">Rp{{ number_format($todayRevenue/1000, 0) }}k</span>
         </div>
 
-        <!-- Card 5 -->
-        <div class="liquid-glass glass-highlight rounded-xl p-3.5 transition-all hover:bg-white/[0.02]">
-            <p class="text-[9px] font-semibold text-stock-label tracking-tight mb-1">Penyewaan hari ini</p>
+        <!-- Card 6: Swap Count -->
+        <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-white/[0.02]">
+            <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1">Penyewaan hari ini</p>
             <div class="flex items-baseline gap-1">
                 <span class="text-xl font-semibold text-white leading-none">{{ $todayRentals }}</span>
-                <span class="text-[10px] font-medium text-stock-label">unit</span>
+                <span class="text-[9px] font-medium text-stock-label">unit</span>
             </div>
         </div>
     </div>
 
     <!-- 2. Analysis Header -->
     <div class="mb-3 flex items-center justify-between px-1">
-        <h2 class="text-[10px] font-semibold text-stock-label tracking-widest leading-none">Analisis pasar</h2>
+        <h2 class="text-[10px] font-semibold text-stock-label uppercase tracking-widest leading-none">Analisis pasar</h2>
         <div class="relative">
             <select wire:model.live="preset"
                 class="appearance-none h-6 bg-transparent pr-4 py-0 text-[11px] font-semibold text-white focus:ring-0 outline-none border-none cursor-pointer">
@@ -144,7 +153,7 @@
         </div>
     </div>
 
-    <!-- 5. Rank Tables (Pure Shadcn-Stockbit Hybrid) -->
+    <!-- 5. Rank Tables -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight">
             <div class="px-4 py-3 border-b border-white/5 bg-white/[0.02]">
@@ -161,7 +170,7 @@
                 <tbody class="text-[11px] divide-y divide-white/5">
                     @foreach($topUnits as $tu)
                         <tr class="hover:bg-white/[0.03] transition-colors">
-                            <td class="px-4 py-3 font-semibold text-white">{{ $tu->unit ? $tu->unit->seri : '---' }}</td>
+                            <td class="px-4 py-3 font-semibold text-white truncate max-w-[120px]">{{ $tu->unit ? $tu->unit->seri : '---' }}</td>
                             <td class="px-4 py-3 text-center text-white/50">{{ $tu->rent_count }}x</td>
                             <td class="px-4 py-3 text-right font-semibold text-stock-up">Rp{{ number_format($tu->revenue/1000, 0) }}k</td>
                         </tr>
@@ -186,7 +195,7 @@
                     @foreach($topTenants as $tenant)
                         <tr class="hover:bg-white/[0.03] transition-colors">
                             <td class="px-4 py-3">
-                                <div class="font-semibold text-white leading-tight">{{ $tenant->nama }}</div>
+                                <div class="font-semibold text-white truncate max-w-[140px] leading-tight">{{ $tenant->nama }}</div>
                                 <div class="text-[8px] text-stock-label mt-0.5">{{ $tenant->no_wa }}</div>
                             </td>
                             <td class="px-4 py-3 text-center text-white/40">{{ $tenant->total_rentals }}x</td>
@@ -198,7 +207,7 @@
         </div>
     </div>
 
-    <!-- 6. Real-time Log -->
+    <!-- 6. Real-time Monitoring -->
     <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight shadow-xl">
         <div class="px-5 py-3.5 border-b border-white/5 bg-primary/5 flex items-center justify-between">
             <div class="flex items-center gap-2">
