@@ -84,10 +84,10 @@
 
     <style>
         .leaflet-container {
-            background: #18181b !important;
+            background: #09090b !important;
         }
         .leaflet-tile {
-            filter: brightness(1.6) contrast(0.9) saturate(0.8);
+            filter: invert(1) hue-rotate(180deg) brightness(0.7) contrast(1.2) saturate(2);
         }
         .custom-div-icon {
             background: none !important;
@@ -164,7 +164,7 @@
                             attributionControl: false
                         }).setView([-7.4243, 109.2303], 13); // Default to Purwokerto
 
-                        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                         subdomains: 'abcd',
                         maxZoom: 20
                     }).addTo(this.map);
