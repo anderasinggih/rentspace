@@ -1,6 +1,6 @@
-<div class="h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)] 
+<div class="lg:h-[calc(100vh-140px)] 
             lg:mt-0 lg:rounded-2xl 
-            fixed inset-0 z-[0] lg:relative lg:inset-auto
+            fixed inset-0 lg:relative lg:inset-auto z-[0]
             overflow-hidden border-0 lg:border lg:border-border" 
      x-data="{ ...radarMap(), isExpanded: false }">
     {{-- Full Background Map --}}
