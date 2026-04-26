@@ -163,11 +163,11 @@
         </div>
     </div>
 
-    <!-- 4. Interactive Terminals (The Twins) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <!-- 4. Interactive Terminals (The Twins - Vertical Stack Edition) -->
+    <div class="flex flex-col gap-4 mb-6">
         <!-- Revenue Terminal -->
-        <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[340px]">
-            <div class="absolute top-4 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
+        <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[400px]">
+            <div class="absolute top-6 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
                 <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-2">Net Income Analysis</h3>
                 <div class="flex items-baseline justify-center gap-2">
                     <div class="flex items-baseline gap-1">
@@ -178,16 +178,16 @@
                         {{ $gainNetRevenue >= 0 ? '▲' : '▼' }} {{ abs($gainNetRevenue) }}%
                     </div>
                 </div>
-                <p id="chart-revenue-date" class="text-[9px] font-semibold text-stock-label mt-3 opacity-0 transition-opacity">---</p>
+                <p id="chart-revenue-date" class="text-[9px] font-semibold text-stock-label mt-4 opacity-0 transition-opacity">---</p>
             </div>
-            <div class="absolute bottom-0 left-0 right-0 h-[220px]">
+            <div class="absolute bottom-0 left-0 right-0 h-[280px]">
                 <div id="revenueChart" class="w-full h-full" wire:ignore></div>
             </div>
         </div>
 
         <!-- Transactions Terminal -->
-        <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[340px]">
-            <div class="absolute top-4 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
+        <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[400px]">
+            <div class="absolute top-6 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
                 <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-2">Order Traffic Pattern</h3>
                 <div class="flex items-baseline justify-center gap-2">
                     <div class="flex items-baseline gap-1">
@@ -198,9 +198,9 @@
                         {{ $gainRentals >= 0 ? '▲' : '▼' }} {{ abs($gainRentals) }}%
                     </div>
                 </div>
-                <p id="chart-trx-date" class="text-[9px] font-semibold text-stock-label mt-3 opacity-0 transition-opacity">---</p>
+                <p id="chart-trx-date" class="text-[9px] font-semibold text-stock-label mt-4 opacity-0 transition-opacity">---</p>
             </div>
-            <div class="absolute bottom-0 left-0 right-0 h-[220px]">
+            <div class="absolute bottom-0 left-0 right-0 h-[280px]">
                 <div id="transactionsChart" class="w-full h-full" wire:ignore></div>
             </div>
         </div>
