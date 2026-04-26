@@ -266,7 +266,7 @@
                                 <input type="text" wire:model.blur="nik" inputmode="numeric"
                                     oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                                     class="flex h-10 w-full border border-input bg-transparent rounded-l-md px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
-                                    placeholder="">
+                                    placeholder="16 Digit NIK">
                                 <button type="button" wire:click="checkNik"
                                     class="inline-flex items-center justify-center rounded-r-md border border-l-0 border-input bg-muted px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted/80 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ring transition-colors shrink-0 whitespace-nowrap">
                                     <span wire:loading.remove wire:target="checkNik">Cek NIK</span>
@@ -286,20 +286,21 @@
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
                                 class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                placeholder=" ">
+                                placeholder="SESUAI KTP">
                             @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="text-sm font-medium leading-none">Nomor Telepon / WhatsApp</label>
                             <input type="text" wire:model="no_wa" inputmode="numeric"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                placeholder="08XXXXXXXXXX">
                             @error('no_wa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="text-sm font-medium leading-none">Sosial Media (IG/TikTok)</label>
                             <div class="relative mt-2 flex shadow-sm rounded-md h-10 w-full group">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground opacity-50 font-bold text-sm italic">@</div>
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-foreground/70 font-bold text-sm">@</div>
                                 <input type="text" wire:model="sosial_media"
                                     class="flex h-10 w-full rounded-md border border-input bg-transparent pl-7 pr-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
                                     placeholder="username">
@@ -312,7 +313,7 @@
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
                                 class="mt-2 flex w-full rounded-md border border-input bg-transparent px-3 py-2 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                placeholder=""></textarea>
+                                placeholder="CONTOH: JL. RAYA NO. 123..."></textarea>
                             @error('alamat') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                     </div>

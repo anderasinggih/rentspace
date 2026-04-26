@@ -485,7 +485,7 @@
                                                 <p class="text-sm font-bold text-white leading-tight">
                                                     {{ $rental->nama }}</p>
                                                 @if($rental->sosial_media)
-                                                    <span class="text-[10px] font-medium text-sky-400/60 transition-colors hover:text-sky-400 cursor-default">@ {{ $rental->sosial_media }}</span>
+                                                    <span class="text-[10px] font-bold text-sky-400 transition-colors cursor-default">@ {{ $rental->sosial_media }}</span>
                                                 @endif
                                                 <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider">Active</x-ui.badge>
                                             </div>
