@@ -12,6 +12,7 @@ class Dashboard extends Component
     public $preset = '30';
     public $startDate;
     public $endDate;
+    public $dateRangeLabel;
     public $heatmapYear;
     public $availableYears = [];
 
@@ -24,6 +25,7 @@ class Dashboard extends Component
         $this->startDate = Carbon::now()->subDays(29)->format('Y-m-d');
         $this->endDate = Carbon::now()->format('Y-m-d');
         $this->heatmapYear = (int)date('Y');
+        $this->updateDateRangeLabel();
         
         $minDate = Rental::min('created_at');
         $minYear = $minDate ? (int)date('Y', strtotime($minDate)) : (int)date('Y');
@@ -51,12 +53,30 @@ class Dashboard extends Component
                 $this->startDate = Carbon::now()->subDays((int)$this->preset - 1)->format('Y-m-d');
                 $this->endDate = Carbon::now()->format('Y-m-d');
             }
+            $this->updateDateRangeLabel();
             $this->updateCharts();
         }
     }
 
-    public function updatedStartDate() { $this->preset = 'custom'; $this->updateCharts(); }
-    public function updatedEndDate() { $this->preset = 'custom'; $this->updateCharts(); }
+    public function updateDateRangeLabel()
+    {
+        $start = Carbon::parse($this->startDate);
+        $end = Carbon::parse($this->endDate);
+        $diff = $start->diffInDays($end);
+
+        if ($this->preset === 'all') {
+            $this->dateRangeLabel = "All Time Data Experience";
+        } elseif ($diff <= 7) {
+            $this->dateRangeLabel = $start->format('d M Y') . ' - ' . $end->format('d M Y');
+        } elseif ($diff <= 31 && $start->month === $end->month) {
+            $this->dateRangeLabel = $start->format('F Y');
+        } else {
+            $this->dateRangeLabel = $start->format('M Y') . ' - ' . $end->format('M Y');
+        }
+    }
+
+    public function updatedStartDate() { $this->preset = 'custom'; $this->updateDateRangeLabel(); $this->updateCharts(); }
+    public function updatedEndDate() { $this->preset = 'custom'; $this->updateDateRangeLabel(); $this->updateCharts(); }
     public function updatedHeatmapYear() { $this->updateCharts(); }
 
     public function updateCharts()

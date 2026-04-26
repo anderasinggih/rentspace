@@ -114,9 +114,9 @@
         <div class="flex items-center justify-between gap-1 w-full overflow-x-auto no-scrollbar">
             @php
                 $presets = [
-                    ['val' => '7',   'label' => '7D'],
-                    ['val' => '30',  'label' => '1M'],
-                    ['val' => '90',  'label' => '3M'],
+                    ['val' => '7', 'label' => '7D'],
+                    ['val' => '30', 'label' => '1M'],
+                    ['val' => '90', 'label' => '3M'],
                     ['val' => '180', 'label' => '6M'],
                     ['val' => 'ytd', 'label' => 'YTD'],
                     ['val' => 'all', 'label' => 'ALL'],
@@ -197,7 +197,7 @@
     <div class="flex flex-col gap-4 mb-6">
         <div class="liquid-glass rounded-2xl p-4 relative overflow-hidden h-[320px] md:h-[400px]">
             <div class="absolute top-8 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
-                <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-2">Net Income Analysis</h3>
+                <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-0.5">Net Income Analysis</h3>
                 <div class="flex items-baseline justify-center gap-2">
                     <div class="flex items-baseline gap-1">
                         <span
@@ -210,6 +210,7 @@
                         {{ $gainNetRevenue >= 0 ? '▲' : '▼' }} {{ abs($gainNetRevenue) }}%
                     </div>
                 </div>
+                <p class="text-[9px] font-medium text-muted-foreground mt-2">{{ $dateRangeLabel }}</p>
                 <p id="chart-revenue-date"
                     class="text-[9px] font-semibold text-stock-label mt-4 opacity-0 transition-opacity">---</p>
             </div>
@@ -220,7 +221,7 @@
 
         <div class="liquid-glass rounded-2xl p-4 relative overflow-hidden h-[320px] md:h-[400px]">
             <div class="absolute top-8 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
-                <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-2">Order Traffic Pattern</h3>
+                <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-0.5">Order Traffic Pattern</h3>
                 <div class="flex items-baseline justify-center gap-2">
                     <div class="flex items-baseline gap-1">
                         <span id="chart-trx-nominal"
@@ -233,6 +234,7 @@
                         {{ $gainRentals >= 0 ? '▲' : '▼' }} {{ abs($gainRentals) }}%
                     </div>
                 </div>
+                <p class="text-[9px] font-medium text-muted-foreground mt-2">{{ $dateRangeLabel }}</p>
                 <p id="chart-trx-date"
                     class="text-[9px] font-semibold text-stock-label mt-4 opacity-0 transition-opacity">---</p>
             </div>
