@@ -247,6 +247,8 @@ class Dashboard extends Component
                 return abs(Carbon::parse($r->waktu_selesai)->diffInHours(Carbon::parse($r->waktu_mulai)));
             }) ?? 0;
 
+        $todayAov = $todayRentals > 0 ? $todayRevenue / $todayRentals : 0;
+
         return view('livewire.admin.dashboard', compact(
             'totalUnits', 'activeUnits', 'pendingRentals', 'pendingRevenue',
             'periodRentals', 'periodRevenue', 'periodDiscounts', 'todayRevenue', 'todayRentals',
@@ -255,7 +257,8 @@ class Dashboard extends Component
             'activeRentals', 'topTenants', 'topUnits', 'topAffiliates',
             'chartCategories', 'chartRevenue', 'chartNetRevenue', 'chartTransactions',
             'paymentLabels', 'paymentCounts',
-            'avgOrderValue', 'profitEfficiency', 'avgDuration', 'unrealizedRevenue'
+            'avgOrderValue', 'profitEfficiency', 'avgDuration', 'unrealizedRevenue',
+            'todayAov'
         ))->layout('layouts.admin');
     }
 }
