@@ -150,17 +150,17 @@
             </div>
         </div>
         <div class="grid grid-cols-3 bg-white/[0.02] p-3 divide-x divide-white/5 font-sans">
-            <div class="flex items-center justify-center gap-3">
-                <span class="text-[9px] font-semibold text-stock-label uppercase">Total Order</span>
-                <span class="text-xs font-semibold text-white">{{ $periodRentals }} <span class="text-[9px] text-stock-label uppercase">Trx</span></span>
+            <div class="flex flex-col items-center justify-center gap-1 text-center">
+                <span class="text-[8px] font-bold text-stock-label uppercase leading-none">Total Order</span>
+                <span class="text-xs font-bold text-white tracking-tight leading-none">{{ $periodRentals }} <span class="text-[8px] text-stock-label">TRX</span></span>
             </div>
-            <div class="flex items-center justify-center gap-3">
-                <span class="text-[9px] font-semibold text-stock-label uppercase">AOV Rerata</span>
-                <span class="text-xs font-semibold text-white">Rp{{ number_format($avgOrderValue / 1000, 1) }}k</span>
+            <div class="flex flex-col items-center justify-center gap-1 text-center">
+                <span class="text-[8px] font-bold text-stock-label uppercase leading-none">AOV Rerata</span>
+                <span class="text-xs font-bold text-white tracking-tight leading-none">Rp{{ number_format($avgOrderValue / 1000, 1) }}k</span>
             </div>
-            <div class="flex items-center justify-center gap-3">
-                <span class="text-[9px] font-semibold text-stock-label uppercase">Durasi Sewa</span>
-                <span class="text-xs font-semibold text-white">{{ round($avgDuration, 1) }} Jam</span>
+            <div class="flex flex-col items-center justify-center gap-1 text-center">
+                <span class="text-[8px] font-bold text-stock-label uppercase leading-none">Durasi Sewa</span>
+                <span class="text-xs font-bold text-white tracking-tight leading-none">{{ round($avgDuration, 1) }} Jam</span>
             </div>
         </div>
     </div>
