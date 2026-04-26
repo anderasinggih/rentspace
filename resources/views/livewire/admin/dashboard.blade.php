@@ -166,7 +166,7 @@
     <!-- 4. Interactive Terminals (The Twins - Vertical Stack Edition) -->
     <div class="flex flex-col gap-4 mb-6">
         <!-- Revenue Terminal -->
-        <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[400px] md:h-[500px]">
+        <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[320px] md:h-[500px]">
             <div class="absolute top-8 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
                 <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-2">Net Income Analysis</h3>
                 <div class="flex items-baseline justify-center gap-2">
@@ -180,13 +180,13 @@
                 </div>
                 <p id="chart-revenue-date" class="text-[9px] font-semibold text-stock-label mt-4 opacity-0 transition-opacity">---</p>
             </div>
-            <div class="absolute bottom-0 left-0 right-0 h-[280px] md:h-[380px]">
+            <div class="absolute bottom-0 left-0 right-0 h-[200px] md:h-[380px]">
                 <div id="revenueChart" class="w-full h-full" wire:ignore></div>
             </div>
         </div>
 
         <!-- Transactions Terminal -->
-        <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[400px] md:h-[500px]">
+        <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[320px] md:h-[500px]">
             <div class="absolute top-8 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
                 <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-2">Order Traffic Pattern</h3>
                 <div class="flex items-baseline justify-center gap-2">
@@ -200,7 +200,7 @@
                 </div>
                 <p id="chart-trx-date" class="text-[9px] font-semibold text-stock-label mt-4 opacity-0 transition-opacity">---</p>
             </div>
-            <div class="absolute bottom-0 left-0 right-0 h-[280px] md:h-[380px]">
+            <div class="absolute bottom-0 left-0 right-0 h-[200px] md:h-[380px]">
                 <div id="transactionsChart" class="w-full h-full" wire:ignore></div>
             </div>
         </div>
@@ -208,17 +208,17 @@
 
     <!-- 5. Secondary Analytics Row -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <div class="lg:col-span-1 liquid-glass rounded-2xl p-5 glass-highlight flex flex-col h-[300px]">
+        <div class="lg:col-span-1 liquid-glass rounded-2xl p-5 glass-highlight flex flex-col h-[260px] md:h-[300px]">
              <h3 class="text-[10px] font-semibold text-stock-label mb-3 uppercase leading-none">Payment Methods</h3>
              <div class="flex-1 flex items-center justify-center">
                  <div id="paymentDonutChart" class="w-full h-full" wire:ignore></div>
              </div>
         </div>
         
-        <div class="lg:col-span-2 liquid-glass rounded-2xl overflow-hidden glass-highlight h-[300px]">
+        <div class="lg:col-span-2 liquid-glass rounded-2xl overflow-hidden glass-highlight h-[260px] md:h-[300px]">
             <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60 uppercase">
                 Top Performing Units</div>
-            <div class="overflow-y-auto h-[255px]">
+            <div class="overflow-y-auto h-[215px] md:h-[255px]">
                 <table class="w-full text-left font-sans text-[11px]">
                     <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5 uppercase sticky top-0 bg-[#16161a] z-10">
                         <tr>
