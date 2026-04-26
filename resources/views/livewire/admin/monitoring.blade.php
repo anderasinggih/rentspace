@@ -190,10 +190,10 @@
                         <div class="flex-1 flex overflow-visible">
                             @foreach($dates as $date)
                                 <div
-                                    class="m-day-col shrink-0 p-3 text-center border-r border-border/30 {{ $date->isToday() ? 'bg-primary/[0.08] shadow-[inset_0_0_15px_rgba(var(--primary),0.05)]' : '' }}">
+                                    class="m-day-col shrink-0 p-3 text-center border-r border-border/30 {{ $date->isToday() ? 'bg-primary/10 shadow-[inset_0_0_15px_rgba(var(--primary),0.02)]' : ($date->isWeekend() ? 'bg-rose-500/5' : '') }}">
                                     <div
                                         class="text-[11px] font-bold text-foreground leading-none {{ $date->isToday() ? 'text-primary' : '' }}">
-                                        {{ $date->translatedFormat('D') }}
+                                        {{ $date->locale('id')->translatedFormat('D') }}
                                     </div>
                                     <div class="text-[9px] font-medium text-muted-foreground mt-1.5 text-center">
                                         {{ $date->format('d/m') }}
@@ -235,7 +235,7 @@
                                 <div class="absolute inset-0 flex pointer-events-none">
                                     @foreach($dates as $date)
                                         <div
-                                            class="m-day-col h-full border-r border-border/10 {{ $date->isToday() ? 'bg-primary/[0.02]' : '' }}">
+                                            class="m-day-col h-full shrink-0 border-r border-border/30 {{ $date->isToday() ? 'bg-primary/[0.04]' : ($date->isWeekend() ? 'bg-rose-500/[0.03]' : '') }}">
                                         </div>
                                     @endforeach
                                 </div>

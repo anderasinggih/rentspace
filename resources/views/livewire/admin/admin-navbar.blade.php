@@ -1,16 +1,18 @@
 <div x-data="{ 
     adminMenuOpen: false,
     darkMode: localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
-    toggleTheme() {
-        this.darkMode = !this.darkMode;
-        if (this.darkMode) {
-            document.documentElement.classList.add('dark');
-            localStorage.theme = 'dark';
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.theme = 'light';
+        toggleTheme() {
+            this.darkMode = !this.darkMode;
+            const newTheme = this.darkMode ? 'dark' : 'light';
+            if (this.darkMode) {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            }
+            window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: newTheme } }));
         }
-    }
 }" class="sticky top-0 z-[100] w-full">
     <!-- Main Nav with Separated Blur Layer to prevent nesting conflicts -->
     <nav class="relative border-b border-white/10 shadow-sm z-50 overflow-visible">

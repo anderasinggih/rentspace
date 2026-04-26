@@ -12,6 +12,8 @@ class Dashboard extends Component
     public $preset = '30';
     public $startDate;
     public $endDate;
+    public $heatmapYear;
+    public $availableYears = [];
 
     public function mount()
     {
@@ -21,6 +23,17 @@ class Dashboard extends Component
 
         $this->startDate = Carbon::now()->subDays(29)->format('Y-m-d');
         $this->endDate = Carbon::now()->format('Y-m-d');
+        $this->heatmapYear = (int)date('Y');
+        
+        $minDate = Rental::min('created_at');
+        $minYear = $minDate ? (int)date('Y', strtotime($minDate)) : (int)date('Y');
+        $maxYear = (int)date('Y');
+        for ($y = $maxYear; $y >= $minYear; $y--) {
+            $this->availableYears[] = $y;
+        }
+        if (!in_array($this->heatmapYear, $this->availableYears)) {
+            $this->availableYears[] = $this->heatmapYear;
+        }
     }
 
     public function updatedPreset()
@@ -46,6 +59,7 @@ class Dashboard extends Component
 
     public function updatedStartDate() { $this->preset = 'custom'; $this->updateCharts(); }
     public function updatedEndDate() { $this->preset = 'custom'; $this->updateCharts(); }
+    public function updatedHeatmapYear() { $this->updateCharts(); }
 
     public function updateCharts()
     {
@@ -134,8 +148,49 @@ class Dashboard extends Component
         return [
             'categories' => $chartCategories, 
             'netRevenue' => $netRevenueSeries,
-            'transactions' => $trxSeries
+            'transactions' => $trxSeries,
+            'heatmap' => $this->getHeatmapData()
         ];
+    }
+
+    private function getHeatmapData()
+    {
+        // Select activity by specifically chosen year
+        $year = $this->heatmapYear ?? date('Y');
+        $start = Carbon::create($year, 1, 1)->startOfWeek(Carbon::SUNDAY);
+        $end = Carbon::create($year, 12, 31)->endOfWeek(Carbon::SATURDAY);
+        
+        $rowLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        $heatmap = [];
+        foreach($rowLabels as $l) {
+            $heatmap[] = ['name' => $l, 'data' => []];
+        }
+
+        $rentals = Rental::whereIn('status', ['paid', 'completed'])
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw('DATE(created_at) as date, COUNT(id) as cnt')
+            ->groupBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $cursor = $start->copy();
+        while ($cursor <= $end) {
+            $dateStr = $cursor->format('Y-m-d');
+            $val = isset($rentals[$dateStr]) ? $rentals[$dateStr]->cnt : 0;
+            $rowIdx = $cursor->dayOfWeek; // 0=Sun, 1=Mon...6=Sat
+            
+            $xKey = $cursor->copy()->startOfWeek(Carbon::SUNDAY)->format('Y-W');
+
+            $heatmap[$rowIdx]['data'][] = [
+                'x' => $xKey,
+                'y' => (int)$val,
+                'd' => $cursor->format('d M Y')
+            ];
+            
+            $cursor->addDay();
+        }
+
+        return $heatmap;
     }
 
     public function render()
@@ -239,6 +294,7 @@ class Dashboard extends Component
         $chartCategories = $chartInfo['categories'];
         $chartNetRevenue = $chartInfo['netRevenue'];
         $chartTransactions = $chartInfo['transactions'];
+        $heatmapData = $chartInfo['heatmap'];
 
         $activeRentals = Rental::with(['units' => function($q) { $q->withTrashed(); }])
             ->whereIn('status', ['paid', 'pending'])
@@ -267,7 +323,7 @@ class Dashboard extends Component
             'periodCommissions', 'periodNetRevenue',
             'gainRentals', 'gainRevenue', 'gainAbsRevenue', 'gainNetRevenue',
             'activeRentals', 'topTenants', 'topUnits', 'topAffiliates',
-            'chartCategories', 'chartNetRevenue', 'chartTransactions',
+            'chartCategories', 'chartNetRevenue', 'chartTransactions', 'heatmapData',
             'paymentLabels', 'paymentCounts',
             'avgOrderValue', 'profitEfficiency', 'avgDuration', 'unrealizedRevenue'
         ))->layout('layouts.admin');
