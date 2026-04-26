@@ -74,7 +74,8 @@ class Dashboard extends Component
 
         $diffDays = $start->diffInDays($end);
         if ($diffDays > 90) {
-            $chartDataObj = Rental::selectRaw('strftime("%Y-%m", created_at) as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
+            // Fix: Use MySQL compatible DATE_FORMAT instead of SQLite strftime
+            $chartDataObj = Rental::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
                 ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
                 ->whereBetween('created_at', [$start, $end])
                 ->groupBy('val')
@@ -83,7 +84,7 @@ class Dashboard extends Component
                 ->keyBy('val');
 
             $commissionDataObj = \App\Models\AffiliateCommission::whereHas('rental')
-                ->selectRaw('strftime("%Y-%m", created_at) as val, SUM(amount) as total_commission')
+                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as val, SUM(amount) as total_commission')
                 ->whereBetween('created_at', [$start, $end])
                 ->groupBy('val')
                 ->get()
