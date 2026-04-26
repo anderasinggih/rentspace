@@ -38,7 +38,7 @@
                 <div class="w-10 h-1 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors"></div>
             </div>
 
-            <div @click="window.innerWidth < 1024 ? isExpanded = !isExpanded : null" class="px-8 pb-4 border-b border-white/5 flex items-center justify-between shrink-0 lg:cursor-default cursor-pointer hover:bg-white/5 lg:hover:bg-transparent transition-all">
+            <div @click="window.innerWidth < 1024 ? isExpanded = !isExpanded : null" class="px-8 pt-4 lg:pt-8 pb-4 border-b border-white/5 flex items-center justify-between shrink-0 lg:cursor-default cursor-pointer hover:bg-white/5 lg:hover:bg-transparent transition-all">
                 <div>
                     <h2 class="text-[17px] font-bold text-white/90 leading-tight">Devices</h2>
                     <p class="text-[13px] font-medium text-white/40 mt-1">{{ count($devices) }} Units Tracked</p>
