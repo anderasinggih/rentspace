@@ -269,6 +269,7 @@
                 colors: ['#10b981'],
                 stroke: { width: 3, curve: 'smooth' },
                 fill: { type: 'gradient', gradient: { opacityFrom: 0.15, opacityTo: 0 } },
+                tooltip: { enabled: false },
                 xaxis: { categories: @json($chartCategories) }
             });
             rv.render();
