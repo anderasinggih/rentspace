@@ -32,12 +32,12 @@
         }
     </style>
 
-    <div class="max-w-[98vw] mx-auto px-2 sm:px-4 pt-4 sm:pt-6">
+    <div class="max-w-[98vw] mx-auto px-2 sm:px-4 pt-1 sm:pt-6">
         {{-- Header & Navigation Switcher --}}
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center justify-between mb-3 sm:mb-6">
             <div class="flex items-center gap-3">
-                <div class="h-8 w-1 bg-primary rounded-full"></div>
-                <h1 class="text-xl font-bold tracking-tight text-foreground">Monitoring</h1>
+                <div class="h-6 sm:h-8 w-1 bg-primary rounded-full"></div>
+                <h1 class="text-lg sm:text-xl font-bold tracking-tight text-foreground">Monitoring</h1>
             </div>
 
             <div class="flex items-center gap-1 bg-muted/40 backdrop-blur-sm border border-border p-1 rounded-xl shadow-sm">
