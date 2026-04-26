@@ -49,7 +49,7 @@ class RadarDevices extends Component
                         'is_overdue' => $rental->waktu_selesai < now(),
                         'time_left' => $rental->waktu_selesai > now() 
                             ? now()->diff($rental->waktu_selesai)->format('%dh %im') 
-                            : 'Expired',
+                            : '+ ' . $rental->waktu_selesai->diff(now())->format('%dh %im'),
                         'time_left_human' => $rental->waktu_selesai->diffForHumans()
                     ];
                 }
