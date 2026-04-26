@@ -1,7 +1,7 @@
-<div class="h-[calc(100vh-60px)] lg:h-[calc(100vh-140px)] 
-            -mt-10 lg:-mt-4 -mx-4 -mb-10 sm:-mx-6 lg:mx-0 lg:mb-0
-            lg:rounded-2xl 
-            relative overflow-hidden border-0 lg:border lg:border-border" 
+<div class="h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)] 
+            lg:mt-0 lg:rounded-2xl 
+            fixed inset-0 z-[0] lg:relative lg:inset-auto
+            overflow-hidden border-0 lg:border lg:border-border" 
      x-data="{ ...radarMap(), isExpanded: false }">
     {{-- Full Background Map --}}
     <div id="radarMap" class="absolute inset-0 z-0 bg-card lg:rounded-2xl" wire:ignore></div>
