@@ -65,19 +65,19 @@
         <div class="relative">
             <select wire:model.live="preset"
                 class="appearance-none h-6 bg-transparent pr-4 py-0 text-[11px] font-semibold text-white focus:ring-0 outline-none border-none cursor-pointer">
-                <option value="7">7 Hari Terakhir</option>
-                <option value="30">30 Hari Terakhir</option>
-                <option value="90">3 Bulan Terakhir</option>
-                <option value="all">Semua Waktu</option>
+                <option value="7">7 Hari</option>
+                <option value="30">30 Hari</option>
+                <option value="90">3 Bulan</option>
+                <option value="all">Semua</option>
             </select>
         </div>
     </div>
 
-    <!-- 3. Performance Summary -->
+    <!-- 3. Performance Summary (CLEANED - 3 Columns) -->
     <div class="mb-6 liquid-glass rounded-2xl overflow-hidden glass-highlight shadow-sm">
-        <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y divide-white/5 border-b border-white/5">
+        <div class="grid grid-cols-3 divide-x divide-white/5 border-b border-white/5">
             <div class="p-4 flex flex-col gap-0.5">
-                <span class="text-[9px] font-semibold text-stock-label">Net Income</span>
+                <span class="text-[9px] font-semibold text-stock-label uppercase">Net Income</span>
                 <span class="text-lg font-semibold text-white">Rp{{ number_format($periodNetRevenue/1000, 0) }}k</span>
                 @if($gainNetRevenue !== null)
                     <div class="text-[10px] font-semibold {{ $gainNetRevenue >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
@@ -86,25 +86,21 @@
                 @endif
             </div>
             <div class="p-4 flex flex-col gap-0.5">
-                <span class="text-[9px] font-semibold text-stock-label">Gross Revenue</span>
-                <span class="text-lg font-semibold text-white">Rp{{ number_format($periodRevenue/1000, 0) }}k</span>
-            </div>
-            <div class="p-4 flex flex-col gap-0.5">
-                <span class="text-[9px] font-semibold text-stock-label">Biaya Afiliasi</span>
+                <span class="text-[9px] font-semibold text-stock-label uppercase">Biaya Afiliasi</span>
                 <span class="text-lg font-semibold text-stock-down/70">Rp{{ number_format($periodCommissions/1000, 0) }}k</span>
             </div>
-            <div class="p-4 flex flex-col gap-0.5">
-                <span class="text-[9px] font-semibold text-stock-label">Margin ROI</span>
+            <div class="p-4 flex flex-col gap-0.5 text-right">
+                <span class="text-[9px] font-semibold text-stock-label uppercase">Margin ROI</span>
                 <span class="text-lg font-semibold text-stock-up">{{ round($profitEfficiency, 1) }}%</span>
             </div>
         </div>
-        <div class="grid grid-cols-2 bg-white/[0.02] p-3 divide-x divide-white/5">
+        <div class="grid grid-cols-2 bg-white/[0.02] p-3 divide-x divide-white/5 font-sans">
             <div class="flex items-center justify-center gap-3">
-                <span class="text-[9px] font-semibold text-stock-label">AOV Rata-Rata</span>
+                <span class="text-[9px] font-semibold text-stock-label uppercase">AOV Rerata</span>
                 <span class="text-xs font-semibold text-white">Rp{{ number_format($avgOrderValue/1000, 1) }}k</span>
             </div>
             <div class="flex items-center justify-center gap-3">
-                <span class="text-[9px] font-semibold text-stock-label">Durasi Sewa</span>
+                <span class="text-[9px] font-semibold text-stock-label uppercase">Durasi Sewa</span>
                 <span class="text-xs font-semibold text-white">{{ round($avgDuration, 1) }} Jam</span>
             </div>
         </div>
@@ -133,6 +129,7 @@
             <div class="liquid-glass rounded-2xl p-4 glass-highlight flex flex-col">
                 <h3 class="text-[10px] font-semibold text-stock-label mb-3 uppercase tracking-widest leading-none">Statistik Order</h3>
                 <div class="flex-1 flex items-center justify-center">
+                    <!-- GANTI WARNA: Jadi Emerald biar serasi dan gak "putih" sendiri -->
                     <div id="transactionsChart" class="w-full h-[160px]" wire:ignore></div>
                 </div>
             </div>
@@ -150,8 +147,8 @@
         <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight">
             <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60">Performa Unit</div>
             <table class="w-full text-left font-sans text-[11px]">
-                <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5">
-                    <tr><th class="px-4 py-2">Unit</th><th class="px-4 py-2 text-center">Frek</th><th class="px-4 py-2 text-right">Revenue</th></tr>
+                <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5 uppercase">
+                    <tr><th class="px-4 py-2">Unit</th><th class="px-4 py-2 text-center">Frek</th><th class="px-4 py-2 text-right">Net Rev</th></tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
                     @foreach($topUnits as $tu)
@@ -168,7 +165,7 @@
         <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight">
             <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60">Penyewa Paling Aktif</div>
             <table class="w-full text-left font-sans text-[11px]">
-                <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5">
+                <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5 uppercase">
                     <tr><th class="px-4 py-2">Penyewa</th><th class="px-4 py-2 text-center">Frek</th><th class="px-4 py-2 text-right">Spent</th></tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
@@ -269,7 +266,6 @@
                 colors: ['#10b981'],
                 stroke: { width: 3, curve: 'smooth' },
                 fill: { type: 'gradient', gradient: { opacityFrom: 0.15, opacityTo: 0 } },
-                tooltip: { enabled: false },
                 xaxis: { categories: @json($chartCategories) }
             });
             rv.render();
@@ -277,11 +273,11 @@
             let tr = new ApexCharts(document.querySelector("#transactionsChart"), {
                 series: [{ name: 'Order', data: @json($chartTransactions) }],
                 chart: { type: 'bar', height: 160, toolbar: { show: false } },
-                colors: ['#ffffff'],
+                colors: ['#10b981'], // GANTI WARNA: Dari Putih ke Emerald (Hijau Saham)
                 plotOptions: { bar: { borderRadius: 3, columnWidth: '50%', dataLabels: { position: 'top' } } },
                 dataLabels: { 
                     enabled: true, offsetY: -18, 
-                    style: { fontSize: '10px', colors: ["#ffffff"], fontWeight: 600 } 
+                    style: { fontSize: '10px', colors: ["#10b981"], fontWeight: 600 } 
                 },
                 xaxis: { categories: @json($chartCategories), labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
                 yaxis: { show: false },
@@ -298,9 +294,9 @@
                 dataLabels: { 
                     enabled: true,
                     formatter: function (val, opts) {
-                        return opts.w.globals.labels[opts.seriesIndex] + ": " + val.toFixed(1) + "%";
+                        return opts.w.globals.labels[opts.seriesIndex];
                     },
-                    style: { fontSize: '9px', fontWeight: 600 }
+                    style: { fontSize: '9px', fontWeight: 600, colors: ['#fff'] }
                 },
                 legend: { show: false },
                 plotOptions: { 
