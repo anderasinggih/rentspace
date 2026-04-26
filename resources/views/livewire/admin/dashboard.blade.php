@@ -312,7 +312,19 @@
                 },
                 colors: ['#10b981'],
                 stroke: { width: 3, curve: 'smooth' },
-                fill: { type: 'gradient', gradient: { opacityFrom: 0.15, opacityTo: 0 } },
+                fill: { 
+                    type: 'gradient', 
+                    gradient: { 
+                        shade: 'dark',
+                        type: "vertical",
+                        shadeIntensity: 0.5,
+                        gradientToColors: undefined, 
+                        inverseColors: true,
+                        opacityFrom: 0.4, 
+                        opacityTo: 0.05, 
+                        stops: [0, 90, 100] 
+                    } 
+                },
                 markers: { 
                     size: 0,
                     strokeColors: '#10b981',
