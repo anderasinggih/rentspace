@@ -87,7 +87,7 @@
             background: #020617 !important;
         }
         .leaflet-tile {
-            filter: brightness(0.6) contrast(1.2) sepia(1) hue-rotate(170deg) saturate(3.5);
+            filter: brightness(0.4) contrast(1.1) sepia(1) hue-rotate(170deg) saturate(2.5);
         }
         .custom-div-icon {
             background: none !important;
