@@ -1,84 +1,80 @@
-<div class="h-[calc(100vh-140px)] flex flex-col relative overflow-hidden" x-data="{ ...radarMap(), isExpanded: false }">
-    {{-- Top Header --}}
-    <div class="flex items-center justify-between mb-4 shrink-0 px-1">
-        <div class="flex items-center gap-3">
-            <h1 class="text-lg font-bold tracking-tight">Radar</h1>
-            <span class="h-4 w-px bg-border"></span>
-            <p class="text-[11px] text-muted-foreground hidden sm:block">Live device tracking</p>
+<div class="h-[calc(100vh-120px)] -mt-4 -mx-4 sm:-mx-6 lg:-mx-8 relative overflow-hidden" x-data="{ ...radarMap(), isExpanded: false }">
+    {{-- Full Background Map --}}
+    <div id="radarMap" class="absolute inset-0 z-0 bg-card" wire:ignore></div>
+
+    {{-- Top Overlay Header --}}
+    <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-[1002] pointer-events-none">
+        <div class="flex items-center gap-2 bg-background/60 backdrop-blur-md border border-white/10 px-3 py-2 rounded-2xl shadow-xl pointer-events-auto">
+            <h1 class="text-sm font-black tracking-tight tracking-tighter">RADAR</h1>
+            <span class="h-3 w-px bg-white/20"></span>
+            <p class="text-[10px] font-bold text-muted-foreground uppercase opacity-70 tracking-widest">{{ count($devices) }} UNITS</p>
         </div>
-        <div class="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border">
-            <a href="{{ route('admin.monitoring') }}" class="px-3 py-1.5 text-[10px] font-medium hover:bg-background rounded-md transition-all">Monitoring</a>
-            <button class="px-3 py-1.5 text-[10px] font-medium bg-background border border-border shadow-xs rounded-md">Radar</button>
+
+        <div class="flex items-center gap-1 bg-background/60 backdrop-blur-md border border-white/10 p-1 rounded-xl shadow-xl pointer-events-auto">
+            <a href="{{ route('admin.monitoring') }}" class="px-3 py-1 text-[10px] font-bold hover:bg-white/10 rounded-lg transition-all opacity-60">MONITORING</a>
+            <button class="px-3 py-1 text-[10px] font-black bg-white/10 rounded-lg shadow-sm">RADAR</button>
         </div>
     </div>
 
-    {{-- Main Container --}}
-    <div class="flex-1 flex flex-col lg:flex-row gap-4 min-h-0 relative">
-        {{-- Map View (Full screen-ish background) --}}
-        <div class="flex-1 relative order-1 lg:order-2 rounded-2xl overflow-hidden border border-border">
-            <div id="radarMap" class="w-full h-full bg-card z-0" wire:ignore></div>
-            
-            {{-- Map Controls --}}
-            <div class="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
-                <button @click="resetView()" class="p-2 bg-background/80 backdrop-blur-md border border-border rounded-xl shadow-lg hover:bg-background transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                </button>
+    {{-- Map Tools Overlay --}}
+    <div class="absolute top-20 right-4 flex flex-col gap-2 z-[1000] pointer-events-auto">
+        <button @click="resetView()" class="p-3 bg-background/60 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl hover:bg-white/10 transition-all active:scale-95 group">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-500"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+    </div>
+
+    {{-- Floating Device Panel --}}
+    <div 
+        class="absolute z-[1001]
+               lg:top-20 lg:left-4 lg:bottom-4 lg:w-72 lg:h-auto
+               fixed bottom-4 left-4 right-4 
+               transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
+               lg:translate-y-0"
+        :class="isExpanded ? 'h-[450px]' : 'h-[72px] lg:h-auto'"
+    >
+        <div class="bg-background/80 lg:bg-background/60 backdrop-blur-2xl border border-white/10 rounded-[32px] flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden">
+            {{-- Apple Drag Handle (Mobile) --}}
+            <div @click="isExpanded = !isExpanded" class="h-8 lg:hidden flex items-center justify-center shrink-0 cursor-pointer group">
+                <div class="w-10 h-1.5 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors"></div>
             </div>
-        </div>
 
-        {{-- Device List Panel --}}
-        <div 
-            class="z-[1001] lg:z-0 lg:w-72 lg:static 
-                   fixed bottom-0 left-0 right-0 
-                   transition-all duration-500 ease-in-out
-                   lg:translate-y-0"
-            :class="isExpanded ? 'h-[420px] lg:h-full' : 'h-[72px] lg:h-full'"
-        >
-            <div class="bg-card/90 lg:bg-card backdrop-blur-xl border-t lg:border border-border rounded-t-[32px] lg:rounded-2xl flex flex-col h-full shadow-[0_-10px_40px_rgba(0,0,0,0.3)] lg:shadow-none overflow-hidden">
-                {{-- Apple Style Drag Handle --}}
-                <div @click="isExpanded = !isExpanded" class="h-8 lg:hidden flex items-center justify-center shrink-0 cursor-pointer group">
-                    <div class="w-10 h-1.5 rounded-full bg-muted-foreground/20 group-hover:bg-muted-foreground/40 transition-colors"></div>
+            <div class="px-6 py-2 lg:pt-6 lg:pb-3 border-b border-white/5 flex items-center justify-between shrink-0">
+                <div>
+                    <h2 class="text-xs font-black tracking-widest uppercase opacity-40">Devices</h2>
+                    <p class="text-[9px] font-bold text-muted-foreground mt-0.5">Tracking Enabled</p>
                 </div>
+            </div>
 
-                <div class="px-5 pb-3 lg:pt-4 border-b border-border/40 flex items-center justify-between shrink-0">
-                    <div>
-                        <p class="text-[10px] font-extrabold text-muted-foreground uppercase tracking-[0.1em]">Devices</p>
-                        <p class="text-[9px] text-muted-foreground opacity-60 leading-none mt-0.5">{{ count($devices) }} unit aktif</p>
-                    </div>
-                </div>
-
-                {{-- Slim Scrollable List --}}
-                <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1 scroll-smooth">
-                    @forelse($devices as $device)
-                        <button 
-                            @click="focusDevice({{ json_encode($device) }}); if(window.innerWidth < 1024) isExpanded = false"
-                            class="w-full text-left px-3 py-2.5 rounded-2xl border border-transparent hover:bg-muted/40 transition-all group relative"
-                            :class="selectedId === {{ $device['id'] }} ? ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/10 border-red-500/40' : 'bg-muted border-border') : ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/5' : '')"
-                        >
-                            <div class="flex items-center justify-between gap-3">
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="text-[11px] font-bold truncate leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-500' : '' }}">{{ $device['seri'] }}</h4>
-                                    <p class="text-[10px] text-muted-foreground truncate opacity-60">{{ $device['nama_peminjam'] }}</p>
-                                </div>
-                                <div class="text-right shrink-0">
-                                    <p class="text-[10px] font-black leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-500' : 'text-emerald-500' }}">
-                                        {{ $device['time_left'] }}
-                                    </p>
-                                    <p class="text-[8px] text-muted-foreground/40 italic leading-none">{{ str_replace('ago', '', $device['last_seen']) }}</p>
-                                </div>
+            {{-- Device List --}}
+            <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1.5 scrollbar-hide">
+                @forelse($devices as $device)
+                    <button 
+                        @click="focusDevice({{ json_encode($device) }}); if(window.innerWidth < 1024) isExpanded = false"
+                        class="w-full text-left px-4 py-3 rounded-[24px] border border-transparent hover:bg-white/5 transition-all group relative"
+                        :class="selectedId === {{ $device['id'] }} ? ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/20 border-red-500/30' : 'bg-white/10 border-white/10') : ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/10' : '')"
+                    >
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-[11px] font-black truncate leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-400' : 'text-white' }}">{{ $device['seri'] }}</h4>
+                                <p class="text-[10px] font-medium text-muted-foreground truncate opacity-60">{{ $device['nama_peminjam'] }}</p>
                             </div>
-                        </button>
-                    @empty
-                        <div class="p-12 text-center">
-                            <div class="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <div class="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
+                            <div class="text-right shrink-0">
+                                <p class="text-[10px] font-black tracking-tighter leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-400' : 'text-emerald-400' }}">
+                                    {{ $device['time_left'] }}
+                                </p>
+                                <p class="text-[8px] font-bold text-white/20 italic leading-none uppercase">{{ str_replace('ago', '', $device['last_seen']) }}</p>
                             </div>
-                            <p class="text-[10px] text-muted-foreground font-medium">Radar is empty</p>
                         </div>
-                    @endforelse
-                </div>
+                    </button>
+                @empty
+                    <div class="p-12 text-center opacity-30">
+                        <p class="text-[10px] font-black uppercase tracking-widest">No Signals</p>
+                    </div>
+                @endforelse
             </div>
         </div>
+    </div>
+</div>
     </div>
 
     {{-- Leaflet Styles & Scripts --}}
