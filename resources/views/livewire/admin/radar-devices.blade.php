@@ -28,49 +28,52 @@
 
         {{-- Device List Panel --}}
         <div 
-            class="z-[1001] lg:z-0 lg:w-72 lg:relative
-                   fixed bottom-0 left-0 right-0 lg:static 
+            class="z-[1001] lg:z-0 lg:w-72 lg:static 
+                   fixed bottom-0 left-0 right-0 
                    transition-all duration-500 ease-in-out
                    lg:translate-y-0"
-            :class="isExpanded ? 'h-[80vh]' : 'h-[72px] lg:h-full'"
+            :class="isExpanded ? 'h-[420px] lg:h-full' : 'h-[72px] lg:h-full'"
         >
-            <div class="bg-card/90 lg:bg-card backdrop-blur-xl border-t lg:border border-border rounded-t-3xl lg:rounded-2xl flex flex-col h-full shadow-2xl lg:shadow-none overflow-hidden">
-                {{-- Drag Handle (Mobile Only) --}}
-                <div @click="isExpanded = !isExpanded" class="h-10 lg:hidden flex items-center justify-center shrink-0 cursor-pointer">
-                    <div class="w-10 h-1 rounded-full bg-border"></div>
+            <div class="bg-card/90 lg:bg-card backdrop-blur-xl border-t lg:border border-border rounded-t-[32px] lg:rounded-2xl flex flex-col h-full shadow-[0_-10px_40px_rgba(0,0,0,0.3)] lg:shadow-none overflow-hidden">
+                {{-- Apple Style Drag Handle --}}
+                <div @click="isExpanded = !isExpanded" class="h-8 lg:hidden flex items-center justify-center shrink-0 cursor-pointer group">
+                    <div class="w-10 h-1.5 rounded-full bg-muted-foreground/20 group-hover:bg-muted-foreground/40 transition-colors"></div>
                 </div>
 
-                <div class="p-3 lg:p-4 border-b border-border/50 flex items-center justify-between">
-                    <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Devices ({{ count($devices) }})</p>
-                    <button @click="isExpanded = !isExpanded" class="lg:hidden text-[11px] font-bold text-sky-500">
-                        <span x-show="!isExpanded">Tampilkan Daftar</span>
-                        <span x-show="isExpanded">Tutup</span>
-                    </button>
+                <div class="px-5 pb-3 lg:pt-4 border-b border-border/40 flex items-center justify-between shrink-0">
+                    <div>
+                        <p class="text-[10px] font-extrabold text-muted-foreground uppercase tracking-[0.1em]">Devices</p>
+                        <p class="text-[9px] text-muted-foreground opacity-60 leading-none mt-0.5">{{ count($devices) }} unit aktif</p>
+                    </div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-1.5 space-y-1">
+                {{-- Slim Scrollable List --}}
+                <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1 scroll-smooth">
                     @forelse($devices as $device)
                         <button 
                             @click="focusDevice({{ json_encode($device) }}); if(window.innerWidth < 1024) isExpanded = false"
-                            class="w-full text-left p-2 rounded-xl border border-transparent hover:bg-muted/50 transition-all group relative"
+                            class="w-full text-left px-3 py-2.5 rounded-2xl border border-transparent hover:bg-muted/40 transition-all group relative"
                             :class="selectedId === {{ $device['id'] }} ? ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/10 border-red-500/40' : 'bg-muted border-border') : ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/5' : '')"
                         >
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex-1 min-w-0">
                                     <h4 class="text-[11px] font-bold truncate leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-500' : '' }}">{{ $device['seri'] }}</h4>
-                                    <p class="text-[10px] text-muted-foreground truncate opacity-70">{{ $device['nama_peminjam'] }}</p>
+                                    <p class="text-[10px] text-muted-foreground truncate opacity-60">{{ $device['nama_peminjam'] }}</p>
                                 </div>
                                 <div class="text-right shrink-0">
-                                    <p class="text-[10px] font-bold leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-500' : 'text-emerald-500 font-extrabold' }}">
+                                    <p class="text-[10px] font-black leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-500' : 'text-emerald-500' }}">
                                         {{ $device['time_left'] }}
                                     </p>
-                                    <p class="text-[9px] text-muted-foreground opacity-40 italic">{{ str_replace('ago', '', $device['last_seen']) }}</p>
+                                    <p class="text-[8px] text-muted-foreground/40 italic leading-none">{{ str_replace('ago', '', $device['last_seen']) }}</p>
                                 </div>
                             </div>
                         </button>
                     @empty
-                        <div class="p-8 text-center">
-                            <p class="text-[11px] text-muted-foreground font-medium">Kosong</p>
+                        <div class="p-12 text-center">
+                            <div class="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <div class="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
+                            </div>
+                            <p class="text-[10px] text-muted-foreground font-medium">Radar is empty</p>
                         </div>
                     @endforelse
                 </div>
