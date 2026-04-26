@@ -325,32 +325,6 @@
             const currentYear = new Date().getFullYear();
             const fmtCategories = categories.map(cat => cat.includes(currentYear) ? cat : cat + ' ' + currentYear);
 
-            // -- ELASTIC RESET: Snap back logic --
-            const snapBack = () => {
-                if (elRevVal) elRevVal.innerText = (latestRev / 1000).toLocaleString() + 'k';
-                if (elRevDate) elRevDate.style.opacity = '0';
-                if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString();
-                if (elTrxDate) elTrxDate.style.opacity = '0';
-            };
-
-            Livewire.on('chartDataUpdated', (d) => {
-                const x = d[0] || d;
-                rv?.updateSeries([{ name: 'Bersih', data: x.netRevenue }]);
-                tr?.updateSeries([{ name: 'Order', data: x.transactions }]);
-                latestRev = x.netRevenue.length > 0 ? x.netRevenue[x.netRevenue.length - 1] : 0;
-                latestTrx = x.transactions.length > 0 ? x.transactions[x.transactions.length - 1] : 0;
-                snapBack();
-            });
-
-            // -- Direct DOM Listeners for Bulletproof Hold & Release --
-            [chartDom, document.querySelector("#transactionsChart")].forEach(el => {
-                if (el) {
-                    el.addEventListener('mouseup', snapBack);
-                    el.addEventListener('touchend', snapBack);
-                    el.addEventListener('mouseleave', snapBack);
-                }
-            });
-
             // -- Chart Helper Config --
             const baseConfig = (seriesData, color, nominalEl, dateEl, isTrx = false) => ({
                 series: [{ name: isTrx ? 'Order' : 'Bersih', data: seriesData }],
@@ -369,13 +343,19 @@
                                 } catch (e) { }
                             }
                         },
-                        mouseLeave: snapBack,
-                        dataPointSelection: snapBack
+                        mouseLeave: function () {
+                            if (nominalEl) nominalEl.innerText = isTrx ? latTrx.toLocaleString() : (latRev/1000).toLocaleString() + 'k';
+                            if (dateEl) dateEl.style.opacity = '0';
+                        }
                     }
                 },
                 grid: { 
-                    show: true, borderColor: 'rgba(255,255,255,0.03)', strokeDashArray: 2, position: 'back', 
-                    xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } 
+                    show: true, 
+                    borderColor: 'rgba(255,255,255,0.03)', 
+                    strokeDashArray: 2, 
+                    position: 'back', 
+                    xaxis: { lines: { show: false } }, // SEMBUNYIKAN: Garis vertikal biar lega
+                    yaxis: { lines: { show: true } } 
                 },
                 colors: [color],
                 stroke: { width: 3, curve: 'smooth' },
@@ -383,7 +363,10 @@
                 markers: { size: 0, strokeColors: color, strokeWidth: 1, hover: { size: 2.5 } },
                 tooltip: { enabled: true, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
                 xaxis: { categories: fmtCategories, crosshairs: { show: true, width: 1, position: 'back', stroke: { color: 'rgba(255,255,255,0.1)', width: 1, dashArray: 4 } }, tooltip: { enabled: false } },
-                yaxis: { tickAmount: 4, tooltip: { enabled: false } }
+                yaxis: { 
+                    tickAmount: 4, // BATASI: Cuma 4 garis horizontal
+                    tooltip: { enabled: false } 
+                }
             });
 
             const rv = new ApexCharts(document.querySelector("#revenueChart"), baseConfig(netData, revColor, elRevVal, elRevDate));
@@ -404,6 +387,36 @@
                 tooltip: { enabled: false }
             });
             dn.render();
+
+            let latestRev = latRev;
+            let latestTrx = latTrx;
+
+            // -- ELASTIC RESET: Snap back to latest values on release/leave --
+            const snapBack = () => {
+                if (elRevVal) elRevVal.innerText = (latestRev / 1000).toLocaleString() + 'k';
+                if (elRevDate) elRevDate.style.opacity = '0';
+                if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString();
+                if (elTrxDate) elTrxDate.style.opacity = '0';
+            };
+
+            Livewire.on('chartDataUpdated', (d) => {
+                const x = d[0] || d;
+                rv?.updateSeries([{ name: 'Bersih', data: x.netRevenue }]);
+                tr?.updateSeries([{ name: 'Order', data: x.transactions }]);
+                latestRev = x.netRevenue.length > 0 ? x.netRevenue[x.netRevenue.length - 1] : 0;
+                latestTrx = x.transactions.length > 0 ? x.transactions[x.transactions.length - 1] : 0;
+                snapBack();
+            });
+
+            // -- NATIVE SENSORS: Forcing 'Hold & Release' feel via DOM --
+            ['#revenueChart', '#transactionsChart'].forEach(id => {
+                const el = document.querySelector(id);
+                if (el) {
+                    ['mouseup', 'touchend', 'mouseleave'].forEach(evt => {
+                        el.addEventListener(evt, snapBack);
+                    });
+                }
+            });
         };
         initCharts();
     }
