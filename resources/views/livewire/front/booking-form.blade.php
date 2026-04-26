@@ -298,10 +298,13 @@
                         </div>
                         <div>
                             <label class="text-sm font-medium leading-none">Sosial Media (IG/TikTok)</label>
-                            <input type="text" wire:model="sosial_media"
-                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                placeholder="@username">
-                            @error('sosial_media') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            <div class="relative mt-2 flex shadow-sm rounded-md h-10 w-full group">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground opacity-50 font-bold text-sm italic">@</div>
+                                <input type="text" wire:model="sosial_media"
+                                    class="flex h-10 w-full rounded-md border border-input bg-transparent pl-7 pr-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                    placeholder="username">
+                            </div>
+                            @error('sosial_media') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
                         </div>
                         <div class="sm:col-span-2">
                             <label class="text-sm font-medium leading-none">Alamat Domisili lengkap</label>
