@@ -115,7 +115,7 @@
 
     <!-- Mobile Dropdown -->
     <div x-show="publicMenuOpen" x-transition x-cloak style="display: none;"
-        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-background/5 backdrop-blur-xl border border-white/10 border-t-white/20 shadow-2xl rounded-3xl flex flex-col gap-1 mx-1 overflow-hidden">
+        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-background/5 backdrop-blur-md border border-white/10 border-t-white/20 shadow-2xl rounded-3xl flex flex-col gap-1 mx-1 overflow-hidden">
         <!-- Shine Overlay -->
         <div
             class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none">
