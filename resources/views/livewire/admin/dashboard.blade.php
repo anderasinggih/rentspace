@@ -1,19 +1,34 @@
 <div class="relative min-h-screen pb-12 overflow-x-hidden" style="touch-action: pan-y;">
     <style>
-        body { overflow-x: hidden !important; background-color: #0c0c0e; color: #fdfdfd; }
+        body {
+            overflow-x: hidden !important;
+            background-color: #0c0c0e;
+            color: #fdfdfd;
+        }
+
         .liquid-glass {
             background: rgba(22, 22, 26, 0.45);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
         }
+
         .glass-highlight {
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .text-stock-label { color: rgba(255, 255, 255, 0.35); }
-        .text-stock-up { color: #10b981; }
-        .text-stock-down { color: #ef4444; }
+
+        .text-stock-label {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .text-stock-up {
+            color: #10b981;
+        }
+
+        .text-stock-down {
+            color: #ef4444;
+        }
     </style>
 
     <!-- 1. Snapshot Grid -->
@@ -32,23 +47,28 @@
                 <span class="text-[8px] font-semibold text-stock-label bg-white/5 px-1 rounded">Trx</span>
             </div>
         </div>
-        <div class="liquid-glass glass-highlight rounded-xl p-3 border-amber-500/20 bg-amber-500/5 transition-all hover:bg-amber-500/10">
+        <div
+            class="liquid-glass glass-highlight rounded-xl p-3 border-amber-500/20 bg-amber-500/5 transition-all hover:bg-amber-500/10">
             <p class="text-[8px] md:text-[9px] font-semibold text-amber-600 mb-1">Pending Balance</p>
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-amber-600/50">Rp</span>
-                <span class="text-xl font-semibold text-amber-600 leading-none">{{ number_format($pendingRevenue/1000, 0) }}k</span>
+                <span
+                    class="text-xl font-semibold text-amber-600 leading-none">{{ number_format($pendingRevenue / 1000, 0) }}k</span>
             </div>
         </div>
-        <div class="liquid-glass glass-highlight rounded-xl p-3 border-emerald-500/20 bg-emerald-500/5 transition-all hover:bg-emerald-500/10">
+        <div
+            class="liquid-glass glass-highlight rounded-xl p-3 border-emerald-500/20 bg-emerald-500/5 transition-all hover:bg-emerald-500/10">
             <p class="text-[8px] md:text-[9px] font-semibold text-emerald-600 mb-1">Unrealized Income</p>
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-emerald-600/50">Rp</span>
-                <span class="text-xl font-semibold text-emerald-600 leading-none">{{ number_format($unrealizedRevenue/1000, 1) }}k</span>
+                <span
+                    class="text-xl font-semibold text-emerald-600 leading-none">{{ number_format($unrealizedRevenue / 1000, 1) }}k</span>
             </div>
         </div>
         <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-white/[0.02]">
             <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1">Realized Today</p>
-            <span class="text-xl font-semibold text-white leading-none">Rp{{ number_format($todayRevenue/1000, 0) }}k</span>
+            <span
+                class="text-xl font-semibold text-white leading-none">Rp{{ number_format($todayRevenue / 1000, 0) }}k</span>
         </div>
         <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-white/[0.02]">
             <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1">Penyewaan Hari Ini</p>
@@ -61,7 +81,7 @@
 
     <!-- 2. Historical Section -->
     <div class="mb-3 flex items-center justify-between px-1">
-        <h2 class="text-[10px] font-semibold text-stock-label uppercase tracking-widest leading-none">Analisis Pasar</h2>
+        <h2 class="text-[10px] font-semibold text-stock-label uppercase tracking leading-none">Analisis</h2>
         <div class="relative">
             <select wire:model.live="preset"
                 class="appearance-none h-6 bg-transparent pr-4 py-0 text-[11px] font-semibold text-white focus:ring-0 outline-none border-none cursor-pointer">
@@ -78,7 +98,8 @@
         <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y divide-white/5 border-b border-white/5">
             <div class="p-4 flex flex-col gap-0.5">
                 <span class="text-[9px] font-semibold text-stock-label">Net Income</span>
-                <span class="text-lg font-semibold text-white">Rp{{ number_format($periodNetRevenue/1000, 0) }}k</span>
+                <span
+                    class="text-lg font-semibold text-white">Rp{{ number_format($periodNetRevenue / 1000, 0) }}k</span>
                 @if($gainNetRevenue !== null)
                     <div class="text-[10px] font-semibold {{ $gainNetRevenue >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
                         {{ $gainNetRevenue >= 0 ? '+' : '' }}{{ $gainNetRevenue }}%
@@ -87,11 +108,12 @@
             </div>
             <div class="p-4 flex flex-col gap-0.5">
                 <span class="text-[9px] font-semibold text-stock-label">Gross Revenue</span>
-                <span class="text-lg font-semibold text-white">Rp{{ number_format($periodRevenue/1000, 0) }}k</span>
+                <span class="text-lg font-semibold text-white">Rp{{ number_format($periodRevenue / 1000, 0) }}k</span>
             </div>
             <div class="p-4 flex flex-col gap-0.5">
                 <span class="text-[9px] font-semibold text-stock-label">Biaya Afiliasi</span>
-                <span class="text-lg font-semibold text-stock-down/70">Rp{{ number_format($periodCommissions/1000, 0) }}k</span>
+                <span
+                    class="text-lg font-semibold text-stock-down/70">Rp{{ number_format($periodCommissions / 1000, 0) }}k</span>
             </div>
             <div class="p-4 flex flex-col gap-0.5">
                 <span class="text-[9px] font-semibold text-stock-label">Margin ROI</span>
@@ -101,7 +123,7 @@
         <div class="grid grid-cols-2 bg-white/[0.02] p-3 divide-x divide-white/5">
             <div class="flex items-center justify-center gap-3">
                 <span class="text-[9px] font-semibold text-stock-label">AOV Rata-Rata</span>
-                <span class="text-xs font-semibold text-white">Rp{{ number_format($avgOrderValue/1000, 1) }}k</span>
+                <span class="text-xs font-semibold text-white">Rp{{ number_format($avgOrderValue / 1000, 1) }}k</span>
             </div>
             <div class="flex items-center justify-center gap-3">
                 <span class="text-[9px] font-semibold text-stock-label">Durasi Sewa</span>
@@ -115,12 +137,15 @@
         <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[340px]">
             <!-- Dynamic Nominal Display -->
             <div class="absolute top-4 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
-                <h3 id="chart-nominal-label" class="text-[10px] font-semibold text-stock-label uppercase tracking-[0.2em] mb-1">Pendapatan Bersih</h3>
+                <h3 id="chart-nominal-label"
+                    class="text-[10px] font-semibold text-stock-label uppercase tracking-[0.2em] mb-1">Pendapatan Bersih
+                </h3>
                 <div class="flex items-baseline justify-center gap-1">
                     <span class="text-xs font-semibold text-stock-up/50">Rp</span>
                     <span id="chart-nominal-value" class="text-3xl font-semibold text-white leading-none">0k</span>
                 </div>
-                <p id="chart-nominal-date" class="text-[8px] font-semibold text-stock-label mt-2 opacity-0 transition-opacity">---</p>
+                <p id="chart-nominal-date"
+                    class="text-[8px] font-semibold text-stock-label mt-2 opacity-0 transition-opacity">---</p>
             </div>
 
             <!-- The Chart -->
@@ -146,17 +171,23 @@
     <!-- 5. Rank Tables -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight">
-            <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60">Performa Unit</div>
+            <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60">
+                Performa Unit</div>
             <table class="w-full text-left font-sans text-[11px]">
                 <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5">
-                    <tr><th class="px-4 py-2">Unit</th><th class="px-4 py-2 text-center">Frek</th><th class="px-4 py-2 text-right">Revenue</th></tr>
+                    <tr>
+                        <th class="px-4 py-2">Unit</th>
+                        <th class="px-4 py-2 text-center">Frek</th>
+                        <th class="px-4 py-2 text-right">Revenue</th>
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
                     @foreach($topUnits as $tu)
                         <tr class="hover:bg-white/[0.03] transition-colors">
                             <td class="px-4 py-3 font-semibold text-white">{{ $tu->unit ? $tu->unit->seri : '---' }}</td>
                             <td class="px-4 py-3 text-center text-white/50">{{ $tu->rent_count }}x</td>
-                            <td class="px-4 py-3 text-right font-semibold text-stock-up">Rp{{ number_format($tu->revenue/1000, 0) }}k</td>
+                            <td class="px-4 py-3 text-right font-semibold text-stock-up">
+                                Rp{{ number_format($tu->revenue / 1000, 0) }}k</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -164,10 +195,15 @@
         </div>
 
         <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight">
-            <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60">Penyewa Paling Aktif</div>
+            <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60">
+                Penyewa Paling Aktif</div>
             <table class="w-full text-left font-sans text-[11px]">
                 <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5">
-                    <tr><th class="px-4 py-2">Penyewa</th><th class="px-4 py-2 text-center">Frek</th><th class="px-4 py-2 text-right">Spent</th></tr>
+                    <tr>
+                        <th class="px-4 py-2">Penyewa</th>
+                        <th class="px-4 py-2 text-center">Frek</th>
+                        <th class="px-4 py-2 text-right">Spent</th>
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
                     @foreach($topTenants as $tenant)
@@ -177,7 +213,8 @@
                                 <div class="text-[8px] text-stock-label mt-0.5">{{ $tenant->no_wa }}</div>
                             </td>
                             <td class="px-4 py-3 text-center text-white/40">{{ $tenant->total_rentals }}x</td>
-                            <td class="px-4 py-3 text-right font-semibold text-white">Rp{{ number_format($tenant->total_spent/1000, 0) }}k</td>
+                            <td class="px-4 py-3 text-right font-semibold text-white">
+                                Rp{{ number_format($tenant->total_spent / 1000, 0) }}k</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -196,7 +233,11 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-[11px]">
                 <thead class="bg-white/[0.01] text-[9px] font-semibold text-stock-label uppercase">
-                    <tr><th class="px-6 py-3">Unit</th><th class="px-6 py-3">Penyewa</th><th class="px-6 py-3 text-right">Countdown</th></tr>
+                    <tr>
+                        <th class="px-6 py-3">Unit</th>
+                        <th class="px-6 py-3">Penyewa</th>
+                        <th class="px-6 py-3 text-right">Countdown</th>
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
                     @forelse($activeRentals as $rental)
@@ -204,7 +245,8 @@
                             <td class="px-6 py-4">
                                 <div class="flex flex-wrap gap-1">
                                     @foreach($rental->units as $u)
-                                        <span class="px-2 py-0.5 rounded bg-white/5 text-[10px] font-semibold text-white border border-white/10">{{ $u->seri }}</span>
+                                        <span
+                                            class="px-2 py-0.5 rounded bg-white/5 text-[10px] font-semibold text-white border border-white/10">{{ $u->seri }}</span>
                                     @endforeach
                                 </div>
                             </td>
@@ -213,11 +255,14 @@
                                 <div class="text-[8px] text-stock-label mt-0.5">{{ $rental->booking_code }}</div>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <span class="text-stock-up font-semibold text-xs tracking-wider">Active</span>
+                                <span class="text-stock-up font-semibold text-xs tracking">Active</span>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="3" class="px-6 py-12 text-center text-white/10 text-[10px] font-semibold italic">Kosong.</td></tr>
+                        <tr>
+                            <td colspan="3" class="px-6 py-12 text-center text-white/10 text-[10px] font-semibold italic">
+                                Kosong.</td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>
@@ -234,7 +279,7 @@
 
             const nValue = document.getElementById('chart-nominal-value');
             const nDate = document.getElementById('chart-nominal-date');
-            
+
             // Set initial value
             const netData = @json($chartNetRevenue);
             const latestValue = netData.length > 0 ? netData[netData.length - 1] : 0;
@@ -245,26 +290,34 @@
 
             rv = new ApexCharts(document.querySelector("#revenueChart"), {
                 series: [{ name: 'Bersih', data: netData }],
-                chart: { 
-                    type: 'area', 
-                    height: '100%', 
-                    fontFamily: 'inherit', 
-                    toolbar: { show: false }, 
-                    zoom: { enabled: false }, 
+                chart: {
+                    type: 'area',
+                    height: '100%',
+                    fontFamily: 'inherit',
+                    toolbar: { show: false },
+                    zoom: { enabled: false },
                     sparkline: { enabled: true },
                     events: {
-                        mouseMove: function(event, chartContext, config) {
-                            if (config.dataPointIndex !== -1) {
-                                const val = config.w.globals.series[0][config.dataPointIndex];
-                                const label = config.w.globals.categoryLabels[config.dataPointIndex];
-                                nValue.innerText = (val / 1000).toLocaleString() + 'k';
-                                nDate.innerText = label;
-                                nDate.style.opacity = '1';
+                        mouseMove: function (event, chartContext, config) {
+                            if (config.dataPointIndex !== -1 && chartContext && chartContext.w && chartContext.w.globals) {
+                                try {
+                                    const val = chartContext.w.globals.series[0][config.dataPointIndex];
+                                    const label = chartContext.w.globals.categoryLabels[config.dataPointIndex];
+                                    if (val !== undefined && nValue) {
+                                        nValue.innerText = (val / 1000).toLocaleString() + 'k';
+                                        if (nDate) {
+                                            nDate.innerText = label || '---';
+                                            nDate.style.opacity = '1';
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.debug('Pointer interaction transient error suppressed');
+                                }
                             }
                         },
-                        mouseLeave: function() {
-                            nValue.innerText = (latestValue / 1000).toLocaleString() + 'k';
-                            nDate.style.opacity = '0';
+                        mouseLeave: function () {
+                            if (nValue) nValue.innerText = (latestValue / 1000).toLocaleString() + 'k';
+                            if (nDate) nDate.style.opacity = '0';
                         }
                     }
                 },
