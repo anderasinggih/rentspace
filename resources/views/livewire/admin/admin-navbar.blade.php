@@ -13,7 +13,7 @@
     }
 }" class="sticky top-0 z-[100] w-full">
     <!-- Main Nav with Separated Blur Layer to prevent nesting conflicts -->
-    <nav class="relative border-b border-white/10 shadow-sm z-50">
+    <nav class="relative border-b border-white/10 shadow-sm z-50 overflow-visible">
         <!-- Separate Blur Layer -->
         <div class="absolute inset-0 bg-background/40 backdrop-blur-md -z-10 pointer-events-none"></div>
 
@@ -28,26 +28,26 @@
                     </a>
 
                     <!-- Desktop Links -->
-                    <div class="hidden md:flex items-center space-x-1">
+                    <div class="hidden md:flex items-center space-x-1.5">
                         <a href="{{ route('admin.dashboard') }}" wire:navigate
-                            class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                            class="px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-300 {{ request()->routeIs('admin.dashboard') ? 'bg-white/15 backdrop-blur-md text-primary font-bold shadow-sm' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground hover:backdrop-blur-sm' }}">
                             Dashboard
                         </a>
 
                         <a href="{{ route('admin.monitoring') }}" wire:navigate
-                            class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                            class="px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-300 {{ request()->routeIs('admin.monitoring') ? 'bg-white/15 backdrop-blur-md text-primary font-bold shadow-sm' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground hover:backdrop-blur-sm' }}">
                             Monitoring
                         </a>
 
                         <a href="{{ route('admin.transactions') }}" wire:navigate
-                            class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                            class="px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-300 {{ request()->routeIs('admin.transactions') ? 'bg-white/15 backdrop-blur-md text-primary font-bold shadow-sm' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground hover:backdrop-blur-sm' }}">
                             Transaksi
                         </a>
 
                         <!-- Dropdown Database (Unit, Promo, Pelanggan, Affiliate, Settings) -->
                         <div x-data="{ open: false }" @click.away="open = false" class="relative">
                             <button @click="open = !open"
-                                class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {{ request()->routeIs('admin.units') || request()->routeIs('admin.promo') || request()->routeIs('admin.customers') || request()->routeIs('admin.affiliate') || request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground' }}">
+                                class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-300 {{ request()->routeIs('admin.units') || request()->routeIs('admin.promo') || request()->routeIs('admin.customers') || request()->routeIs('admin.affiliate') || request()->routeIs('admin.settings') ? 'bg-white/15 backdrop-blur-md text-primary font-bold shadow-sm' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground hover:backdrop-blur-sm' }}">
                                 Database
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -63,7 +63,7 @@
                                 x-transition:leave="transition ease-in duration-75"
                                 x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                                 style="backdrop-filter: blur(25px) !important; -webkit-backdrop-filter: blur(25px) !important;"
-                                class="absolute left-0 mt-1 w-52 rounded-2xl bg-background/70 border border-white/10 shadow-2xl py-2 z-[110] overflow-hidden"
+                                class="absolute left-0 mt-2 w-52 rounded-2xl bg-background/70 border border-white/10 shadow-2xl py-2 z-[110] overflow-hidden"
                                 x-cloak>
                                 <div
                                     class="px-4 py-1.5 text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest">
@@ -105,11 +105,11 @@
                 <!-- Right side context -->
                 <div class="flex items-center gap-2 sm:gap-4">
                     <a href="/" wire:navigate
-                        class="hidden xl:inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
+                        class="hidden xl:inline-flex items-center px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-sm">
                         Lihat Web Publik ↗
                     </a> <!-- Quick Scan Button -->
                     <a href="{{ route('admin.scan') }}" wire:navigate
-                        class="p-2 flex items-center justify-center rounded-md hover:bg-primary/10 text-primary transition-all hover:scale-110 active:scale-95 focus:outline-none {{ request()->routeIs('admin.scan') ? 'bg-primary/20 bg-primary shadow-sm' : '' }}"
+                        class="p-2 flex items-center justify-center rounded-xl hover:bg-white/10 text-primary transition-all hover:scale-110 active:scale-95 focus:outline-none {{ request()->routeIs('admin.scan') ? 'bg-white/20 shadow-sm ring-1 ring-white/20' : '' }}"
                         title="Quick Scan QR">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -126,7 +126,7 @@
 
                     <!-- Dark Mode Toggle Admin -->
                     <button @click="toggleTheme()"
-                        class="p-2 items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors focus:outline-none">
+                        class="p-2 items-center justify-center rounded-xl hover:bg-white/10 text-muted-foreground transition-all hover:scale-110 active:scale-95 focus:outline-none">
                         <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round">
@@ -150,10 +150,10 @@
                     <div class="border-l border-white/10 h-6 mx-2 hidden sm:block"></div>
 
                     <div class="hidden sm:flex items-center gap-3">
-                        <span class="text-sm font-medium text-foreground">{{ auth()->user()->name ?? 'Administrator'
+                        <span class="text-sm font-medium text-foreground opacity-80">{{ auth()->user()->name ?? 'Administrator'
                             }}</span>
                         <button wire:click="logout"
-                            class="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                            class="inline-flex items-center justify-center p-2 rounded-xl text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-all hover:scale-110 active:scale-95"
                             title="Logout">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -161,11 +161,12 @@
                                 <polyline points="16 17 21 12 16 7" />
                                 <line x1="21" x2="9" y1="12" y2="12" />
                             </svg>
+                        </button>
                     </div>
 
                     <!-- Mobile Hamburger -->
                     <button @click="adminMenuOpen = !adminMenuOpen"
-                        class="md:hidden p-2 rounded-md hover:bg-muted text-foreground transition-colors focus:outline-none">
+                        class="md:hidden p-2 rounded-xl hover:bg-white/10 text-foreground transition-all active:scale-90 focus:outline-none">
                         <svg x-show="!adminMenuOpen" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round">
