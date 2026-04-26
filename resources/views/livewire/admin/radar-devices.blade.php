@@ -26,27 +26,34 @@
     {{-- Floating Device Panel --}}
     <div 
         class="absolute z-[1001]
-               lg:top-20 lg:left-4 lg:bottom-4 lg:w-72 lg:h-auto
+               lg:top-24 lg:left-6 lg:w-80 lg:h-[calc(100vh-220px)]
                fixed bottom-4 left-4 right-4 
                transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
                lg:translate-y-0"
-        :class="isExpanded ? 'h-[450px]' : 'h-[72px] lg:h-auto'"
+        :class="isExpanded ? 'h-[480px]' : 'h-[100px] lg:h-[calc(100vh-220px)]'"
     >
-        <div class="bg-background/80 lg:bg-background/60 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden">
-            {{-- Apple Drag Handle (Mobile) --}}
-            <div @click="isExpanded = !isExpanded" class="h-8 lg:hidden flex items-center justify-center shrink-0 cursor-pointer group">
-                <div class="w-10 h-1.5 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors"></div>
+        <div class="bg-background/80 lg:bg-background/70 backdrop-blur-2xl border border-white/15 rounded-2xl flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
+            {{-- Apple Drag Handle (Mobile Only) --}}
+            <div @click="isExpanded = !isExpanded" class="h-10 lg:hidden flex items-center justify-center shrink-0 cursor-pointer group">
+                <div class="w-12 h-1.5 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors"></div>
             </div>
 
-            <div class="px-6 py-2 lg:pt-6 lg:pb-3 border-b border-white/5 flex items-center justify-between shrink-0">
+            {{-- Panel Header --}}
+            <div class="px-6 py-3 lg:pt-8 lg:pb-4 border-b border-white/10 flex items-center justify-between shrink-0">
                 <div>
-                    <h2 class="text-xs font-black tracking-widest uppercase opacity-40">Devices</h2>
-                    <p class="text-[9px] font-bold text-muted-foreground mt-0.5">Tracking Enabled</p>
+                    <h2 class="text-[11px] font-black tracking-[0.2em] uppercase text-white/90">Devices</h2>
+                    <p class="text-[10px] font-bold text-white/40 mt-1">Tracking Enabled</p>
+                </div>
+                <div class="lg:hidden">
+                    <button @click="isExpanded = !isExpanded" class="text-[10px] font-black text-sky-400 uppercase tracking-widest">
+                        <span x-show="!isExpanded">Open</span>
+                        <span x-show="isExpanded">Close</span>
+                    </button>
                 </div>
             </div>
 
-            {{-- Device List --}}
-            <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1.5 scrollbar-hide">
+            {{-- Scrollable Device List --}}
+            <div class="flex-1 overflow-y-auto px-2 py-3 space-y-1.5 scrollbar-hide">
                 @forelse($devices as $device)
                     <button 
                         @click="focusDevice({{ json_encode($device) }}); if(window.innerWidth < 1024) isExpanded = false"
