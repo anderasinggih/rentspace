@@ -4,7 +4,7 @@
     <div id="radarMap" class="absolute inset-0 z-0 bg-card" wire:ignore></div>
 
     {{-- Top Overlay Header --}}
-    <div class="absolute top-20 lg:top-8 left-4 right-4 flex items-center justify-between z-[1002] pointer-events-none">
+    <div class="absolute top-20 lg:top-24 left-4 right-4 lg:left-12 lg:right-12 flex items-center justify-between z-[1002] pointer-events-none">
         <div class="flex items-center gap-2 bg-background/60 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto">
             <h1 class="text-[13px] font-bold tracking-tight">Radar</h1>
             <span class="h-3 w-px bg-white/20"></span>
@@ -18,7 +18,7 @@
     </div>
 
     {{-- Map Tools Overlay --}}
-    <div class="absolute top-36 lg:top-24 right-4 flex flex-col gap-2 z-[1000] pointer-events-auto">
+    <div class="absolute top-36 lg:top-40 right-4 lg:right-12 flex flex-col gap-2 z-[1000] pointer-events-auto">
         <button @click="resetView()" class="p-3 bg-background/60 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl hover:bg-white/10 transition-all active:scale-95 group">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-500"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         </button>
@@ -27,7 +27,7 @@
     {{-- Floating Device Panel/Dock --}}
     <div 
         class="absolute z-[1001]
-               lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:w-[500px]
+               lg:bottom-8 lg:left-1/2 lg:-translate-x-1/2 lg:w-[800px]
                fixed bottom-4 left-4 right-4 
                transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)"
         :class="isExpanded ? 'h-[440px]' : 'h-[96px] lg:h-[96px]'"
