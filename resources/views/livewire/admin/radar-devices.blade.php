@@ -8,15 +8,15 @@
 
     {{-- Top Overlay Header --}}
     <div class="absolute top-20 lg:top-8 left-4 right-4 flex items-center justify-between z-[1002] pointer-events-none">
-        <div class="flex items-center gap-2 bg-background/60 backdrop-blur-md border border-white/10 px-3 py-2 rounded-2xl shadow-xl pointer-events-auto">
-            <h1 class="text-xs font-black tracking-tighter">RADAR</h1>
+        <div class="flex items-center gap-2 bg-background/60 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto">
+            <h1 class="text-[13px] font-bold tracking-tight">Radar</h1>
             <span class="h-3 w-px bg-white/20"></span>
-            <p class="text-[9px] font-bold text-muted-foreground uppercase opacity-70 tracking-widest">{{ count($devices) }} UNITS</p>
+            <p class="text-[11px] font-medium text-muted-foreground opacity-70">{{ count($devices) }} Units</p>
         </div>
 
         <div class="flex items-center gap-1 bg-background/60 backdrop-blur-md border border-white/10 p-1 rounded-xl shadow-xl pointer-events-auto">
-            <a href="{{ route('admin.monitoring') }}" class="px-3 py-1 text-[9px] font-bold hover:bg-white/10 rounded-lg transition-all opacity-60">MONITOR</a>
-            <button class="px-3 py-1 text-[9px] font-black bg-white/10 rounded-lg shadow-sm">RADAR</button>
+            <a href="{{ route('admin.monitoring') }}" class="px-4 py-1.5 text-[11px] font-semibold hover:bg-white/10 rounded-lg transition-all opacity-60">Monitor</a>
+            <button class="px-4 py-1.5 text-[11px] font-bold bg-white/10 rounded-lg shadow-sm">Radar</button>
         </div>
     </div>
 
@@ -43,8 +43,8 @@
 
             <div @click="isExpanded = !isExpanded" class="px-6 pb-3 border-b border-white/5 flex items-center justify-between shrink-0 cursor-pointer hover:bg-white/5 transition-all">
                 <div>
-                    <h2 class="text-[10px] font-black tracking-[0.2em] uppercase text-white/90 leading-none">Devices</h2>
-                    <p class="text-[9px] font-bold text-white/30 mt-1 uppercase tracking-tighter">{{ count($devices) }} Units Tracked</p>
+                    <h2 class="text-[17px] font-bold text-white/90 leading-tight">Devices</h2>
+                    <p class="text-[13px] font-medium text-white/40">{{ count($devices) }} Units Tracked</p>
                 </div>
             </div>
 
