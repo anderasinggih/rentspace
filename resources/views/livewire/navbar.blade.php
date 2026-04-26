@@ -115,20 +115,20 @@
 
     <!-- Mobile Dropdown -->
     <div x-show="publicMenuOpen" x-transition x-cloak style="display: none;"
-        class="md:hidden absolute top-[115%] left-0 right-0 p-4 bg-background/20 backdrop-blur-[4px] backdrop-saturate-[180%] border border-white/10 border-t-white/30 border-l-white/20 shadow-2xl rounded-3xl flex flex-col gap-2 mx-1 overflow-hidden">
+        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-background/5 backdrop-blur-xl border border-white/10 border-t-white/20 shadow-2xl rounded-3xl flex flex-col gap-1 mx-1 overflow-hidden">
         <!-- Shine Overlay -->
         <div
             class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none">
         </div>
         <a href="/" wire:navigate
-            class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->is('/') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">Beranda</a>
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->is('/') ? 'bg-black/5 dark:bg-white/10 text-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground' }}">Beranda</a>
         <a href="{{ route('public.timeline') }}" wire:navigate
-            class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.timeline') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">Jadwal</a>
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('public.timeline') ? 'bg-black/5 dark:bg-white/10 text-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground' }}">Jadwal</a>
         <a href="{{ route('public.about') }}" wire:navigate
-            class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.about') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('public.about') ? 'bg-black/5 dark:bg-white/10 text-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground' }}">
             Tentang & FAQ</a>
         <a href="{{ route('affiliate.login') }}" wire:navigate
-            class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('affiliate.*') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
+            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('affiliate.*') ? 'bg-black/5 dark:bg-white/10 text-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground' }}">
             Affiliate Center</a>
         @php
             $mobileCustomer = session('customer_session');
@@ -136,22 +136,22 @@
         @endphp
         @if($mobileIsLoggedIn)
             <a href="{{ route('public.check-order') }}" wire:navigate
-                class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('public.check-order') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
+                class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('public.check-order') ? 'bg-black/5 dark:bg-white/10 text-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground' }}">
                 Cek Pesanan
             </a>
             <a href="{{ route('customer.logout') }}" wire:navigate wire:confirm="Apakah Anda yakin ingin keluar?"
-                class="px-4 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10">
+                class="px-4 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-500/10 transition-all">
                 Keluar
             </a>
         @else
             <a href="{{ route('customer.login') }}" wire:navigate
-                class="px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('customer.login') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
+                class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('customer.login') ? 'bg-black/5 dark:bg-white/10 text-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground' }}">
                 Masuk
             </a>
         @endif
-        <div class="h-px bg-border my-1"></div>
+        <div class="h-px bg-white/10 my-1 mx-4"></div>
         <a href="{{ route('public.booking') }}" wire:navigate
-            class="flex items-center justify-center rounded-xl bg-foreground text-background text-sm font-semibold px-4 py-3 hover:bg-foreground/90 transition-all mt-2">
+            class="flex items-center justify-center rounded-2xl bg-foreground text-background text-sm font-semibold px-4 py-3.5 hover:bg-foreground/90 active:scale-95 transition-all mt-1">
             Sewa Sekarang
         </a>
     </div>
