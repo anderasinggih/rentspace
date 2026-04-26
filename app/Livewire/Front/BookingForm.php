@@ -571,7 +571,11 @@ class BookingForm extends Component
         try {
             $adminEmail = env('ADMIN_EMAIL');
             if ($adminEmail) {
-                Mail::to($adminEmail)->send(new NewOrderNotification($rental));
+                // Support multiple emails separated by comma
+                $emails = array_map('trim', explode(',', $adminEmail));
+                if (!empty($emails)) {
+                    Mail::to($emails)->send(new NewOrderNotification($rental));
+                }
             }
         } catch (\Exception $e) {
             // Silently fail to not block customer redirect
