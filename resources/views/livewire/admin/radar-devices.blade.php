@@ -51,24 +51,31 @@
             {{-- Scrollable List (Max 5 items before scroll) --}}
             <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1 scrollbar-hide">
                 @forelse($devices as $device)
-                    <button 
-                        @click="focusDevice({{ json_encode($device) }}); if(window.innerWidth < 1024) isExpanded = false"
-                        class="w-full text-left px-3 py-2.5 rounded-xl border border-transparent hover:bg-white/5 transition-all group relative"
+                    <div 
+                        class="w-full flex items-center px-3 py-2.5 rounded-xl border border-transparent hover:bg-white/5 transition-all group relative cursor-pointer"
                         :class="selectedId === {{ $device['id'] }} ? ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/20 border-red-500/30' : 'bg-white/10 border-white/10') : ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/10' : '')"
+                        @click="focusDevice({{ json_encode($device) }}); if(window.innerWidth < 1024) isExpanded = false"
                     >
-                        <div class="flex items-center justify-between gap-3">
+                        <div class="flex-1 min-w-0 flex items-center justify-between gap-3">
                             <div class="flex-1 min-w-0">
-                                <h4 class="text-[11px] font-black truncate leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-400' : 'text-white' }}">{{ $device['seri'] }}</h4>
-                                <p class="text-[10px] font-medium text-muted-foreground truncate opacity-60">{{ $device['nama_peminjam'] }}</p>
+                                <h4 class="text-[14px] font-bold truncate leading-tight  {{ $device['is_overdue'] ? 'text-red-400' : 'text-white' }}">{{ $device['seri'] }}</h4>
+                                <p class="text-[11px] font-medium text-muted-foreground truncate opacity-60 mt-0.5">{{ $device['nama_peminjam'] }}</p>
                             </div>
-                            <div class="text-right shrink-0">
-                                <p class="text-[10px] font-black tracking-tighter leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-400' : 'text-emerald-400' }}">
-                                    {{ $device['time_left'] }}
-                                </p>
-                                <p class="text-[8px] font-bold text-white/20 italic leading-none uppercase">{{ str_replace('ago', '', $device['last_seen']) }}</p>
+                            <div class="text-right shrink-0 flex items-center gap-3">
+                                <div class="text-right">
+                                    <p class="text-[12px] font-bold leading-none {{ $device['is_overdue'] ? 'text-red-400' : 'text-emerald-400' }}">
+                                        {{ $device['time_left'] }}
+                                    </p>
+                                    <p class="text-[9px] font-medium text-white/20 mt-1 leading-none">{{ str_replace('ago', '', $device['last_seen']) }}</p>
+                                </div>
+                                <a href="{{ route('admin.transactions', ['search' => $device['rental_id'] ?? $device['id']]) }}" 
+                                   @click.stop
+                                   class="p-1 -mr-1 hover:bg-white/10 rounded-full transition-colors text-white/10 group-hover:text-white/40">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </a>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 @empty
                     <div class="p-12 text-center opacity-30">
                         <p class="text-[10px] font-black uppercase tracking-widest">No Signals</p>
