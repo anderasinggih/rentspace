@@ -1,5 +1,5 @@
 <div class="h-[calc(100vh-60px)] lg:h-[calc(100vh-140px)] 
-            -mt-4 -mx-4 -mb-10 sm:-mx-6 lg:mx-0 lg:mb-0
+            -mt-10 lg:-mt-4 -mx-4 -mb-10 sm:-mx-6 lg:mx-0 lg:mb-0
             lg:rounded-2xl 
             relative overflow-hidden border-0 lg:border lg:border-border" 
      x-data="{ ...radarMap(), isExpanded: false }">
