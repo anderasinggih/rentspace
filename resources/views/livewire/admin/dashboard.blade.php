@@ -1,272 +1,269 @@
-<div class="relative min-h-screen pb-20">
-    <!-- Header Section: Pure Shadcn Minimalist -->
-    <div class="mb-8">
-        <h1 class="text-2xl font-semibold text-foreground tracking-tight">Dashboard</h1>
-        <p class="text-sm text-muted-foreground mt-0.5">Statistik dan analisis performa RentSpace.</p>
+<div class="relative min-h-screen pb-16">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <h1 class="text-xl font-bold text-foreground">Dashboard</h1>
+        <p class="text-[11px] text-muted-foreground mt-0.5 opacity-60 font-medium">Monitoring performa RentSpace.</p>
     </div>
 
-    <!-- 1. Summary Hari Ini (Snapshot Metrics) -->
-    <div class="mb-8">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <!-- Stats Card 1 -->
-            <div class="rounded-xl border border-border/50 bg-card p-4 shadow-sm">
-                <p class="text-[11px] font-medium text-muted-foreground mb-1">Unit Aktif</p>
+    <!-- 1. Snapshot Real-time (Ultra Compact) -->
+    <div class="mb-6">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+            <!-- Card 1 -->
+            <div class="rounded-xl border border-border/40 bg-card p-3 shadow-sm md:p-4">
+                <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1">Unit Aktif</p>
                 <div class="flex items-baseline gap-1">
-                    <span class="text-2xl font-semibold text-foreground">{{ $activeUnits }}</span>
-                    <span class="text-[11px] font-medium text-muted-foreground opacity-60">/ {{ $totalUnits }} unit</span>
+                    <span class="text-xl md:text-2xl font-bold text-foreground">{{ $activeUnits }}</span>
+                    <span class="text-[9px] font-medium text-muted-foreground opacity-40">/{{ $totalUnits }}</span>
                 </div>
-                <div class="mt-3 h-1 w-full bg-muted rounded-full overflow-hidden">
+                <div class="mt-2 h-1 w-full bg-muted rounded-full overflow-hidden">
                     <div class="h-full bg-primary" style="width: {{ $totalUnits > 0 ? ($activeUnits / $totalUnits) * 100 : 0 }}%"></div>
                 </div>
             </div>
 
-            <!-- Stats Card 2 -->
-            <div class="rounded-xl border border-border/50 bg-card p-4 shadow-sm">
-                <p class="text-[11px] font-medium text-muted-foreground mb-1">Pending order</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-2xl font-semibold text-amber-600">{{ $pendingRentals }}</span>
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[10px] font-medium border border-amber-500/20">
-                        Rp {{ number_format($pendingRevenue / 1000, 0, ',', '.') }}k
-                    </span>
+            <!-- Card 2 -->
+            <div class="rounded-xl border border-border/40 bg-card p-3 shadow-sm md:p-4">
+                <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1">Pending</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-xl md:text-2xl font-bold text-amber-600">{{ $pendingRentals }}</span>
+                    <span class="text-[8px] font-bold bg-amber-500/10 text-amber-600 px-1 rounded">Rp{{ number_format($pendingRevenue/1000, 0) }}k</span>
                 </div>
             </div>
 
-            <!-- Stats Card 3 -->
-            <div class="rounded-xl border border-border/50 bg-card p-4 shadow-sm">
-                <p class="text-[11px] font-medium text-muted-foreground mb-1">Pendapatan hari ini</p>
+            <!-- Card 3 -->
+            <div class="rounded-xl border border-border/40 bg-card p-3 shadow-sm md:p-4">
+                <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1">Hari Ini</p>
                 <div class="flex items-baseline gap-1">
-                    <span class="text-[11px] font-medium text-muted-foreground opacity-60">Rp</span>
-                    <span class="text-2xl font-semibold text-emerald-600">{{ number_format($todayRevenue / 1000, 0, ',', '.') }}k</span>
+                    <span class="text-xl md:text-2xl font-bold text-emerald-600">Rp{{ number_format($todayRevenue / 1000, 0, ',', '.') }}k</span>
                 </div>
             </div>
 
-            <!-- Stats Card 4 -->
-            <div class="rounded-xl border border-border/50 bg-card p-4 shadow-sm">
-                <p class="text-[11px] font-medium text-muted-foreground mb-1">Sewa hari ini</p>
+            <!-- Card 4 -->
+            <div class="rounded-xl border border-border/40 bg-card p-3 shadow-sm md:p-4">
+                <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1">Sewa Hari Ini</p>
                 <div class="flex items-baseline gap-1">
-                    <span class="text-2xl font-semibold text-blue-600">{{ $todayRentals }}</span>
-                    <span class="text-[11px] font-medium text-muted-foreground opacity-60">unit</span>
+                    <span class="text-xl md:text-2xl font-bold text-blue-600">{{ $todayRentals }}</span>
+                    <span class="text-[9px] font-medium text-muted-foreground opacity-40">unit</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 2. Filter Periode (Pindah ke bawah Summary Hari Ini) -->
-    <div class="mb-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 class="text-xs font-bold text-muted-foreground uppercase tracking-tight opacity-70">Analisis Historis</h2>
-            
-            <div class="flex items-center gap-2 p-1 bg-muted/40 rounded-xl border border-border/40 shadow-sm overflow-hidden">
-                <div class="relative">
-                    <select wire:model.live="preset"
-                        class="appearance-none h-9 w-full sm:w-[160px] rounded-lg border-none bg-background pl-4 pr-10 py-1 text-xs font-bold shadow-sm transition-all focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer">
-                        <option value="7">7 hari terakhir</option>
-                        <option value="30">30 hari terakhir</option>
-                        <option value="90">3 bulan terakhir</option>
-                        <option value="all">Semua waktu</option>
-                        <option value="custom">Pilih tanggal</option>
-                    </select>
-                    <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                    </div>
+    <!-- 2. Naked Period Filter -->
+    <div class="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3 px-1">
+        <h2 class="text-[10px] font-bold text-muted-foreground uppercase tracking-tight opacity-40 leading-none">Analisis Historis</h2>
+        
+        <div class="flex items-center gap-2">
+            <div class="relative">
+                <select wire:model.live="preset"
+                    class="appearance-none h-8 w-full sm:w-[150px] bg-transparent pl-0 pr-6 py-0 text-xs font-bold text-foreground focus:ring-0 outline-none border-none cursor-pointer">
+                    <option value="7">7 hari terakhir</option>
+                    <option value="30">30 hari terakhir</option>
+                    <option value="90">3 bulan terakhir</option>
+                    <option value="all">Semua waktu</option>
+                    <option value="custom">Pilih tanggal</option>
+                </select>
+                <div class="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </div>
+            </div>
 
-                @if($preset === 'custom')
-                    <div class="flex items-center gap-2 px-3 border-l border-border/30">
-                        <input type="date" wire:model.live="startDate" class="h-8 bg-transparent border-none text-[11px] p-0 font-black outline-none">
-                        <span class="text-muted-foreground opacity-20">→</span>
-                        <input type="date" wire:model.live="endDate" class="h-8 bg-transparent border-none text-[11px] p-0 font-black outline-none">
+            @if($preset === 'custom')
+                <div class="flex items-center gap-1 border-l border-border/30 pl-2">
+                    <input type="date" wire:model.live="startDate" class="h-6 bg-transparent border-none text-[10px] p-0 font-bold outline-none text-foreground">
+                    <span class="text-muted-foreground opacity-20">→</span>
+                    <input type="date" wire:model.live="endDate" class="h-6 bg-transparent border-none text-[10px] p-0 font-bold outline-none text-foreground">
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- 3. Period Performance & In-depth Analysis (High Density) -->
+    <div class="mb-6 overflow-hidden rounded-xl border border-border/40 bg-card shadow-sm">
+        <!-- Main Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y divide-border/40 border-b border-border/40">
+            <div class="p-3 md:p-4 flex flex-col gap-0.5">
+                <span class="text-[8px] md:text-[9px] font-bold text-muted-foreground uppercase opacity-40">Volume Sewa</span>
+                <span class="text-base md:text-lg font-bold text-foreground leading-tight">{{ $periodRentals }} <span class="text-[9px] font-medium opacity-40">trx</span></span>
+                @if($gainRentals !== null)
+                    <div class="text-[9px] font-bold {{ $gainRentals >= 0 ? 'text-emerald-500' : 'text-red-500' }}">
+                        {{ $gainRentals >= 0 ? '+' : '' }}{{ $gainRentals }}%
                     </div>
                 @endif
             </div>
+            <div class="p-3 md:p-4 flex flex-col gap-0.5">
+                <span class="text-[8px] md:text-[9px] font-bold text-muted-foreground uppercase opacity-40">Omset Kotor</span>
+                <span class="text-base md:text-lg font-bold text-foreground leading-tight">Rp{{ number_format($periodRevenue / 1000, 0) }}k</span>
+                @if($gainRevenue !== null)
+                    <div class="text-[9px] font-bold {{ $gainRevenue >= 0 ? 'text-emerald-500' : 'text-red-500' }}">
+                        {{ $gainRevenue >= 0 ? '+' : '' }}{{ $gainRevenue }}%
+                    </div>
+                @endif
+            </div>
+            <div class="p-3 md:p-4 flex flex-col gap-0.5">
+                <span class="text-[8px] md:text-[9px] font-bold text-muted-foreground uppercase opacity-40">Afiliasi</span>
+                <span class="text-base md:text-lg font-bold text-red-500/80 leading-tight">Rp{{ number_format($periodCommissions / 1000, 0) }}k</span>
+            </div>
+            <div class="p-3 md:p-4 flex flex-col gap-0.5">
+                <span class="text-[8px] md:text-[9px] font-bold text-muted-foreground uppercase opacity-40">Diskon</span>
+                <span class="text-base md:text-lg font-bold text-foreground/80 leading-tight">Rp{{ number_format($periodDiscounts / 1000, 0) }}k</span>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics Grid (New Data) -->
+        <div class="grid grid-cols-3 divide-x divide-border/40 bg-muted/20 border-b border-border/40">
+            <div class="p-2.5 flex flex-col items-center">
+                <span class="text-[7px] md:text-[8px] font-bold text-muted-foreground uppercase opacity-50">AOV (Rata-rata)</span>
+                <span class="text-[11px] md:text-xs font-bold text-foreground">Rp{{ number_format($avgOrderValue/1000, 1) }}k</span>
+            </div>
+            <div class="p-2.5 flex flex-col items-center">
+                <span class="text-[7px] md:text-[8px] font-bold text-muted-foreground uppercase opacity-50">Profit Efficiency</span>
+                <span class="text-[11px] md:text-xs font-bold text-emerald-600">{{ round($profitEfficiency, 1) }}%</span>
+            </div>
+            <div class="p-2.5 flex flex-col items-center">
+                <span class="text-[7px] md:text-[8px] font-bold text-muted-foreground uppercase opacity-50">Avg Duration</span>
+                <span class="text-[11px] md:text-xs font-bold text-foreground">{{ round($avgDuration, 1) }}h</span>
+            </div>
+        </div>
+
+        <!-- Net Result -->
+        <div class="bg-primary/5 p-3 flex items-center justify-between">
+            <span class="text-[9px] md:text-[10px] font-bold text-primary/70 uppercase tracking-tight">Net Revenue Estimate</span>
+            <span class="text-sm md:text-base font-bold text-primary">Rp{{ number_format($periodNetRevenue, 0, ',', '.') }}</span>
         </div>
     </div>
 
-    <!-- 3. Period Metrics Table -->
-    <div class="mb-8 overflow-hidden rounded-xl border border-border/50 bg-card">
-        <div class="p-4 border-b border-border/50 flex items-center justify-between">
-            <h3 class="text-xs font-semibold text-foreground/70">Performa periode terpilih</h3>
-            <span class="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Data olahan</span>
-        </div>
-        
-        @php
-            function getGainDisplay($gain) {
-                if ($gain === null) return 'N/A';
-                $isPos = $gain >= 0;
-                $color = $isPos ? 'text-emerald-500' : 'text-red-500';
-                $arrow = $isPos ? '↑' : '↓';
-                return "<span class='flex items-center gap-0.5 $color font-bold'>$arrow" . abs($gain) . "%</span>";
-            }
-        @endphp
-
-        <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-border/50 border-b border-border/50">
-            <div class="p-4 flex flex-col gap-1">
-                <span class="text-[10px] font-medium text-muted-foreground">Volume sewa</span>
-                <span class="text-lg font-semibold text-foreground">{{ $periodRentals }}</span>
-                <div class="text-[10px] uppercase font-bold">{!! getGainDisplay($gainRentals) !!}</div>
+    <!-- 4. Charts Content (Side by Side Desktop, Stack Mobile) -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+        <div class="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden p-2">
+            <div class="px-3 py-2 border-b border-border/20 mb-2 flex items-center justify-between">
+                <h3 class="text-[10px] font-bold text-foreground/60 uppercase">Revenue Flow</h3>
+                <div class="flex items-center gap-2">
+                    <span class="flex items-center gap-1 text-[8px] font-bold opacity-50 text-indigo-500">■ Kotor</span>
+                    <span class="flex items-center gap-1 text-[8px] font-bold opacity-50 text-emerald-500">■ Bersih</span>
+                </div>
             </div>
-            <div class="p-4 flex flex-col gap-1">
-                <span class="text-[10px] font-medium text-muted-foreground">Omset kotor</span>
-                <span class="text-lg font-semibold text-foreground">Rp {{ number_format($periodRevenue / 1000, 0, ',', '.') }}k</span>
-                <div class="text-[10px] uppercase font-bold">{!! getGainDisplay($gainRevenue) !!}</div>
-            </div>
-            <div class="p-4 flex flex-col gap-1">
-                <span class="text-[10px] font-medium text-muted-foreground">Komisi affiliate</span>
-                <span class="text-lg font-semibold text-red-500">Rp {{ number_format($periodCommissions / 1000, 0, ',', '.') }}k</span>
-            </div>
-            <div class="p-4 flex flex-col gap-1">
-                <span class="text-[10px] font-medium text-muted-foreground">Diskon keluar</span>
-                <span class="text-lg font-semibold text-foreground">Rp {{ number_format($periodDiscounts / 1000, 0, ',', '.') }}k</span>
-            </div>
-        </div>
-
-        <div class="bg-primary/5 p-4 flex items-center justify-between">
-            <span class="text-[11px] font-semibold text-primary/80 uppercase tracking-tight">Estimasi pendapatan bersih</span>
-            <span class="text-base font-bold text-primary">Rp {{ number_format($periodNetRevenue, 0, ',', '.') }}</span>
-        </div>
-    </div>
-
-    <!-- 4. Charts -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-8">
-        <div class="rounded-xl border border-border/50 bg-card shadow-sm overflow-hidden">
-            <div class="p-5 border-b border-border/50 bg-muted/10">
-                <h3 class="text-sm font-semibold text-foreground">Tren pendapatan</h3>
-            </div>
-            <div class="p-2 md:p-4">
-                <div id="revenueChart" class="w-full h-[300px]" wire:ignore></div>
-            </div>
+            <div id="revenueChart" class="w-full h-[240px]" wire:ignore></div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-1 gap-4">
-            <div class="rounded-xl border border-border/50 bg-card shadow-sm overflow-hidden">
-                <div class="p-4 border-b border-border/50 flex items-center justify-between bg-muted/10">
-                    <h3 class="text-[11px] font-semibold text-foreground/70 uppercase">Frekuensi transaksi</h3>
-                </div>
-                <div class="p-2">
-                    <div id="transactionsChart" class="w-full h-[140px]" wire:ignore></div>
-                </div>
+            <div class="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden p-2">
+                <h3 class="text-[10px] font-bold text-foreground/60 uppercase px-3 py-1">Order Frequency</h3>
+                <div id="transactionsChart" class="w-full h-[120px]" wire:ignore></div>
             </div>
 
-            <div class="rounded-xl border border-border/50 bg-card shadow-sm overflow-hidden px-4 py-3">
-                <div class="mb-2">
-                    <h3 class="text-[11px] font-semibold text-foreground/70 uppercase">Metode pembayaran</h3>
-                </div>
-                <div class="flex items-center justify-center">
-                    <div id="paymentDonutChart" class="w-full h-[180px]" wire:ignore></div>
+            <div class="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden p-2 flex items-center">
+                <div class="flex-1">
+                    <h3 class="text-[10px] font-bold text-foreground/60 uppercase px-3">Payments</h3>
+                    <div id="paymentDonutChart" class="w-full h-[120px]" wire:ignore></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 5. Top Analysis -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-        <div class="rounded-xl border border-border/50 bg-card shadow-sm overflow-hidden flex flex-col">
-            <div class="p-4 border-b border-border/50 flex items-center justify-between bg-muted/30">
-                <h3 class="text-xs font-semibold text-foreground/70">Performa unit</h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-muted/40 text-[10px] font-semibold text-muted-foreground/70 border-b border-border/50">
+    <!-- 5. Dense Tables Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <!-- Top Units -->
+        <div class="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
+            <div class="p-3 border-b border-border/40 bg-muted/10 font-bold text-[10px] text-muted-foreground uppercase opacity-60">Unit Performance</div>
+            <table class="w-full text-left">
+                <thead class="bg-muted/30 text-[8px] font-bold text-muted-foreground/60">
+                    <tr>
+                        <th class="px-3 py-1.5">Seri</th>
+                        <th class="px-2 py-1.5 text-center">Qty</th>
+                        <th class="px-3 py-1.5 text-right">Rev</th>
+                    </tr>
+                </thead>
+                <tbody class="text-[10px] divide-y divide-border/20">
+                    @foreach($topUnits as $tu)
                         <tr>
-                            <th class="px-4 py-2">Seri</th>
-                            <th class="px-2 py-2 text-center">Qty</th>
-                            <th class="px-4 py-2 text-right">Revenue</th>
+                            <td class="px-3 py-2 font-bold text-foreground truncate max-w-[100px]">{{ $tu->unit ? $tu->unit->seri : 'Unknown' }}</td>
+                            <td class="px-2 py-2 text-center opacity-60">{{ $tu->rent_count }}x</td>
+                            <td class="px-3 py-2 text-right font-bold text-emerald-600">Rp{{ number_format($tu->revenue / 1000, 0) }}k</td>
                         </tr>
-                    </thead>
-                    <tbody class="text-[11px] divide-y divide-border/50">
-                        @foreach($topUnits as $tu)
-                            <tr class="hover:bg-muted/30 transition-colors">
-                                <td class="px-4 py-2.5 font-medium text-foreground">{{ $tu->unit ? $tu->unit->seri : 'Unknown' }}</td>
-                                <td class="px-2 py-2.5 text-center opacity-70">{{ $tu->rent_count }}x</td>
-                                <td class="px-4 py-2.5 text-right font-semibold text-emerald-600">Rp{{ number_format($tu->revenue / 1000, 0, ',', '.') }}k</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
 
-        <div class="rounded-xl border border-border/50 bg-card shadow-sm overflow-hidden flex flex-col">
-            <div class="p-4 border-b border-border/50 flex items-center justify-between bg-muted/30">
-                <h3 class="text-xs font-semibold text-foreground/70">Penyewa setia</h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-muted/40 text-[10px] font-semibold text-muted-foreground/70 border-b border-border/50">
+        <!-- Top Tenants -->
+        <div class="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
+            <div class="p-3 border-b border-border/40 bg-muted/10 font-bold text-[10px] text-muted-foreground uppercase opacity-60">Loyal Tenants</div>
+            <table class="w-full text-left">
+                <thead class="bg-muted/30 text-[8px] font-bold text-muted-foreground/60">
+                    <tr>
+                        <th class="px-3 py-1.5">Nama</th>
+                        <th class="px-2 py-1.5 text-center">Sewa</th>
+                        <th class="px-3 py-1.5 text-right">Spent</th>
+                    </tr>
+                </thead>
+                <tbody class="text-[10px] divide-y divide-border/20">
+                    @foreach($topTenants as $tenant)
                         <tr>
-                            <th class="px-4 py-2">Nama</th>
-                            <th class="px-4 py-2 text-right">Spent</th>
+                            <td class="px-3 py-2">
+                                <div class="font-bold text-foreground truncate max-w-[110px]">{{ $tenant->nama }}</div>
+                                <div class="text-[7px] opacity-40">{{ $tenant->no_wa }}</div>
+                            </td>
+                            <td class="px-2 py-2 text-center font-bold opacity-50">{{ $tenant->total_rentals }}x</td>
+                            <td class="px-3 py-2 text-right font-bold text-primary">Rp{{ number_format($tenant->total_spent/1000, 0) }}k</td>
                         </tr>
-                    </thead>
-                    <tbody class="text-[11px] divide-y divide-border/50">
-                        @foreach($topTenants as $tenant)
-                            <tr class="hover:bg-muted/30 transition-colors">
-                                <td class="px-4 py-2">
-                                    <div class="font-medium text-foreground">{{ $tenant->nama }}</div>
-                                    <div class="text-[9px] text-muted-foreground opacity-50">{{ $tenant->no_wa }}</div>
-                                </td>
-                                <td class="px-4 py-2 text-right font-semibold text-primary">Rp{{ number_format($tenant->total_spent / 1000, 0, ',', '.') }}k</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- 6. Active Now -->
-    <div class="rounded-xl border border-border/50 bg-card shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-border/50 bg-muted/20 flex items-center justify-between">
-            <div class="flex items-center gap-2">
+    <!-- 6. Real-time Monitoring Table (The Most Compact) -->
+    <div class="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
+        <div class="p-3 border-b border-border/40 bg-emerald-500/5 flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
                 <div class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <h3 class="text-xs font-semibold text-foreground">Sewa aktif hari ini</h3>
+                <h3 class="text-[10px] font-bold text-foreground">Live Monitoring</h3>
             </div>
+            <span class="text-[8px] font-bold text-muted-foreground uppercase opacity-40">Unit In Hands</span>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-muted/40 text-[10px] font-semibold text-muted-foreground/70">
+                <thead class="bg-muted/40 text-[8px] font-bold text-muted-foreground/50">
                     <tr>
-                        <th class="px-5 py-3">Unit</th>
-                        <th class="px-5 py-3">Penyewa</th>
-                        <th class="px-5 py-3 text-right">Status</th>
+                        <th class="px-4 py-2">Unit</th>
+                        <th class="px-4 py-2">Penyewa</th>
+                        <th class="px-4 py-2 text-right">Status</th>
                     </tr>
                 </thead>
-                <tbody class="text-[11px] font-medium divide-y divide-border/50">
+                <tbody class="text-[10px] font-medium divide-y divide-border/10">
                     @forelse($activeRentals as $rental)
                         @php
                             $end = \Carbon\Carbon::parse($rental->waktu_selesai);
                             $diffInHours = now()->diffInHours($end, false);
-                            $totalMinutes = abs(now()->diffInMinutes($end));
-                            $h = floor($totalMinutes / 60);
-                            $m = $totalMinutes % 60;
-                            $diffText = ($h > 0 ? $h . 'j ' : '') . ($m > 0 ? $m . 'm' : ($h == 0 ? '0m' : ''));
+                            $totalM = abs(now()->diffInMinutes($end));
+                            $h = floor($totalM / 60);
+                            $m = $totalM % 60;
+                            $diffT = ($h > 0 ? $h . 'j' : '') . ($m . 'm');
                         @endphp
-                        <tr class="hover:bg-muted/20 transition-all">
-                            <td class="px-5 py-3">
+                        <tr class="hover:bg-muted/10 transition-all">
+                            <td class="px-4 py-2">
                                 <div class="flex flex-wrap gap-1">
                                     @foreach($rental->units as $u)
-                                        <span class="px-1.5 py-0.5 rounded bg-muted text-foreground/80 font-bold border border-border/50">{{ $u->seri }}</span>
+                                        <span class="px-1 py-0 rounded bg-muted text-[9px] font-bold border border-border/30">{{ $u->seri }}</span>
                                     @endforeach
                                 </div>
                             </td>
-                            <td class="px-5 py-3">
-                                <div class="font-bold text-foreground">{{ $rental->nama }}</div>
-                                <div class="text-[9px] text-muted-foreground opacity-60">{{ $rental->booking_code }}</div>
+                            <td class="px-4 py-2">
+                                <div class="font-bold text-foreground leading-tight">{{ $rental->nama }}</div>
+                                <div class="text-[7px] opacity-30">{{ $rental->booking_code }}</div>
                             </td>
-                            <td class="px-5 py-3 text-right">
+                            <td class="px-4 py-2 text-right truncate">
                                 @if($diffInHours < 0)
-                                    <span class="text-red-500 font-bold">Telat</span>
+                                    <span class="text-red-500 font-extrabold uppercase text-[9px]">Telat</span>
                                 @elseif($diffInHours < 3)
-                                    <span class="text-amber-500 font-bold">{{ $diffText }} lagi</span>
+                                    <span class="text-amber-500 font-bold">{{ $diffT }}</span>
                                 @else
                                     <span class="text-emerald-500 font-bold">Aman</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="3" class="px-5 py-10 text-center opacity-40 text-xs font-medium">Kosong.</td>
-                        </tr>
+                        <tr><td colspan="3" class="px-4 py-8 text-center opacity-30 text-[9px] font-bold italic">No active units.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -281,99 +278,61 @@
             const chartDom = document.querySelector("#revenueChart");
             if (!chartDom) return;
 
-            function getChartColors() {
-                const isDark = document.documentElement.classList.contains('dark');
-                return {
-                    isDark,
-                    textColor: isDark ? '#a1a1aa' : '#71717a',
-                    borderColor: isDark ? '#27272a' : '#e4e4e7',
-                };
+            function getC() {
+                const isD = document.documentElement.classList.contains('dark');
+                return { isD, txt: isD ? '#a1a1aa' : '#71717a', brd: isD ? '#27272a' : '#e4e4e7' };
             }
 
-            let colors = getChartColors();
-            let revChart, trxChart, donutChart;
+            let c = getC();
+            let rv, tr, dn;
 
-            const baseOptions = {
+            const opt = {
                 chart: { fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, background: 'transparent' },
                 dataLabels: { enabled: false },
-                theme: { mode: colors.isDark ? 'dark' : 'light' },
-                grid: { borderColor: colors.borderColor, strokeDashArray: 4, padding: { left: 0, right: 0 } },
+                theme: { mode: c.isD ? 'dark' : 'light' },
+                grid: { borderColor: c.brd, strokeDashArray: 4, padding: { left: 0, right: 0 } },
             };
 
-            // ── 1. REVENUE AREA CHART ──────────────────────────────────────────────
-            revChart = new ApexCharts(document.querySelector("#revenueChart"), {
-                ...baseOptions,
-                series: [
-                    { name: 'Kotor', data: @json($chartRevenue) },
-                    { name: 'Bersih', data: @json($chartNetRevenue) }
-                ],
-                chart: { ...baseOptions.chart, type: 'area', height: 300 },
+            rv = new ApexCharts(document.querySelector("#revenueChart"), {
+                ...opt, series: [{ name: 'Kotor', data: @json($chartRevenue) }, { name: 'Bersih', data: @json($chartNetRevenue) }],
+                chart: { ...opt.chart, type: 'area', height: 240 },
                 colors: ['#6366f1', '#10b981'],
-                xaxis: {
-                    categories: @json($chartCategories),
-                    labels: { style: { colors: colors.textColor, fontSize: '10px' } },
-                    tickAmount: window.innerWidth < 640 ? 3 : 8
-                },
-                yaxis: {
-                    labels: {
-                        formatter: (val) => val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val,
-                        style: { colors: colors.textColor, fontSize: '10px' }
-                    }
-                },
-                stroke: { width: 2, curve: 'straight' },
-                fill: { type: 'gradient', gradient: { opacityFrom: 0.1, opacityTo: 0.0 } },
-                tooltip: { theme: colors.isDark ? 'dark' : 'light' }
+                xaxis: { categories: @json($chartCategories), labels: { style: { colors: c.txt, fontSize: '9px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                yaxis: { labels: { formatter: (v) => v >= 1000 ? (v/1000).toFixed(0)+'k' : v, style: { colors: c.txt, fontSize: '9px' } } },
+                stroke: { width: 2, curve: 'smooth' }, fill: { type: 'gradient', gradient: { opacityFrom: 0.1, opacityTo: 0 } }
             });
-            revChart.render();
+            rv.render();
 
-            // ── 2. TRANSACTIONS BAR CHART ──────────────────────────────────────────
-            trxChart = new ApexCharts(document.querySelector("#transactionsChart"), {
-                ...baseOptions,
-                series: [{ name: 'Order', data: @json($chartTransactions) }],
-                chart: { ...baseOptions.chart, type: 'bar', height: 140 },
-                colors: ['#10b981'],
+            tr = new ApexCharts(document.querySelector("#transactionsChart"), {
+                ...opt, series: [{ name: 'Order', data: @json($chartTransactions) }],
+                chart: { ...opt.chart, type: 'bar', height: 120 }, colors: ['#10b981'],
                 plotOptions: { bar: { borderRadius: 2, columnWidth: '20%' } },
-                xaxis: { labels: { show: false } },
-                yaxis: { show: false },
-                grid: { show: false },
-                tooltip: { theme: colors.isDark ? 'dark' : 'light' }
+                xaxis: { labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+                yaxis: { show: false }, grid: { show: false }
             });
-            trxChart.render();
+            tr.render();
 
-            // ── 3. PAYMENT METHOD DONUT CHART ─────────────────────────────────────
-            donutChart = new ApexCharts(document.querySelector("#paymentDonutChart"), {
-                ...baseOptions,
-                series: @json($paymentCounts),
-                labels: @json($paymentLabels),
-                chart: { ...baseOptions.chart, type: 'donut', height: 180 },
+            dn = new ApexCharts(document.querySelector("#paymentDonutChart"), {
+                ...opt, series: @json($paymentCounts), labels: @json($paymentLabels),
+                chart: { ...opt.chart, type: 'donut', height: 120 },
                 colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                legend: { position: 'right', fontSize: '10px', labels: { colors: colors.textColor } },
-                plotOptions: { pie: { donut: { size: '70%' } } },
-                stroke: { width: 0 }
+                legend: { show: false }, plotOptions: { pie: { donut: { size: '75%' } } }, stroke: { width: 0 }
             });
-            donutChart.render();
+            dn.render();
 
-            // ── Livewire updates ──────────────────────────────────────────────────
-            Livewire.on('chartDataUpdated', (data) => {
-                const d = Array.isArray(data) ? data[0] : data;
-                revChart?.updateOptions({ xaxis: { categories: d.categories } });
-                revChart?.updateSeries([{ name: 'Kotor', data: d.revenue }, { name: 'Bersih', data: d.netRevenue }]);
-                trxChart?.updateSeries([{ name: 'Order', data: d.transactions }]);
+            Livewire.on('chartDataUpdated', (d) => {
+                const x = Array.isArray(d) ? d[0] : d;
+                rv?.updateOptions({ xaxis: { categories: x.categories } });
+                rv?.updateSeries([{ name: 'Kotor', data: x.revenue }, { name: 'Bersih', data: x.netRevenue }]);
+                tr?.updateSeries([{ name: 'Order', data: x.transactions }]);
             });
 
-            // ── Theme observer ────────────────────────────────────────────────────
-            const observer = new MutationObserver(() => {
-                const c = getChartColors();
-                [revChart, trxChart, donutChart].forEach(chart => {
-                    chart?.updateOptions({ theme: { mode: c.isDark ? 'dark' : 'light' }, grid: { borderColor: c.borderColor } });
-                });
+            const obs = new MutationObserver(() => {
+                const nc = getC();
+                [rv, tr, dn].forEach(ch => ch?.updateOptions({ theme: { mode: nc.isD ? 'dark' : 'light' }, grid: { borderColor: nc.brd } }));
             });
-            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-            document.addEventListener('livewire:navigating', () => {
-                observer.disconnect();
-                [revChart, trxChart, donutChart].forEach(c => c?.destroy());
-            }, { once: true });
+            obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+            document.addEventListener('livewire:navigating', () => { obs.disconnect(); [rv, tr, dn].forEach(x => x?.destroy()); }, { once: true });
         };
         initCharts();
     }

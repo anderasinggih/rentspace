@@ -231,6 +231,18 @@ class Dashboard extends Component
             ->where(fn($q) => $q->where('waktu_selesai', '>=', now()))
             ->get();
 
+        // Advanced Analysis
+        $avgOrderValue = $periodRentals > 0 ? $periodRevenue / $periodRentals : 0;
+        $profitEfficiency = $periodRevenue > 0 ? ($periodNetRevenue / $periodRevenue) * 100 : 0;
+        
+        // Avg Duration for the period
+        $avgDuration = Rental::whereBetween('created_at', [$start, $end])
+            ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
+            ->get()
+            ->avg(function($r) {
+                return abs(Carbon::parse($r->waktu_selesai)->diffInHours(Carbon::parse($r->waktu_mulai)));
+            }) ?? 0;
+
         return view('livewire.admin.dashboard', compact(
             'totalUnits', 'activeUnits', 'pendingRentals', 'pendingRevenue',
             'periodRentals', 'periodRevenue', 'periodDiscounts', 'todayRevenue', 'todayRentals',
@@ -238,7 +250,8 @@ class Dashboard extends Component
             'gainRentals', 'gainRevenue', 'gainAbsRevenue', 'gainNetRevenue',
             'activeRentals', 'topTenants', 'topUnits', 'topAffiliates',
             'chartCategories', 'chartRevenue', 'chartNetRevenue', 'chartTransactions',
-            'paymentLabels', 'paymentCounts'
+            'paymentLabels', 'paymentCounts',
+            'avgOrderValue', 'profitEfficiency', 'avgDuration'
         ))->layout('layouts.admin');
     }
 }
