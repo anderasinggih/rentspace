@@ -5,6 +5,8 @@ namespace App\Livewire\Front;
 use App\Models\Unit;
 use App\Models\Rental;
 use App\Models\PricingRule;
+use App\Mail\NewOrderNotification;
+use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Livewire\Component;
 
@@ -564,6 +566,17 @@ class BookingForm extends Component
         }
 
         $this->dispatch('booking-submitted');
+
+        // Send Email Notification to Admin
+        try {
+            $adminEmail = env('ADMIN_EMAIL');
+            if ($adminEmail) {
+                Mail::to($adminEmail)->send(new NewOrderNotification($rental));
+            }
+        } catch (\Exception $e) {
+            // Silently fail to not block customer redirect
+            \Illuminate\Support\Facades\Log::error("Email failed: " . $e->getMessage());
+        }
 
         return redirect()->route('public.payment', $rental->booking_code);
     }
