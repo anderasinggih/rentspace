@@ -326,7 +326,7 @@
                 colors: [color],
                 stroke: { width: 3, curve: 'smooth' },
                 fill: { type: 'gradient', gradient: { shade: 'dark', type: "vertical", shadeIntensity: 0.5, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
-                markers: { size: 0, strokeColors: color, strokeWidth: 2, hover: { size: 4 } },
+                markers: { size: 0, strokeColors: color, strokeWidth: 1, hover: { size: 2.5 } },
                 tooltip: { enabled: true, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
                 xaxis: { categories: fmtCategories, crosshairs: { show: true, width: 1, position: 'back', stroke: { color: 'rgba(255,255,255,0.1)', width: 1, dashArray: 4 } }, tooltip: { enabled: false } },
                 yaxis: { tooltip: { enabled: false } }
