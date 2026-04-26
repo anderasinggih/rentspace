@@ -38,6 +38,18 @@
         .no-transitions * {
             transition: none !important;
         }
+
+        html, body {
+            touch-action: pan-x pan-y;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Allow selection in inputs */
+        input, textarea {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+        }
     </style>
     <script>
         document.documentElement.classList.add('no-transitions');
@@ -51,10 +63,30 @@
              applyTheme();
              setTimeout(() => document.documentElement.classList.remove('no-transitions'), 100);
         });
+
+        // Force disable zooming
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            let now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
     </script>
 </head>
 
-<body class="bg-background min-h-screen text-foreground antialiased font-sans flex flex-col">
+<body class="bg-background min-h-screen text-foreground antialiased font-sans flex flex-col select-none">
 
     <livewire:admin.admin-navbar />
     <livewire:admin.command-palette />

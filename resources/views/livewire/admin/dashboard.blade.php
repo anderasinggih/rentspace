@@ -1,9 +1,10 @@
-<div class="relative min-h-screen pb-12 overflow-x-hidden" style="touch-action: pan-y;">
+<div class="relative min-h-screen pb-12 overflow-x-hidden select-none" style="touch-action: pan-y;">
     <style>
         body {
             overflow-x: hidden !important;
             background-color: #0c0c0e;
             color: #fdfdfd;
+            user-select: none;
         }
 
         .liquid-glass {

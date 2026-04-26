@@ -29,8 +29,7 @@
             -webkit-text-size-adjust: 100%;
             user-select: none;
             -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* Allow selection in inputs */
@@ -51,7 +50,19 @@
         }
     </style>
     <script>
-        // Force disable double-tap to zoom
+        // Force disable zooming
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, {
+            passive: false
+        });
+
         let lastTouchEnd = 0;
         document.addEventListener('touchend', function(event) {
             let now = (new Date()).getTime();
@@ -60,6 +71,7 @@
             }
             lastTouchEnd = now;
         }, false);
+
 
         // Advanced Haptic Engine (Native Feeling for Web)
         window.hapticEngine = {

@@ -32,6 +32,16 @@
             touch-action: pan-x pan-y;
             -webkit-text-size-adjust: 100%;
             overscroll-behavior-y: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Allow selection in inputs */
+        input,
+        textarea {
+            user-select: text !important;
+            -webkit-user-select: text !important;
         }
 
         /* Prevent input auto-zoom on iOS */
@@ -45,10 +55,14 @@
         }
     </style>
     <script>
-        // Force disable double-tap to zoom
+        // Force disable zooming
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
         document.addEventListener('touchstart', function(event) {
             if (event.touches.length > 1) {
-                // Allow pinch-to-zoom if they really want it
+                event.preventDefault();
             }
         }, {
             passive: false
