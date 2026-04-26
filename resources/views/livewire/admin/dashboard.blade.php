@@ -437,7 +437,7 @@
             const getChartStyles = () => {
                 const isDark = document.documentElement.classList.contains('dark');
                 return {
-                    grid: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                    grid: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.08)',
                     crosshair: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                     tooltip: isDark ? 'dark' : 'light',
                     label: isDark ? '#666' : '#999',
@@ -470,9 +470,9 @@
                 grid: {
                     show: true,
                     borderColor: styles.grid,
-                    strokeDashArray: 2,
+                    strokeDashArray: 4,
                     position: 'back',
-                    xaxis: { lines: { show: false } },
+                    xaxis: { lines: { show: true } },
                     yaxis: { lines: { show: true } }
                 },
                 colors: [color],
@@ -480,7 +480,12 @@
                 fill: { type: 'gradient', gradient: { shade: styles.tooltip, type: "vertical", shadeIntensity: 0.5, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
                 markers: { size: 0, strokeColors: color, strokeWidth: 1, hover: { size: 2.5 } },
                 tooltip: { enabled: true, theme: styles.tooltip, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
-                xaxis: { categories: fmtCategories, crosshairs: { show: true, width: 1, position: 'back', stroke: { color: styles.crosshair, width: 1, dashArray: 4 } }, tooltip: { enabled: false } },
+                xaxis: { 
+                    categories: fmtCategories, 
+                    tickAmount: 6,
+                    crosshairs: { show: true, width: 1, position: 'back', stroke: { color: styles.crosshair, width: 1, dashArray: 4 } }, 
+                    tooltip: { enabled: false } 
+                },
                 yaxis: { tickAmount: 4, tooltip: { enabled: false } }
             });
 
