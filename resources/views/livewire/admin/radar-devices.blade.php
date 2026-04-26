@@ -41,10 +41,10 @@
                 <div class="w-10 h-1 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors"></div>
             </div>
 
-            <div @click="isExpanded = !isExpanded" class="px-6 pb-3 border-b border-white/5 flex items-center justify-between shrink-0 cursor-pointer hover:bg-white/5 transition-all">
+            <div @click="isExpanded = !isExpanded" class="px-8 pb-4 border-b border-white/5 flex items-center justify-between shrink-0 cursor-pointer hover:bg-white/5 transition-all">
                 <div>
                     <h2 class="text-[17px] font-bold text-white/90 leading-tight">Devices</h2>
-                    <p class="text-[13px] font-medium text-white/40">{{ count($devices) }} Units Tracked</p>
+                    <p class="text-[13px] font-medium text-white/40 mt-1">{{ count($devices) }} Units Tracked</p>
                 </div>
             </div>
 
