@@ -85,13 +85,11 @@
         </div>
     </div>
 
-    <!-- 2. Historical Section (Stockbit Style) -->
-    <div class="mb-4 flex flex-row items-center justify-between gap-2 px-1">
-        <h2 class="text-[9px] font-bold text-stock-label uppercase tracking-tighter leading-none shrink-0">Performance</h2>
-        <div class="flex items-center gap-0.5 overflow-x-auto hide-scrollbar no-scrollbar" style="-ms-overflow-style: none; scrollbar-width: none;">
+    <!-- 2. Historical Section (Stockbit Style - Full Width) -->
+    <div class="mb-4 px-1">
+        <div class="flex items-center justify-between gap-1 w-full overflow-x-auto hide-scrollbar no-scrollbar" style="-ms-overflow-style: none; scrollbar-width: none;">
             @php
                 $presets = [
-                    ['val' => '1', 'label' => '1D'],
                     ['val' => '7', 'label' => '7D'],
                     ['val' => '30', 'label' => '1M'],
                     ['val' => '90', 'label' => '3M'],
@@ -102,13 +100,13 @@
             @foreach($presets as $p)
                 <button 
                     wire:click="$set('preset', '{{ $p['val'] }}')"
-                    class="h-6 px-2 rounded text-[10px] font-bold transition-all shrink-0 {{ $preset === $p['val'] ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-white/5 text-stock-label hover:bg-white/10' }}">
+                    class="flex-1 h-7 rounded text-[10px] font-bold transition-all shrink-0 {{ $preset === $p['val'] ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-white/5 text-stock-label hover:bg-white/10' }}">
                     {{ $p['label'] }}
                 </button>
             @endforeach
             <button 
                 wire:click="$set('preset', 'custom')"
-                class="h-6 px-2.5 rounded text-[10px] font-bold transition-all shrink-0 {{ $preset === 'custom' ? 'bg-amber-500 text-black' : 'bg-white/5 text-stock-label hover:bg-white/10' }}">
+                class="px-4 h-7 rounded text-[10px] font-bold transition-all shrink-0 {{ $preset === 'custom' ? 'bg-amber-500 text-black' : 'bg-white/5 text-stock-label hover:bg-white/10' }}">
                 C
             </button>
         </div>
