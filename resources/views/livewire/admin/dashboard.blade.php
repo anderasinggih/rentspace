@@ -85,19 +85,48 @@
         </div>
     </div>
 
-    <!-- 2. Historical Section -->
-    <div class="mb-3 flex items-center justify-between px-1">
-        <h2 class="text-[10px] font-semibold text-stock-label uppercase leading-none">Analisis</h2>
-        <div class="relative">
-            <select wire:model.live="preset"
-                class="appearance-none h-6 bg-transparent pr-4 py-0 text-[11px] font-semibold text-white focus:ring-0 outline-none border-none cursor-pointer">
-                <option value="7">7 Hari</option>
-                <option value="30">30 Hari</option>
-                <option value="90">3 Bulan</option>
-                <option value="all">Semua</option>
-            </select>
+    <!-- 2. Historical Section (Stockbit Style) -->
+    <div class="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3 px-1">
+        <h2 class="text-[10px] font-semibold text-stock-label uppercase tracking-wider">Performance Analytics</h2>
+        <div class="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 hide-scrollbar no-scrollbar" style="-ms-overflow-style: none; scrollbar-width: none;">
+            @php
+                $presets = [
+                    ['val' => '1', 'label' => '1D'],
+                    ['val' => '7', 'label' => '7D'],
+                    ['val' => '30', 'label' => '1M'],
+                    ['val' => '90', 'label' => '3M'],
+                    ['val' => 'ytd', 'label' => 'YTD'],
+                    ['val' => 'all', 'label' => 'ALL'],
+                ];
+            @endphp
+            @foreach($presets as $p)
+                <button 
+                    wire:click="$set('preset', '{{ $p['val'] }}')"
+                    class="h-7 px-3 rounded text-[10px] font-bold transition-all {{ $preset === $p['val'] ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-white/5 text-stock-label hover:bg-white/10' }}">
+                    {{ $p['label'] }}
+                </button>
+            @endforeach
+            <button 
+                wire:click="$set('preset', 'custom')"
+                class="h-7 px-3 rounded text-[10px] font-bold transition-all {{ $preset === 'custom' ? 'bg-amber-500 text-black' : 'bg-white/5 text-stock-label hover:bg-white/10' }}">
+                CUSTOM
+            </button>
         </div>
     </div>
+
+    <!-- 2.1 Custom Date Picker (Show only if preset is custom) -->
+    @if($preset === 'custom')
+        <div class="mb-6 grid grid-cols-2 gap-3 liquid-glass p-3 rounded-xl glass-highlight animate-in fade-in slide-in-from-top-1">
+            <div class="flex flex-col gap-1">
+                <label class="text-[8px] font-bold text-stock-label uppercase px-1">Start Date</label>
+                <input type="date" wire:model.live="startDate" class="bg-white/5 border-white/10 rounded h-8 text-[11px] text-white focus:ring-emerald-500 px-2 outline-none">
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-[8px] font-bold text-stock-label uppercase px-1">End Date</label>
+                <input type="date" wire:model.live="endDate" class="bg-white/5 border-white/10 rounded h-8 text-[11px] text-white focus:ring-emerald-500 px-2 outline-none">
+            </div>
+        </div>
+    @endif
 
     <!-- 3. Performance Summary -->
     <div class="mb-6 liquid-glass rounded-2xl overflow-hidden glass-highlight shadow-sm">

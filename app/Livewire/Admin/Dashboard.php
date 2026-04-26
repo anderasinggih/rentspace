@@ -30,6 +30,12 @@ class Dashboard extends Component
                 $firstRental = Rental::min('created_at');
                 $this->startDate = $firstRental ? Carbon::parse($firstRental)->format('Y-m-d') : Carbon::now()->format('Y-m-d');
                 $this->endDate = Carbon::now()->format('Y-m-d');
+            } elseif ($this->preset === 'ytd') {
+                $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
+                $this->endDate = Carbon::now()->format('Y-m-d');
+            } elseif ($this->preset === '1') {
+                $this->startDate = Carbon::now()->format('Y-m-d');
+                $this->endDate = Carbon::now()->format('Y-m-d');
             } else {
                 $this->startDate = Carbon::now()->subDays((int)$this->preset - 1)->format('Y-m-d');
                 $this->endDate = Carbon::now()->format('Y-m-d');
