@@ -18,17 +18,17 @@
 
     <!-- Header Section -->
     <div class="mb-4 flex items-center justify-between">
-        <h1 class="text-lg font-semibold text-white tracking-tight">Dashboard</h1>
+        <h1 class="text-lg font-semibold text-white">Dashboard</h1>
         <div class="flex items-center gap-2">
             <div class="h-1 w-1 rounded-full bg-stock-up animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-            <span class="text-[9px] font-semibold text-stock-up tracking-wider italic">Real-time audit</span>
+            <span class="text-[9px] font-semibold text-stock-up uppercase">Real-time audit</span>
         </div>
     </div>
 
-    <!-- 1. Snapshot Grid (Extreme Density - 6 Cards) -->
+    <!-- 1. Snapshot Grid (Clean Typography) -->
     <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 md:gap-3 mb-6">
         <!-- Card 1: Assets -->
-        <div class="liquid-glass glass-highlight rounded-xl p-3 tranition-all hover:bg-white/[0.02]">
+        <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-white/[0.02]">
             <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1">Unit aktif</p>
             <div class="flex items-baseline gap-1">
                 <span class="text-xl font-semibold text-white leading-none">{{ $activeUnits }}</span>
@@ -45,7 +45,7 @@
             </div>
         </div>
 
-        <!-- Card 3: Pending Nominal (NEW) -->
+        <!-- Card 3: Pending Nominal -->
         <div class="liquid-glass glass-highlight rounded-xl p-3 border-amber-500/20 bg-amber-500/5 transition-all hover:bg-amber-500/10">
             <p class="text-[8px] md:text-[9px] font-semibold text-amber-600 mb-1">Pending balance</p>
             <div class="flex items-baseline gap-0.5">
@@ -81,7 +81,7 @@
 
     <!-- 2. Analysis Header -->
     <div class="mb-3 flex items-center justify-between px-1">
-        <h2 class="text-[10px] font-semibold text-stock-label uppercase tracking-widest leading-none">Analisis pasar</h2>
+        <h2 class="text-[10px] font-semibold text-stock-label uppercase leading-none">Analisis pasar</h2>
         <div class="relative">
             <select wire:model.live="preset"
                 class="appearance-none h-6 bg-transparent pr-4 py-0 text-[11px] font-semibold text-white focus:ring-0 outline-none border-none cursor-pointer">
@@ -135,17 +135,17 @@
     <!-- 4. Charts Block -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
         <div class="liquid-glass rounded-2xl p-4 glass-highlight">
-            <h3 class="text-[10px] font-semibold text-stock-label tracking-widest mb-4">Tren pendapatan</h3>
+            <h3 class="text-[10px] font-semibold text-stock-label mb-4">Tren pendapatan</h3>
             <div id="revenueChart" class="w-full h-[220px]" wire:ignore></div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
             <div class="liquid-glass rounded-2xl p-4 glass-highlight">
-                <h3 class="text-[10px] font-semibold text-stock-label tracking-widest mb-3">Order</h3>
+                <h3 class="text-[10px] font-semibold text-stock-label mb-3">Order</h3>
                 <div id="transactionsChart" class="w-full h-[100px]" wire:ignore></div>
             </div>
             <div class="liquid-glass rounded-2xl p-4 glass-highlight flex flex-col">
-                <h3 class="text-[10px] font-semibold text-stock-label tracking-widest mb-3">Gateway</h3>
+                <h3 class="text-[10px] font-semibold text-stock-label mb-3">Gateway</h3>
                 <div class="flex-1 flex items-center justify-center">
                     <div id="paymentDonutChart" class="w-full h-[120px]" wire:ignore></div>
                 </div>
@@ -156,8 +156,8 @@
     <!-- 5. Rank Tables -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight">
-            <div class="px-4 py-3 border-b border-white/5 bg-white/[0.02]">
-                <span class="text-[10px] font-semibold text-white tracking-wider opacity-60">Performa unit</span>
+            <div class="p-3 border-b border-white/5 bg-white/[0.02]">
+                <span class="text-[10px] font-semibold text-white opacity-60">Performa unit</span>
             </div>
             <table class="w-full text-left">
                 <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5">
@@ -170,7 +170,7 @@
                 <tbody class="text-[11px] divide-y divide-white/5">
                     @foreach($topUnits as $tu)
                         <tr class="hover:bg-white/[0.03] transition-colors">
-                            <td class="px-4 py-3 font-semibold text-white truncate max-w-[120px]">{{ $tu->unit ? $tu->unit->seri : '---' }}</td>
+                            <td class="px-4 py-3 font-semibold text-white">{{ $tu->unit ? $tu->unit->seri : '---' }}</td>
                             <td class="px-4 py-3 text-center text-white/50">{{ $tu->rent_count }}x</td>
                             <td class="px-4 py-3 text-right font-semibold text-stock-up">Rp{{ number_format($tu->revenue/1000, 0) }}k</td>
                         </tr>
@@ -180,8 +180,8 @@
         </div>
 
         <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight">
-            <div class="px-4 py-3 border-b border-white/5 bg-white/[0.02]">
-                <span class="text-[10px] font-semibold text-white tracking-wider opacity-60">Penyewa setia</span>
+            <div class="p-3 border-b border-white/5 bg-white/[0.02]">
+                <span class="text-[10px] font-semibold text-white opacity-60">Penyewa setia</span>
             </div>
             <table class="w-full text-left">
                 <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5">
@@ -195,7 +195,7 @@
                     @foreach($topTenants as $tenant)
                         <tr class="hover:bg-white/[0.03] transition-colors">
                             <td class="px-4 py-3">
-                                <div class="font-semibold text-white truncate max-w-[140px] leading-tight">{{ $tenant->nama }}</div>
+                                <div class="font-semibold text-white leading-tight">{{ $tenant->nama }}</div>
                                 <div class="text-[8px] text-stock-label mt-0.5">{{ $tenant->no_wa }}</div>
                             </td>
                             <td class="px-4 py-3 text-center text-white/40">{{ $tenant->total_rentals }}x</td>
@@ -212,12 +212,12 @@
         <div class="px-5 py-3.5 border-b border-white/5 bg-primary/5 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
-                <span class="text-[11px] font-semibold text-primary tracking-widest text-xs">Monitoring sewa aktif</span>
+                <span class="text-[11px] font-semibold text-primary text-xs">Monitoring sewa aktif</span>
             </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-white/[0.01] text-[9px] font-semibold text-stock-label tracking-wider">
+                <thead class="bg-white/[0.01] text-[9px] font-semibold text-stock-label">
                     <tr>
                         <th class="px-6 py-3">Unit</th>
                         <th class="px-6 py-3">Penyewa</th>
@@ -255,7 +255,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="3" class="px-6 py-12 text-center text-white/10 text-[10px] font-semibold italic">Kosong.</td></tr>
+                        <tr><td colspan="3" class="px-6 py-12 text-center text-white/10 text-[10px] font-semibold">Kosong.</td></tr>
                     @endforelse
                 </tbody>
             </table>
