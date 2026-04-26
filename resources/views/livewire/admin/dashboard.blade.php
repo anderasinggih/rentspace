@@ -390,27 +390,40 @@
 
             let latestRev = latRev;
             let latestTrx = latTrx;
+            let idleTimerRev, idleTimerTrx;
+
+            const revertRev = () => {
+                if (elRevVal) elRevVal.innerText = (latestRev / 1000).toLocaleString() + 'k';
+                if (elRevDate) elRevDate.style.opacity = '0';
+            };
+            const revertTrx = () => {
+                if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString();
+                if (elTrxDate) elTrxDate.style.opacity = '0';
+            };
 
             Livewire.on('chartDataUpdated', (d) => {
                 const x = d[0] || d;
                 rv?.updateSeries([{ name: 'Bersih', data: x.netRevenue }]);
                 tr?.updateSeries([{ name: 'Order', data: x.transactions }]);
                 
-                // UPDATE: Sinkronkan angka nominal spotlight setelah data berubah
                 latestRev = x.netRevenue.length > 0 ? x.netRevenue[x.netRevenue.length - 1] : 0;
                 latestTrx = x.transactions.length > 0 ? x.transactions[x.transactions.length - 1] : 0;
                 
-                if (elRevVal) elRevVal.innerText = (latestRev / 1000).toLocaleString() + 'k';
-                if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString();
+                revertRev();
+                revertTrx();
             });
 
-            // Update mouseLeave logic to use the reactive variables
+            // Update chart settings with inactivity and mouseLeave logic
             rv.updateOptions({
                 chart: {
                     events: {
+                        mouseMove: function () {
+                            clearTimeout(idleTimerRev);
+                            idleTimerRev = setTimeout(revertRev, 1500); // Balik ke data terbaru setelah 1.5 detik diam
+                        },
                         mouseLeave: function () {
-                            if (elRevVal) elRevVal.innerText = (latestRev / 1000).toLocaleString() + 'k';
-                            if (elRevDate) elRevDate.style.opacity = '0';
+                            clearTimeout(idleTimerRev);
+                            revertRev();
                         }
                     }
                 }
@@ -419,9 +432,13 @@
             tr.updateOptions({
                 chart: {
                     events: {
+                        mouseMove: function () {
+                            clearTimeout(idleTimerTrx);
+                            idleTimerTrx = setTimeout(revertTrx, 1500); // Balik ke data terbaru setelah 1.5 detik diam
+                        },
                         mouseLeave: function () {
-                            if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString();
-                            if (elTrxDate) elTrxDate.style.opacity = '0';
+                            clearTimeout(idleTimerTrx);
+                            revertTrx();
                         }
                     }
                 }
