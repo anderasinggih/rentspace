@@ -33,6 +33,19 @@
     </style>
 
     <div class="max-w-[98vw] mx-auto px-2 sm:px-4 pt-4 sm:pt-6">
+        {{-- Header & Navigation Switcher --}}
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="h-8 w-1 bg-primary rounded-full"></div>
+                <h1 class="text-xl font-bold tracking-tight text-foreground">Monitoring</h1>
+            </div>
+
+            <div class="flex items-center gap-1 bg-muted/40 backdrop-blur-sm border border-border p-1 rounded-xl shadow-sm">
+                <button class="px-4 py-1.5 text-[11px] font-bold bg-background border border-border/50 rounded-lg shadow-sm">Monitor</button>
+                <a href="{{ route('admin.radar') }}" class="px-4 py-1.5 text-[11px] font-semibold hover:bg-muted/60 rounded-lg transition-all opacity-60">Radar</a>
+            </div>
+        </div>
+
         <!-- Filter Bar -->
         <div
             class="hidden sm:flex flex-col gap-4 sm:gap-6 mb-6 sm:mb-8 bg-muted/20 p-4 sm:p-6 rounded-2xl border border-border w-full">
