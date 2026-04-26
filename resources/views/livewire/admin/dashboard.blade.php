@@ -16,11 +16,11 @@
         <p class="text-[11px] text-muted-foreground mt-0.5 opacity-60 font-medium">Monitoring performa RentSpace.</p>
     </div>
 
-    <!-- 1. Snapshot Real-time (Liquid Glass Style) -->
+    <!-- 1. Snapshot Real-time (Ultra Density Grid) -->
     <div class="mb-6">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-            <!-- Card 1 -->
-            <div class="glass-card rounded-xl p-3 shadow-sm md:p-4 transition-all hover:bg-card/60">
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-3">
+            <!-- Stats Card 1 -->
+            <div class="glass-card rounded-xl p-3 shadow-sm transition-all hover:bg-card/60">
                 <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1">Unit Aktif</p>
                 <div class="flex items-baseline gap-1">
                     <span class="text-xl md:text-2xl font-bold text-foreground leading-none">{{ $activeUnits }}</span>
@@ -31,25 +31,35 @@
                 </div>
             </div>
 
-            <!-- Card 2 -->
-            <div class="glass-card rounded-xl p-3 shadow-sm md:p-4 transition-all hover:bg-card/60">
-                <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1">Pending</p>
+            <!-- Stats Card 2 -->
+            <div class="glass-card rounded-xl p-3 shadow-sm transition-all hover:bg-card/60">
+                <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1 leading-none mb-1.5">Pending</p>
                 <div class="flex items-baseline gap-1">
                     <span class="text-xl md:text-2xl font-bold text-amber-600 leading-none">{{ $pendingRentals }}</span>
-                    <span class="text-[8px] font-bold bg-amber-500/10 text-amber-600 px-1 rounded">Rp{{ number_format($pendingRevenue/1000, 0) }}k</span>
+                    <span class="text-[8px] font-bold bg-amber-500/10 text-amber-600 px-1 rounded uppercase">Trx</span>
                 </div>
             </div>
 
-            <!-- Card 3 -->
-            <div class="glass-card rounded-xl p-3 shadow-sm md:p-4 transition-all hover:bg-card/60">
-                <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1">Hari Ini</p>
+            <!-- Stats Card 3: Unrealized Revenue (NEW) -->
+            <div class="glass-card rounded-xl p-3 shadow-sm border border-emerald-500/20 bg-emerald-500/5 transition-all hover:bg-emerald-500/10">
+                <p class="text-[8px] md:text-[10px] font-bold text-emerald-600 uppercase opacity-60 mb-1 leading-none">Unrealized</p>
+                <div class="flex items-baseline gap-0.5">
+                    <span class="text-[9px] font-bold text-emerald-600/50">Rp</span>
+                    <span class="text-xl md:text-2xl font-black text-emerald-600 leading-none">{{ number_format($unrealizedRevenue / 1000, 0, ',', '.') }}k</span>
+                </div>
+                <p class="text-[7px] font-bold text-emerald-600/40 uppercase mt-1 tracking-tighter">Projected Wealth</p>
+            </div>
+
+            <!-- Stats Card 4 -->
+            <div class="glass-card rounded-xl p-3 shadow-sm transition-all hover:bg-card/60">
+                <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1">Today Rev</p>
                 <div class="flex items-baseline gap-1">
-                    <span class="text-xl md:text-2xl font-bold text-emerald-600 leading-none">Rp{{ number_format($todayRevenue / 1000, 0, ',', '.') }}k</span>
+                    <span class="text-xl md:text-2xl font-bold text-foreground leading-none">Rp{{ number_format($todayRevenue / 1000, 0, ',', '.') }}k</span>
                 </div>
             </div>
 
-            <!-- Card 4 -->
-            <div class="glass-card rounded-xl p-3 shadow-sm md:p-4 transition-all hover:bg-card/60">
+            <!-- Stats Card 5 -->
+            <div class="glass-card rounded-xl p-3 shadow-sm transition-all hover:bg-card/60">
                 <p class="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase opacity-50 mb-1">Sewa Hari Ini</p>
                 <div class="flex items-baseline gap-1">
                     <span class="text-xl md:text-2xl font-bold text-blue-600 leading-none">{{ $todayRentals }}</span>
@@ -88,9 +98,8 @@
         </div>
     </div>
 
-    <!-- 3. Period Performance (Liquid Glass Table) -->
+    <!-- 3. Period Performance (High Density Table) -->
     <div class="mb-6 overflow-hidden rounded-xl border border-border/40 bg-card/10 backdrop-blur-md shadow-sm">
-        <!-- Main Stats Grid -->
         <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y divide-border/20 border-b border-border/20">
             <div class="p-3 md:p-4 flex flex-col gap-0.5">
                 <span class="text-[8px] md:text-[9px] font-bold text-muted-foreground uppercase opacity-40">Volume Sewa</span>
@@ -136,7 +145,6 @@
             </div>
         </div>
 
-        <!-- Net Result -->
         <div class="bg-primary/5 p-3 flex items-center justify-between">
             <span class="text-[9px] md:text-[10px] font-bold text-primary/70 uppercase tracking-tight">Net Revenue Estimate</span>
             <span class="text-sm md:text-base font-bold text-primary">Rp{{ number_format($periodNetRevenue, 0, ',', '.') }}</span>
@@ -168,7 +176,7 @@
     </div>
 
     <!-- 5. Dense Tables Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-4 mb-6">
         <!-- Top Units -->
         <div class="glass-card rounded-xl shadow-sm overflow-hidden">
             <div class="p-3 border-b border-border/20 bg-muted/10 font-bold text-[10px] text-muted-foreground uppercase opacity-50 font-black">Inventory Rank</div>
@@ -183,9 +191,9 @@
                 <tbody class="text-[10px] divide-y divide-border/10">
                     @foreach($topUnits as $tu)
                         <tr class="hover:bg-primary/5 transition-colors">
-                            <td class="px-3 py-2.5 font-bold text-foreground truncate max-w-[100px]">{{ $tu->unit ? $tu->unit->seri : 'Unknown' }}</td>
-                            <td class="px-2 py-2.5 text-center opacity-60">{{ $tu->rent_count }}x</td>
-                            <td class="px-3 py-2.5 text-right font-bold text-emerald-600">Rp{{ number_format($tu->revenue / 1000, 0) }}k</td>
+                            <td class="px-3 py-2 font-bold text-foreground truncate max-w-[100px]">{{ $tu->unit ? $tu->unit->seri : 'Unknown' }}</td>
+                            <td class="px-2 py-2 text-center opacity-60">{{ $tu->rent_count }}x</td>
+                            <td class="px-3 py-2 text-right font-bold text-emerald-600">Rp{{ number_format($tu->revenue / 1000, 0) }}k</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -206,12 +214,12 @@
                 <tbody class="text-[10px] divide-y divide-border/10">
                     @foreach($topTenants as $tenant)
                         <tr class="hover:bg-primary/5 transition-colors">
-                            <td class="px-3 py-2.5">
+                            <td class="px-3 py-2">
                                 <div class="font-bold text-foreground truncate max-w-[110px]">{{ $tenant->nama }}</div>
                                 <div class="text-[7px] opacity-40 font-medium">{{ $tenant->no_wa }}</div>
                             </td>
-                            <td class="px-2 py-2.5 text-center font-bold opacity-50">{{ $tenant->total_rentals }}x</td>
-                            <td class="px-3 py-2.5 text-right font-bold text-primary">Rp{{ number_format($tenant->total_spent/1000, 0) }}k</td>
+                            <td class="px-2 py-2 text-center font-bold opacity-50">{{ $tenant->total_rentals }}x</td>
+                            <td class="px-3 py-2 text-right font-bold text-primary">Rp{{ number_format($tenant->total_spent/1000, 0) }}k</td>
                         </tr>
                     @endforeach
                 </tbody>

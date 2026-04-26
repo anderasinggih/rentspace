@@ -235,6 +235,9 @@ class Dashboard extends Component
         // Advanced Analysis
         $avgOrderValue = $periodRentals > 0 ? $periodRevenue / $periodRentals : 0;
         $profitEfficiency = $periodRevenue > 0 ? ($periodNetRevenue / $periodRevenue) * 100 : 0;
+        $unrealizedRevenue = Rental::whereIn('status', ['pending', 'paid'])
+                            ->where(fn($q) => $q->where('waktu_selesai', '>', now()))
+                            ->sum('grand_total');
         
         // Avg Duration for the period
         $avgDuration = Rental::whereBetween('created_at', [$start, $end])
@@ -252,7 +255,7 @@ class Dashboard extends Component
             'activeRentals', 'topTenants', 'topUnits', 'topAffiliates',
             'chartCategories', 'chartRevenue', 'chartNetRevenue', 'chartTransactions',
             'paymentLabels', 'paymentCounts',
-            'avgOrderValue', 'profitEfficiency', 'avgDuration'
+            'avgOrderValue', 'profitEfficiency', 'avgDuration', 'unrealizedRevenue'
         ))->layout('layouts.admin');
     }
 }
