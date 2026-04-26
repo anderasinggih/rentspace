@@ -1,18 +1,22 @@
-<div class="h-[calc(100vh-120px)] -mt-4 -mx-4 sm:-mx-6 lg:-mx-8 relative overflow-hidden" x-data="{ ...radarMap(), isExpanded: false }">
+<div class="h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)] 
+            -mt-4 -mx-4 sm:-mx-6 lg:mx-0 
+            lg:rounded-2xl 
+            relative overflow-hidden border-0 lg:border lg:border-border" 
+     x-data="{ ...radarMap(), isExpanded: false }">
     {{-- Full Background Map --}}
-    <div id="radarMap" class="absolute inset-0 z-0 bg-card" wire:ignore></div>
+    <div id="radarMap" class="absolute inset-0 z-0 bg-card lg:rounded-2xl" wire:ignore></div>
 
     {{-- Top Overlay Header --}}
     <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-[1002] pointer-events-none">
         <div class="flex items-center gap-2 bg-background/60 backdrop-blur-md border border-white/10 px-3 py-2 rounded-2xl shadow-xl pointer-events-auto">
-            <h1 class="text-sm font-black tracking-tight tracking-tighter">RADAR</h1>
+            <h1 class="text-xs font-black tracking-tighter">RADAR</h1>
             <span class="h-3 w-px bg-white/20"></span>
-            <p class="text-[10px] font-bold text-muted-foreground uppercase opacity-70 tracking-widest">{{ count($devices) }} UNITS</p>
+            <p class="text-[9px] font-bold text-muted-foreground uppercase opacity-70 tracking-widest">{{ count($devices) }} UNITS</p>
         </div>
 
         <div class="flex items-center gap-1 bg-background/60 backdrop-blur-md border border-white/10 p-1 rounded-xl shadow-xl pointer-events-auto">
-            <a href="{{ route('admin.monitoring') }}" class="px-3 py-1 text-[10px] font-bold hover:bg-white/10 rounded-lg transition-all opacity-60">MONITORING</a>
-            <button class="px-3 py-1 text-[10px] font-black bg-white/10 rounded-lg shadow-sm">RADAR</button>
+            <a href="{{ route('admin.monitoring') }}" class="px-3 py-1 text-[9px] font-bold hover:bg-white/10 rounded-lg transition-all opacity-60">MONITOR</a>
+            <button class="px-3 py-1 text-[9px] font-black bg-white/10 rounded-lg shadow-sm">RADAR</button>
         </div>
     </div>
 
