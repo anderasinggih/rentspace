@@ -2,8 +2,8 @@
     <div class="mb-6 flex flex-col gap-4">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-foreground">Pengaturan Sistem</h1>
-                <p class="mt-1 text-sm text-muted-foreground">Konfigurasi website dan data sistem.</p>
+                <h1 class="text-2xl font-bold tracking-tight text-foreground">System Settings</h1>
+                <p class="mt-1 text-sm text-muted-foreground">Configure all website settings</p>
             </div>
         </div>
 

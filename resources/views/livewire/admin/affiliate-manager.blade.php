@@ -1,8 +1,8 @@
 <div>
     <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold tracking-tight text-foreground">Manajemen Affiliate</h1>
-            <p class="mt-2 text-sm text-muted-foreground">Kelola pendaftaran mitra dan permintaan pencairan komisi.</p>
+            <h1 class="text-2xl font-bold tracking-tight text-foreground">Affiliate Manager</h1>
+            <p class="mt-2 text-sm text-muted-foreground">Manage all affiliate accounts and payout requests.</p>
         </div>
         
         <div class="flex bg-muted p-1 rounded-xl">
