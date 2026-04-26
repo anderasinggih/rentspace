@@ -83,7 +83,7 @@
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-amber-600/50">Rp</span>
                 <span
-                    class="text-xl font-semibold text-amber-600 leading-none">{{ number_format($pendingRevenue / 1000, 0) }}k</span>
+                    class="text-xl font-semibold text-amber-600 leading-none">{{ number_format($pendingRevenue, 0, ',', '.') }}</span>
             </div>
         </div>
         <div
@@ -92,13 +92,13 @@
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-emerald-600/50">Rp</span>
                 <span
-                    class="text-xl font-semibold text-emerald-600 leading-none">{{ number_format($unrealizedRevenue / 1000, 1) }}k</span>
+                    class="text-xl font-semibold text-emerald-600 leading-none">{{ number_format($unrealizedRevenue, 0, ',', '.') }}</span>
             </div>
         </div>
         <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-muted/10">
             <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1 uppercase">Realized Today</p>
             <span
-                class="text-xl font-semibold text-foreground leading-none">Rp{{ number_format($todayRevenue / 1000, 0) }}k</span>
+                class="text-xl font-semibold text-foreground leading-none">Rp{{ number_format($todayRevenue, 0, ',', '.') }}</span>
         </div>
         <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-muted/10">
             <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1 uppercase">Today's Rentals</p>
@@ -157,7 +157,7 @@
             <div class="p-4 flex flex-col gap-0.5">
                 <span class="text-[9px] font-semibold text-stock-label uppercase">Net Income</span>
                 <span
-                    class="text-lg font-semibold text-foreground">Rp{{ number_format($periodNetRevenue / 1000, 0) }}k</span>
+                    class="text-lg font-semibold text-foreground">Rp{{ number_format($periodNetRevenue, 0, ',', '.') }}</span>
                 @if($gainNetRevenue !== null)
                     <div class="text-[10px] font-semibold {{ $gainNetRevenue >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
                         {{ $gainNetRevenue >= 0 ? '+' : '' }}{{ $gainNetRevenue }}%
@@ -167,7 +167,7 @@
             <div class="p-4 flex flex-col gap-0.5">
                 <span class="text-[9px] font-semibold text-stock-label uppercase">Affiliate Fee</span>
                 <span
-                    class="text-lg font-semibold text-stock-down/70">Rp{{ number_format($periodCommissions / 1000, 0) }}k</span>
+                    class="text-lg font-semibold text-stock-down/70">Rp{{ number_format($periodCommissions, 0, ',', '.') }}</span>
             </div>
             <div class="p-4 flex flex-col gap-0.5 text-right">
                 <span class="text-[9px] font-semibold text-stock-label uppercase">Margin ROI</span>
@@ -183,7 +183,7 @@
             <div class="flex flex-col items-center justify-center gap-1 text-center">
                 <span class="text-[8px] font-bold text-stock-label uppercase leading-none">Avg. AOV</span>
                 <span
-                    class="text-xs font-bold text-foreground tracking-tight leading-none">Rp{{ number_format($avgOrderValue / 1000, 1) }}k</span>
+                    class="text-xs font-bold text-foreground tracking-tight leading-none">Rp{{ number_format($avgOrderValue, 0, ',', '.') }}</span>
             </div>
             <div class="flex flex-col items-center justify-center gap-1 text-center">
                 <span class="text-[8px] font-bold text-stock-label uppercase leading-none">Avg. Duration</span>
@@ -317,7 +317,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-center text-muted-foreground">{{ $tu->rent_count }}x</td>
                                 <td class="px-4 py-3 text-right font-semibold text-stock-up">
-                                    Rp{{ number_format($tu->revenue / 1000, 0) }}k</td>
+                                    Rp{{ number_format($tu->revenue, 0, ',', '.') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -394,7 +394,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-center text-muted-foreground">{{ $tenant->total_rentals }}x</td>
                                 <td class="px-4 py-3 text-right font-semibold text-foreground">
-                                    Rp{{ number_format($tenant->total_spent / 1000, 0) }}k</td>
+                                    Rp{{ number_format($tenant->total_spent, 0, ',', '.') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -422,8 +422,8 @@
             const latRev = netData.length > 0 ? netData[netData.length - 1] : 0;
             const latTrx = trxData.length > 0 ? trxData[trxData.length - 1] : 0;
 
-            if (elRevVal) elRevVal.innerText = (latRev / 1000).toLocaleString() + 'k';
-            if (elTrxVal) elTrxVal.innerText = latTrx.toLocaleString();
+            if (elRevVal) elRevVal.innerText = latRev.toLocaleString('id-ID');
+            if (elTrxVal) elTrxVal.innerText = latTrx.toLocaleString('id-ID');
 
             const gainRev = @json($gainNetRevenue);
             const gainTrx = @json($gainRentals);
@@ -459,7 +459,7 @@
                                     const v = ctx.w.globals.series[0][config.dataPointIndex];
                                     const l = fmtCategories[config.dataPointIndex];
                                     if (v !== undefined && nominalEl) {
-                                        nominalEl.innerText = isTrx ? v.toLocaleString() : (v / 1000).toLocaleString() + 'k';
+                                        nominalEl.innerText = isTrx ? v.toLocaleString('id-ID') : v.toLocaleString('id-ID');
                                         if (dateEl) { dateEl.innerText = l || '---'; dateEl.style.opacity = '1'; }
                                     }
                                 } catch (e) { }
@@ -583,9 +583,9 @@
             let latestTrx = latTrx;
 
             const snapBack = () => {
-                if (elRevVal) elRevVal.innerText = (latestRev / 1000).toLocaleString() + 'k';
+                if (elRevVal) elRevVal.innerText = latestRev.toLocaleString('id-ID');
                 if (elRevDate) elRevDate.style.opacity = '0';
-                if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString();
+                if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString('id-ID');
                 if (elTrxDate) elTrxDate.style.opacity = '0';
             };
 
