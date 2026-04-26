@@ -25,18 +25,27 @@
                     @forelse($devices as $device)
                         <button 
                             @click="focusDevice({{ json_encode($device) }})"
-                            class="flex-shrink-0 w-48 lg:w-full text-left p-2.5 rounded-lg border border-transparent hover:bg-muted transition-all"
-                            :class="selectedId === {{ $device['id'] }} ? 'bg-muted border-border' : ''"
+                            class="flex-shrink-0 w-48 lg:w-full text-left p-2.5 rounded-lg border border-transparent hover:bg-muted transition-all relative overflow-hidden group"
+                            :class="selectedId === {{ $device['id'] }} ? ({{ $device['is_overdue'] ? 'json_encode(true)' : 'json_encode(false)' }} ? 'bg-red-500/10 border-red-500/50' : 'bg-muted border-border') : ({{ $device['is_overdue'] ? 'json_encode(true)' : 'json_encode(false)' }} ? 'bg-red-500/5 border-red-500/20' : '')"
                         >
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-bold truncate leading-none">{{ $device['seri'] }}</span>
+                                <span class="text-xs font-bold truncate leading-none {{ $device['is_overdue'] ? 'text-red-500' : '' }}">{{ $device['seri'] }}</span>
                                 @if($device['battery'])
                                     <span class="text-[9px] font-bold {{ $device['battery'] < 20 ? 'text-red-500' : 'text-emerald-500' }}">{{ $device['battery'] }}%</span>
                                 @endif
                             </div>
-                            <div class="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
-                                <span class="truncate max-w-[80px]">{{ explode(' ', trim($device['nama_peminjam']))[0] }}</span>
-                                <span class="opacity-50 italic">Seen: {{ str_replace('ago', '', $device['last_seen']) }}</span>
+                            
+                            <div class="mt-2 flex items-center justify-between">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] text-muted-foreground truncate max-w-[80px] leading-none">{{ $device['nama_peminjam'] }}</span>
+                                    <span class="text-[9px] text-muted-foreground opacity-50 mt-1 italic">Seen: {{ str_replace('ago', '', $device['last_seen']) }}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-bold tracking-tight {{ $device['is_overdue'] ? 'text-red-500' : 'text-emerald-500' }}">
+                                        {{ $device['time_left'] }}
+                                    </span>
+                                    <p class="text-[8px] opacity-40 leading-none mt-0.5">{{ $device['is_overdue'] ? 'Overdue' : 'Left' }}</p>
+                                </div>
                             </div>
                         </button>
                     @empty

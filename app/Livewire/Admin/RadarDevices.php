@@ -46,11 +46,22 @@ class RadarDevices extends Component
                         'last_seen' => $lastLoc ? $lastLoc->created_at->diffForHumans() : 'Unknown',
                         'status' => $rental->status,
                         'history' => $history,
-                        'is_overdue' => $rental->waktu_selesai < now() // Added overdue flag
+                        'is_overdue' => $rental->waktu_selesai < now(),
+                        'time_left' => $rental->waktu_selesai > now() 
+                            ? now()->diff($rental->waktu_selesai)->format('%dh %im') 
+                            : 'Expired',
+                        'time_left_human' => $rental->waktu_selesai->diffForHumans()
                     ];
                 }
             }
         }
+
+        // Sort devices: overdue first, then by earliest end time
+        usort($devices, function($a, $b) {
+            if ($a['is_overdue'] && !$b['is_overdue']) return -1;
+            if (!$a['is_overdue'] && $b['is_overdue']) return 1;
+            return 0;
+        });
 
         return view('livewire.admin.radar-devices', [
             'devices' => $devices
