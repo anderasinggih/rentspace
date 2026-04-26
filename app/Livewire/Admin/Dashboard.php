@@ -237,7 +237,6 @@ class Dashboard extends Component
 
         $chartInfo = $this->getChartData();
         $chartCategories = $chartInfo['categories'];
-        $chartRevenue = $chartInfo['revenue'];
         $chartNetRevenue = $chartInfo['netRevenue'];
         $chartTransactions = $chartInfo['transactions'];
 
