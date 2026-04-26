@@ -1,10 +1,7 @@
-<div class="lg:h-[calc(100vh-140px)] 
-            lg:mt-0 lg:rounded-2xl 
-            fixed inset-0 lg:relative lg:inset-auto z-[0]
-            overflow-hidden border-0 lg:border lg:border-border" 
+<div class="fixed inset-0 z-[0] bg-background overflow-hidden" 
      x-data="{ ...radarMap(), isExpanded: false }">
     {{-- Full Background Map --}}
-    <div id="radarMap" class="absolute inset-0 z-0 bg-card lg:rounded-2xl" wire:ignore></div>
+    <div id="radarMap" class="absolute inset-0 z-0 bg-card" wire:ignore></div>
 
     {{-- Top Overlay Header --}}
     <div class="absolute top-20 lg:top-8 left-4 right-4 flex items-center justify-between z-[1002] pointer-events-none">
