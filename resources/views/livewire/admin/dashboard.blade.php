@@ -141,7 +141,7 @@
                     Pendapatan Bersih</h3>
                 <div class="flex items-baseline justify-center gap-2">
                     <div class="flex items-baseline gap-1">
-                        <span class="text-xs font-semibold text-stock-up/50">Rp</span>
+                        <span class="text-xs font-semibold {{ $gainNetRevenue >= 0 ? 'text-stock-up' : 'text-stock-down' }} opacity-50">Rp</span>
                         <span id="chart-nominal-value" class="text-3xl font-semibold text-white leading-none">0k</span>
                     </div>
                     <!-- Gain Badge -->
@@ -291,6 +291,10 @@
             const netData = @json($chartNetRevenue);
             const latestValue = netData.length > 0 ? netData[netData.length - 1] : 0;
             nValue.innerText = (latestValue / 1000).toLocaleString() + 'k';
+            
+            // ADAPTIVE COLORS
+            const gain = @json($gainNetRevenue);
+            const stockColor = (gain >= 0) ? '#10b981' : '#ef4444';
 
             const c = { txt: 'rgba(255,255,255,0.2)', brd: 'rgba(255,255,255,0.05)' };
             
@@ -333,7 +337,7 @@
                     yaxis: { lines: { show: true } },
                     padding: { top: 0, right: 0, bottom: 0, left: 0 }
                 },
-                colors: ['#10b981'],
+                colors: [stockColor], // DYNAMIC COLOR
                 stroke: { width: 3, curve: 'smooth' },
                 fill: { 
                     type: 'gradient', 
@@ -341,8 +345,6 @@
                         shade: 'dark',
                         type: "vertical",
                         shadeIntensity: 0.5,
-                        gradientToColors: undefined, 
-                        inverseColors: true,
                         opacityFrom: 0.4, 
                         opacityTo: 0.05, 
                         stops: [0, 90, 100] 
@@ -350,7 +352,7 @@
                 },
                 markers: { 
                     size: 0,
-                    strokeColors: '#10b981',
+                    strokeColors: stockColor,
                     strokeWidth: 2,
                     hover: { size: 4 }
                 },
@@ -381,11 +383,11 @@
             let tr = new ApexCharts(document.querySelector("#transactionsChart"), {
                 series: [{ name: 'Order', data: @json($chartTransactions) }],
                 chart: { type: 'bar', height: 160, toolbar: { show: false } },
-                colors: ['#10b981'],
+                colors: [stockColor], // DYNAMIC COLOR
                 plotOptions: { bar: { borderRadius: 3, columnWidth: '50%', dataLabels: { position: 'top' } } },
                 dataLabels: {
                     enabled: true, offsetY: -18,
-                    style: { fontSize: '10px', colors: ["#10b981"], fontWeight: 600 }
+                    style: { fontSize: '10px', colors: [stockColor], fontWeight: 600 }
                 },
                 xaxis: { categories: formattedCategories, labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
                 yaxis: { show: false },
