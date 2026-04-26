@@ -120,7 +120,11 @@
                 <span class="text-lg font-semibold text-stock-up">{{ round($profitEfficiency, 1) }}%</span>
             </div>
         </div>
-        <div class="grid grid-cols-2 bg-white/[0.02] p-3 divide-x divide-white/5 font-sans">
+        <div class="grid grid-cols-3 bg-white/[0.02] p-3 divide-x divide-white/5 font-sans">
+            <div class="flex items-center justify-center gap-3">
+                <span class="text-[9px] font-semibold text-stock-label uppercase">Total Order</span>
+                <span class="text-xs font-semibold text-white">{{ $periodRentals }} <span class="text-[9px] text-stock-label uppercase">Trx</span></span>
+            </div>
             <div class="flex items-center justify-center gap-3">
                 <span class="text-[9px] font-semibold text-stock-label uppercase">AOV Rerata</span>
                 <span class="text-xs font-semibold text-white">Rp{{ number_format($avgOrderValue / 1000, 1) }}k</span>
@@ -132,148 +136,135 @@
         </div>
     </div>
 
-    <!-- 4. Revenue Curve Block -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+    <!-- 4. Interactive Terminals (The Twins) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <!-- Revenue Terminal -->
         <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[340px]">
-            <!-- Dynamic Nominal Display -->
             <div class="absolute top-4 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
-                <h3 id="chart-nominal-label" class="text-[10px] font-semibold text-stock-label uppercase mb-2">
-                    Pendapatan Bersih</h3>
+                <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-2">Net Income Analysis</h3>
                 <div class="flex items-baseline justify-center gap-2">
                     <div class="flex items-baseline gap-1">
                         <span class="text-xs font-semibold {{ $gainNetRevenue >= 0 ? 'text-stock-up' : 'text-stock-down' }} opacity-50">Rp</span>
-                        <span id="chart-nominal-value" class="text-3xl font-semibold text-white leading-none">0k</span>
+                        <span id="chart-revenue-nominal" class="text-3xl font-semibold text-white leading-none">0k</span>
                     </div>
-                    <!-- Gain Badge -->
-                    <div id="chart-nominal-gain" class="px-1.5 py-0.5 rounded text-[10px] font-bold {{ $gainNetRevenue >= 0 ? 'bg-stock-up/10 text-stock-up' : 'bg-stock-down/10 text-stock-down' }}">
+                    <div class="px-1.5 py-0.5 rounded text-[10px] font-bold {{ $gainNetRevenue >= 0 ? 'bg-stock-up/10 text-stock-up' : 'bg-stock-down/10 text-stock-down' }}">
                         {{ $gainNetRevenue >= 0 ? '▲' : '▼' }} {{ abs($gainNetRevenue) }}%
                     </div>
                 </div>
-                <!-- Date with Year -->
-                <p id="chart-nominal-date"
-                    class="text-[9px] font-semibold text-stock-label mt-3 opacity-0 transition-opacity">---</p>
+                <p id="chart-revenue-date" class="text-[9px] font-semibold text-stock-label mt-3 opacity-0 transition-opacity">---</p>
             </div>
-
-            <!-- The Chart -->
             <div class="absolute bottom-0 left-0 right-0 h-[220px]">
                 <div id="revenueChart" class="w-full h-full" wire:ignore></div>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div class="liquid-glass rounded-2xl p-4 glass-highlight flex flex-col">
-                <h3 class="text-[10px] font-semibold text-stock-label mb-3 uppercase leading-none">Statistik Order</h3>
-                <div class="flex-1 flex items-center justify-center">
-                    <div id="transactionsChart" class="w-full h-[160px]" wire:ignore></div>
+        <!-- Transactions Terminal -->
+        <div class="liquid-glass rounded-2xl p-4 glass-highlight relative overflow-hidden h-[340px]">
+            <div class="absolute top-4 left-1/2 -translate-x-1/2 text-center z-10 w-full pointer-events-none">
+                <h3 class="text-[10px] font-semibold text-stock-label uppercase mb-2">Order Traffic Pattern</h3>
+                <div class="flex items-baseline justify-center gap-2">
+                    <div class="flex items-baseline gap-1">
+                        <span id="chart-trx-nominal" class="text-3xl font-semibold text-white leading-none">0</span>
+                        <span class="text-xs font-semibold {{ $gainRentals >= 0 ? 'text-stock-up' : 'text-stock-down' }} opacity-50">Trx</span>
+                    </div>
+                    <div class="px-1.5 py-0.5 rounded text-[10px] font-bold {{ $gainRentals >= 0 ? 'bg-stock-up/10 text-stock-up' : 'bg-stock-down/10 text-stock-down' }}">
+                        {{ $gainRentals >= 0 ? '▲' : '▼' }} {{ abs($gainRentals) }}%
+                    </div>
                 </div>
+                <p id="chart-trx-date" class="text-[9px] font-semibold text-stock-label mt-3 opacity-0 transition-opacity">---</p>
             </div>
-            <div class="liquid-glass rounded-2xl p-4 glass-highlight flex flex-col relative overflow-hidden">
-                <h3 class="text-[10px] font-semibold text-stock-label mb-3 uppercase leading-none">Metode Bayar</h3>
-                <div class="flex-1 flex items-center justify-center">
-                    <div id="paymentDonutChart" class="w-full h-[180px]" wire:ignore></div>
-                </div>
+            <div class="absolute bottom-0 left-0 right-0 h-[220px]">
+                <div id="transactionsChart" class="w-full h-full" wire:ignore></div>
             </div>
         </div>
     </div>
 
-    <!-- 5. Rank Tables -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight">
+    <!-- 5. Secondary Analytics Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="lg:col-span-1 liquid-glass rounded-2xl p-5 glass-highlight flex flex-col h-[300px]">
+             <h3 class="text-[10px] font-semibold text-stock-label mb-3 uppercase leading-none">Payment Methods</h3>
+             <div class="flex-1 flex items-center justify-center">
+                 <div id="paymentDonutChart" class="w-full h-full" wire:ignore></div>
+             </div>
+        </div>
+        
+        <div class="lg:col-span-2 liquid-glass rounded-2xl overflow-hidden glass-highlight h-[300px]">
             <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60 uppercase">
-                Performa Unit</div>
-            <table class="w-full text-left font-sans text-[11px]">
-                <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5 uppercase">
-                    <tr>
-                        <th class="px-4 py-2">Unit</th>
-                        <th class="px-4 py-2 text-center">Frek</th>
-                        <th class="px-4 py-2 text-right">Net Rev</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-white/5">
-                    @foreach($topUnits as $tu)
-                        <tr class="hover:bg-white/[0.03] transition-colors">
-                            <td class="px-4 py-3 font-semibold text-white uppercase">{{ $tu->unit ? $tu->unit->seri : '---' }}</td>
-                            <td class="px-4 py-3 text-center text-white/50">{{ $tu->rent_count }}x</td>
-                            <td class="px-4 py-3 text-right font-semibold text-stock-up">
-                                Rp{{ number_format($tu->revenue / 1000, 0) }}k</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight">
-            <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60 uppercase">
-                Penyewa Paling Aktif</div>
-            <table class="w-full text-left font-sans text-[11px]">
-                <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5 uppercase">
-                    <tr>
-                        <th class="px-4 py-2">Penyewa</th>
-                        <th class="px-4 py-2 text-center">Frek</th>
-                        <th class="px-4 py-2 text-right">Spent</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-white/5">
-                    @foreach($topTenants as $tenant)
-                        <tr class="hover:bg-white/[0.03] transition-colors">
-                            <td class="px-4 py-3">
-                                <div class="font-semibold text-white leading-tight uppercase">{{ $tenant->nama }}</div>
-                                <div class="text-[8px] text-stock-label mt-0.5">{{ $tenant->no_wa }}</div>
-                            </td>
-                            <td class="px-4 py-3 text-center text-white/40">{{ $tenant->total_rentals }}x</td>
-                            <td class="px-4 py-3 text-right font-semibold text-white">
-                                Rp{{ number_format($tenant->total_spent / 1000, 0) }}k</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- 6. Monitor Log -->
-    <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight shadow-xl">
-        <div class="px-5 py-3.5 border-b border-white/5 bg-primary/5 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
-                <span class="text-[11px] font-semibold text-primary uppercase">Sewa Aktif Monitor</span>
-            </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-[11px]">
-                <thead class="bg-white/[0.01] text-[9px] font-semibold text-stock-label uppercase">
-                    <tr>
-                        <th class="px-6 py-3">Unit</th>
-                        <th class="px-6 py-3">Penyewa</th>
-                        <th class="px-6 py-3 text-right">Countdown</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-white/5">
-                    @forelse($activeRentals as $rental)
-                        <tr class="hover:bg-white/[0.04] transition-all">
-                            <td class="px-6 py-4">
-                                <div class="flex flex-wrap gap-1">
-                                    @foreach($rental->units as $u)
-                                        <span
-                                            class="px-2 py-0.5 rounded bg-white/5 text-[10px] font-semibold text-white border border-white/10 uppercase">{{ $u->seri }}</span>
-                                    @endforeach
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="font-semibold text-white text-xs uppercase">{{ $rental->nama }}</div>
-                                <div class="text-[8px] text-stock-label mt-0.5 uppercase">{{ $rental->booking_code }}</div>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-stock-up font-semibold text-xs uppercase">Active</span>
-                            </td>
-                        </tr>
-                    @empty
+                Top Performing Units</div>
+            <div class="overflow-y-auto h-[255px]">
+                <table class="w-full text-left font-sans text-[11px]">
+                    <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5 uppercase sticky top-0 bg-[#16161a] z-10">
                         <tr>
-                            <td colspan="3" class="px-6 py-12 text-center text-white/10 text-[10px] font-semibold uppercase">
-                                Kosong.</td>
+                            <th class="px-4 py-2">Unit</th>
+                            <th class="px-4 py-2 text-center">Rented</th>
+                            <th class="px-4 py-2 text-right">Net Revenue</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        @foreach($topUnits as $tu)
+                            <tr class="hover:bg-white/[0.03] transition-colors">
+                                <td class="px-4 py-3 font-semibold text-white uppercase">{{ $tu->unit ? $tu->unit->seri : '---' }}</td>
+                                <td class="px-4 py-3 text-center text-white/50">{{ $tu->rent_count }}x</td>
+                                <td class="px-4 py-3 text-right font-semibold text-stock-up">Rp{{ number_format($tu->revenue / 1000, 0) }}k</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Monitor & Tenants Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight shadow-xl">
+            <div class="px-5 py-3.5 border-b border-white/5 bg-primary/5 flex items-center justify-between uppercase">
+                <span class="text-[11px] font-semibold text-primary">Sewa Aktif Monitor</span>
+            </div>
+            <div class="overflow-x-auto max-h-[300px]">
+                <table class="w-full text-left border-collapse text-[11px]">
+                    <thead class="bg-white/[0.01] text-[9px] font-semibold text-stock-label uppercase sticky top-0 bg-[#16161a] z-10">
+                        <tr><th class="px-6 py-3">Unit</th><th class="px-6 py-3">Penyewa</th><th class="px-6 py-3 text-right">Status</th></tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        @forelse($activeRentals as $rental)
+                            <tr class="hover:bg-white/[0.04] transition-all">
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach($rental->units as $u)
+                                            <span class="px-2 py-0.5 rounded bg-white/5 text-[10px] font-semibold text-white border border-white/10 uppercase">{{ $u->seri }}</span>
+                                        @endforeach
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-semibold text-white uppercase">{{ $rental->nama }}</td>
+                                <td class="px-6 py-4 text-right"><span class="text-stock-up font-semibold text-xs uppercase">Active</span></td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="3" class="px-6 py-12 text-center text-white/10 text-[10px] font-semibold uppercase">Empty</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="liquid-glass rounded-2xl overflow-hidden glass-highlight h-full">
+            <div class="p-3 border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-white opacity-60 uppercase">
+                Top Active Tenants</div>
+            <div class="overflow-y-auto max-h-[300px]">
+                <table class="w-full text-left font-sans text-[11px]">
+                    <thead class="text-[9px] font-semibold text-stock-label border-b border-white/5 uppercase sticky top-0 bg-[#16161a] z-10">
+                        <tr><th class="px-4 py-2">Tenant</th><th class="px-4 py-2 text-center">Frek</th><th class="px-4 py-2 text-right">Spent</th></tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        @foreach($topTenants as $tenant)
+                            <tr class="hover:bg-white/[0.03] transition-colors">
+                                <td class="px-4 py-3"><div class="font-semibold text-white uppercase">{{ $tenant->nama }}</div><div class="text-[8px] text-stock-label mt-0.5">{{ $tenant->no_wa }}</div></td>
+                                <td class="px-4 py-3 text-center text-white/40">{{ $tenant->total_rentals }}x</td>
+                                <td class="px-4 py-3 text-right font-semibold text-white">Rp{{ number_format($tenant->total_spent/1000, 0) }}k</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -282,145 +273,79 @@
 <script>
     if (typeof ApexCharts !== 'undefined') {
         const initCharts = () => {
-            const chartDom = document.querySelector("#revenueChart");
-            if (!chartDom) return;
+            // -- Elements --
+            const elRevVal = document.getElementById('chart-revenue-nominal');
+            const elRevDate = document.getElementById('chart-revenue-date');
+            const elTrxVal = document.getElementById('chart-trx-nominal');
+            const elTrxDate = document.getElementById('chart-trx-date');
 
-            const nValue = document.getElementById('chart-nominal-value');
-            const nDate = document.getElementById('chart-nominal-date');
-
+            // -- Data --
             const netData = @json($chartNetRevenue);
-            const latestValue = netData.length > 0 ? netData[netData.length - 1] : 0;
-            nValue.innerText = (latestValue / 1000).toLocaleString() + 'k';
-            
-            // ADAPTIVE COLORS
-            const gain = @json($gainNetRevenue);
-            const stockColor = (gain >= 0) ? '#10b981' : '#ef4444';
-
-            const c = { txt: 'rgba(255,255,255,0.2)', brd: 'rgba(255,255,255,0.05)' };
-            
-            // Format Categories with Year
+            const trxData = @json($chartTransactions);
             const categories = @json($chartCategories);
-            const currentYear = new Date().getFullYear();
-            const formattedCategories = categories.map(cat => {
-                return (cat.includes(currentYear)) ? cat : cat + ' ' + currentYear;
-            });
+            
+            const latRev = netData.length > 0 ? netData[netData.length - 1] : 0;
+            const latTrx = trxData.length > 0 ? trxData[trxData.length - 1] : 0;
+            
+            elRevVal.innerText = (latRev / 1000).toLocaleString() + 'k';
+            elTrxVal.innerText = latTrx.toLocaleString();
 
-            let rv = new ApexCharts(document.querySelector("#revenueChart"), {
-                series: [{ name: 'Bersih', data: netData }],
+            const gainRev = @json($gainNetRevenue);
+            const gainTrx = @json($gainRentals);
+            const revColor = (gainRev >= 0) ? '#10b981' : '#ef4444';
+            const trxColor = (gainTrx >= 0) ? '#10b981' : '#ef4444';
+
+            const currentYear = new Date().getFullYear();
+            const fmtCategories = categories.map(cat => cat.includes(currentYear) ? cat : cat + ' ' + currentYear);
+
+            // -- Chart Helper Config --
+            const baseConfig = (seriesData, color, nominalEl, dateEl, isTrx = false) => ({
+                series: [{ name: isTrx ? 'Order' : 'Bersih', data: seriesData }],
                 chart: {
                     type: 'area', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: true },
                     events: {
-                        mouseMove: function (event, chartContext, config) {
-                            if (config.dataPointIndex !== -1 && chartContext && chartContext.w && chartContext.w.globals) {
+                        mouseMove: function (ev, ctx, config) {
+                            if (config.dataPointIndex !== -1 && ctx.w.globals) {
                                 try {
-                                    const val = chartContext.w.globals.series[0][config.dataPointIndex];
-                                    const label = formattedCategories[config.dataPointIndex];
-                                    if (val !== undefined && nValue) {
-                                        nValue.innerText = (val / 1000).toLocaleString() + 'k';
-                                        if (nDate) { nDate.innerText = label || '---'; nDate.style.opacity = '1'; }
+                                    const v = ctx.w.globals.series[0][config.dataPointIndex];
+                                    const l = fmtCategories[config.dataPointIndex];
+                                    if (v !== undefined && nominalEl) {
+                                        nominalEl.innerText = isTrx ? v.toLocaleString() : (v/1000).toLocaleString() + 'k';
+                                        if (dateEl) { dateEl.innerText = l || '---'; dateEl.style.opacity = '1'; }
                                     }
                                 } catch (e) { }
                             }
                         },
                         mouseLeave: function () {
-                            if (nValue) nValue.innerText = (latestValue / 1000).toLocaleString() + 'k';
-                            if (nDate) nDate.style.opacity = '0';
+                            if (nominalEl) nominalEl.innerText = isTrx ? latTrx.toLocaleString() : (latRev/1000).toLocaleString() + 'k';
+                            if (dateEl) dateEl.style.opacity = '0';
                         }
                     }
                 },
-                grid: {
-                    show: true,
-                    borderColor: 'rgba(255,255,255,0.03)',
-                    strokeDashArray: 2,
-                    position: 'back',
-                    xaxis: { lines: { show: true } },
-                    yaxis: { lines: { show: true } },
-                    padding: { top: 0, right: 0, bottom: 0, left: 0 }
-                },
-                colors: [stockColor], // DYNAMIC COLOR
+                grid: { show: true, borderColor: 'rgba(255,255,255,0.03)', strokeDashArray: 2, position: 'back', xaxis: { lines: { show: true } }, yaxis: { lines: { show: true } } },
+                colors: [color],
                 stroke: { width: 3, curve: 'smooth' },
-                fill: { 
-                    type: 'gradient', 
-                    gradient: { 
-                        shade: 'dark',
-                        type: "vertical",
-                        shadeIntensity: 0.5,
-                        opacityFrom: 0.4, 
-                        opacityTo: 0.05, 
-                        stops: [0, 90, 100] 
-                    } 
-                },
-                markers: { 
-                    size: 0,
-                    strokeColors: stockColor,
-                    strokeWidth: 2,
-                    hover: { size: 4 }
-                },
-                tooltip: { 
-                    enabled: true,
-                    shared: false,
-                    intersect: false,
-                    marker: { show: false },
-                    x: { show: false },
-                    y: { show: false }
-                },
-                xaxis: {
-                    categories: formattedCategories,
-                    crosshairs: { 
-                        show: true,
-                        width: 1,
-                        position: 'back',
-                        stroke: { color: 'rgba(255,255,255,0.1)', width: 1, dashArray: 4 }
-                    },
-                    tooltip: { enabled: false }
-                },
-                yaxis: {
-                    tooltip: { enabled: false }
-                }
+                fill: { type: 'gradient', gradient: { shade: 'dark', type: "vertical", shadeIntensity: 0.5, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
+                markers: { size: 0, strokeColors: color, strokeWidth: 2, hover: { size: 4 } },
+                tooltip: { enabled: true, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
+                xaxis: { categories: fmtCategories, crosshairs: { show: true, width: 1, position: 'back', stroke: { color: 'rgba(255,255,255,0.1)', width: 1, dashArray: 4 } }, tooltip: { enabled: false } },
+                yaxis: { tooltip: { enabled: false } }
             });
-            rv.render();
 
-            let tr = new ApexCharts(document.querySelector("#transactionsChart"), {
-                series: [{ name: 'Order', data: @json($chartTransactions) }],
-                chart: { type: 'bar', height: 160, toolbar: { show: false } },
-                colors: [stockColor], // DYNAMIC COLOR
-                plotOptions: { bar: { borderRadius: 3, columnWidth: '50%', dataLabels: { position: 'top' } } },
-                dataLabels: {
-                    enabled: true, offsetY: -18,
-                    style: { fontSize: '10px', colors: [stockColor], fontWeight: 600 }
-                },
-                xaxis: { categories: formattedCategories, labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
-                yaxis: { show: false },
-                grid: { show: false },
-                tooltip: { enabled: false }
-            });
+            const rv = new ApexCharts(document.querySelector("#revenueChart"), baseConfig(netData, revColor, elRevVal, elRevDate));
+            const tr = new ApexCharts(document.querySelector("#transactionsChart"), baseConfig(trxData, trxColor, elTrxVal, elTrxDate, true));
+            
+            rv.render();
             tr.render();
 
             let dn = new ApexCharts(document.querySelector("#paymentDonutChart"), {
                 series: @json($paymentCounts),
-                chart: { type: 'donut', height: 200 },
+                chart: { type: 'donut', height: '100%', toolbar: { show: false } },
                 colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ffffff'],
                 labels: @json($paymentLabels),
-                dataLabels: {
-                    enabled: true,
-                    formatter: function (val, opts) {
-                        return opts.w.globals.labels[opts.seriesIndex];
-                    },
-                    style: { fontSize: '9px', fontWeight: 600, colors: ['#fff'] }
-                },
+                dataLabels: { enabled: true, formatter: (val, opts) => opts.w.globals.labels[opts.seriesIndex], style: { fontSize: '9px', fontWeight: 600, colors: ['#fff'] } },
                 legend: { show: false },
-                plotOptions: {
-                    pie: {
-                        donut: {
-                            size: '75%',
-                            labels: {
-                                show: true,
-                                name: { show: true, fontSize: '10px', color: '#666', offsetY: -5 },
-                                value: { show: true, fontSize: '14px', color: '#fff', offsetY: 5, fontWeight: 700 }
-                            }
-                        }
-                    }
-                },
+                plotOptions: { pie: { donut: { size: '75%', labels: { show: true, name: { show: true, fontSize: '10px', color: '#666', offsetY: -5 }, value: { show: true, fontSize: '14px', color: '#fff', offsetY: 5, fontWeight: 700 } } } } },
                 stroke: { width: 1, colors: ['#000'] },
                 tooltip: { enabled: false }
             });
