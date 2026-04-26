@@ -390,10 +390,43 @@
             });
             dn.render();
 
+            let latestRev = latRev;
+            let latestTrx = latTrx;
+
             Livewire.on('chartDataUpdated', (d) => {
                 const x = d[0] || d;
                 rv?.updateSeries([{ name: 'Bersih', data: x.netRevenue }]);
                 tr?.updateSeries([{ name: 'Order', data: x.transactions }]);
+                
+                // UPDATE: Sinkronkan angka nominal spotlight setelah data berubah
+                latestRev = x.netRevenue.length > 0 ? x.netRevenue[x.netRevenue.length - 1] : 0;
+                latestTrx = x.transactions.length > 0 ? x.transactions[x.transactions.length - 1] : 0;
+                
+                if (elRevVal) elRevVal.innerText = (latestRev / 1000).toLocaleString() + 'k';
+                if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString();
+            });
+
+            // Update mouseLeave logic to use the reactive variables
+            rv.updateOptions({
+                chart: {
+                    events: {
+                        mouseLeave: function () {
+                            if (elRevVal) elRevVal.innerText = (latestRev / 1000).toLocaleString() + 'k';
+                            if (elRevDate) elRevDate.style.opacity = '0';
+                        }
+                    }
+                }
+            });
+
+            tr.updateOptions({
+                chart: {
+                    events: {
+                        mouseLeave: function () {
+                            if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString();
+                            if (elTrxDate) elTrxDate.style.opacity = '0';
+                        }
+                    }
+                }
             });
         };
         initCharts();
