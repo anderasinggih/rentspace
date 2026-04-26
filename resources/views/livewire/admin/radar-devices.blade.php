@@ -33,20 +33,20 @@
         :class="isExpanded ? 'h-[440px]' : 'h-[96px] lg:h-auto'"
     >
         <div class="bg-background/70 backdrop-blur-md border border-white/10 rounded-2xl flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
-            {{-- Unified Drag Handle/Header --}}
-            <div @click="isExpanded = !isExpanded" class="h-8 flex items-center justify-center shrink-0 cursor-pointer group hover:bg-white/5 transition-all">
+            {{-- Unified Drag Handle/Header (Mobile Only) --}}
+            <div @click="isExpanded = !isExpanded" class="h-8 flex lg:hidden items-center justify-center shrink-0 cursor-pointer group hover:bg-white/5 transition-all">
                 <div class="w-10 h-1 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors"></div>
             </div>
 
-            <div @click="isExpanded = !isExpanded" class="px-8 pb-4 border-b border-white/5 flex items-center justify-between shrink-0 cursor-pointer hover:bg-white/5 transition-all">
+            <div @click="window.innerWidth < 1024 ? isExpanded = !isExpanded : null" class="px-8 pb-4 border-b border-white/5 flex items-center justify-between shrink-0 lg:cursor-default cursor-pointer hover:bg-white/5 lg:hover:bg-transparent transition-all">
                 <div>
                     <h2 class="text-[17px] font-bold text-white/90 leading-tight">Devices</h2>
                     <p class="text-[13px] font-medium text-white/40 mt-1">{{ count($devices) }} Units Tracked</p>
                 </div>
             </div>
 
-            {{-- Scrollable List (Max 5 items before scroll) --}}
-            <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1 scrollbar-hide">
+            {{-- Scrollable List (Desktop: Max 9 units visible, Mobile: Flexible) --}}
+            <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1 lg:max-h-[600px] scrollbar-hide">
                 @forelse($devices as $device)
                     <div 
                         class="w-full flex items-center px-3 py-2.5 rounded-xl border border-transparent hover:bg-white/5 transition-all group relative cursor-pointer"
