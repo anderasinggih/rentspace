@@ -114,10 +114,11 @@
         <div class="flex items-center justify-between gap-1 w-full overflow-x-auto no-scrollbar">
             @php
                 $presets = [
-                    ['val' => 'day', 'label' => 'TDY'],
-                    ['val' => '7', 'label' => '7D'],
-                    ['val' => '30', 'label' => '1M'],
-                    ['val' => '90', 'label' => '3M'],
+                    ['val' => '7',   'label' => '7D'],
+                    ['val' => '30',  'label' => '1M'],
+                    ['val' => '90',  'label' => '3M'],
+                    ['val' => '180', 'label' => '6M'],
+                    ['val' => 'ytd', 'label' => 'YTD'],
                     ['val' => 'all', 'label' => 'ALL'],
                 ];
             @endphp
