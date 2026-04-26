@@ -7,7 +7,8 @@
         }
 
         .liquid-glass {
-            @apply backdrop-blur-xl border border-border bg-background shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)];
+            @apply backdrop-blur-xl bg-background shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)];
+            border: 1px solid #cbd5e1;
         }
 
         .dark .liquid-glass {
@@ -77,7 +78,7 @@
             </div>
         </div>
         <div
-            class="liquid-glass glass-highlight rounded-xl p-3 border-amber-500/20 bg-amber-500/5 transition-all hover:bg-amber-500/10">
+            class="liquid-glass glass-highlight rounded-xl p-3 border-amber-500/40 bg-amber-500/5 transition-all hover:bg-amber-500/10 dark:border-amber-500/20">
             <p class="text-[8px] md:text-[9px] font-semibold text-amber-600 mb-1 uppercase">Pending Balance</p>
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-amber-600/50">Rp</span>
@@ -86,7 +87,7 @@
             </div>
         </div>
         <div
-            class="liquid-glass glass-highlight rounded-xl p-3 border-emerald-500/20 bg-emerald-500/5 transition-all hover:bg-emerald-500/10">
+            class="liquid-glass glass-highlight rounded-xl p-3 border-emerald-500/40 bg-emerald-500/5 transition-all hover:bg-emerald-500/10 dark:border-emerald-500/20">
             <p class="text-[8px] md:text-[9px] font-semibold text-emerald-600 mb-1 uppercase">Unrealized Income</p>
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-emerald-600/50">Rp</span>
