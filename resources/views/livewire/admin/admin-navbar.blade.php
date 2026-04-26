@@ -11,7 +11,7 @@
             localStorage.theme = 'light';
         }
     }
-}" class="bg-background/5 sticky backdrop-blur-md top-0 z-[100] border-b border-white/10 shadow-sm">
+}" class="bg-background/10 sticky backdrop-blur-md top-0 z-[100] border-b border-white/10 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16 text-foreground">
             <!-- Left side Navigation -->
@@ -173,7 +173,7 @@
 
     <!-- Mobile Menu -->
     <div x-show="adminMenuOpen" x-transition x-cloak style="display: none;"
-        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-background/5 backdrop-blur-md border border-white/10 border-t-white/20 shadow-2xl rounded-3xl mx-4 overflow-hidden flex flex-col gap-1 z-[110]">
+        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-background/10 backdrop-blur-md border border-white/10 border-t-white/20 shadow-2xl rounded-3xl mx-4 overflow-hidden flex flex-col gap-1 z-[110]">
         
         <!-- Shine Overlay -->
         <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none"></div>
