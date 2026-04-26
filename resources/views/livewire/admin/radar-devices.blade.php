@@ -27,10 +27,10 @@
     {{-- Floating Device Panel/Dock --}}
     <div 
         class="absolute z-[1001]
-               lg:bottom-8 lg:left-1/2 lg:-translate-x-1/2 lg:w-[800px]
+               lg:top-48 lg:bottom-12 lg:left-12 lg:w-[400px] lg:translate-x-0 lg:h-auto
                fixed bottom-4 left-4 right-4 
                transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)"
-        :class="isExpanded ? 'h-[440px]' : 'h-[96px] lg:h-[96px]'"
+        :class="isExpanded ? 'h-[440px]' : 'h-[96px] lg:h-auto'"
     >
         <div class="bg-background/70 backdrop-blur-md border border-white/10 rounded-2xl flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
             {{-- Unified Drag Handle/Header --}}
