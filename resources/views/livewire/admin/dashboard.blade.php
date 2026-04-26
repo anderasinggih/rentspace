@@ -322,14 +322,24 @@
                         }
                     }
                 },
-                grid: { show: true, borderColor: 'rgba(255,255,255,0.03)', strokeDashArray: 2, position: 'back', xaxis: { lines: { show: true } }, yaxis: { lines: { show: true } } },
+                grid: { 
+                    show: true, 
+                    borderColor: 'rgba(255,255,255,0.03)', 
+                    strokeDashArray: 2, 
+                    position: 'back', 
+                    xaxis: { lines: { show: false } }, // SEMBUNYIKAN: Garis vertikal biar lega
+                    yaxis: { lines: { show: true } } 
+                },
                 colors: [color],
                 stroke: { width: 3, curve: 'smooth' },
                 fill: { type: 'gradient', gradient: { shade: 'dark', type: "vertical", shadeIntensity: 0.5, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
                 markers: { size: 0, strokeColors: color, strokeWidth: 1, hover: { size: 2.5 } },
                 tooltip: { enabled: true, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
                 xaxis: { categories: fmtCategories, crosshairs: { show: true, width: 1, position: 'back', stroke: { color: 'rgba(255,255,255,0.1)', width: 1, dashArray: 4 } }, tooltip: { enabled: false } },
-                yaxis: { tooltip: { enabled: false } }
+                yaxis: { 
+                    tickAmount: 4, // BATASI: Cuma 4 garis horizontal
+                    tooltip: { enabled: false } 
+                }
             });
 
             const rv = new ApexCharts(document.querySelector("#revenueChart"), baseConfig(netData, revColor, elRevVal, elRevDate));
