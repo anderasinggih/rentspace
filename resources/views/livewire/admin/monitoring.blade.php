@@ -208,12 +208,12 @@
                 <div class="flex flex-col relative divide-y divide-border/50">
                     @foreach($units as $unit)
                         <div
-                            class="flex min-h-[85px] group hover:bg-muted/[0.02] transition-colors relative border-b border-border/30 last:border-b-0">
+                            class="flex min-h-[70px] group hover:bg-muted/[0.02] transition-colors relative border-b border-border/30 last:border-b-0">
                             <!-- Unit Column (Sticky) -->
                             <div
-                                class="m-unit-col shrink-0 p-4 md:p-5 border-r border-border border-dashed flex items-center gap-4 bg-background sticky left-0 z-40 transition-colors shadow-[4px_0_15px_-5px_rgba(0,0,0,0.08)]">
+                                class="m-unit-col shrink-0 p-3 md:p-4 border-r border-border border-dashed flex items-center gap-4 bg-background sticky left-0 z-40 transition-colors shadow-[4px_0_15px_-5px_rgba(0,0,0,0.08)]">
                                 <div
-                                    class="w-1.5 h-10 rounded-full bg-primary/10 group-hover:bg-primary transition-all duration-300">
+                                    class="w-1.5 h-8 rounded-full bg-primary/10 group-hover:bg-primary transition-all duration-300">
                                 </div>
                                 <div class="min-w-0">
                                     <div
@@ -370,7 +370,7 @@
         </div>
 
         <!-- STATUS CATEGORIES SECTION -->
-        <div class="mt-4 sm:mt-16 space-y-6 sm:space-y-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
+        <div class="mt-4 sm:mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 animate-in fade-in slide-in-from-bottom-10 duration-700">
 
             <!-- 1. ACTIVE RENTALS SECTION -->
             <div class="space-y-4">
@@ -413,11 +413,11 @@
 
                                 <!-- Accordion Header -->
                                 <div @click="expanded = !expanded"
-                                    class="p-2 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
+                                    class="p-2 sm:p-3 md:p-4 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
                                     <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                                         <div class="flex -space-x-3 overflow-hidden shrink-0">
                                             @foreach($rental->units as $u)
-                                                <div class="h-8 w-8 sm:h-12 sm:w-12 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm"
+                                                <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm"
                                                     title="{{ $u->seri }}">
                                                     <span
                                                         class="text-[7px] font-bold text-muted-foreground leading-none text-center px-0.5">
@@ -478,7 +478,7 @@
 
                                 <!-- Accordion content -->
                                 <div x-show="expanded" x-collapse class="bg-muted/20 border-t border-border">
-                                    <div class="p-3 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+                                    <div class="p-3 md:p-4 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
                                         {{-- Kolom 1: Data Diri --}}
                                         <div class="space-y-4">
                                             <div class="flex items-center gap-2 mt-1.5">
@@ -513,7 +513,7 @@
                                                 @if ($rental->status_bayar === 'Menunggu')
                                                     <button wire:click="markAsPaid({{ $rental->id }})"
                                                         wire:loading.attr="disabled"
-                                                        class="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-sm">Validasi</button>
+                                                        class="px-4 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-sm">Validasi</button>
                                                 @endif
                                             </div>
                                         </div>
@@ -573,13 +573,13 @@
                                             <div class="pt-2 flex gap-2">
                                                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}"
                                                     target="_blank"
-                                                    class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/5 text-emerald-600 border border-emerald-500/10 text-[10px] font-bold hover:bg-emerald-500 hover:text-white transition-all">
+                                                    class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-500/5 text-emerald-600 border border-emerald-500/10 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all overflow-hidden whitespace-nowrap">
                                                     WhatsApp
                                                 </a>
                                                 <button wire:click="openDendaModal({{ $rental->id }})"
-                                                    class="flex-[2] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[10px] font-black hover:bg-blue-500 hover:text-white transition-all shadow-sm active:scale-95">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                                    Selesaikan Sewa
+                                                    class="flex-[2] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-black hover:bg-blue-500 hover:text-white transition-all shadow-sm active:scale-95 overflow-hidden whitespace-nowrap">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                                    Selesaikan
                                                 </button>
                                             </div>
 
@@ -634,7 +634,7 @@
                                                                             <span class="text-[9px] sm:text-[10px] font-semibold {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/40' }}">{{ (int)$loc->battery_level }}%</span>
                                                                         </div>
                                                                     @endif
-                                                                    <a href="https://www.google.com/maps?q={{ $loc->lat }},{{ $loc->lng }}" target="_blank" class="h-7 w-7 rounded-lg bg-white/5 text-white/20 flex items-center justify-center hover:bg-emerald-500 hover:text-white border border-white/5 transition-all">
+                                                                    <a href="{{ route('admin.radar') }}?unit_id={{ $u->id }}" class="h-7 w-7 rounded-lg bg-white/5 text-white/20 flex items-center justify-center hover:bg-emerald-500 hover:text-white border border-white/5 transition-all">
                                                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                                                                     </a>
                                                                 </div>
@@ -699,11 +699,11 @@
 
                                 <!-- Accordion Header -->
                                 <div @click="expanded = !expanded"
-                                    class="p-2 sm:p-4 md:p-6 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
+                                    class="p-2 sm:p-3 md:p-4 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
                                     <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                                         <div class="flex -space-x-3 overflow-hidden shrink-0">
                                             @foreach($rental->units as $u)
-                                                <div class="h-8 w-8 sm:h-12 sm:w-12 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm"
+                                                <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm"
                                                     title="{{ $u->seri }}">
                                                     <span
                                                         class="text-[7px] font-bold text-muted-foreground leading-none text-center px-0.5">
@@ -764,7 +764,7 @@
                                 </div>
 
                                 <div x-show="expanded" x-collapse class="bg-muted/20 border-t border-border">
-                                    <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
+                                    <div class="p-3 md:p-4 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
                                         {{-- Kolom 1: Data Diri --}}
                                         <div class="space-y-4">
                                             <div class="flex items-center gap-2 mt-1.5">
@@ -831,13 +831,13 @@
                                         <div class="space-y-4 text-right flex flex-col h-full justify-end">
                                              @if($rental->status === 'paid')
                                                 <div class="flex flex-row gap-2">
-                                                    <button wire:click="openDendaModal({{ $rental->id }})" class="flex-1 py-2.5 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[10px] font-black hover:bg-blue-500 hover:text-white transition-all">LANGSUNG SELESAIKAN</button>
-                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-2.5 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all">BATALKAN</button>
+                                                    <button wire:click="openDendaModal({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-black hover:bg-blue-500 hover:text-white transition-all uppercase tracking-tighter">Selesaikan</button>
+                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all uppercase tracking-tighter">Batal</button>
                                                 </div>
                                             @else
                                                 <div class="flex flex-row gap-2">
-                                                    <button wire:confirm="Yakin ingin validasi pembayaran?" wire:click="markAsPaid({{ $rental->id }})" class="flex-1 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-black hover:bg-emerald-500 hover:text-white transition-all active:scale-95">VALIDASI</button>
-                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-2.5 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all">BATALKAN</button>
+                                                    <button wire:confirm="Yakin ingin validasi pembayaran?" wire:click="markAsPaid({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-black hover:bg-emerald-500 hover:text-white transition-all active:scale-95 uppercase tracking-tighter">Validasi</button>
+                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all uppercase tracking-tighter">Batal</button>
                                                 </div>
                                             @endif
                                         </div>

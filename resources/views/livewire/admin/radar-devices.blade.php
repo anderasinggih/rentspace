@@ -15,7 +15,19 @@
             } else {
                 this.currentH = this.minH;
             }
-            this.$nextTick(() => this.radarInit());
+            this.$nextTick(() => {
+                this.radarInit();
+                
+                // Track unit_id from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const unitId = urlParams.get('unit_id');
+                if (unitId) {
+                    const device = this.devices.find(d => d.id == unitId);
+                    if (device) {
+                        setTimeout(() => this.focusDevice(device), 1000);
+                    }
+                }
+            });
         },
         handleTouchStart(e) {
             if (window.innerWidth >= 1024) return;
