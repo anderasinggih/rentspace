@@ -192,10 +192,10 @@
                                     className: 'custom-div-icon',
                                     html: `
                                         <div class="flex flex-col items-center">
-                                            <div class="${device.is_overdue ? 'bg-red-500/50 border-red-400/50 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'bg-background/40 border-white/10'} backdrop-blur-xl border rounded-2xl px-3 py-1.5 shadow-2xl mb-2 whitespace-nowrap pointer-events-none translate-y-[-6px]">
+                                            <div class="${device.is_overdue ? 'bg-red-600/80 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'bg-card/70 border-border/50'} backdrop-blur-md border rounded-lg px-2 py-1 shadow-2xl mb-1 whitespace-nowrap pointer-events-none translate-y-[-4px]">
                                                 <div class="flex flex-col gap-0 text-center">
-                                                    <p class="text-[12px] font-bold ${device.is_overdue ? 'text-white' : 'text-foreground'} leading-tight">${device.seri}</p>
-                                                    <p class="text-[9px] ${device.is_overdue ? 'text-white/90 font-semibold' : 'text-muted-foreground font-medium'} leading-none mt-1 opacity-70">
+                                                    <p class="text-[10px] font-black ${device.is_overdue ? 'text-white' : 'text-foreground'} leading-tight">${device.seri}</p>
+                                                    <p class="text-[8px] ${device.is_overdue ? 'text-white/80 font-bold' : 'text-muted-foreground font-medium'} leading-none mt-1 opacity-70">
                                                         ${device.is_overdue ? '❌ TELAT: ' : ''}${device.nama_peminjam.split(' ')[0]} • ${device.last_seen.replace('ago', '')}
                                                     </p>
                                                 </div>
