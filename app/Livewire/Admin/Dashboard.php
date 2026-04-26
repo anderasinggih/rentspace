@@ -74,13 +74,15 @@ class Dashboard extends Component
             ->keyBy('date_val');
             
         $chartCategories = [];
-        $revenueSeries = [];
         $netRevenueSeries = [];
         $trxSeries = [];
 
+        $cumulativeNet = 0;
+        $cumulativeTrx = 0;
+
         $diffDays = $start->diffInDays($end);
         if ($diffDays > 90) {
-            // Fix: Use MySQL compatible DATE_FORMAT instead of SQLite strftime
+            // ... (previous SQL logic ... stays same)
             $chartDataObj = Rental::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
                 ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
                 ->whereBetween('created_at', [$start, $end])
@@ -102,9 +104,13 @@ class Dashboard extends Component
                 $chartCategories[] = $cursor->format('M Y');
                 $rev = isset($chartDataObj[$format]) ? (int) $chartDataObj[$format]->revenue : 0;
                 $comm = isset($commissionDataObj[$format]) ? (int) $commissionDataObj[$format]->total_commission : 0;
-                $revenueSeries[] = $rev;
-                $netRevenueSeries[] = $rev - $comm;
-                $trxSeries[] = isset($chartDataObj[$format]) ? (int) $chartDataObj[$format]->trx_count : 0;
+                $trx = isset($chartDataObj[$format]) ? (int) $chartDataObj[$format]->trx_count : 0;
+
+                $cumulativeNet += ($rev - $comm);
+                $cumulativeTrx += $trx;
+
+                $netRevenueSeries[] = $cumulativeNet;
+                $trxSeries[] = $cumulativeTrx;
                 $cursor->addMonth();
             }
         } else {
@@ -114,16 +120,19 @@ class Dashboard extends Component
                 $chartCategories[] = $cursor->format('d M');
                 $rev = isset($chartDataObj[$formattedSQLDate]) ? (int) $chartDataObj[$formattedSQLDate]->revenue : 0;
                 $comm = isset($commissionDataObj[$formattedSQLDate]) ? (int) $commissionDataObj[$formattedSQLDate]->total_commission : 0;
-                $revenueSeries[] = $rev;
-                $netRevenueSeries[] = $rev - $comm;
-                $trxSeries[] = isset($chartDataObj[$formattedSQLDate]) ? (int) $chartDataObj[$formattedSQLDate]->trx_count : 0;
+                $trx = isset($chartDataObj[$formattedSQLDate]) ? (int) $chartDataObj[$formattedSQLDate]->trx_count : 0;
+
+                $cumulativeNet += ($rev - $comm);
+                $cumulativeTrx += $trx;
+
+                $netRevenueSeries[] = $cumulativeNet;
+                $trxSeries[] = $cumulativeTrx;
                 $cursor->addDay();
             }
         }
         
         return [
             'categories' => $chartCategories, 
-            'revenue' => $revenueSeries, 
             'netRevenue' => $netRevenueSeries,
             'transactions' => $trxSeries
         ];
