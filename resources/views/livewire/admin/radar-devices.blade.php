@@ -1,6 +1,6 @@
-<div class="h-[calc(100vh-160px)] flex flex-col" x-data="radarMap()">
+<div class="h-[calc(100vh-140px)] flex flex-col relative overflow-hidden" x-data="{ ...radarMap(), isExpanded: false }">
     {{-- Top Header --}}
-    <div class="flex items-center justify-between mb-4 shrink-0">
+    <div class="flex items-center justify-between mb-4 shrink-0 px-1">
         <div class="flex items-center gap-3">
             <h1 class="text-lg font-bold tracking-tight">Radar</h1>
             <span class="h-4 w-px bg-border"></span>
@@ -13,59 +13,67 @@
     </div>
 
     {{-- Main Container --}}
-    <div class="flex-1 flex flex-col lg:flex-row gap-4 min-h-0 pb-4">
-        {{-- Device List: Horizontal on Mobile, Sidebar on Desktop --}}
-        <div class="w-full lg:w-72 shrink-0">
-            <div class="bg-card border border-border rounded-xl flex flex-col h-full overflow-hidden">
-                <div class="p-3 border-b border-border bg-muted/20 hidden lg:block">
-                    <p class="text-[10px] font-bold text-muted-foreground">Aktif ({{ count($devices) }})</p>
+    <div class="flex-1 flex flex-col lg:flex-row gap-4 min-h-0 relative">
+        {{-- Map View (Full screen-ish background) --}}
+        <div class="flex-1 relative order-1 lg:order-2 rounded-2xl overflow-hidden border border-border">
+            <div id="radarMap" class="w-full h-full bg-card z-0" wire:ignore></div>
+            
+            {{-- Map Controls --}}
+            <div class="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
+                <button @click="resetView()" class="p-2 bg-background/80 backdrop-blur-md border border-border rounded-xl shadow-lg hover:bg-background transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </button>
+            </div>
+        </div>
+
+        {{-- Device List Panel --}}
+        <div 
+            class="z-[1001] lg:z-0 lg:w-72 lg:relative
+                   fixed bottom-0 left-0 right-0 lg:static 
+                   transition-all duration-500 ease-in-out
+                   lg:translate-y-0"
+            :class="isExpanded ? 'h-[80vh]' : 'h-[72px] lg:h-full'"
+        >
+            <div class="bg-card/90 lg:bg-card backdrop-blur-xl border-t lg:border border-border rounded-t-3xl lg:rounded-2xl flex flex-col h-full shadow-2xl lg:shadow-none overflow-hidden">
+                {{-- Drag Handle (Mobile Only) --}}
+                <div @click="isExpanded = !isExpanded" class="h-10 lg:hidden flex items-center justify-center shrink-0 cursor-pointer">
+                    <div class="w-10 h-1 rounded-full bg-border"></div>
                 </div>
-                {{-- Scroll Container --}}
-                <div class="flex lg:flex-col overflow-x-auto lg:overflow-y-auto p-1.5 gap-1.5 scrollbar-hide">
+
+                <div class="p-3 lg:p-4 border-b border-border/50 flex items-center justify-between">
+                    <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Devices ({{ count($devices) }})</p>
+                    <button @click="isExpanded = !isExpanded" class="lg:hidden text-[11px] font-bold text-sky-500">
+                        <span x-show="!isExpanded">Tampilkan Daftar</span>
+                        <span x-show="isExpanded">Tutup</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-1.5 space-y-1">
                     @forelse($devices as $device)
                         <button 
-                            @click="focusDevice({{ json_encode($device) }})"
-                            class="flex-shrink-0 w-48 lg:w-full text-left p-2.5 rounded-lg border border-transparent hover:bg-muted transition-all relative overflow-hidden group"
-                            :class="selectedId === {{ $device['id'] }} ? ({{ $device['is_overdue'] ? 'json_encode(true)' : 'json_encode(false)' }} ? 'bg-red-500/10 border-red-500/50' : 'bg-muted border-border') : ({{ $device['is_overdue'] ? 'json_encode(true)' : 'json_encode(false)' }} ? 'bg-red-500/5 border-red-500/20' : '')"
+                            @click="focusDevice({{ json_encode($device) }}); if(window.innerWidth < 1024) isExpanded = false"
+                            class="w-full text-left p-2 rounded-xl border border-transparent hover:bg-muted/50 transition-all group relative"
+                            :class="selectedId === {{ $device['id'] }} ? ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/10 border-red-500/40' : 'bg-muted border-border') : ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/5' : '')"
                         >
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-bold truncate leading-none {{ $device['is_overdue'] ? 'text-red-500' : '' }}">{{ $device['seri'] }}</span>
-                                @if($device['battery'])
-                                    <span class="text-[9px] font-bold {{ $device['battery'] < 20 ? 'text-red-500' : 'text-emerald-500' }}">{{ $device['battery'] }}%</span>
-                                @endif
-                            </div>
-                            
-                            <div class="mt-2 flex items-center justify-between">
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] text-muted-foreground truncate max-w-[80px] leading-none">{{ $device['nama_peminjam'] }}</span>
-                                    <span class="text-[9px] text-muted-foreground opacity-50 mt-1 italic">Seen: {{ str_replace('ago', '', $device['last_seen']) }}</span>
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-[11px] font-bold truncate leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-500' : '' }}">{{ $device['seri'] }}</h4>
+                                    <p class="text-[10px] text-muted-foreground truncate opacity-70">{{ $device['nama_peminjam'] }}</p>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-[10px] font-bold tracking-tight {{ $device['is_overdue'] ? 'text-red-500' : 'text-emerald-500' }}">
+                                <div class="text-right shrink-0">
+                                    <p class="text-[10px] font-bold leading-none mb-1 {{ $device['is_overdue'] ? 'text-red-500' : 'text-emerald-500 font-extrabold' }}">
                                         {{ $device['time_left'] }}
-                                    </span>
-                                    <p class="text-[8px] opacity-40 leading-none mt-0.5">{{ $device['is_overdue'] ? 'Overdue' : 'Left' }}</p>
+                                    </p>
+                                    <p class="text-[9px] text-muted-foreground opacity-40 italic">{{ str_replace('ago', '', $device['last_seen']) }}</p>
                                 </div>
                             </div>
                         </button>
                     @empty
-                        <div class="p-4 text-center w-full">
-                            <p class="text-[10px] font-medium text-muted-foreground">Kosong</p>
+                        <div class="p-8 text-center">
+                            <p class="text-[11px] text-muted-foreground font-medium">Kosong</p>
                         </div>
                     @endforelse
                 </div>
-            </div>
-        </div>
-
-        {{-- Map View --}}
-        <div class="flex-1 relative min-h-[400px] lg:min-h-0 mt-2 lg:mt-0">
-            <div id="radarMap" class="w-full h-full rounded-xl border border-border bg-card z-0" wire:ignore></div>
-            
-            {{-- Map Controls --}}
-            <div class="absolute bottom-4 right-4 flex flex-col gap-2 z-[1000]">
-                <button @click="resetView()" class="p-2 bg-background border border-border rounded-lg shadow-sm hover:bg-muted transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                </button>
             </div>
         </div>
     </div>
