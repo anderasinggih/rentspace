@@ -267,7 +267,7 @@ class Dashboard extends Component
             'periodCommissions', 'periodNetRevenue',
             'gainRentals', 'gainRevenue', 'gainAbsRevenue', 'gainNetRevenue',
             'activeRentals', 'topTenants', 'topUnits', 'topAffiliates',
-            'chartCategories', 'chartRevenue', 'chartNetRevenue', 'chartTransactions',
+            'chartCategories', 'chartNetRevenue', 'chartTransactions',
             'paymentLabels', 'paymentCounts',
             'avgOrderValue', 'profitEfficiency', 'avgDuration', 'unrealizedRevenue'
         ))->layout('layouts.admin');
