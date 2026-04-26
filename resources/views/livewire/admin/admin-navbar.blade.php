@@ -112,7 +112,7 @@
                         class="p-2 flex items-center justify-center rounded-xl hover:bg-white/10 text-primary transition-all hover:scale-110 active:scale-95 focus:outline-none {{ request()->routeIs('admin.scan') ? 'bg-white/20 shadow-sm ring-1 ring-white/20' : '' }}"
                         title="Quick Scan QR">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M3 7V5a2 2 0 0 1 2-2h2" />
                             <path d="M17 3h2a2 2 0 0 1 2 2v2" />
                             <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
