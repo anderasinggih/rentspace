@@ -33,7 +33,7 @@
                lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:w-[500px]
                fixed bottom-4 left-4 right-4 
                transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)"
-        :class="isExpanded ? 'h-[440px]' : 'h-20 lg:h-20'"
+        :class="isExpanded ? 'h-[440px]' : 'h-[96px] lg:h-[96px]'"
     >
         <div class="bg-background/70 backdrop-blur-md border border-white/10 rounded-2xl flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
             {{-- Unified Drag Handle/Header --}}
