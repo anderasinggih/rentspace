@@ -86,9 +86,6 @@
         .leaflet-container {
             background: #09090b !important;
         }
-        .leaflet-tile {
-            filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
-        }
         .custom-div-icon {
             background: none !important;
             border: none !important;
@@ -164,7 +161,10 @@
                             attributionControl: false
                         }).setView([-7.4243, 109.2303], 13); // Default to Purwokerto
 
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                        subdomains: 'abcd',
+                        maxZoom: 20
+                    }).addTo(this.map);
 
                         this.loadMarkers();
                     });
