@@ -358,7 +358,7 @@
                     yaxis: { lines: { show: true } } 
                 },
                 colors: [color],
-                stroke: { width: 3, curve: 'smooth' },
+                stroke: { width: 2, curve: 'smooth' },
                 fill: { type: 'gradient', gradient: { shade: 'dark', type: "vertical", shadeIntensity: 0.5, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
                 markers: { size: 0, strokeColors: color, strokeWidth: 1, hover: { size: 2.5 } },
                 tooltip: { enabled: true, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
