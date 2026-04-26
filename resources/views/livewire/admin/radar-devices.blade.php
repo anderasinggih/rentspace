@@ -84,10 +84,10 @@
 
     <style>
         .leaflet-container {
-            background: #111827 !important;
+            background: #020617 !important;
         }
         .leaflet-tile {
-            filter: brightness(0.8) contrast(1.1);
+            filter: brightness(0.6) contrast(1.3) sepia(1) hue-rotate(190deg) saturate(5);
         }
         .custom-div-icon {
             background: none !important;
