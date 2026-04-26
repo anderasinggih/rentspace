@@ -44,7 +44,7 @@
     <div id="radarMap" class="absolute inset-0 z-0 bg-card" wire:ignore></div>
 
     {{-- Top Overlay Header --}}
-    <div class="absolute top-6 lg:top-24 left-4 right-4 lg:left-12 lg:right-12 flex items-center justify-between z-[1002] pointer-events-none">
+    <div class="absolute top-44 lg:top-24 left-4 right-4 lg:left-12 lg:right-12 flex items-center justify-between z-[1002] pointer-events-none">
         <div
             class="flex items-center gap-2 bg-background/60 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto">
             <h1 class="text-[13px] font-bold tracking-tight">Radar</h1>
@@ -61,7 +61,7 @@
     </div>
 
     {{-- Map Tools Overlay --}}
-    <div class="absolute top-24 lg:top-40 right-4 lg:right-12 flex flex-col gap-2 z-[1000] pointer-events-auto">
+    <div class="absolute top-64 lg:top-40 right-4 lg:right-12 flex flex-col gap-2 z-[1000] pointer-events-auto">
         <button @click="resetView()"
             class="p-3 bg-background/60 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl hover:bg-white/10 transition-all active:scale-95 group">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
