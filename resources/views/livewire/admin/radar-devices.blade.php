@@ -84,7 +84,10 @@
 
     <style>
         .leaflet-container {
-            background: #09090b !important;
+            background: #18181b !important;
+        }
+        .leaflet-tile {
+            filter: brightness(1.6) contrast(0.9) saturate(0.8);
         }
         .custom-div-icon {
             background: none !important;
