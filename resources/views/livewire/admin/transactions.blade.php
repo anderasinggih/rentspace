@@ -690,6 +690,15 @@
                                         class="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary outline-none">
                                 </div>
                                 <div>
+                                    <label class="block text-xs font-medium text-muted-foreground mb-1">Sosial Media (IG/TikTok)</label>
+                                    <div class="relative group">
+                                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground opacity-50 font-bold text-xs italic">@</div>
+                                        <input type="text" wire:model="edit_sosial_media"
+                                            class="w-full h-10 rounded-md border border-input bg-background pl-7 pr-3 text-sm focus:ring-1 focus:ring-primary outline-none"
+                                            placeholder="username">
+                                    </div>
+                                </div>
+                                <div>
                                     <label class="block text-xs font-medium text-muted-foreground mb-1">Alamat</label>
                                     <textarea wire:model="edit_alamat" rows="2"
                                         class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none"></textarea>
