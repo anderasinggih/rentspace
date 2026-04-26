@@ -32,7 +32,7 @@
                lg:translate-y-0"
         :class="isExpanded ? 'h-[450px]' : 'h-[72px] lg:h-auto'"
     >
-        <div class="bg-background/80 lg:bg-background/60 backdrop-blur-2xl border border-white/10 rounded-[32px] flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden">
+        <div class="bg-background/80 lg:bg-background/60 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden">
             {{-- Apple Drag Handle (Mobile) --}}
             <div @click="isExpanded = !isExpanded" class="h-8 lg:hidden flex items-center justify-center shrink-0 cursor-pointer group">
                 <div class="w-10 h-1.5 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors"></div>
@@ -50,7 +50,7 @@
                 @forelse($devices as $device)
                     <button 
                         @click="focusDevice({{ json_encode($device) }}); if(window.innerWidth < 1024) isExpanded = false"
-                        class="w-full text-left px-4 py-3 rounded-[24px] border border-transparent hover:bg-white/5 transition-all group relative"
+                        class="w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-white/5 transition-all group relative"
                         :class="selectedId === {{ $device['id'] }} ? ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/20 border-red-500/30' : 'bg-white/10 border-white/10') : ({{ $device['is_overdue'] ? 'true' : 'false' }} ? 'bg-red-500/10' : '')"
                     >
                         <div class="flex items-center justify-between gap-3">
