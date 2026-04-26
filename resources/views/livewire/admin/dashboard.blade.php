@@ -390,13 +390,11 @@
 
             let latestRev = latRev;
             let latestTrx = latTrx;
-            let idleTimerRev, idleTimerTrx;
 
-            const revertRev = () => {
+            // -- ELASTIC RESET: Snap back to latest values on release/leave --
+            const snapBack = () => {
                 if (elRevVal) elRevVal.innerText = (latestRev / 1000).toLocaleString() + 'k';
                 if (elRevDate) elRevDate.style.opacity = '0';
-            };
-            const revertTrx = () => {
                 if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString();
                 if (elTrxDate) elTrxDate.style.opacity = '0';
             };
@@ -409,39 +407,19 @@
                 latestRev = x.netRevenue.length > 0 ? x.netRevenue[x.netRevenue.length - 1] : 0;
                 latestTrx = x.transactions.length > 0 ? x.transactions[x.transactions.length - 1] : 0;
                 
-                revertRev();
-                revertTrx();
+                snapBack();
             });
 
-            // Update chart settings with inactivity and mouseLeave logic
-            rv.updateOptions({
-                chart: {
-                    events: {
-                        mouseMove: function () {
-                            clearTimeout(idleTimerRev);
-                            idleTimerRev = setTimeout(revertRev, 1500); // Balik ke data terbaru setelah 1.5 detik diam
-                        },
-                        mouseLeave: function () {
-                            clearTimeout(idleTimerRev);
-                            revertRev();
+            // Re-apply events for both twins to ensure hold-and-release feel
+            [rv, tr].forEach(chart => {
+                chart.updateOptions({
+                    chart: {
+                        events: {
+                            mouseLeave: snapBack,
+                            touchEnd: snapBack // Proteksi buat Mobile: Lepas jari = Reset
                         }
                     }
-                }
-            });
-
-            tr.updateOptions({
-                chart: {
-                    events: {
-                        mouseMove: function () {
-                            clearTimeout(idleTimerTrx);
-                            idleTimerTrx = setTimeout(revertTrx, 1500); // Balik ke data terbaru setelah 1.5 detik diam
-                        },
-                        mouseLeave: function () {
-                            clearTimeout(idleTimerTrx);
-                            revertTrx();
-                        }
-                    }
-                }
+                });
             });
         };
         initCharts();
