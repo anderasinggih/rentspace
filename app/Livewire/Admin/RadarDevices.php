@@ -20,7 +20,7 @@ class RadarDevices extends Component
         }, 'units.locations' => function($q) {
             $q->latest()->limit(50); // Fetch more points for route shadow
         }, 'units.category'])
-        ->where('status', 'paid')
+        ->whereIn('status', ['paid', 'renting'])
         ->where('waktu_mulai', '<=', now())
         ->get();
 

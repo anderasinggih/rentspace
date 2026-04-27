@@ -83,7 +83,9 @@
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-amber-600/50">Rp</span>
                 <span
-                    class="text-xl font-semibold text-amber-600 leading-none">{{ number_format($pendingRevenue, 0, ',', '.') }}</span>
+                    class="text-xl font-semibold text-amber-600 leading-none">
+                    {{ $pendingRevenue >= 1000 ? round($pendingRevenue / 1000, 1) . 'k' : number_format($pendingRevenue, 0, ',', '.') }}
+                </span>
             </div>
         </div>
         <div
@@ -92,13 +94,16 @@
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-emerald-600/50">Rp</span>
                 <span
-                    class="text-xl font-semibold text-emerald-600 leading-none">{{ number_format($unrealizedRevenue, 0, ',', '.') }}</span>
+                    class="text-xl font-semibold text-emerald-600 leading-none">
+                    {{ $unrealizedRevenue >= 1000 ? round($unrealizedRevenue / 1000, 1) . 'k' : number_format($unrealizedRevenue, 0, ',', '.') }}
+                </span>
             </div>
         </div>
         <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-muted/10">
             <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1 uppercase">Realized Today</p>
-            <span
-                class="text-xl font-semibold text-foreground leading-none">Rp{{ number_format($todayRevenue, 0, ',', '.') }}</span>
+            <span class="text-xl font-semibold text-foreground leading-none">
+                Rp{{ $todayRevenue >= 1000 ? round($todayRevenue / 1000, 1) . 'k' : number_format($todayRevenue, 0, ',', '.') }}
+            </span>
         </div>
         <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-muted/10">
             <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1 uppercase">Today's Rentals</p>
@@ -156,8 +161,9 @@
         <div class="grid grid-cols-3 divide-x divide-border border-b border-border">
             <div class="p-4 flex flex-col gap-0.5">
                 <span class="text-[9px] font-semibold text-stock-label uppercase">Net Income</span>
-                <span
-                    class="text-lg font-semibold text-foreground">Rp{{ number_format($periodNetRevenue, 0, ',', '.') }}</span>
+                <span class="text-lg font-semibold text-foreground">
+                    Rp{{ $periodNetRevenue >= 1000 ? round($periodNetRevenue / 1000, 1) . 'k' : number_format($periodNetRevenue, 0, ',', '.') }}
+                </span>
                 @if($gainNetRevenue !== null)
                     <div class="text-[10px] font-semibold {{ $gainNetRevenue >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
                         {{ $gainNetRevenue >= 0 ? '+' : '' }}{{ $gainNetRevenue }}%
@@ -166,8 +172,9 @@
             </div>
             <div class="p-4 flex flex-col gap-0.5">
                 <span class="text-[9px] font-semibold text-stock-label uppercase">Affiliate Fee</span>
-                <span
-                    class="text-lg font-semibold text-stock-down/70">Rp{{ number_format($periodCommissions, 0, ',', '.') }}</span>
+                <span class="text-lg font-semibold text-stock-down/70">
+                    Rp{{ $periodCommissions >= 1000 ? round($periodCommissions / 1000, 1) . 'k' : number_format($periodCommissions, 0, ',', '.') }}
+                </span>
             </div>
             <div class="p-4 flex flex-col gap-0.5 text-right">
                 <span class="text-[9px] font-semibold text-stock-label uppercase">Margin ROI</span>
@@ -182,8 +189,9 @@
             </div>
             <div class="flex flex-col items-center justify-center gap-1 text-center">
                 <span class="text-[8px] font-bold text-stock-label uppercase leading-none">Avg. AOV</span>
-                <span
-                    class="text-xs font-bold text-foreground tracking-tight leading-none">Rp{{ number_format($avgOrderValue, 0, ',', '.') }}</span>
+                <span class="text-xs font-bold text-foreground tracking-tight leading-none">
+                    Rp{{ $avgOrderValue >= 1000 ? round($avgOrderValue / 1000, 1) . 'k' : number_format($avgOrderValue, 0, ',', '.') }}
+                </span>
             </div>
             <div class="flex flex-col items-center justify-center gap-1 text-center">
                 <span class="text-[8px] font-bold text-stock-label uppercase leading-none">Avg. Duration</span>

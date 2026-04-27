@@ -413,8 +413,8 @@
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                         </span>
                         <span
-                            class="text-[9px] sm:text-[11px] font-black text-emerald-600 dark:text-emerald-400 tracking-wider">{{ $activeRentals->count() }}
-                            Aktif</span>
+                            class="text-[9px] sm:text-[11px] font-black text-emerald-600 dark:text-emerald-400 tracking-wider lowercase">
+                            <span class="uppercase">{{ $activeRentals->count() }}</span> RENT</span>
                     </div>
                 </div>
 
@@ -506,7 +506,7 @@
                                                 @if($rental->sosial_media)
                                                     <span class="text-[10px] font-bold text-sky-400 transition-colors cursor-default">@ {{ $rental->sosial_media }}</span>
                                                 @endif
-                                                <x-ui.badge variant="{{ $isOverdue ? 'rose' : 'emerald' }}" class="text-[9px] uppercase tracking-wider">{{ $isOverdue ? 'Overdue' : 'Active' }}</x-ui.badge>
+                                                <x-ui.badge variant="{{ $isOverdue ? 'rose' : 'emerald' }}" class="text-[9px] uppercase tracking-wider">{{ $isOverdue ? 'Overdue' : 'Rent' }}</x-ui.badge>
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
@@ -931,7 +931,7 @@
                                 @elseif($r->status === 'paid') <span class="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span> <span
                                     class="text-xs font-bold text-blue-600 dark:text-blue-400 tracking-wide uppercase">Paid</span>
                                 @elseif($r->status === 'renting') <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> <span
-                                    class="text-xs font-bold text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">Renting</span>
+                                    class="text-xs font-bold text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">Rent</span>
                                 @elseif($r->status === 'completed') <span class="h-2 w-2 rounded-full bg-slate-500"></span>
                                     <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Selesai</span>
                                 @else <span class="h-2 w-2 rounded-full bg-red-500"></span> <span
@@ -955,25 +955,27 @@
                                     <p class="text-[9px] font-bold text-muted-foreground mb-0.5">Nama Lengkap</p>
                                     <p class="text-sm font-semibold text-foreground leading-tight">{{ $r->nama }}</p>
                                 </div>
-                                <div>
+                                 <div>
                                     <p class="text-[9px] font-bold text-muted-foreground mb-0.5">Kontak WhatsApp</p>
                                     <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $r->no_wa) }}" target="_blank"
                                         class="text-sm font-bold text-primary hover:underline italic">{{ $r->no_wa }}</a>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Alamat Email</p>
+                                        <p class="text-xs font-medium text-foreground truncate">{{ $r->email ?: '-' }}</p>
+                                    </div>
+                                    @if($r->sosial_media)
+                                    <div>
+                                        <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase tracking-wider">Sosial Media</p>
+                                        <p class="text-xs font-black text-sky-500 italic">@ {{ ltrim($r->sosial_media, '@') }}</p>
+                                    </div>
+                                    @endif
                                 </div>
                                 <div>
                                     <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Identitas (NIK)</p>
                                     <p class="text-xs font-medium text-foreground tracking-widest">{{ $r->nik }}</p>
                                 </div>
-                                <div>
-                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Alamat Email</p>
-                                    <p class="text-xs font-medium text-foreground truncate">{{ $r->email }}</p>
-                                </div>
-                                @if($r->sosial_media)
-                                <div>
-                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase tracking-wider">Sosial Media</p>
-                                    <p class="text-xs font-black text-sky-500 italic">@ {{ ltrim($r->sosial_media, '@') }}</p>
-                                </div>
-                                @endif
                             </div>
                         </div>
 

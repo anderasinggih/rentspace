@@ -91,7 +91,7 @@ class Dashboard extends Component
         $end = Carbon::parse($this->endDate)->endOfDay();
         
         $chartDataObj = Rental::selectRaw('DATE(created_at) as date_val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
-            ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
+            ->whereIn('status', ['paid', 'renting', 'completed'])
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('date_val')
             ->orderBy('date_val')
@@ -116,7 +116,7 @@ class Dashboard extends Component
         if ($diffDays > 90) {
             // ... (previous SQL logic ... stays same)
             $chartDataObj = Rental::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
-                ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
+                ->whereIn('status', ['paid', 'renting', 'completed'])
                 ->whereBetween('created_at', [$start, $end])
                 ->groupBy('val')
                 ->orderBy('val')
@@ -184,7 +184,7 @@ class Dashboard extends Component
             $heatmap[] = ['name' => $l, 'data' => []];
         }
 
-        $rentals = Rental::whereIn('status', ['paid', 'completed'])
+        $rentals = Rental::whereIn('status', ['paid', 'renting', 'completed'])
             ->whereBetween('created_at', [$start, $end])
             ->selectRaw('DATE(created_at) as date, COUNT(id) as cnt')
             ->groupBy('date')
@@ -229,7 +229,7 @@ class Dashboard extends Component
 
         // Period Metrics
         $periodRentals = Rental::whereBetween('created_at', [$start, $end])->count();
-        $periodRevenue = Rental::where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
+        $periodRevenue = Rental::whereIn('status', ['paid', 'renting', 'completed'])
                             ->whereBetween('created_at', [$start, $end])->sum('grand_total');
         $periodDiscounts = Rental::whereBetween('created_at', [$start, $end])->sum('potongan_diskon');
         
@@ -237,13 +237,13 @@ class Dashboard extends Component
         $periodCommissions = \App\Models\AffiliateCommission::whereHas('rental')->whereBetween('created_at', [$start, $end])->sum('amount');
         $periodNetRevenue = $periodRevenue - $periodCommissions;
 
-        $todayRevenue = Rental::where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
+        $todayRevenue = Rental::whereIn('status', ['paid', 'renting', 'completed'])
                             ->whereDate('created_at', Carbon::today())->sum('grand_total');
         $todayRentals = Rental::whereDate('created_at', Carbon::today())->count();
 
         // Previous Period Metrics (for gain delta)
         $prevRentals = Rental::whereBetween('created_at', [$prevStart, $prevEnd])->count();
-        $prevRevenue = Rental::where(function($q) { $q->where('status', 'completed')->orWhere('status', 'paid'); })
+        $prevRevenue = Rental::whereIn('status', ['paid', 'renting', 'completed'])
                             ->whereBetween('created_at', [$prevStart, $prevEnd])->sum('grand_total');
         $prevCommissions = \App\Models\AffiliateCommission::whereBetween('created_at', [$prevStart, $prevEnd])->sum('amount');
         $prevNetRevenue = $prevRevenue - $prevCommissions;
@@ -255,7 +255,7 @@ class Dashboard extends Component
 
         // Leaderboards scoped by date to reflect trends
         $topTenants = Rental::selectRaw('nik, nama, no_wa, COUNT(id) as total_rentals, SUM(grand_total) as total_spent')
-            ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
+            ->whereIn('status', ['paid', 'renting', 'completed'])
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('nik', 'nama', 'no_wa')
             ->orderByDesc('total_spent')
@@ -275,7 +275,7 @@ class Dashboard extends Component
         // Unit performance with Rented Hours calculation using RentalItem pivot
         $topUnits = \App\Models\RentalItem::query()
             ->whereHas('rental', function($q) use ($start, $end) {
-                $q->where(fn($q2) => $q2->where('status', 'completed')->orWhere('status', 'paid'))
+                $q->whereIn('status', ['paid', 'renting', 'completed'])
                   ->whereBetween('created_at', [$start, $end]);
             })
             ->with(['unit' => function($q) { $q->withTrashed(); }, 'rental'])
@@ -300,7 +300,7 @@ class Dashboard extends Component
             ->take(5);
 
         // Payment Method Breakdown
-        $paymentSplit = Rental::where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
+        $paymentSplit = Rental::whereIn('status', ['paid', 'renting', 'completed'])
             ->whereBetween('created_at', [$start, $end])
             ->selectRaw('metode_pembayaran, COUNT(id) as cnt')
             ->groupBy('metode_pembayaran')
@@ -315,7 +315,7 @@ class Dashboard extends Component
         $heatmapData = $chartInfo['heatmap'];
 
         $activeRentals = Rental::with(['units' => function($q) { $q->withTrashed(); }])
-            ->whereIn('status', ['paid', 'pending'])
+            ->whereIn('status', ['paid', 'pending', 'renting'])
             ->where(fn($q) => $q->where('waktu_mulai', '<=', now()))
             ->where(fn($q) => $q->where('waktu_selesai', '>=', now()))
             ->get();
@@ -329,7 +329,7 @@ class Dashboard extends Component
         
         // Avg Duration for the period
         $avgDuration = Rental::whereBetween('created_at', [$start, $end])
-            ->where(fn($q) => $q->where('status', 'completed')->orWhere('status', 'paid'))
+            ->whereIn('status', ['paid', 'renting', 'completed'])
             ->get()
             ->avg(function($r) {
                 return abs(Carbon::parse($r->waktu_selesai)->diffInHours(Carbon::parse($r->waktu_mulai)));
