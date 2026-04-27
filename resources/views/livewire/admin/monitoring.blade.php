@@ -1152,21 +1152,40 @@
                     @if($dendaAmount > 0 || $dendaKerusakanAmount > 0)
                     <div>
                         <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Metode Bayar Denda</label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button @click="$wire.set('dendaMethod', 'cash')" class="py-2.5 rounded-xl border-2 text-[10px] font-black transition-all {{ $dendaMethod === 'cash' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-muted/5 text-muted-foreground' }}">TUNAI / CASH</button>
-                            <button @click="$wire.set('dendaMethod', 'qris')" class="py-2.5 rounded-xl border-2 text-[10px] font-black transition-all {{ $dendaMethod === 'qris' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-muted/5 text-muted-foreground' }}">QRIS / TRANSFER</button>
+                        <div class="rounded-xl bg-primary/5 p-4 border border-primary/10 animate-in slide-in-from-top-4 duration-500">
+                            <label class="block text-[11px] font-bold uppercase text-primary mb-3">Metode Bayar Denda</label>
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <label class="relative flex cursor-pointer rounded-xl border bg-background p-3 shadow-sm focus:outline-none hover:border-primary/50 transition-all {{ $dendaMethod === 'cash' ? 'border-primary ring-1 ring-primary' : 'border-border' }}">
+                                    <input type="radio" wire:model.live="dendaMethod" value="cash" class="sr-only">
+                                    <span class="flex flex-1 items-center justify-center">
+                                        <span class="text-xs font-bold {{ $dendaMethod === 'cash' ? 'text-primary' : 'text-muted-foreground' }}">CASH / TUNAI</span>
+                                    </span>
+                                </label>
+                                <label class="relative flex cursor-pointer rounded-xl border bg-background p-3 shadow-sm focus:outline-none hover:border-primary/50 transition-all {{ $dendaMethod === 'qris' ? 'border-primary ring-1 ring-primary' : 'border-border' }}">
+                                    <input type="radio" wire:model.live="dendaMethod" value="qris" class="sr-only">
+                                    <span class="flex flex-1 items-center justify-center">
+                                        <span class="text-xs font-bold {{ $dendaMethod === 'qris' ? 'text-primary' : 'text-muted-foreground' }}">QRIS / DIGITAL</span>
+                                    </span>
+                                </label>
+                            </div>
+
+                            @if($dendaMethod === 'qris')
+                                <div class="text-center pt-2 border-t border-primary/10">
+                                    <p class="text-[9px] text-muted-foreground uppercase font-bold mb-1">Total Tagihan Denda</p>
+                                    <p class="text-2xl font-black text-primary">Rp {{ number_format((int) $dendaAmount + (int) $dendaKerusakanAmount, 0, ',', '.') }}</p>
+                                </div>
+                            @endif
                         </div>
-                    </div>
                     @endif
                 </div>
-            </div>
 
-            <div class="p-6 bg-muted/5 border-t border-border flex gap-3">
-                <button @click="$wire.closeDendaModal()" class="flex-1 py-3 text-[11px] font-black text-muted-foreground hover:bg-muted rounded-xl transition-all uppercase tracking-widest">Batal</button>
-                <button wire:click="confirmDenda" class="flex-1 py-3 bg-primary text-primary-foreground text-[11px] font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest">Validasi Pengembalian</button>
+                <div class="mt-8 flex gap-3">
+                    <button wire:click="closeDendaModal" class="flex-1 py-3 text-[11px] font-black text-muted-foreground hover:bg-muted rounded-xl transition-all uppercase tracking-widest">Batal</button>
+                    <button wire:click="confirmDenda" class="flex-1 py-3 bg-primary text-primary-foreground text-[11px] font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest">Validasi Pengembalian</button>
+                </div>
             </div>
         </div>
-    </div>
+    @endif
 
 
 </div>
