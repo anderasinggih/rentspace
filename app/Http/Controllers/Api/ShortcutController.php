@@ -32,18 +32,20 @@ class ShortcutController extends Controller
         // 2. Validasi Input
         $request->validate([
             'unit_identifier' => 'required|string', // Bisa ID atau Seri Unit
-            'action' => 'required|string|in:complete,status,log_location'
+            'action' => 'required|string|in:complete,status,log_location,handover'
         ]);
 
-        // 3. Cari Unit (Cari by ID dulu, kalau gagal cari by Seri)
-        $unit = Unit::where('id', $request->unit_identifier)
-            ->orWhere('seri', 'LIKE', '%' . $request->unit_identifier . '%')
+        // 3. Cari Unit (Cari by ID dulu, prioritize exact match)
+        $identifier = $request->unit_identifier;
+        $unit = Unit::where('id', $identifier)
+            ->orWhere('seri', $identifier)
+            ->orWhere('seri', 'LIKE', '%' . $identifier . '%')
             ->first();
 
         if (!$unit) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unit tidak ditemukan: ' . $request->unit_identifier
+                'message' => 'Unit tidak ditemukan: ' . $identifier
             ], 404);
         }
 
@@ -98,7 +100,7 @@ class ShortcutController extends Controller
             ]);
         }
 
-        // 5.b Eksekusi Aksi 'handover' (Validasi Ambil - JADI RENTING)
+        // 5.b Eksekusi Aksi 'handover' (Validasi Ambil)
         if ($request->action === 'handover') {
             if (!$rental || $rental->status !== 'paid') {
                 return response()->json([
@@ -121,22 +123,28 @@ class ShortcutController extends Controller
 
         // 6. Eksekusi Aksi 'log_location'
         if ($request->action === 'log_location') {
-            $request->validate([
-                'lat' => 'required',
-                'long' => 'required'
-            ]);
+            // Flexible parameters: accept long or lng
+            $lat = $request->lat;
+            $lng = $request->long ?? $request->lng;
+
+            if (!$lat || !$lng) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data lokasi tidak lengkap (lat/long required).'
+                ], 422);
+            }
 
             $address = $request->address;
 
             // Jika alamat kosong dari iPhone, coba cari di Web (Reverse Geocoding)
-            if (!$address && $request->lat && $request->long) {
+            if (!$address) {
                 try {
                     $response = Http::withHeaders([
                         'User-Agent' => 'RentSpace-App-v1'
                     ])->get("https://nominatim.openstreetmap.org/reverse", [
                         'format' => 'json',
-                        'lat' => $request->lat,
-                        'lon' => $request->long,
+                        'lat' => $lat,
+                        'lon' => $lng,
                         'zoom' => 18,
                         'addressdetails' => 1
                     ]);
@@ -145,14 +153,13 @@ class ShortcutController extends Controller
                         $address = $response->json('display_name');
                     }
                 } catch (\Exception $e) {
-                    // Silently fail if geocoding fails
                 }
             }
 
             UnitLocation::create([
                 'unit_id' => $unit->id,
-                'lat' => $request->lat,
-                'lng' => $request->long,
+                'lat' => $lat,
+                'lng' => $lng,
                 'address' => $address,
                 'battery_level' => $request->battery_level
             ]);
