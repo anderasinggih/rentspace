@@ -14,13 +14,16 @@
                 <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Dibatalkan</h1>
                 <p class="text-[10px] text-rose-500/70 mt-1 font-medium italic">Status: Sesi Pembayaran Berakhir (Unit Dilepas)</p>
             @elseif($rental->status === 'paid')
+                <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Terima Kasih!</h1>
+                <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Siap Diambil / Lunas</p>
+            @elseif($rental->status === 'renting')
                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-500 mb-4 animate-in zoom-in duration-500">
                     <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Pembayaran Berhasil!</h1>
-                <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Lunas / Terbayar</p>
+                <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Unit Sedang Disewa</h1>
+                <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Aktif / Dibawa Penyewa</p>
             @elseif($rental->metode_pembayaran === 'cash' && $rental->status === 'pending')
                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-500/10 text-blue-500 mb-4 animate-in zoom-in duration-500">
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>

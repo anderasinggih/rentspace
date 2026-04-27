@@ -187,7 +187,7 @@ class Success extends Component
                     $this->rental->update(['payment_details' => $updatedDetails]);
                 }
 
-                if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
+                if (($transactionStatus == 'settlement' || $transactionStatus == 'capture') && $this->rental->status === 'pending') {
                     $this->rental->update(['status' => 'paid']);
                 } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
                     $this->rental->update(['status' => 'cancelled']);

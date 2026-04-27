@@ -288,7 +288,7 @@ class Monitoring extends Component
         $upcomingRentals = $upcomingRentalsQuery->orderBy('waktu_mulai', 'asc')->get();
 
         // 5. Fetch Available Units (Not currently rented)
-        $activeUnitIds = Rental::where('status', 'paid')
+        $activeUnitIds = Rental::whereIn('status', ['paid', 'renting'])
             ->where('waktu_mulai', '<=', now())
             ->where('waktu_selesai', '>=', now())
             ->get()
@@ -306,7 +306,7 @@ class Monitoring extends Component
         $availableUnits = $availableUnitsQuery->orderBy('category_id')->get();
 
         // 6. Stats for Summary Cards
-        $endingSoonCount = Rental::where('status', 'paid')
+        $endingSoonCount = Rental::whereIn('status', ['paid', 'renting'])
             ->where('waktu_selesai', '>', now())
             ->where('waktu_selesai', '<=', now()->addHours(6))
             ->count();
