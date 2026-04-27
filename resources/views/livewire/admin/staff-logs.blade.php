@@ -94,12 +94,12 @@
                         </td>
                         <td class="whitespace-nowrap px-3 sm:px-4 py-4">
                             <span class="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter
-                                {{ str_contains($log->action, 'paid') ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : '' }}
+                                {{ str_contains($log->action, 'paid') || str_contains($log->action, 'handover') ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : '' }}
                                 {{ str_contains($log->action, 'cancel') ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : '' }}
-                                {{ str_contains($log->action, 'edit') ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : '' }}
-                                {{ !str_contains($log->action, 'paid') && !str_contains($log->action, 'cancel') && !str_contains($log->action, 'edit') ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-400' : '' }}
+                                {{ str_contains($log->action, 'edit') || str_contains($log->action, 'complete') ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : '' }}
+                                {{ !str_contains($log->action, 'paid') && !str_contains($log->action, 'handover') && !str_contains($log->action, 'cancel') && !str_contains($log->action, 'edit') && !str_contains($log->action, 'complete') ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-400' : '' }}
                             ">
-                                {{ str_replace('_', ' ', $log->action) }}
+                                {{ $log->action === 'handover_unit' ? 'validasi ambil' : str_replace('_', ' ', $log->action) }}
                             </span>
                         </td>
                         <td class="px-3 sm:px-4 py-4 text-xs text-muted-foreground leading-relaxed">

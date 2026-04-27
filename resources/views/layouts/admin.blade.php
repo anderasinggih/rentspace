@@ -86,7 +86,7 @@
     </script>
 </head>
 
-<body class="bg-background min-h-screen text-foreground antialiased font-sans flex flex-col select-none">
+<body class="bg-background min-h-screen text-foreground antialiased font-sans flex flex-col">
 
     <livewire:admin.admin-navbar />
     <livewire:admin.command-palette />

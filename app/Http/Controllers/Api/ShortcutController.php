@@ -98,7 +98,7 @@ class ShortcutController extends Controller
             ]);
         }
 
-        // 5.b Eksekusi Aksi 'handover' (Serah Terima - JADI RENTING)
+        // 5.b Eksekusi Aksi 'handover' (Validasi Ambil - JADI RENTING)
         if ($request->action === 'handover') {
             if (!$rental || $rental->status !== 'paid') {
                 return response()->json([
@@ -114,7 +114,7 @@ class ShortcutController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Berhasil! Unit {$unit->seri} telah DISERAHKAN ke {$rental->nama}. Status sekarang: DISUWA.",
+                'message' => "Berhasil! Unit {$unit->seri} telah divalidasi ambil oleh {$rental->nama}. Status sekarang: Sedang Disewa.",
                 'handed_over_at' => Carbon::now()->format('H:i:s')
             ]);
         }

@@ -263,6 +263,13 @@ class UnitManager extends Component
                     return $q->where('is_active', true);
                 if ($this->filterStatus === 'inactive')
                     return $q->where('is_active', false);
+                if ($this->filterStatus === 'rented') {
+                    return $q->whereHas('rentals', function($sq) {
+                        $sq->whereIn('status', ['paid', 'renting'])
+                           ->where('waktu_mulai', '<=', now())
+                           ->where('waktu_selesai', '>=', now());
+                    });
+                }
             })
             ->orderBy('is_active', 'desc')
             ->orderBy('seri', 'asc');

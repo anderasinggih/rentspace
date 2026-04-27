@@ -21,7 +21,7 @@ class QuickScan extends Component
             $this->activeRental = Rental::whereHas('units', function($q) use ($id) {
                     $q->where('units.id', $id);
                 })
-                ->whereIn('status', ['paid', 'confirmed', 'active', 'pending'])
+                ->whereIn('status', ['paid', 'confirmed', 'renting', 'pending'])
                 ->where('waktu_selesai', '>=', now())
                 ->latest()
                 ->first();
@@ -38,9 +38,9 @@ class QuickScan extends Component
         $rental = Rental::findOrFail($id);
         
         if (in_array($rental->status, ['paid', 'confirmed'])) {
-            $rental->update(['status' => 'active']);
+            $rental->update(['status' => 'renting']);
             $this->findUnit($this->scannedUnit->id);
-            session()->flash('message', 'Serah terima unit BERHASIL! Unit sekarang dalam status SEWA.');
+            session()->flash('message', 'Validasi ambil unit BERHASIL! Unit sekarang dalam status SEWA.');
         }
     }
 
@@ -50,7 +50,7 @@ class QuickScan extends Component
 
         $rental = Rental::findOrFail($id);
         
-        if ($rental->status === 'active') {
+        if ($rental->status === 'renting') {
             $rental->update(['status' => 'completed']);
             $this->findUnit($this->scannedUnit->id);
             session()->flash('message', 'Pengembalian unit BERHASIL! Transaksi telah SELESAI.');

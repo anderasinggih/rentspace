@@ -75,7 +75,7 @@
             <div class="flex items-center justify-between">
                 <div class="">
                     <h1 class="text-2xl font-bold tracking-tight text-foreground">Quick Scanner</h1>
-                    <p class="mt-2 text-sm text-muted-foreground">Scan unit untuk validasi serah terima fisik secara instan.</p>
+                    <p class="mt-2 text-sm text-muted-foreground">Scan unit untuk validasi ambil fisik secara instan.</p>
                 </div>
                 @if($scannedUnit)
                     <button @click="retry()" class="p-2 rounded-lg border hover:bg-muted transition-colors shadow-sm">
@@ -94,8 +94,8 @@
                         <div class="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/><rect width="7" height="7" x="7" y="7" rx="1"/><path d="M10 17h.01"/><path d="M17 10h.01"/><path d="M17 17h.01"/></svg>
                         </div>
-                        <h3 class="text-base font-bold mb-1">Siap Scann Unit?</h3>
-                        <p class="text-[11px] text-muted-foreground mb-10 max-w-[200px]">Aktifkan kamera untuk mulai manajemen serah terima fisik unit.</p>
+                        <h3 class="text-base font-bold mb-1">Siap Scan Unit?</h3>
+                        <p class="text-[11px] text-muted-foreground mb-10 max-w-[200px]">Aktifkan kamera untuk mulai manajemen validasi ambil fisik unit.</p>
                         
                         <button @click="startScan()" class="h-11 px-10 rounded-md bg-primary text-primary-foreground font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all">
                             Aktifkan Kamera
@@ -161,8 +161,22 @@
                                     <h2 class="text-3xl font-black tracking-tight leading-none">{{ $scannedUnit->seri }}</h2>
                                     <p class="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Unit ID: #{{ str_pad($scannedUnit->id, 3, '0', STR_PAD_LEFT) }}</p>
                                 </div>
-                                <div class="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-colors {{ $activeRental && $activeRental->status === 'active' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' : ($activeRental ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' : 'bg-green-500/10 text-green-600 border-green-500/20') }}">
-                                    {{ $activeRental && $activeRental->status === 'active' ? 'Sedang Disewa' : ($activeRental ? 'Siap Diambil' : 'Tersedia') }}
+                                <div class="flex items-center gap-2">
+                                    @if($activeRental)
+                                        @if($activeRental->status === 'pending')
+                                            <x-ui.badge variant="amber" class="text-[9px]">Pending</x-ui.badge>
+                                        @elseif($activeRental->status === 'paid')
+                                            <x-ui.badge variant="blue" class="text-[9px]">Paid</x-ui.badge>
+                                        @elseif($activeRental->status === 'renting')
+                                            <x-ui.badge variant="emerald" class="text-[9px]">Rent</x-ui.badge>
+                                        @elseif($activeRental->status === 'completed')
+                                            <x-ui.badge variant="green" class="text-[9px]">Done</x-ui.badge>
+                                        @else
+                                            <x-ui.badge variant="red" class="text-[9px]">Cancel</x-ui.badge>
+                                        @endif
+                                    @else
+                                        <x-ui.badge variant="green" class="text-[9px]">Available</x-ui.badge>
+                                    @endif
                                 </div>
                             </div>
 
@@ -188,8 +202,8 @@
                                         </div>
                                         <div class="p-3 rounded-lg bg-muted/40 transition-colors">
                                             <p class="text-[8px] font-bold text-muted-foreground uppercase mb-1">Status Bayar</p>
-                                            <p class="text-xs font-bold {{ in_array($activeRental->status, ['paid', 'active', 'completed']) ? 'text-green-600' : 'text-orange-500' }}">
-                                                {{ in_array($activeRental->status, ['paid', 'active', 'completed']) ? 'Lunas' : 'Belum Bayar' }}
+                                            <p class="text-xs font-bold {{ in_array($activeRental->status, ['paid', 'renting', 'completed']) ? 'text-green-600' : 'text-orange-500' }}">
+                                                {{ in_array($activeRental->status, ['paid', 'renting', 'completed']) ? 'Lunas' : 'Belum Bayar' }}
                                             </p>
                                         </div>
                                     </div>
@@ -199,7 +213,7 @@
                             <div class="grid grid-cols-1 gap-3 pt-4">
                                 @if($activeRental && in_array($activeRental->status, ['paid', 'confirmed']))
                                     <button wire:click="confirmHandover({{ $activeRental->id }})" class="h-12 w-full flex items-center justify-center bg-primary text-primary-foreground font-black text-xs rounded-lg uppercase tracking-widest active:scale-95 transition-all">
-                                        Validasi Serah Terima
+                                        Validasi Ambil
                                     </button>
                                 @endif
                                 <div class="flex gap-3">

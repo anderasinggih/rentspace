@@ -1,4 +1,4 @@
-<div class="relative min-h-screen pb-12 overflow-x-hidden select-none" style="touch-action: pan-y;">
+<div class="relative min-h-screen pb-12 overflow-x-hidden" style="touch-action: pan-y;">
     <style>
         body {
             overflow-x: hidden !important;
@@ -364,8 +364,19 @@
                                 <td class="px-6 py-4 font-semibold text-foreground uppercase">
                                     {{ explode(' ', trim($rental->nama))[0] }}
                                 </td>
-                                <td class="px-6 py-4 text-right"><span
-                                        class="text-stock-up font-semibold text-xs uppercase">Active</span></td>
+                                <td class="px-6 py-4 text-right">
+                                    @if($rental->status === 'pending')
+                                        <x-ui.badge variant="amber" class="text-[9px]">Pending</x-ui.badge>
+                                    @elseif($rental->status === 'paid')
+                                        <x-ui.badge variant="blue" class="text-[9px]">Paid</x-ui.badge>
+                                    @elseif($rental->status === 'renting')
+                                        <x-ui.badge variant="emerald" class="text-[9px]">Rent</x-ui.badge>
+                                    @elseif($rental->status === 'completed')
+                                        <x-ui.badge variant="green" class="text-[9px]">Done</x-ui.badge>
+                                    @else
+                                        <x-ui.badge variant="red" class="text-[9px]">Cancel</x-ui.badge>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>

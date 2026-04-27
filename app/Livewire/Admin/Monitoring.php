@@ -165,8 +165,8 @@ class Monitoring extends Component
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'paid') {
             $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
-            $this->logActivity('handover_unit', $rental, "Serah terima unit untuk transaksi #{$rental->id}");
-            session()->flash('message', 'Unit berhasil diserah-terimakan. Status sekarang: Renting.');
+            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi #{$rental->id}");
+            session()->flash('message', 'Unit berhasil divalidasi ambil. Status sekarang: Renting.');
         }
     }
 

@@ -534,7 +534,7 @@
                                                         wire:loading.attr="disabled"
                                                         class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-sky-500 text-white text-[9px] font-black hover:bg-sky-600 transition-all shadow-sm active:scale-95">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
-                                                        Validasi Ambil Unit
+                                                        Validasi Ambil
                                                     </button>
                                                 @elseif ($rental->status === 'pending')
                                                     <button wire:click="markAsPaid({{ $rental->id }})"
@@ -924,24 +924,26 @@
                         <div class="space-y-1">
                             <p class="text-[9px] font-bold text-muted-foreground">Status Transaksi</p>
                             <div class="flex items-center gap-2">
-                                @if($r->status === 'pending') <span
-                                    class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span> <span
-                                    class="text-xs font-semibold text-amber-600 dark:text-amber-400">Menunggu
-                                    Pembayaran</span>
-                                @elseif($r->status === 'paid') <span class="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span> <span
-                                    class="text-xs font-bold text-blue-600 dark:text-blue-400 tracking-wide uppercase">Paid</span>
-                                @elseif($r->status === 'renting') <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> <span
-                                    class="text-xs font-bold text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">Rent</span>
-                                @elseif($r->status === 'completed') <span class="h-2 w-2 rounded-full bg-slate-500"></span>
-                                    <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Selesai</span>
-                                @else <span class="h-2 w-2 rounded-full bg-red-500"></span> <span
-                                    class="text-xs font-semibold text-red-600 dark:text-red-400">Dibatalkan</span>
+                                @if($r->status === 'pending')
+                                    <x-ui.badge variant="amber" class="text-[9px]">Pending</x-ui.badge>
+                                @elseif($r->status === 'paid')
+                                    <x-ui.badge variant="blue" class="text-[9px]">Paid</x-ui.badge>
+                                @elseif($r->status === 'renting')
+                                    <x-ui.badge variant="emerald" class="text-[9px]">Rent</x-ui.badge>
+                                @elseif($r->status === 'completed')
+                                    <x-ui.badge variant="green" class="text-[9px]">Done</x-ui.badge>
+                                @else
+                                    <x-ui.badge variant="red" class="text-[9px]">Cancel</x-ui.badge>
                                 @endif
                             </div>
                         </div>
                         <div class="text-right space-y-1 border-l border-border pl-4">
                             <p class="text-[9px] font-bold text-muted-foreground">Booking Code</p>
-                            <p class="text-xs font-black text-primary">{{ $r->booking_code }}</p>
+                            <p class="text-xs font-black text-primary cursor-pointer relative" 
+                               x-data="{ copied: false }" 
+                               @click="navigator.clipboard.writeText('{{ $r->booking_code }}'); copied = true; setTimeout(() => copied = false, 200)">
+                                {{ $r->booking_code }}
+                            </p>
                         </div>
                     </div>
 
@@ -1011,7 +1013,7 @@
                         </div>
                     </div>
 
-                    <!-- Logistik & Serah Terima -->
+                    <!-- Logistik & Validasi Ambil -->
                     @if($r->handed_over_at || $r->completed_at)
                     <div class="space-y-4 pt-6 border-t border-border">
                         <h4 class="text-[9px] font-bold text-muted-foreground/70 tracking-widest uppercase italic">Histori Logistik & Inventaris</h4>

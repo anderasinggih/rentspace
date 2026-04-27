@@ -36,4 +36,13 @@ class Unit extends Model
     {
         return $this->hasMany(UnitLocation::class);
     }
+
+    public function getIsRentedAttribute()
+    {
+        return $this->rentals()
+            ->whereIn('status', ['paid', 'renting'])
+            ->where('waktu_mulai', '<=', now())
+            ->where('waktu_selesai', '>=', now())
+            ->exists();
+    }
 }

@@ -69,6 +69,7 @@
                             class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             <option value="">Semua Status</option>
                             <option value="active">🟢 Aktif</option>
+                            <option value="rented">🟡 Sedang Disewa</option>
                             <option value="inactive">⚪ Nonaktif</option>
                             <option value="trashed">🗑️ Terhapus</option>
                         </select>
@@ -162,11 +163,13 @@
                                             </td>
                                             <td class="px-2 sm:px-6 py-1.5 sm:py-2 align-middle">
                                                 @if($unit->trashed())
-                                                    <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Terhapus</x-ui.badge>
+                                                    <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Deleted</x-ui.badge>
+                                                @elseif($unit->is_rented)
+                                                    <x-ui.badge variant="amber" class="text-[10px] sm:text-xs">Rent</x-ui.badge>
                                                 @elseif($unit->is_active)
-                                                    <x-ui.badge variant="green" class="text-[10px] sm:text-xs">Aktif</x-ui.badge>
+                                                    <x-ui.badge variant="green" class="text-[10px] sm:text-xs">Active</x-ui.badge>
                                                 @else
-                                                    <x-ui.badge variant="zinc" class="text-[10px] sm:text-xs">Nonaktif</x-ui.badge>
+                                                    <x-ui.badge variant="zinc" class="text-[10px] sm:text-xs">Inactive</x-ui.badge>
                                                 @endif
                                             </td>
                                             <td class="px-2 sm:px-6 py-1.5 sm:py-2 align-middle text-right h-full">

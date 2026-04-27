@@ -85,11 +85,11 @@
                         @forelse ($orders as $order)
                             @php
                                 $statusConfig = [
-                                    'pending' => ['class' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'dot' => 'bg-amber-500', 'label' => 'Menunggu Bayar'],
-                                    'paid' => ['class' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20', 'dot' => 'bg-blue-500', 'label' => 'Siap Ambil'],
-                                    'renting' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Sedang Disewa'],
-                                    'completed' => ['class' => 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20', 'dot' => 'bg-gray-500', 'label' => 'Selesai'],
-                                    'cancelled' => ['class' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20', 'dot' => 'bg-rose-500', 'label' => 'Dibatalkan'],
+                                    'pending' => ['class' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'dot' => 'bg-amber-500', 'label' => 'Pending'],
+                                    'paid' => ['class' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20', 'dot' => 'bg-blue-500', 'label' => 'Paid'],
+                                    'renting' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Rent'],
+                                    'completed' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Done'],
+                                    'cancelled' => ['class' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20', 'dot' => 'bg-rose-500', 'label' => 'Cancel'],
                                 ];
                                 $sc = $statusConfig[$order->status] ?? $statusConfig['pending'];
                             @endphp
@@ -139,7 +139,7 @@
                                                 <span
                                                     class="inline-flex items-center gap-1 px-1.5 py-0 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                                                     <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
-                                                    Berlangsung
+                                                    {{ $sc['label'] }}
                                                 </span>
                                             @else
                                                 <span
