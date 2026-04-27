@@ -57,7 +57,7 @@
                             placeholder="Cari seri, IMEI, warna...">
                     </div>
 
-                    <div class="flex gap-2 w-full sm:w-auto">
+                    <div class="grid grid-cols-2 gap-3 w-full sm:flex sm:gap-2 sm:w-auto mt-2 sm:mt-0">
                         <select wire:model.live="filterKategori"
                             class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             <option value="">Semua Kategori</option>
@@ -104,10 +104,10 @@
                                     @foreach($units as $unit)
                                         <tr wire:key="unit-row-{{ $unit->id }}"
                                             class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5' : (!$unit->is_active ? 'opacity-50' : '') }}">
-                                            <td class="px-3 sm:px-6 py-1.5 sm:py-2 align-middle">
+                                            <td class="px-2 sm:px-6 py-1 sm:py-2 align-middle">
                                                 <div
-                                                    class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'text-red-900 dark:text-red-300' : '' }} flex items-center gap-1.5">
-                                                    <span class="inline-flex items-center rounded border border-border/50 bg-muted/60 px-1.5 py-0.5 font-mono text-[9px] font-bold text-muted-foreground leading-none">#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}</span>
+                                                    class="font-bold text-[11px] sm:text-sm {{ $unit->trashed() ? 'text-red-900 dark:text-red-300' : '' }} flex items-center gap-1.5 leading-tight">
+                                                    <span class="inline-flex items-center rounded border border-border/50 bg-muted/60 px-1 py-0 font-mono text-[8.5px] font-bold text-muted-foreground leading-none">#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}</span>
                                                     {{ $unit->seri }}
                                                     @if($unit->category)
                                                         <x-ui.badge
@@ -118,17 +118,18 @@
                                                     @endif
                                                 </div>
                                                 @if($unit->imei)
-                                                    <div class="text-xs text-muted-foreground">{{ $unit->imei }}</div>
+                                                    <div class="text-[9.5px] text-muted-foreground leading-none mt-0.5">{{ $unit->imei }}</div>
                                                 @endif
                                                 {{-- Specs + price shown only on mobile --}}
-                                                <div class="sm:hidden mt-1 space-y-0.5">
+                                                {{-- Specs + price shown only on mobile --}}
+                                                <div class="sm:hidden mt-0.5 space-y-0.5">
                                                     @if($unit->warna || $unit->memori)
-                                                        <div class="text-xs text-muted-foreground">{{ $unit->warna }} ·
+                                                        <div class="text-[9.5px] text-muted-foreground leading-tight">{{ $unit->warna }} ·
                                                             {{ $unit->memori }}</div>
                                                     @endif
-                                                    <div class="text-xs font-semibold text-foreground">Rp
-                                                        {{ number_format($unit->harga_per_hari, 0, ',', '.') }}/hari · Rp
-                                                        {{ number_format($unit->harga_per_jam, 0, ',', '.') }}/jam</div>
+                                                    <div class="text-[10px] font-semibold text-foreground leading-tight">Rp
+                                                        {{ number_format($unit->harga_per_hari, 0, ',', '.') }}/h · Rp
+                                                        {{ number_format($unit->harga_per_jam, 0, ',', '.') }}/j</div>
                                                 </div>
                                             </td>
                                             <td class="hidden sm:table-cell px-6 py-2 align-middle">
@@ -161,19 +162,19 @@
                                                 <div class="text-xs text-muted-foreground">Rp
                                                     {{ number_format($unit->harga_per_jam, 0, ',', '.') }} / jam</div>
                                             </td>
-                                            <td class="px-2 sm:px-6 py-1.5 sm:py-2 align-middle">
+                                            <td class="px-1 sm:px-6 py-1 sm:py-2 align-middle">
                                                 @if($unit->trashed())
-                                                    <x-ui.badge variant="red" class="text-[10px] sm:text-xs">Deleted</x-ui.badge>
+                                                    <x-ui.badge variant="red" class="text-[9px] sm:text-xs px-1 py-0">Del</x-ui.badge>
                                                 @elseif($unit->is_rented)
-                                                    <x-ui.badge variant="amber" class="text-[10px] sm:text-xs">Rent</x-ui.badge>
+                                                    <x-ui.badge variant="amber" class="text-[9px] sm:text-xs px-1 py-0">Rent</x-ui.badge>
                                                 @elseif($unit->is_active)
-                                                    <x-ui.badge variant="green" class="text-[10px] sm:text-xs">Active</x-ui.badge>
+                                                    <x-ui.badge variant="green" class="text-[9px] sm:text-xs px-1 py-0">Act</x-ui.badge>
                                                 @else
-                                                    <x-ui.badge variant="zinc" class="text-[10px] sm:text-xs">Inactive</x-ui.badge>
+                                                    <x-ui.badge variant="zinc" class="text-[9px] sm:text-xs px-1 py-0">Inact</x-ui.badge>
                                                 @endif
                                             </td>
-                                            <td class="px-2 sm:px-6 py-1.5 sm:py-2 align-middle text-right h-full">
-                                                <div class="flex items-center justify-end w-full gap-2 transition-all">
+                                            <td class="px-1 sm:px-6 py-1 sm:py-2 align-middle text-right h-full">
+                                                <div class="flex items-center justify-end w-full gap-1.5 transition-all">
                                                     @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
                                                         <button wire:click="showQr({{ $unit->id }})"
                                                             class="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-all active:scale-95"
