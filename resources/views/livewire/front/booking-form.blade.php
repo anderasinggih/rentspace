@@ -265,6 +265,7 @@
                             <div class="mt-2 flex shadow-sm rounded-md h-10 w-full">
                                 <input type="text" wire:model.blur="nik" inputmode="numeric"
                                     oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                    maxlength="16"
                                     class="flex h-10 w-full border border-input bg-transparent rounded-l-md px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
                                     placeholder="16 Digit NIK">
                                 <button type="button" wire:click="checkNik"
@@ -285,6 +286,7 @@
                             <input type="text" wire:model="nama"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
+                                maxlength="50"
                                 class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 placeholder="SESUAI KTP">
                             @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
@@ -292,6 +294,7 @@
                         <div>
                             <label class="text-sm font-medium leading-none">Alamat Email (Untuk Terima Invoice)</label>
                             <input type="email" wire:model.live.debounce.500ms="email"
+                                maxlength="50"
                                 class="mt-2 flex h-10 w-full rounded-md border {{ $errors->has('email') ? 'border-red-500 bg-red-50' : 'border-input bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
                                 placeholder="nama@email.com">
                             @error('email') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
@@ -300,6 +303,7 @@
                             <label class="text-sm font-medium leading-none">Nomor Telepon / WhatsApp</label>
                             <input type="text" wire:model="no_wa" inputmode="numeric"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                maxlength="15"
                                 class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 placeholder="08XXXXXXXXXX">
                             @error('no_wa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
@@ -309,6 +313,7 @@
                             <div class="relative mt-2 flex shadow-sm rounded-md h-10 w-full group">
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-foreground/70 font-bold text-sm">@</div>
                                 <input type="text" wire:model="sosial_media"
+                                    maxlength="20"
                                     class="flex h-10 w-full rounded-md border border-input bg-transparent pl-7 pr-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
                                     placeholder="username">
                             </div>
@@ -319,6 +324,7 @@
                             <textarea wire:model="alamat" rows="3"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
+                                maxlength="150"
                                 class="mt-2 flex w-full rounded-md border border-input bg-transparent px-3 py-2 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 placeholder="CONTOH: JL. RAYA NO. 123..."></textarea>
                             @error('alamat') <span class="text-xs text-red-500">{{ $message }}</span> @enderror

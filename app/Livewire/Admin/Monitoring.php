@@ -107,8 +107,8 @@ class Monitoring extends Component
 
         // Calculate late duration
         $end = \Carbon\Carbon::parse($trx->waktu_selesai);
+        $this->isOverdue = $end->isPast();
         $diff = now()->diff($end);
-        $this->isOverdue = now() > $end;
 
         $parts = [];
         if ($diff->d > 0) $parts[] = $diff->d . 'd';

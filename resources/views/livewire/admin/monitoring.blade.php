@@ -272,9 +272,9 @@
                                         $duration = max($duration, 0.01);
 
                                         $statusStyle = match ($rental->status) {
-                                            'renting' => $eDate->isPast() 
-                                                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/40 shadow-[0_4px_12px_rgba(244,63,94,0.1)]'
-                                                : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.08)]',
+                                            'renting' => $eDate->isPast()
+                                            ? 'bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/40 shadow-[0_4px_12px_rgba(244,63,94,0.1)]'
+                                            : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.08)]',
                                             'paid' => 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20 shadow-[0_4px_12px_rgba(14,165,233,0.08)]',
                                             'pending' => 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-[0_4px_12px_rgba(245,158,11,0.08)]',
                                             'completed' => 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20 shadow-[0_4px_12px_rgba(100,116,139,0.08)]',
@@ -314,7 +314,7 @@
 
                                         <div
                                             class="w-full h-full rounded-xl {{ $statusStyle }} px-3.5 py-1.5 flex flex-col justify-center transition-all relative group-hover/bar:border-primary group-hover/bar:shadow-2xl group-hover/bar:z-50 ring-1 ring-transparent hover:ring-primary/40">
-                                            
+
                                             <!-- Floating Tooltip -->
                                             <div class="absolute -top-11 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 group-hover/bar:-translate-y-1 transition-all duration-200 pointer-events-none z-[60] scale-90 group-hover/bar:scale-100">
                                                 <div class="bg-zinc-900/95 dark:bg-zinc-800/95 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-2xl text-white flex items-center gap-2.5 whitespace-nowrap border border-white/10">
@@ -467,13 +467,13 @@
                                                             update() {
                                                                 const now = Math.floor(Date.now() / 1000);
                                                                 const diff = this.isOverdue ? (now - this.endTime) : (this.endTime - now);
-                                                                
+
                                                                 if (diff <= 0 && !this.isOverdue) { this.timeLeft = 'DONE'; return; }
-                                                                
+
                                                                 const d = Math.floor(diff / 86400);
                                                                 const h = Math.floor((diff % 86400) / 3600);
                                                                 const m = Math.floor((diff % 3600) / 60);
-                                                                
+
                                                                 this.timeLeft = d > 0 ? `${d}d ${h}h` : (h > 0 ? `${h}h ${m}m` : `${m}m`);
                                                             }
                                                         }" x-init="update(); setInterval(() => update(), 60000)">
@@ -500,13 +500,18 @@
                                     <div class="p-3 md:p-4 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
                                         {{-- Kolom 1: Data Diri --}}
                                         <div class="space-y-4">
-                                            <div class="flex items-center gap-2 mt-1.5">
-                                                <p class="text-sm font-bold text-foreground leading-tight">
-                                                    {{ $rental->nama }}</p>
-                                                @if($rental->sosial_media)
-                                                    <span class="text-[10px] font-bold text-sky-400 transition-colors cursor-default">@ {{ $rental->sosial_media }}</span>
-                                                @endif
-                                                <x-ui.badge variant="{{ $isOverdue ? 'rose' : 'emerald' }}" class="text-[9px] uppercase tracking-wider">{{ $isOverdue ? 'Overdue' : 'Rent' }}</x-ui.badge>
+                                            <div class="flex items-start justify-between gap-2 mt-1.5">
+                                                <div class="flex flex-col min-w-0 flex-1">
+                                                    <p class="text-sm font-bold text-foreground leading-tight truncate max-w-[180px] sm:max-w-full" title="{{ $rental->nama }}">
+                                                        {{ \Illuminate\Support\Str::limit($rental->nama, 30) }}
+                                                    </p>
+                                                    @if($rental->sosial_media)
+                                                        <span class="text-[10px] font-bold text-sky-400 transition-colors cursor-default truncate max-w-[180px] sm:max-w-full mt-0.5" title="{{ $rental->sosial_media }}">
+                                                            @ {{ \Illuminate\Support\Str::limit($rental->sosial_media, 20) }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <x-ui.badge variant="{{ $isOverdue ? 'rose' : 'emerald' }}" class="text-[9px] uppercase tracking-wider shrink-0 mt-0.5">{{ $isOverdue ? 'Overdue' : 'Rent' }}</x-ui.badge>
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
@@ -527,7 +532,7 @@
                                                 <p class="text-xs font-medium text-foreground leading-tight mt-1.5">
                                                     {{ $rental->alamat ?: '-' }}</p>
                                             </div>
-                                            
+
                                             <div class="pt-2 flex flex-wrap items-center gap-2">
                                                 @if ($rental->status === 'paid')
                                                     <button wire:click="handover({{ $rental->id }})"
@@ -616,12 +621,12 @@
 
                                     {{-- Log Lokasi: Hanya muncul jika ada iPhone dan ada datanya --}}
                                     @php 
-                                        $iphoneUnits = $rental->units->filter(fn($u) => $u->category && str_contains(strtolower($u->category->name), 'iphone'));
+                                                                        $iphoneUnits = $rental->units->filter(fn($u) => $u->category && str_contains(strtolower($u->category->name), 'iphone'));
                                         $hasLogs = false;
-                                        if($iphoneUnits->isNotEmpty()) {
-                                            foreach($iphoneUnits as $u) {
+                                        if ($iphoneUnits->isNotEmpty()) {
+                                            foreach ($iphoneUnits as $u) {
                                                 $logEndTime = $isOverdue ? now() : $rental->waktu_selesai;
-                                                if($u->locations()->whereBetween('created_at', [$rental->waktu_mulai, $logEndTime])->exists()) {
+                                                if ($u->locations()->whereBetween('created_at', [$rental->waktu_mulai, $logEndTime])->exists()) {
                                                     $hasLogs = true;
                                                     break;
                                                 }
@@ -635,7 +640,7 @@
                                                 <div class="space-y-1 max-h-[185px] overflow-y-auto pr-2 scrollbar-hide">
                                                     @foreach($iphoneUnits as $u)
                                                         @php 
-                                                            $logEndTime = $isOverdue ? now() : $rental->waktu_selesai;
+                                                                                                        $logEndTime = $isOverdue ? now() : $rental->waktu_selesai;
                                                             $logs = $u->locations()
                                                                 ->whereBetween('created_at', [$rental->waktu_mulai, $logEndTime])
                                                                 ->latest()
@@ -657,11 +662,11 @@
                                                                         <p class="text-[8px] sm:text-[9px] text-muted-foreground/40 truncate italic font-light">{{ $loc->lat }}, {{ $loc->lng }}</p>
                                                                     @endif
                                                                 </div>
-                                                                
+
                                                                 <div class="flex items-center gap-3 shrink-0">
                                                                     @if($loc->battery_level)
                                                                         <div class="flex flex-col items-center">
-                                                                            <span class="text-[9px] sm:text-[10px] font-semibold {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/40' }}">{{ (int)$loc->battery_level }}%</span>
+                                                                            <span class="text-[9px] sm:text-[10px] font-semibold {{ (int) $loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/40' }}">{{ (int) $loc->battery_level }}%</span>
                                                                         </div>
                                                                     @endif
                                                                     <a href="{{ route('admin.radar') }}?unit_id={{ $u->id }}" class="h-7 w-7 rounded-lg bg-muted border border-border text-muted-foreground flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all">
@@ -717,7 +722,7 @@
                         class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-amber-500/10 border border-amber-500/20 rounded-full shrink-0">
                         <span
                             class="text-[9px] sm:text-[11px] font-black text-amber-600 dark:text-amber-400 tracking-wider">{{ $upcomingRentals->count() }}
-                            Antrean</span>
+                            Waiting List</span>
                     </div>
                 </div>
                 @if($upcomingRentals->count() > 0)
@@ -793,16 +798,21 @@
                                     <div class="p-3 md:p-4 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
                                         {{-- Kolom 1: Data Diri --}}
                                         <div class="space-y-4">
-                                            <div class="flex items-center gap-2 mt-1.5">
-                                                <p class="text-sm font-bold text-foreground leading-tight">
-                                                    {{ $rental->nama }}</p>
-                                                @if($rental->sosial_media)
-                                                    <span class="text-[10px] font-medium text-sky-400/60 transition-colors hover:text-sky-400 cursor-default">@ {{ $rental->sosial_media }}</span>
-                                                @endif
+                                            <div class="flex items-start justify-between gap-2 mt-1.5">
+                                                <div class="flex flex-col min-w-0 flex-1">
+                                                    <p class="text-sm font-bold text-foreground leading-tight truncate max-w-[180px] sm:max-w-full" title="{{ $rental->nama }}">
+                                                        {{ \Illuminate\Support\Str::limit($rental->nama, 30) }}
+                                                    </p>
+                                                    @if($rental->sosial_media)
+                                                        <span class="text-[10px] font-medium text-sky-400/60 transition-colors hover:text-sky-400 cursor-default truncate max-w-[180px] sm:max-w-full mt-0.5" title="{{ $rental->sosial_media }}">
+                                                            @ {{ \Illuminate\Support\Str::limit($rental->sosial_media, 20) }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                                 @if($rental->status === 'paid')
-                                                    <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider">Paid</x-ui.badge>
+                                                    <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider shrink-0 mt-0.5">Paid</x-ui.badge>
                                                 @else
-                                                    <x-ui.badge variant="amber" class="text-[9px] uppercase tracking-wider">Pending</x-ui.badge>
+                                                    <x-ui.badge variant="amber" class="text-[9px] uppercase tracking-wider shrink-0 mt-0.5">Pending</x-ui.badge>
                                                 @endif
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
@@ -857,13 +867,17 @@
                                         <div class="space-y-4 text-right flex flex-col h-full justify-end">
                                              @if($rental->status === 'paid')
                                                 <div class="flex flex-row gap-2">
-                                                    <button wire:click="openDendaModal({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-black hover:bg-blue-500 hover:text-white transition-all uppercase tracking-tighter">Validasi Pengembalian</button>
-                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all uppercase tracking-tighter">Batal</button>
+                                                    <button wire:click="handover({{ $rental->id }})" wire:confirm="Validasi ambil unit?" class="flex-1 py-1.5 rounded-lg bg-sky-500/10 text-sky-600 border border-sky-500/20 text-[9px] font-bold hover:bg-sky-500 hover:text-white transition-all active:scale-95">Validasi Ambil</button>
+                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-bold hover:bg-rose-500 hover:text-white transition-all">Batal</button>
                                                 </div>
-                                            @else
+                                            @elseif($rental->status === 'renting')
                                                 <div class="flex flex-row gap-2">
-                                                    <button wire:confirm="Yakin ingin validasi pembayaran?" wire:click="markAsPaid({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-black hover:bg-emerald-500 hover:text-white transition-all active:scale-95 uppercase tracking-tighter">Validasi</button>
-                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all uppercase tracking-tighter">Batal</button>
+                                                    <button wire:click="openDendaModal({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-bold hover:bg-blue-500 hover:text-white transition-all active:scale-95">Validasi Pengembalian</button>
+                                                </div>
+                                            @elseif($rental->status === 'pending')
+                                                <div class="flex flex-row gap-2">
+                                                    <button wire:confirm="Yakin validasi pembayaran?" wire:click="markAsPaid({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all active:scale-95">Validasi Bayar</button>
+                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-bold hover:bg-rose-500 hover:text-white transition-all">Batal</button>
                                                 </div>
                                             @endif
                                         </div>
@@ -968,10 +982,10 @@
                                         <p class="text-xs font-medium text-foreground truncate">{{ $r->email ?: '-' }}</p>
                                     </div>
                                     @if($r->sosial_media)
-                                    <div>
-                                        <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase tracking-wider">Sosial Media</p>
-                                        <p class="text-xs font-black text-sky-500 italic">@ {{ ltrim($r->sosial_media, '@') }}</p>
-                                    </div>
+                                        <div>
+                                            <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase tracking-wider">Sosial Media</p>
+                                            <p class="text-xs font-black text-sky-500 italic">@ {{ ltrim($r->sosial_media, '@') }}</p>
+                                        </div>
                                     @endif
                                 </div>
                                 <div>
@@ -1015,30 +1029,30 @@
 
                     <!-- Logistik & Validasi Ambil -->
                     @if($r->handed_over_at || $r->completed_at)
-                    <div class="space-y-4 pt-6 border-t border-border">
-                        <h4 class="text-[9px] font-bold text-muted-foreground/70 tracking-widest uppercase italic">Histori Logistik & Inventaris</h4>
-                        <div class="grid grid-cols-2 gap-x-8 gap-y-4">
-                            @if($r->handed_over_at)
-                                <div class="bg-muted/30 p-2.5 rounded-lg border border-border/50">
-                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Unit Diambil</p>
-                                    <p class="text-xs font-black text-foreground">{{ $r->handed_over_at->format('d M Y, H:i') }}</p>
-                                </div>
-                            @endif
-                            @if($r->completed_at)
-                                <div class="bg-muted/30 p-2.5 rounded-lg border border-border/50">
-                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Unit Kembali</p>
-                                    <p class="text-xs font-black text-foreground">{{ $r->completed_at->format('d M Y, H:i') }}</p>
+                        <div class="space-y-4 pt-6 border-t border-border">
+                            <h4 class="text-[9px] font-bold text-muted-foreground/70 tracking-widest uppercase italic">Histori Logistik & Inventaris</h4>
+                            <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                                @if($r->handed_over_at)
+                                    <div class="bg-muted/30 p-2.5 rounded-lg border border-border/50">
+                                        <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Unit Diambil</p>
+                                        <p class="text-xs font-black text-foreground">{{ $r->handed_over_at->format('d M Y, H:i') }}</p>
+                                    </div>
+                                @endif
+                                @if($r->completed_at)
+                                    <div class="bg-muted/30 p-2.5 rounded-lg border border-border/50">
+                                        <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Unit Kembali</p>
+                                        <p class="text-xs font-black text-foreground">{{ $r->completed_at->format('d M Y, H:i') }}</p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            @if($r->catatan_kerusakan)
+                                <div class="p-3 rounded-xl bg-orange-500/5 border border-orange-500/10">
+                                    <p class="text-[9px] font-bold text-orange-600 uppercase tracking-widest leading-none">Catatan Kondisi Unit</p>
+                                    <p class="text-xs font-medium text-foreground mt-2 leading-relaxed italic">{{ $r->catatan_kerusakan }}</p>
                                 </div>
                             @endif
                         </div>
-                        
-                        @if($r->catatan_kerusakan)
-                            <div class="p-3 rounded-xl bg-orange-500/5 border border-orange-500/10">
-                                <p class="text-[9px] font-bold text-orange-600 uppercase tracking-widest leading-none">Catatan Kondisi Unit</p>
-                                <p class="text-xs font-medium text-foreground mt-2 leading-relaxed italic">{{ $r->catatan_kerusakan }}</p>
-                            </div>
-                        @endif
-                    </div>
                     @endif
 
                     <!-- Financial Summary -->
@@ -1112,90 +1126,115 @@
     </div>
 
     <!-- Completion / Denda Modal -->
-    <div x-show="$wire.completingTrxId" 
+    <div x-show="$wire.completingTrxId"
+        x-cloak
         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        x-cloak>
-        
-        <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-200">
-            <div class="p-6 border-b border-border bg-muted/5">
-                <h3 class="text-base font-black text-foreground uppercase tracking-tight">Validasi Pengembalian Unit</h3>
-                <p class="text-[10px] text-muted-foreground mt-1">Konfirmasi pengembalian unit & cek denda.</p>
+        x-transition:leave-end="opacity-0">
+
+        <div class="bg-background rounded-xl p-6 shadow-xl w-full max-w-md border border-border">
+            <h3 class="text-lg font-bold mb-1 text-foreground">Validasi Pengembalian Unit</h3>
+            <p class="text-[11px] text-muted-foreground mb-4 leading-relaxed italic">Catat jika ada denda tambahan sebelum menutup pesanan.</p>
+
+            {{-- Duration Badge — Alpine reads live $wire values --}}
+            <div class="mb-6 flex items-center justify-between p-4 rounded-2xl"
+                :class="$wire.isOverdue ? 'bg-rose-500/5 border border-rose-500/10' : 'bg-emerald-500/5 border border-emerald-500/10'">
+                <div class="flex flex-col">
+                    <p class="text-[8px] font-black tracking-widest uppercase mb-1"
+                        :class="$wire.isOverdue ? 'text-rose-600' : 'text-emerald-600'"
+                        x-text="$wire.isOverdue ? 'Telat' : 'Sisa Waktu'"></p>
+                    <p class="text-2xl font-black font-mono tracking-tighter leading-none"
+                        :class="$wire.isOverdue ? 'text-rose-600' : 'text-emerald-600'"
+                        x-text="$wire.lateDurationText"></p>
+                </div>
+                <div class="h-10 w-10 rounded-xl flex items-center justify-center"
+                    :class="$wire.isOverdue ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </div>
             </div>
-            
-            <div class="p-6 space-y-5">
-                <div class="mb-6 flex items-center justify-between p-4 rounded-2xl {{ $isOverdue ? 'bg-rose-500/5 border border-rose-500/10' : 'bg-emerald-500/5 border border-emerald-500/10' }}">
-                    <div class="flex flex-col">
-                        <p class="text-[8px] font-black {{ $isOverdue ? 'text-rose-600' : 'text-emerald-600' }} tracking-widest uppercase mb-1">
-                            {{ $isOverdue ? 'Telat' : 'Sisa Waktu' }}
-                        </p>
-                        <p class="text-2xl font-black {{ $isOverdue ? 'text-rose-600' : 'text-emerald-600' }} font-mono tracking-tighter leading-none">
-                            {{ $lateDurationText }}
-                        </p>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Denda Keterlambatan</label>
+                        <input type="number" wire:model.live="dendaAmount" min="0"
+                            class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            placeholder="0">
                     </div>
-                    <div class="h-10 w-10 rounded-xl {{ $isOverdue ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500' }} flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                        </svg>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Denda Kerusakan</label>
+                        <input type="number" wire:model.live="dendaKerusakanAmount" min="0"
+                            class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            placeholder="0">
                     </div>
                 </div>
 
-                <div class="space-y-4">
+                @if($dendaKerusakanAmount > 0)
                     <div>
-                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Denda Keterlambatan (Rp)</label>
-                        <input type="number" wire:model.live="dendaAmount" class="w-full h-11 px-4 bg-muted border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                        <label class="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Keterangan Kerusakan</label>
+                        <textarea wire:model="catatanKerusakan" rows="2"
+                            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none"
+                            placeholder="Contoh: Layar retak, Kabel hilang..."></textarea>
                     </div>
-                    <div>
-                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Denda Kerusakan (Rp)</label>
-                        <input type="number" wire:model.live="dendaKerusakanAmount" class="w-full h-11 px-4 bg-muted border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Catatan Kondisi Barang</label>
-                        <textarea wire:model="catatanKerusakan" placeholder="Misal: lecet dikit, layar gores..." class="w-full p-4 bg-muted border border-border rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[80px]"></textarea>
-                    </div>
-                    
-                    @if($dendaAmount > 0 || $dendaKerusakanAmount > 0)
-                    <div>
-                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Metode Bayar Denda</label>
-                        <div class="rounded-xl bg-primary/5 p-4 border border-primary/10 animate-in slide-in-from-top-4 duration-500">
-                            <label class="block text-[11px] font-bold uppercase text-primary mb-3">Metode Bayar Denda</label>
-                            <div class="grid grid-cols-2 gap-3 mb-4">
-                                <label class="relative flex cursor-pointer rounded-xl border bg-background p-3 shadow-sm focus:outline-none hover:border-primary/50 transition-all {{ $dendaMethod === 'cash' ? 'border-primary ring-1 ring-primary' : 'border-border' }}">
-                                    <input type="radio" wire:model.live="dendaMethod" value="cash" class="sr-only">
-                                    <span class="flex flex-1 items-center justify-center">
-                                        <span class="text-xs font-bold {{ $dendaMethod === 'cash' ? 'text-primary' : 'text-muted-foreground' }}">CASH / TUNAI</span>
-                                    </span>
-                                </label>
-                                <label class="relative flex cursor-pointer rounded-xl border bg-background p-3 shadow-sm focus:outline-none hover:border-primary/50 transition-all {{ $dendaMethod === 'qris' ? 'border-primary ring-1 ring-primary' : 'border-border' }}">
-                                    <input type="radio" wire:model.live="dendaMethod" value="qris" class="sr-only">
-                                    <span class="flex flex-1 items-center justify-center">
-                                        <span class="text-xs font-bold {{ $dendaMethod === 'qris' ? 'text-primary' : 'text-muted-foreground' }}">QRIS / DIGITAL</span>
-                                    </span>
-                                </label>
-                            </div>
+                @endif
 
-                            @if($dendaMethod === 'qris')
-                                <div class="text-center pt-2 border-t border-primary/10">
-                                    <p class="text-[9px] text-muted-foreground uppercase font-bold mb-1">Total Tagihan Denda</p>
-                                    <p class="text-2xl font-black text-primary">Rp {{ number_format((int) $dendaAmount + (int) $dendaKerusakanAmount, 0, ',', '.') }}</p>
-                                </div>
-                            @endif
+                @if($dendaAmount > 0 || $dendaKerusakanAmount > 0)
+                    <div class="rounded-lg bg-muted/30 p-4 border border-border">
+                        <label class="block text-[11px] font-bold uppercase text-muted-foreground mb-3">Metode Pembayaran Denda</label>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <label class="relative flex cursor-pointer rounded-lg border bg-background p-3 shadow-sm hover:border-primary/50 transition-colors {{ $dendaMethod === 'cash' ? 'border-primary ring-1 ring-primary' : 'border-border' }}">
+                                <input type="radio" wire:model.live="dendaMethod" value="cash" class="sr-only">
+                                <span class="flex flex-1 items-center justify-center">
+                                    <span class="font-medium {{ $dendaMethod === 'cash' ? 'text-primary' : 'text-foreground' }}">Tunai</span>
+                                </span>
+                            </label>
+                            <label class="relative flex cursor-pointer rounded-lg border bg-background p-3 shadow-sm hover:border-primary/50 transition-colors {{ $dendaMethod === 'qris' ? 'border-primary ring-1 ring-primary' : 'border-border' }}">
+                                <input type="radio" wire:model.live="dendaMethod" value="qris" class="sr-only">
+                                <span class="flex flex-1 items-center justify-center">
+                                    <span class="font-medium {{ $dendaMethod === 'qris' ? 'text-primary' : 'text-foreground' }}">QRIS</span>
+                                </span>
+                            </label>
                         </div>
-                    @endif
-                </div>
+                        @if($dendaMethod === 'qris')
+                            <div class="space-y-4 pt-4 border-t border-border/50">
+                                <div class="text-center">
+                                    <p class="text-[10px] text-muted-foreground uppercase font-bold mb-1">Total Denda Bayar</p>
+                                    <p class="text-2xl font-black text-primary">Rp {{ number_format((int) $dendaAmount + (int) $dendaKerusakanAmount, 0, ',', '.') }}</p>
+                                    <p class="text-[10px] text-red-500 font-medium mt-1 uppercase italic">* TANPA KODE UNIK</p>
+                                </div>
+                                <div class="flex justify-center">
+                                    <div class="p-2 bg-white rounded-lg shadow-inner border border-zinc-200">
+                                        <img src="{{ asset('uploads/' . \App\Models\Setting::getVal('qris', 'default.jpg')) }}" class="w-48 h-48 object-contain">
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+            </div>
 
-                <div class="mt-8 flex gap-3">
-                    <button wire:click="closeDendaModal" class="flex-1 py-3 text-[11px] font-black text-muted-foreground hover:bg-muted rounded-xl transition-all uppercase tracking-widest">Batal</button>
-                    <button wire:click="confirmDenda" class="flex-1 py-3 bg-primary text-primary-foreground text-[11px] font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest">Validasi Pengembalian</button>
-                </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <x-ui.button wire:click="closeDendaModal" variant="outline" size="sm" class="rounded-full px-6">
+                    Batal
+                </x-ui.button>
+                <x-ui.button wire:click="confirmDenda"
+                    wire:loading.attr="disabled"
+                    wire:target="confirmDenda"
+                    variant="success" size="sm" class="w-[180px]">
+                    <span wire:loading.remove wire:target="confirmDenda">Validasi & Selesaikan</span>
+                    <span wire:loading wire:target="confirmDenda" class="flex items-center gap-2">
+                        <span class="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                        Memproses...
+                    </span>
+                </x-ui.button>
             </div>
         </div>
-    
-
+    </div>
 
 </div>
