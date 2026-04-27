@@ -158,7 +158,7 @@ class BookingForm extends Component
         // We check only the range the user is actually picking [start, end]
         $this->schedule_available_unit_ids = Unit::query()->where('is_active', true)
             ->whereDoesntHave('rentals', function ($query) use ($start, $end) {
-                $query->whereIn('status', ['pending', 'paid'])
+                $query->whereIn('status', ['pending', 'paid', 'renting'])
                     ->where(function ($q) use ($start, $end) {
                         $q->whereBetween('waktu_mulai', [$start, $end])
                             ->orWhereBetween('waktu_selesai', [$start, $end])
@@ -186,7 +186,7 @@ class BookingForm extends Component
             // Check if any selected unit has a conflict in the BONUS period [end, effectiveEnd]
             $clashingUnitIds = Unit::whereIn('id', $this->selected_unit_ids)
                 ->whereHas('rentals', function ($query) use ($end, $effectiveEnd) {
-                    $query->whereIn('status', ['pending', 'paid'])
+                    $query->whereIn('status', ['pending', 'paid', 'renting'])
                         ->where(function ($q) use ($end, $effectiveEnd) {
                             $q->whereBetween('waktu_mulai', [$end, $effectiveEnd])
                                 ->orWhereBetween('waktu_selesai', [$end, $effectiveEnd])

@@ -27,7 +27,7 @@ class BookingTimeline extends Component
         }
 
         $units = \App\Models\Unit::query()->with('category')->where('is_active', true)->with(['rentals' => function ($q) use ($startDate, $endDate) {
-            $q->whereIn('status', ['paid', 'pending', 'completed'])
+            $q->whereIn('status', ['paid', 'pending', 'completed', 'renting'])
               ->where('waktu_mulai', '<=', $endDate)
               ->where('waktu_selesai', '>=', $startDate);
         }])->get();
