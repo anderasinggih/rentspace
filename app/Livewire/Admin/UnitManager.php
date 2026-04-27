@@ -266,7 +266,6 @@ class UnitManager extends Component
                 if ($this->filterStatus === 'rented') {
                     return $q->whereHas('rentals', function($sq) {
                         $sq->whereIn('status', ['paid', 'renting'])
-                           ->where('waktu_mulai', '<=', now())
                            ->where('waktu_selesai', '>=', now());
                     });
                 }

@@ -41,7 +41,6 @@ class Unit extends Model
     {
         return $this->rentals()
             ->whereIn('status', ['paid', 'renting'])
-            ->where('waktu_mulai', '<=', now())
             ->where('waktu_selesai', '>=', now())
             ->exists();
     }
