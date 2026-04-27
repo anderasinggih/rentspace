@@ -20,8 +20,13 @@ class RadarDevices extends Component
         }, 'units.locations' => function($q) {
             $q->latest()->limit(50); // Fetch more points for route shadow
         }, 'units.category'])
-        ->whereIn('status', ['paid', 'renting'])
-        ->where('waktu_mulai', '<=', now())
+        ->where(function($q) {
+            $q->where('status', 'renting')
+              ->orWhere(function($sq) {
+                  $sq->where('status', 'paid')
+                    ->where('waktu_mulai', '<=', now());
+              });
+        })
         ->get();
 
         // Map data for Leaflet
