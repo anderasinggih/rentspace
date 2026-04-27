@@ -301,7 +301,7 @@
                                                             const now = Math.floor(Date.now() / 1000);
                                                             const diff = this.endTime - now;
                                                             if (diff <= 0) {
-                                                                this.timeLeft = 'Selesai';
+                                                                this.timeLeft = 'DONE';
                                                                 return;
                                                             }
                                                             const h = Math.floor(diff / 3600);
@@ -381,7 +381,7 @@
             </div>
             <div class="flex items-center gap-3">
                 <div class="w-3.5 h-3.5 rounded bg-slate-500 shadow-[0_0_12px_rgba(100,116,139,0.3)]"></div>
-                <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Selesai</span>
+                <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">DONE</span>
             </div>
         </div>
 
@@ -468,7 +468,7 @@
                                                                 const now = Math.floor(Date.now() / 1000);
                                                                 const diff = this.isOverdue ? (now - this.endTime) : (this.endTime - now);
                                                                 
-                                                                if (diff <= 0 && !this.isOverdue) { this.timeLeft = 'Selesai'; return; }
+                                                                if (diff <= 0 && !this.isOverdue) { this.timeLeft = 'DONE'; return; }
                                                                 
                                                                 const d = Math.floor(diff / 86400);
                                                                 const h = Math.floor((diff % 86400) / 3600);
@@ -607,7 +607,7 @@
                                                 <button wire:click="openDendaModal({{ $rental->id }})"
                                                     class="flex-[2] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-black hover:bg-blue-500 hover:text-white transition-all shadow-sm active:scale-95 overflow-hidden whitespace-nowrap">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                                    {{ $isOverdue ? 'Selesaikan & Denda' : 'Selesaikan' }}
+                                                    {{ $isOverdue ? 'Validasi & Denda' : 'Validasi Pengembalian' }}
                                                 </button>
                                             </div>
 
@@ -857,7 +857,7 @@
                                         <div class="space-y-4 text-right flex flex-col h-full justify-end">
                                              @if($rental->status === 'paid')
                                                 <div class="flex flex-row gap-2">
-                                                    <button wire:click="openDendaModal({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-black hover:bg-blue-500 hover:text-white transition-all uppercase tracking-tighter">Selesaikan</button>
+                                                    <button wire:click="openDendaModal({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-black hover:bg-blue-500 hover:text-white transition-all uppercase tracking-tighter">Validasi Pengembalian</button>
                                                     <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all uppercase tracking-tighter">Batal</button>
                                                 </div>
                                             @else
@@ -1124,7 +1124,7 @@
         
         <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-200">
             <div class="p-6 border-b border-border bg-muted/5">
-                <h3 class="text-base font-black text-foreground uppercase tracking-tight">Selesaikan Sewa</h3>
+                <h3 class="text-base font-black text-foreground uppercase tracking-tight">Validasi Pengembalian Unit</h3>
                 <p class="text-[10px] text-muted-foreground mt-1">Konfirmasi pengembalian unit & cek denda.</p>
             </div>
             
@@ -1163,7 +1163,7 @@
 
             <div class="p-6 bg-muted/5 border-t border-border flex gap-3">
                 <button @click="$wire.closeDendaModal()" class="flex-1 py-3 text-[11px] font-black text-muted-foreground hover:bg-muted rounded-xl transition-all uppercase tracking-widest">Batal</button>
-                <button wire:click="confirmDenda" class="flex-1 py-3 bg-primary text-primary-foreground text-[11px] font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest">Selesaikan</button>
+                <button wire:click="confirmDenda" class="flex-1 py-3 bg-primary text-primary-foreground text-[11px] font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest">Validasi Pengembalian</button>
             </div>
         </div>
     </div>

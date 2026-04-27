@@ -226,6 +226,12 @@
                                         Validasi Ambil
                                     </button>
                                 @endif
+
+                                @if($activeRental && $activeRental->status === 'renting')
+                                    <button wire:click="confirmReturn({{ $activeRental->id }})" class="h-12 w-full flex items-center justify-center bg-green-600 text-white font-black text-xs rounded-lg uppercase tracking-widest active:scale-95 transition-all">
+                                        Validasi Pengembalian
+                                    </button>
+                                @endif
                                 <div class="flex gap-3">
                                     <button @click="retry()" class="h-11 flex-1 border bg-background font-bold text-[10px] uppercase tracking-widest rounded-lg hover:bg-muted transition-colors">
                                         Scan Lagi

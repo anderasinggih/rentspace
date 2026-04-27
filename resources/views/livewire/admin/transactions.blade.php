@@ -329,7 +329,7 @@
                                                                                                                                                                                                                                                                     </svg>
                                                                                                                                                                                                                                                                     <span wire:loading wire:target="openDendaModal({{ $trx->id }})"
                                                                                                                                                                                                                                                                         class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                                                                                                                                                                                                                                                    Selesaikan
+                                                                                                                                                                                                                                                                    Validasi Pengembalian
                                                                                                                                                                                                                                                                 </x-ui.button>
                                                                                                                                                                                                                                                             @endif
                                                                                                                                                                                                                                                         @endif
@@ -465,7 +465,7 @@
                                                                                                                                                                                                                                                                                                                                          @elseif($inspectTrx->status === "paid")
                                                                                                                                                                                                                                                                                                                                              <x-ui.button wire:click="handover({{ $inspectTrx->id }})" wire:confirm="Validasi ambil unit?" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Validasi Ambil</x-ui.button>
                                                                                                                                                                                                                                                                                                                                          @elseif($inspectTrx->status === "renting")
-                                                                                                                                                                                                                                                                                                                                             <x-ui.button wire:click="openDendaModal({{ $inspectTrx->id }})" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Selesaikan Sewa</x-ui.button>
+                                                                                                                                                                                                                                                                                                                                             <x-ui.button wire:click="openDendaModal({{ $inspectTrx->id }})" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Validasi Pengembalian</x-ui.button>
                                                                                                                                                                                                                                                                                                                                          @endif
                                                                                                                                                                                                                                                                                                                                         <x-ui.button wire:click="editTrx({{ $inspectTrx->id }})" variant="outline" size="sm">Edit Transaksi</x-ui.button>
 
@@ -565,7 +565,7 @@
         @if($completingTrxId)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                 <div class="bg-background rounded-xl p-6 shadow-xl w-full max-w-md border border-border">
-                    <h3 class="text-lg font-bold mb-1 text-foreground">Penyelesaian Transaksi</h3>
+                    <h3 class="text-lg font-bold mb-1 text-foreground">Validasi Pengembalian Unit</h3>
                     <p class="text-[11px] text-muted-foreground mb-1 leading-relaxed italic">Catat jika ada denda tambahan
                         sebelum menutup pesanan.</p>
                     <div
@@ -657,13 +657,13 @@
 
                     <div class="mt-6 flex justify-end gap-3">
                         <x-ui.button wire:click="closeDendaModal" variant="outline" size="sm" class="rounded-full px-6">
-                            Batalkan
+                            Batal
                         </x-ui.button>
                         <x-ui.button wire:click="confirmDenda"
                             wire:loading.attr="disabled"
                             wire:target="confirmDenda"
                             variant="success" size="sm" class="w-[180px]">
-                            <span wire:loading.remove wire:target="confirmDenda">Selesaikan & Tagih</span>
+                            <span wire:loading.remove wire:target="confirmDenda">Validasi & Selesaikan</span>
                             <span wire:loading wire:target="confirmDenda" class="flex items-center gap-2">
                                 <span class="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
                                 Memproses...
@@ -794,8 +794,8 @@
                                             <option value="pending">Pending</option>
                                             <option value="paid">Paid</option>
                                             <option value="renting">Rent</option>
-                                            <option value="completed">Selesai</option>
-                                            <option value="cancelled">Batal</option>
+                                            <option value="completed">Done</option>
+                                            <option value="cancelled">Cancel</option>
                                         </select>
                                     </div>
                                     <div>
