@@ -30,6 +30,13 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        @keyframes blinker {
+            50% { opacity: 0.6; transform: scale(1.01); border-color: rgba(244, 63, 94, 0.8); }
+        }
+        .blink-card {
+            animation: blinker 2s linear infinite;
+        }
     </style>
 
     <div>
@@ -217,8 +224,9 @@
                                 </div>
                                 <div class="min-w-0">
                                     <div
-                                        class="font-bold text-[13px]  leading-tight truncate text-foreground group-hover:text-primary transition-colors">
-                                        {{ $unit->seri }}
+                                        class="font-bold text-[13px] leading-tight truncate text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
+                                        <span class="inline-flex items-center rounded border border-border/50 bg-muted/60 px-1.5 py-1 font-mono text-[9px] font-bold text-muted-foreground leading-none">#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}</span>
+                                        <span class="truncate">{{ $unit->seri }}</span>
                                     </div>
                                     <div class="flex items-center gap-2 mt-1.5 overflow-hidden">
                                         <span
@@ -245,8 +253,8 @@
                                     @php
                                         $sDate = \Carbon\Carbon::parse($rental->waktu_mulai);
                                         $eDate = \Carbon\Carbon::parse($rental->waktu_selesai);
-                                        $isOngoing = now()->between($sDate, $eDate) && in_array($rental->status, ['paid', 'completed']);
-                                        $isPaid = in_array($rental->status, ['paid', 'completed']);
+                                        $isOngoing = now()->between($sDate, $eDate) && in_array($rental->status, ['paid', 'completed', 'renting']);
+                                        $isPaid = in_array($rental->status, ['paid', 'completed', 'renting']);
 
                                         $viewStart = $dates[0]->startOfDay();
                                         $viewEnd = end($dates)->endOfDay();
@@ -264,21 +272,25 @@
                                         $duration = max($duration, 0.01);
 
                                         $statusStyle = match ($rental->status) {
-                                            'paid' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.08)]',
+                                            'renting' => $eDate->isPast() 
+                                                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/40 shadow-[0_4px_12px_rgba(244,63,94,0.1)]'
+                                                : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.08)]',
+                                            'paid' => 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20 shadow-[0_4px_12px_rgba(14,165,233,0.08)]',
                                             'pending' => 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-[0_4px_12px_rgba(245,158,11,0.08)]',
-                                            'completed' => 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.08)]',
+                                            'completed' => 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20 shadow-[0_4px_12px_rgba(100,116,139,0.08)]',
                                             default => 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20',
                                         };
 
                                         $dotColor = match ($rental->status) {
-                                            'paid' => 'bg-emerald-500',
+                                            'renting' => $eDate->isPast() ? 'bg-rose-500' : 'bg-emerald-500',
+                                            'paid' => 'bg-sky-500',
                                             'pending' => 'bg-amber-500',
-                                            'completed' => 'bg-blue-500',
+                                            'completed' => 'bg-slate-500',
                                             default => 'bg-slate-500',
                                         };
                                     @endphp
                                     <div wire:click="selectRental({{ $rental->id }})"
-                                        class="absolute h-full top-0 px-[4.5px] py-[15px] z-30 group/bar cursor-pointer"
+                                        class="absolute h-full top-0 px-[4.5px] py-[15px] z-30 group/bar cursor-pointer hover:z-[70]"
                                         style="left: calc(var(--admin-day-width) * {{ $startIndex }}); width: calc(var(--admin-day-width) * {{ $duration }});"
                                         x-data="{ 
                                                         timeLeft: '',
@@ -301,9 +313,24 @@
                                         x-init="updateCountdown(); if(isPaid) setInterval(() => updateCountdown(), 1000)">
 
                                         <div
-                                            class="w-full h-full rounded-xl {{ $statusStyle }} px-3.5 py-1.5 flex flex-col justify-center transition-all relative overflow-hidden group-hover/bar:border-primary group-hover/bar:shadow-2xl group-hover/bar:z-50 ring-1 ring-transparent hover:ring-primary/40">
+                                            class="w-full h-full rounded-xl {{ $statusStyle }} px-3.5 py-1.5 flex flex-col justify-center transition-all relative group-hover/bar:border-primary group-hover/bar:shadow-2xl group-hover/bar:z-50 ring-1 ring-transparent hover:ring-primary/40">
+                                            
+                                            <!-- Floating Tooltip -->
+                                            <div class="absolute -top-11 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 group-hover/bar:-translate-y-1 transition-all duration-200 pointer-events-none z-[60] scale-90 group-hover/bar:scale-100">
+                                                <div class="bg-zinc-900/95 dark:bg-zinc-800/95 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-2xl text-white flex items-center gap-2.5 whitespace-nowrap border border-white/10">
+                                                    <span class="text-[10px] font-black uppercase tracking-tight">{{ $rental->nama }}</span>
+                                                    <span class="text-[10px] font-black opacity-20">|</span>
+                                                    <span class="text-[10px] font-black tracking-tight font-mono">{{ $sDate->format('H:i') }} - {{ $eDate->format('H:i') }}</span>
+                                                    @if($isPaid)
+                                                        <span class="text-[10px] font-black opacity-20">|</span>
+                                                        <span class="text-[10px] font-black text-emerald-400" x-text="timeLeft"></span>
+                                                    @endif
+                                                </div>
+                                                <div class="w-3 h-3 bg-zinc-900/95 dark:bg-zinc-800/95 rotate-45 mx-auto -mt-1.5 shadow-2xl border-r border-b border-white/10"></div>
+                                            </div>
+
                                             <div
-                                                class="flex items-center gap-2.5 overflow-hidden transition-all group-hover/bar:-translate-y-3">
+                                                class="flex items-center gap-2.5 overflow-hidden transition-all">
                                                 <div
                                                     class="h-1.5 w-1.5 rounded-full {{ $dotColor }} {{ $rental->status == 'pending' ? 'animate-pulse' : '' }} shrink-0">
                                                 </div>
@@ -313,7 +340,7 @@
                                                     </span>
                                                     @if($isPaid)
                                                         <span
-                                                            class="text-[8px] font-bold opacity-60 flex items-center gap-1 mt-0.5 group-hover/bar:opacity-0 transition-opacity">
+                                                            class="text-[8px] font-bold opacity-60 flex items-center gap-1 mt-0.5 transition-opacity">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"
                                                                 viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                                 stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -325,23 +352,8 @@
                                                     @endif
                                                 </div>
                                             </div>
-
-                                            <!-- Detail on hover -->
-                                            <div
-                                                class="absolute inset-x-0 bottom-2.5 opacity-0 group-hover/bar:opacity-100 transition-all translate-y-4 group-hover/bar:translate-y-0 flex flex-col items-center justify-center gap-1">
-                                                <div class="flex items-center gap-2.5 text-[11px] font-black text-primary">
-                                                    <span>{{ $sDate->format('H:i') }}</span>
-                                                    <span class="opacity-30">→</span>
-                                                    <span>{{ $eDate->format('H:i') }}</span>
-                                                </div>
-                                                @if($isPaid)
-                                                    <span
-                                                        class="text-[8px] font-bold bg-primary/10 px-2 py-0.5 rounded-full text-primary flex items-center gap-1">
-                                                        Sisa: <span x-text="timeLeft"></span>
-                                                    </span>
-                                                @endif
-                                            </div>
                                         </div>
+
                                     </div>
                                 @endforeach
                             </div>
@@ -356,16 +368,20 @@
             class="mt-10 hidden sm:flex flex-wrap items-center justify-center gap-12 bg-muted/5 p-5 rounded-2xl border border-border dark:border-white/5 shadow-inner">
             <div class="flex items-center gap-3">
                 <div class="w-3.5 h-3.5 rounded bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]"></div>
-                <span class="text-[9px] font-bold text-muted-foreground tracking-widest">Aktif / Sudah Bayar</span>
+                <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Rent</span>
             </div>
             <div class="flex items-center gap-3">
-                <div class="w-3.5 h-3.5 rounded bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)] animate-pulse">
+                <div class="w-3.5 h-3.5 rounded bg-sky-500 shadow-[0_0_12px_rgba(14,165,233,0.3)]"></div>
+                <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Paid</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-3.5 h-3.5 rounded bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]">
                 </div>
-                <span class="text-[9px] font-bold text-muted-foreground tracking-widest">Antrean / Pending</span>
+                <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Booking / Pending</span>
             </div>
             <div class="flex items-center gap-3">
-                <div class="w-3.5 h-3.5 rounded bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.3)]"></div>
-                <span class="text-[9px] font-bold text-muted-foreground tracking-widest">Kembali / Selesai</span>
+                <div class="w-3.5 h-3.5 rounded bg-slate-500 shadow-[0_0_12px_rgba(100,116,139,0.3)]"></div>
+                <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Selesai</span>
             </div>
         </div>
 
@@ -394,8 +410,6 @@
                     <div
                         class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full shrink-0">
                         <span class="relative flex h-2 w-2">
-                            <span
-                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                         </span>
                         <span
@@ -407,30 +421,30 @@
                 @if($activeRentals->count() > 0)
                     <div class="grid grid-cols-1 gap-2">
                         @foreach($activeRentals as $rental)
+                            @php $isOverdue = $rental->waktu_selesai->isPast(); @endphp
                             <div x-data="{ expanded: false }"
-                                class="bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-emerald-500/30"
-                                :class="expanded ? 'shadow-2xl ring-1 ring-emerald-500/20' : 'shadow-sm'">
+                                class="bg-card border rounded-2xl overflow-hidden transition-all duration-300 {{ $isOverdue ? 'border-rose-500/50 bg-rose-500/5' : 'border-border hover:border-emerald-500/30' }}"
+                                :class="expanded ? 'shadow-2xl ring-1 {{ $isOverdue ? 'ring-rose-500/20' : 'ring-emerald-500/20' }}' : 'shadow-sm'">
 
                                 <!-- Accordion Header -->
                                 <div @click="expanded = !expanded"
                                     class="p-2 sm:p-3 md:p-4 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
                                     <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                        <div class="flex -space-x-3 overflow-hidden shrink-0">
-                                            @foreach($rental->units as $u)
-                                                <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm"
-                                                    title="{{ $u->seri }}">
-                                                    <span
-                                                        class="text-[7px] font-bold text-muted-foreground leading-none text-center px-0.5">
-                                                        {{ substr($u->seri, 0, 3) }}<br>{{ substr($u->seri, -2) }}
-                                                    </span>
-                                                </div>
-                                            @endforeach
-                                        </div>
                                         <div class="flex flex-col min-w-0">
                                             <div class="flex items-center gap-1.5">
-                                                <h3
-                                                    class="font-bold text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-sm truncate tracking-tight">
-                                                    {{ $rental->units->pluck('seri')->join(', ') }}</h3>
+                                                <div class="flex items-center gap-1.5 min-w-0">
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        @foreach($rental->units as $u)
+                                                            <span class="inline-flex items-center rounded border border-border/50 bg-muted/60 px-1 py-0.5 font-mono text-[8px] font-bold text-muted-foreground italic">#{{ str_pad($u->id, 3, '0', STR_PAD_LEFT) }}</span>
+                                                        @endforeach
+                                                    </div>
+                                                    <h3
+                                                        class="font-bold {{ $isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} text-[10px] sm:text-sm truncate tracking-tight">
+                                                        {{ $rental->units->pluck('seri')->join(', ') }}</h3>
+                                                </div>
+                                                @if($isOverdue)
+                                                    <span class="flex h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                                                @endif
                                             </div>
                                             <div class="flex items-center gap-1.5 mt-1">
                                                 <span class="text-[10px] sm:text-sm font-bold text-foreground truncate">{{ explode(' ', trim($rental->nama))[0] }}</span>
@@ -449,24 +463,29 @@
                                             x-data="{ 
                                                             timeLeft: '',
                                                             endTime: {{ $rental->waktu_selesai->timestamp }},
+                                                            isOverdue: {{ $isOverdue ? 'true' : 'false' }},
                                                             update() {
                                                                 const now = Math.floor(Date.now() / 1000);
-                                                                const diff = this.endTime - now;
-                                                                if (diff <= 0) { this.timeLeft = 'Selesai'; return; }
-                                                                const h = Math.floor(diff / 3600);
+                                                                const diff = this.isOverdue ? (now - this.endTime) : (this.endTime - now);
+                                                                
+                                                                if (diff <= 0 && !this.isOverdue) { this.timeLeft = 'Selesai'; return; }
+                                                                
+                                                                const d = Math.floor(diff / 86400);
+                                                                const h = Math.floor((diff % 86400) / 3600);
                                                                 const m = Math.floor((diff % 3600) / 60);
-                                                                this.timeLeft = `${h}j ${m}m`;
+                                                                
+                                                                this.timeLeft = d > 0 ? `${d}h ${h}m` : `${h}j ${m}m`;
                                                             }
                                                         }" x-init="update(); setInterval(() => update(), 60000)">
                                             <p
-                                                class="text-[7px] sm:text-[8px] font-black text-muted-foreground tracking-widest">
-                                                Sisa</p>
+                                                class="text-[7px] sm:text-[8px] font-black text-muted-foreground tracking-widest uppercase">
+                                                {{ $isOverdue ? 'Telat' : 'Sisa' }}</p>
                                             <p x-text="timeLeft"
-                                                class="text-sm sm:text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                                                class="text-sm sm:text-xl font-black {{ $isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} font-mono">
                                             </p>
                                         </div>
                                         <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-muted-foreground transition-transform duration-300"
-                                            :class="expanded ? 'rotate-180 bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : ''">
+                                            :class="expanded ? 'rotate-180 {{ $isOverdue ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' }}' : ''">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                                 fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -482,20 +501,20 @@
                                         {{-- Kolom 1: Data Diri --}}
                                         <div class="space-y-4">
                                             <div class="flex items-center gap-2 mt-1.5">
-                                                <p class="text-sm font-bold text-white leading-tight">
+                                                <p class="text-sm font-bold text-foreground leading-tight">
                                                     {{ $rental->nama }}</p>
                                                 @if($rental->sosial_media)
                                                     <span class="text-[10px] font-bold text-sky-400 transition-colors cursor-default">@ {{ $rental->sosial_media }}</span>
                                                 @endif
-                                                <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider">Active</x-ui.badge>
+                                                <x-ui.badge variant="{{ $isOverdue ? 'rose' : 'emerald' }}" class="text-[9px] uppercase tracking-wider">{{ $isOverdue ? 'Overdue' : 'Active' }}</x-ui.badge>
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">NIK / Identitas</p>
-                                                    <p class="text-xs font-medium text-white/90 mt-1.5">{{ $rental->nik }}</p>
+                                                    <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">NIK / Identitas</p>
+                                                    <p class="text-xs font-medium text-foreground mt-1.5">{{ $rental->nik }}</p>
                                                 </div>
                                                 <div>
-                                                    <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">Booking Code</p>
+                                                    <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">Booking Code</p>
                                                     <div class="mt-1.5">
                                                         <span class="inline-flex items-center rounded border bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-tight">
                                                             {{ $rental->booking_code }}
@@ -504,41 +523,50 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">Alamat Lengkap</p>
-                                                <p class="text-xs font-medium text-white/90 leading-tight mt-1.5">
+                                                <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">Alamat Lengkap</p>
+                                                <p class="text-xs font-medium text-foreground leading-tight mt-1.5">
                                                     {{ $rental->alamat ?: '-' }}</p>
                                             </div>
                                             
                                             <div class="pt-2 flex flex-wrap items-center gap-2">
-                                                @if ($rental->status_bayar === 'Menunggu')
+                                                @if ($rental->status === 'paid')
+                                                    <button wire:click="handover({{ $rental->id }})"
+                                                        wire:loading.attr="disabled"
+                                                        class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-sky-500 text-white text-[9px] font-black hover:bg-sky-600 transition-all shadow-sm active:scale-95">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+                                                        Validasi Ambil Unit
+                                                    </button>
+                                                @elseif ($rental->status === 'pending')
                                                     <button wire:click="markAsPaid({{ $rental->id }})"
                                                         wire:loading.attr="disabled"
-                                                        class="px-4 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-sm">Validasi</button>
+                                                        class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
+                                                        Validasi Bayar
+                                                    </button>
                                                 @endif
                                             </div>
                                         </div>
 
                                         {{-- Kolom 2: Waktu --}}
                                         <div class="space-y-4">
-                                            <h4 class="text-[10px] font-bold text-white/40 tracking-widest uppercase mb-1">Jadwal Sewa</h4>
+                                            <h4 class="text-[10px] font-bold text-muted-foreground tracking-widest uppercase mb-1">Jadwal Sewa</h4>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="flex items-stretch gap-2.5">
                                                     <div class="w-1 bg-sky-500 rounded-full shrink-0 my-0.5 shadow-[0_0_8px_rgba(14,165,233,0.4)]"></div>
                                                     <div class="flex flex-col justify-center">
-                                                        <p class="text-[9px] font-bold text-white/30 uppercase leading-none mb-1.5">Mulai</p>
-                                                        <p class="text-[11px] font-bold text-white leading-tight">
+                                                        <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1.5">Mulai</p>
+                                                        <p class="text-[11px] font-bold text-foreground leading-tight">
                                                             {{ $rental->waktu_mulai->translatedFormat('d M, H:i') }}<br>
-                                                            <span class="text-[10px] font-semibold text-sky-400 uppercase tracking-tighter">{{ $rental->waktu_mulai->translatedFormat('l') }}</span>
+                                                            <span class="text-[10px] font-semibold text-sky-500 uppercase tracking-tighter">{{ $rental->waktu_mulai->translatedFormat('l') }}</span>
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div class="flex items-stretch gap-2.5">
                                                     <div class="w-1 bg-emerald-500 rounded-full shrink-0 my-0.5 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
                                                     <div class="flex flex-col justify-center">
-                                                        <p class="text-[9px] font-bold text-white/30 uppercase leading-none mb-1.5">Selesai</p>
-                                                        <p class="text-[11px] font-bold text-white leading-tight">
+                                                        <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1.5">Selesai</p>
+                                                        <p class="text-[11px] font-bold text-foreground leading-tight">
                                                             {{ $rental->waktu_selesai->translatedFormat('d M, H:i') }}<br>
-                                                            <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-tighter">{{ $rental->waktu_selesai->translatedFormat('l') }}</span>
+                                                            <span class="text-[10px] font-semibold text-emerald-500 uppercase tracking-tighter">{{ $rental->waktu_selesai->translatedFormat('l') }}</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -579,7 +607,7 @@
                                                 <button wire:click="openDendaModal({{ $rental->id }})"
                                                     class="flex-[2] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-black hover:bg-blue-500 hover:text-white transition-all shadow-sm active:scale-95 overflow-hidden whitespace-nowrap">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                                    Selesaikan
+                                                    {{ $isOverdue ? 'Selesaikan & Denda' : 'Selesaikan' }}
                                                 </button>
                                             </div>
 
@@ -592,7 +620,8 @@
                                         $hasLogs = false;
                                         if($iphoneUnits->isNotEmpty()) {
                                             foreach($iphoneUnits as $u) {
-                                                if($u->locations()->whereBetween('created_at', [$rental->waktu_mulai, $rental->waktu_selesai])->exists()) {
+                                                $logEndTime = $isOverdue ? now() : $rental->waktu_selesai;
+                                                if($u->locations()->whereBetween('created_at', [$rental->waktu_mulai, $logEndTime])->exists()) {
                                                     $hasLogs = true;
                                                     break;
                                                 }
@@ -606,25 +635,26 @@
                                                 <div class="space-y-1 max-h-[185px] overflow-y-auto pr-2 scrollbar-hide">
                                                     @foreach($iphoneUnits as $u)
                                                         @php 
+                                                            $logEndTime = $isOverdue ? now() : $rental->waktu_selesai;
                                                             $logs = $u->locations()
-                                                                ->whereBetween('created_at', [$rental->waktu_mulai, $rental->waktu_selesai])
+                                                                ->whereBetween('created_at', [$rental->waktu_mulai, $logEndTime])
                                                                 ->latest()
                                                                 ->limit(50)
                                                                 ->get();
                                                         @endphp
 
                                                         @foreach($logs as $loc)
-                                                            <div class="py-1.5 px-2.5 bg-white/[0.02] rounded-xl border border-white/5 flex items-center justify-between group/loc hover:bg-white/5 transition-all mb-1 last:mb-0">
+                                                            <div class="py-1.5 px-2.5 bg-muted/30 rounded-xl border border-border flex items-center justify-between group/loc hover:bg-muted/50 transition-all mb-1 last:mb-0">
                                                                 <div class="min-w-0 flex-1">
                                                                     <div class="flex items-center gap-1.5 mb-0.5">
-                                                                        <span class="text-[10px] sm:text-xs font-semibold text-white/90 leading-none">{{ $loc->created_at->format('H:i') }}</span>
-                                                                        <span class="text-[8px] sm:text-[9px] font-medium text-white/30 leading-none tracking-tight">{{ $loc->created_at->translatedFormat('d M Y') }}</span>
-                                                                        <span class="text-[7px] sm:text-[8px] font-medium text-white/10 hidden sm:inline">· {{ $loc->created_at->diffForHumans() }}</span>
+                                                                        <span class="text-[10px] sm:text-xs font-semibold text-foreground/90 leading-none">{{ $loc->created_at->format('H:i') }}</span>
+                                                                        <span class="text-[8px] sm:text-[9px] font-medium text-muted-foreground/60 leading-none tracking-tight">{{ $loc->created_at->translatedFormat('d M Y') }}</span>
+                                                                        <span class="text-[7px] sm:text-[8px] font-medium text-muted-foreground/30 hidden sm:inline">· {{ $loc->created_at->diffForHumans() }}</span>
                                                                     </div>
                                                                     @if($loc->address)
                                                                         <p class="text-[9px] sm:text-[10px] text-emerald-500/60 font-medium leading-tight truncate pr-2">{{ $loc->address }}</p>
                                                                     @else
-                                                                        <p class="text-[8px] sm:text-[9px] text-white/20 truncate italic font-light">{{ $loc->lat }}, {{ $loc->lng }}</p>
+                                                                        <p class="text-[8px] sm:text-[9px] text-muted-foreground/40 truncate italic font-light">{{ $loc->lat }}, {{ $loc->lng }}</p>
                                                                     @endif
                                                                 </div>
                                                                 
@@ -634,7 +664,7 @@
                                                                             <span class="text-[9px] sm:text-[10px] font-semibold {{ (int)$loc->battery_level < 20 ? 'text-rose-500' : 'text-emerald-500/40' }}">{{ (int)$loc->battery_level }}%</span>
                                                                         </div>
                                                                     @endif
-                                                                    <a href="{{ route('admin.radar') }}?unit_id={{ $u->id }}" class="h-7 w-7 rounded-lg bg-white/5 text-white/20 flex items-center justify-center hover:bg-emerald-500 hover:text-white border border-white/5 transition-all">
+                                                                    <a href="{{ route('admin.radar') }}?unit_id={{ $u->id }}" class="h-7 w-7 rounded-lg bg-muted border border-border text-muted-foreground flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all">
                                                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                                                                     </a>
                                                                 </div>
@@ -661,7 +691,7 @@
             </div>
 
             <!-- 2. UPCOMING RENTALS SECTION -->
-            <div class="space-y-6">
+            <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-border dark:border-white/10 pb-4">
                     <div class="flex items-center gap-3">
                         <div
@@ -701,22 +731,18 @@
                                 <div @click="expanded = !expanded"
                                     class="p-2 sm:p-3 md:p-4 flex items-center justify-between gap-2 cursor-pointer bg-background hover:bg-muted/5 transition-colors">
                                     <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                        <div class="flex -space-x-3 overflow-hidden shrink-0">
-                                            @foreach($rental->units as $u)
-                                                <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-muted border border-background flex items-center justify-center shadow-sm"
-                                                    title="{{ $u->seri }}">
-                                                    <span
-                                                        class="text-[7px] font-bold text-muted-foreground leading-none text-center px-0.5">
-                                                        {{ substr($u->seri, 0, 3) }}<br>{{ substr($u->seri, -2) }}
-                                                    </span>
-                                                </div>
-                                            @endforeach
-                                        </div>
                                         <div class="flex flex-col min-w-0">
                                             <div class="flex items-center gap-1.5">
-                                                <h3
-                                                    class="font-bold text-amber-600 dark:text-amber-400 text-[10px] sm:text-sm truncate tracking-tight">
-                                                    {{ $rental->units->pluck('seri')->join(', ') }}</h3>
+                                                <div class="flex items-center gap-1.5 min-w-0">
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        @foreach($rental->units as $u)
+                                                            <span class="inline-flex items-center rounded border border-border/50 bg-muted/60 px-1 py-0.5 font-mono text-[8px] font-bold text-muted-foreground italic">#{{ str_pad($u->id, 3, '0', STR_PAD_LEFT) }}</span>
+                                                        @endforeach
+                                                    </div>
+                                                    <h3
+                                                        class="font-bold text-amber-600 dark:text-amber-400 text-[10px] sm:text-sm truncate tracking-tight">
+                                                        {{ $rental->units->pluck('seri')->join(', ') }}</h3>
+                                                </div>
                                             </div>
                                             <div class="flex items-center gap-1.5 mt-1">
                                                 <span
@@ -768,7 +794,7 @@
                                         {{-- Kolom 1: Data Diri --}}
                                         <div class="space-y-4">
                                             <div class="flex items-center gap-2 mt-1.5">
-                                                <p class="text-sm font-bold text-white leading-tight">
+                                                <p class="text-sm font-bold text-foreground leading-tight">
                                                     {{ $rental->nama }}</p>
                                                 @if($rental->sosial_media)
                                                     <span class="text-[10px] font-medium text-sky-400/60 transition-colors hover:text-sky-400 cursor-default">@ {{ $rental->sosial_media }}</span>
@@ -781,11 +807,11 @@
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">NIK / Identitas</p>
-                                                    <p class="text-xs font-medium text-white/90 mt-1.5">{{ $rental->nik }}</p>
+                                                    <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">NIK / Identitas</p>
+                                                    <p class="text-xs font-medium text-foreground mt-1.5">{{ $rental->nik }}</p>
                                                 </div>
                                                 <div>
-                                                    <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">Booking Code</p>
+                                                    <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">Booking Code</p>
                                                     <div class="mt-1.5">
                                                         <span class="inline-flex items-center rounded border bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-tight">
                                                             {{ $rental->booking_code }}
@@ -794,33 +820,33 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <p class="text-[9px] font-bold text-white/40 uppercase leading-none tracking-wider">Alamat Lengkap</p>
-                                                <p class="text-xs font-medium text-white/90 leading-tight mt-1.5">
+                                                <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">Alamat Lengkap</p>
+                                                <p class="text-xs font-medium text-foreground leading-tight mt-1.5">
                                                     {{ $rental->alamat ?: '-' }}</p>
                                             </div>
                                         </div>
 
                                         {{-- Kolom 2: Jadwal --}}
                                         <div class="space-y-4">
-                                            <h4 class="text-[10px] font-bold text-white/40 tracking-widest uppercase mb-1">Jadwal Sewa</h4>
+                                            <h4 class="text-[10px] font-bold text-muted-foreground tracking-widest uppercase mb-1">Jadwal Sewa</h4>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="flex items-stretch gap-2.5">
                                                     <div class="w-1 bg-sky-500 rounded-full shrink-0 my-0.5 shadow-[0_0_8px_rgba(14,165,233,0.4)]"></div>
                                                     <div class="flex flex-col justify-center">
-                                                        <p class="text-[9px] font-bold text-white/30 uppercase leading-none mb-1.5">Mulai</p>
-                                                        <p class="text-[11px] font-bold text-white leading-tight">
+                                                        <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1.5">Mulai</p>
+                                                        <p class="text-[11px] font-bold text-foreground leading-tight">
                                                             {{ $rental->waktu_mulai->translatedFormat('d M, H:i') }}<br>
-                                                            <span class="text-[10px] font-semibold text-sky-400 uppercase tracking-tighter">{{ $rental->waktu_mulai->translatedFormat('l') }}</span>
+                                                            <span class="text-[10px] font-semibold text-sky-500 uppercase tracking-tighter">{{ $rental->waktu_mulai->translatedFormat('l') }}</span>
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div class="flex items-stretch gap-2.5">
                                                     <div class="w-1 bg-emerald-500 rounded-full shrink-0 my-0.5 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
                                                     <div class="flex flex-col justify-center">
-                                                        <p class="text-[9px] font-bold text-white/30 uppercase leading-none mb-1.5">Selesai</p>
-                                                        <p class="text-[11px] font-bold text-white leading-tight">
+                                                        <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1.5">Selesai</p>
+                                                        <p class="text-[11px] font-bold text-foreground leading-tight">
                                                             {{ $rental->waktu_selesai->translatedFormat('d M, H:i') }}<br>
-                                                            <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-tighter">{{ $rental->waktu_selesai->translatedFormat('l') }}</span>
+                                                            <span class="text-[10px] font-semibold text-emerald-500 uppercase tracking-tighter">{{ $rental->waktu_selesai->translatedFormat('l') }}</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -902,10 +928,12 @@
                                     class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span> <span
                                     class="text-xs font-semibold text-amber-600 dark:text-amber-400">Menunggu
                                     Pembayaran</span>
-                                @elseif($r->status === 'paid') <span class="h-2 w-2 rounded-full bg-blue-500"></span> <span
-                                    class="text-xs font-semibold text-blue-600 dark:text-blue-400">Dibayar (Aktif)</span>
-                                @elseif($r->status === 'completed') <span class="h-2 w-2 rounded-full bg-green-500"></span>
-                                    <span class="text-xs font-semibold text-green-600 dark:text-green-400">Selesai</span>
+                                @elseif($r->status === 'paid') <span class="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span> <span
+                                    class="text-xs font-bold text-blue-600 dark:text-blue-400 tracking-wide uppercase">Paid</span>
+                                @elseif($r->status === 'renting') <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> <span
+                                    class="text-xs font-bold text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">Renting</span>
+                                @elseif($r->status === 'completed') <span class="h-2 w-2 rounded-full bg-slate-500"></span>
+                                    <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Selesai</span>
                                 @else <span class="h-2 w-2 rounded-full bg-red-500"></span> <span
                                     class="text-xs font-semibold text-red-600 dark:text-red-400">Dibatalkan</span>
                                 @endif
@@ -933,9 +961,19 @@
                                         class="text-sm font-bold text-primary hover:underline italic">{{ $r->no_wa }}</a>
                                 </div>
                                 <div>
-                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5">Identitas (NIK)</p>
-                                    <p class="text-sm font-medium text-foreground ">{{ $r->nik }}</p>
+                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Identitas (NIK)</p>
+                                    <p class="text-xs font-medium text-foreground tracking-widest">{{ $r->nik }}</p>
                                 </div>
+                                <div>
+                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Alamat Email</p>
+                                    <p class="text-xs font-medium text-foreground truncate">{{ $r->email }}</p>
+                                </div>
+                                @if($r->sosial_media)
+                                <div>
+                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase tracking-wider">Sosial Media</p>
+                                    <p class="text-xs font-black text-sky-500 italic">@ {{ ltrim($r->sosial_media, '@') }}</p>
+                                </div>
+                                @endif
                             </div>
                         </div>
 
@@ -948,7 +986,10 @@
                                     <div class="space-y-2 mt-1">
                                         @foreach($r->units as $u)
                                             <div class="p-2 rounded bg-muted/50 border border-border/50">
-                                                <p class="text-sm font-bold text-foreground">{{ $u->seri }}</p>
+                                                <p class="text-sm font-bold text-foreground flex items-center gap-2">
+                                                    <span class="inline-flex items-center rounded border border-border/50 bg-muted/60 px-1.5 py-0.5 font-mono text-[9px] font-bold text-muted-foreground leading-none">#{{ str_pad($u->id, 3, '0', STR_PAD_LEFT) }}</span>
+                                                    {{ $u->seri }}
+                                                </p>
                                                 <p class="text-[9px] text-muted-foreground">{{ $u->warna }}</p>
                                             </div>
                                         @endforeach
@@ -967,6 +1008,34 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Logistik & Serah Terima -->
+                    @if($r->handed_over_at || $r->completed_at)
+                    <div class="space-y-4 pt-6 border-t border-border">
+                        <h4 class="text-[9px] font-bold text-muted-foreground/70 tracking-widest uppercase italic">Histori Logistik & Inventaris</h4>
+                        <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                            @if($r->handed_over_at)
+                                <div class="bg-muted/30 p-2.5 rounded-lg border border-border/50">
+                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Unit Diambil</p>
+                                    <p class="text-xs font-black text-foreground">{{ $r->handed_over_at->format('d M Y, H:i') }}</p>
+                                </div>
+                            @endif
+                            @if($r->completed_at)
+                                <div class="bg-muted/30 p-2.5 rounded-lg border border-border/50">
+                                    <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Unit Kembali</p>
+                                    <p class="text-xs font-black text-foreground">{{ $r->completed_at->format('d M Y, H:i') }}</p>
+                                </div>
+                            @endif
+                        </div>
+                        
+                        @if($r->catatan_kerusakan)
+                            <div class="p-3 rounded-xl bg-orange-500/5 border border-orange-500/10">
+                                <p class="text-[9px] font-bold text-orange-600 uppercase tracking-widest leading-none">Catatan Kondisi Unit</p>
+                                <p class="text-xs font-medium text-foreground mt-2 leading-relaxed italic">{{ $r->catatan_kerusakan }}</p>
+                            </div>
+                        @endif
+                    </div>
+                    @endif
 
                     <!-- Financial Summary -->
                     <div class="space-y-4 pt-4 border-t border-border">
@@ -992,11 +1061,18 @@
                                         <td class="py-2.5 px-4 text-right font-medium text-xs">+ Rp
                                             {{ $r->kode_unik_pembayaran }}</td>
                                     </tr>
-                                    @if($r->denda > 0 || $r->denda_kerusakan > 0)
+                                    @if($r->denda > 0)
                                         <tr class="bg-amber-500/5">
-                                            <td class="py-2.5 px-4 text-amber-600 font-bold text-xs">Total Denda</td>
+                                            <td class="py-2.5 px-4 text-amber-600 font-medium text-xs">Denda Keterlambatan</td>
                                             <td class="py-2.5 px-4 text-right font-bold text-amber-600 text-xs">+ Rp
-                                                {{ number_format($r->denda + $r->denda_kerusakan, 0, ',', '.') }}</td>
+                                                {{ number_format($r->denda, 0, ',', '.') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if($r->denda_kerusakan > 0)
+                                        <tr class="bg-rose-500/5">
+                                            <td class="py-2.5 px-4 text-rose-600 font-medium text-xs">Biaya Kerusakan/Lainnya</td>
+                                            <td class="py-2.5 px-4 text-right font-bold text-rose-600 text-xs">+ Rp
+                                                {{ number_format($r->denda_kerusakan, 0, ',', '.') }}</td>
                                         </tr>
                                     @endif
                                     <tr class="bg-primary/5">

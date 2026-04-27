@@ -89,9 +89,7 @@
                     <div class="flex items-center justify-between text-sm">
                         <span class="font-semibold text-foreground">
                             {{ $unit->seri }}
-                            @if($unit->imei)
-                                <span class="opacity-50 text-[10px] font-mono">(...{{ substr($unit->imei, -4) }})</span>
-                            @endif
+                                <span class="opacity-50 text-[10px] font-mono">[#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}]</span>
                         </span>
                         <span class="text-xs text-muted-foreground">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
                     </div>

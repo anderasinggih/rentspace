@@ -130,7 +130,7 @@ class Monitoring extends Component
 
         if ($this->completingTrxId) {
             $rental = Rental::findOrFail($this->completingTrxId);
-            if (in_array($rental->status, ['pending', 'paid'])) {
+            if (in_array($rental->status, ['pending', 'paid', 'renting'])) {
                 $newGrandTotal = $rental->grand_total + (int)$this->dendaAmount + (int)$this->dendaKerusakanAmount;
                 $rental->update([
                     'status' => 'completed',
@@ -152,10 +152,21 @@ class Monitoring extends Component
     {
         if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $rental = Rental::findOrFail($id);
-        if (in_array($rental->status, ['pending', 'paid'])) {
+        if (in_array($rental->status, ['pending', 'paid', 'renting'])) {
             $rental->update(['status' => 'completed', 'denda' => 0, 'denda_payment_method' => null, 'completed_at' => now()]);
             $this->calculateAffiliateCommission($rental);
             $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} tanpa denda via Monitoring");
+        }
+    }
+
+    public function handover($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $rental = Rental::findOrFail($id);
+        if ($rental->status === 'paid') {
+            $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
+            $this->logActivity('handover_unit', $rental, "Serah terima unit untuk transaksi #{$rental->id}");
+            session()->flash('message', 'Unit berhasil diserah-terimakan. Status sekarang: Renting.');
         }
     }
 
@@ -213,8 +224,9 @@ class Monitoring extends Component
             $dates[] = $startDate->copy()->addDays($i);
         }
 
+        // 1. Fetch Timeline Units & Rentals
         $unitsQuery = Unit::query()->with(['category', 'rentals' => function ($q) use ($startDate, $endDate) {
-            $q->whereIn('status', ['paid', 'pending', 'completed'])
+            $q->whereIn('status', ['paid', 'pending', 'completed', 'renting'])
               ->where('waktu_mulai', '<=', $endDate)
               ->where('waktu_selesai', '>=', $startDate)
               ->when($this->search, function($q) {
@@ -243,12 +255,11 @@ class Monitoring extends Component
         $categories = \App\Models\Category::orderBy('name')->get();
 
         // 3. Fetch Currently Rented Units (Active Now)
+        // 3. Fetch Currently Rented Units (Status is 'renting' and started)
         $activeRentalsQuery = Rental::with(['units.category', 'units.locations' => function($q) use ($startDate, $endDate) {
             $q->latest()->limit(1);
         }])
-            ->where('status', 'paid')
-            ->where('waktu_mulai', '<=', now())
-            ->where('waktu_selesai', '>=', now());
+            ->where('status', 'renting');
             
         if ($this->search) {
             $activeRentalsQuery->where(function($q) {
@@ -260,10 +271,11 @@ class Monitoring extends Component
         
         $activeRentals = $activeRentalsQuery->orderBy('waktu_selesai', 'asc')->get();
 
-        // 4. Fetch Upcoming Rentals (Booked for Future)
+        // 4. Fetch Upcoming & Ready to Collect (Status is 'paid' or 'pending')
         $upcomingRentalsQuery = Rental::with(['units.category'])
-            ->whereIn('status', ['paid', 'pending'])
-            ->where('waktu_mulai', '>', now());
+            ->whereIn('status', ['paid', 'pending']);
+            // Note: we don't strictly filter by waktu_mulai > now anymore, 
+            // since a PAID rental that is supposed to start might be waiting for pickup
 
         if ($this->search) {
             $upcomingRentalsQuery->where(function($q) {

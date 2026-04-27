@@ -159,7 +159,7 @@
                                         @endif
                                     </div>
                                     <h2 class="text-3xl font-black tracking-tight leading-none">{{ $scannedUnit->seri }}</h2>
-                                    <p class="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">IMEI: {{ $scannedUnit->imei }}</p>
+                                    <p class="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Unit ID: #{{ str_pad($scannedUnit->id, 3, '0', STR_PAD_LEFT) }}</p>
                                 </div>
                                 <div class="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-colors {{ $activeRental && $activeRental->status === 'active' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' : ($activeRental ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' : 'bg-green-500/10 text-green-600 border-green-500/20') }}">
                                     {{ $activeRental && $activeRental->status === 'active' ? 'Sedang Disewa' : ($activeRental ? 'Siap Diambil' : 'Tersedia') }}

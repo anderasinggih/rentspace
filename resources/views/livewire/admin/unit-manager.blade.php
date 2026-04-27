@@ -105,7 +105,8 @@
                                             class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5' : (!$unit->is_active ? 'opacity-50' : '') }}">
                                             <td class="px-3 sm:px-6 py-1.5 sm:py-2 align-middle">
                                                 <div
-                                                    class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'text-red-900 dark:text-red-300' : '' }}">
+                                                    class="font-bold text-xs sm:text-sm {{ $unit->trashed() ? 'text-red-900 dark:text-red-300' : '' }} flex items-center gap-1.5">
+                                                    <span class="inline-flex items-center rounded border border-border/50 bg-muted/60 px-1.5 py-0.5 font-mono text-[9px] font-bold text-muted-foreground leading-none">#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}</span>
                                                     {{ $unit->seri }}
                                                     @if($unit->category)
                                                         <x-ui.badge

@@ -111,6 +111,17 @@ class Transactions extends Component
         }
     }
 
+    public function handover($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $rental = Rental::findOrFail($id);
+        if ($rental->status === 'paid') {
+            $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
+            $this->logActivity('handover_unit', $rental, "Serah terima unit untuk transaksi #{$rental->id} (via Transaksi)");
+            session()->flash('message', 'Unit berhasil diserah-terimakan.');
+        }
+    }
+
     public function cancel($id)
     {
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
@@ -209,7 +220,7 @@ class Transactions extends Component
 
         if ($this->completingTrxId) {
             $rental = Rental::findOrFail($this->completingTrxId);
-            if (in_array($rental->status, ['pending', 'paid'])) {
+            if (in_array($rental->status, ['pending', 'paid', 'renting'])) {
                 $newGrandTotal = $rental->grand_total + (int)$this->dendaAmount + (int)$this->dendaKerusakanAmount;
                 $rental->update([
                     'status' => 'completed',
@@ -234,7 +245,7 @@ class Transactions extends Component
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
-        if (in_array($rental->status, ['pending', 'paid'])) {
+        if (in_array($rental->status, ['pending', 'paid', 'renting'])) {
             $rental->update([
                 'status' => 'completed',
                 'denda' => 0,

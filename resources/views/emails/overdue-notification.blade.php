@@ -34,9 +34,7 @@
                 <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600;">
                     @foreach($rental->units as $unit)
                         <div>{{ $unit->seri }} 
-                            @if($unit->imei)
-                                <span style="font-size: 11px; color: #64748b; font-family: monospace; font-weight: 400;">(...{{ substr($unit->imei, -4) }})</span>
-                            @endif
+                                <span style="font-size: 11px; color: #64748b; font-family: monospace; font-weight: 400;">[#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}]</span>
                         </div>
                     @endforeach
                 </td>

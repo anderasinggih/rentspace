@@ -39,9 +39,7 @@
             <div style="padding: 10px; background-color: #f8fafc; border-radius: 6px; border: 1px solid #f1f5f9; margin-bottom: 8px;">
                 <span style="font-size: 13px; font-weight: 600; color: #0f172a;">
                     {{ $unit->seri }}
-                    @if($unit->imei)
-                        <span style="font-size: 11px; color: #64748b; font-family: monospace; font-weight: 400; margin-left: 4px;">(...{{ substr($unit->imei, -4) }})</span>
-                    @endif
+                    <span style="font-size: 11px; color: #64748b; font-family: monospace; font-weight: 400; margin-left: 4px;">[#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}]</span>
                 </span>
             </div>
             @endforeach
