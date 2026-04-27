@@ -17,9 +17,7 @@ class RadarDevices extends Component
             $q->whereHas('category', function($cq) {
                 $cq->where('name', 'like', '%iphone%');
             });
-        }, 'units.locations' => function($q) {
-            $q->latest()->limit(50); // Fetch more points for route shadow
-        }, 'units.category'])
+        }, 'units.locations', 'units.category'])
         ->where(function($q) {
             $q->where('status', 'renting')
               ->orWhere(function($sq) {
@@ -32,13 +30,17 @@ class RadarDevices extends Component
         // Map data for Leaflet
         $devices = [];
         foreach($rentals as $rental) {
+            $startTime = $rental->handed_over_at ?? $rental->waktu_mulai;
+            
             foreach($rental->units as $unit) {
                 if($unit->category && str_contains(strtolower($unit->category->name), 'iphone')) {
-                    $locs = $unit->locations; // Already limited to 50 in 'with'
+                    // Filter locations that only happened during this rental period
+                    $locs = $unit->locations->where('created_at', '>=', $startTime)->sortByDesc('created_at');
                     $lastLoc = $locs->first();
                     
                     // Sort history from Oldest to Newest to draw a connected line in order
-                    $history = $locs->reverse()->map(fn($l) => [$l->lat, $l->lng])->values()->toArray();
+                    // Limit to 100 points to keep the map smooth
+                    $history = $locs->take(100)->reverse()->map(fn($l) => [$l->lat, $l->lng])->values()->toArray();
 
                     $devices[] = [
                         'id' => $unit->id,

@@ -38,8 +38,9 @@ class Dashboard extends Component
         }
     }
 
-    public function updatedPreset()
+    public function selectPreset($p)
     {
+        $this->preset = $p;
         if ($this->preset !== 'custom') {
             if ($this->preset === 'all') {
                 $firstRental = Rental::min('created_at');
@@ -56,6 +57,17 @@ class Dashboard extends Component
             $this->updateDateRangeLabel();
             $this->updateCharts();
         }
+    }
+
+    public function updatedPreset()
+    {
+        $this->selectPreset($this->preset);
+    }
+
+    public function setHeatmapYear($year)
+    {
+        $this->heatmapYear = $year;
+        $this->updateCharts();
     }
 
     public function updateDateRangeLabel()

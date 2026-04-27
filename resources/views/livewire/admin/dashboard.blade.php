@@ -128,12 +128,12 @@
                 ];
             @endphp
             @foreach($presets as $p)
-                <button wire:click="$set('preset', '{{ $p['val'] }}')"
+                <button wire:click="selectPreset('{{ $p['val'] }}')"
                     class="flex-1 h-7 rounded text-[10px] font-bold transition-all shrink-0 {{ $preset === $p['val'] ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/50 text-muted-foreground hover:bg-muted' }}">
                     {{ $p['label'] }}
                 </button>
             @endforeach
-            <button wire:click="$set('preset', 'custom')"
+            <button wire:click="selectPreset('custom')"
                 class="px-4 h-7 rounded text-[10px] font-bold transition-all shrink-0 {{ $preset === 'custom' ? 'bg-amber-500 text-black' : 'bg-muted/50 text-muted-foreground hover:bg-muted' }}">
                 C
             </button>
@@ -269,7 +269,7 @@
                 <div
                     class="flex flex-row md:flex-col gap-1.5 md:gap-2 shrink-0 md:border-l border-border md:pl-4 py-2 border-t md:border-t-0 mt-3 md:mt-0 pt-3 md:pt-0 overflow-x-auto no-scrollbar">
                     @foreach($availableYears as $year)
-                        <button wire:click="$set('heatmapYear', {{ $year }})"
+                        <button wire:click="setHeatmapYear({{ $year }})"
                             class="text-[9px] font-black transition-all px-2 md:px-0 py-1 rounded {{ $heatmapYear == $year ? 'text-primary' : 'text-stock-label hover:text-foreground' }}">
                             {{ $year }}
                         </button>
