@@ -53,12 +53,12 @@
 
                 <div class="hidden sm:flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-end">
                     <div class="w-full sm:w-auto">
-                        <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Dari</label>
+                        <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Mulai</label>
                         <input type="date" wire:model.live="dateStart"
                             class="h-9 w-full sm:w-[140px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                     </div>
                     <div class="w-full sm:w-auto">
-                        <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Sampai</label>
+                        <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Hingga</label>
                         <input type="date" wire:model.live="dateEnd"
                             class="h-9 w-full sm:w-[140px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                     </div>
@@ -67,12 +67,12 @@
                         <select wire:model.live="filterStatus"
                             class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             <option value="">Semua</option>
-                            <option value="pending">⏳ Pending</option>
-                            <option value="paid">💳 Lunas (Siap Ambil)</option>
-                            <option value="renting">📱 Sedang Disewa</option>
-                            <option value="completed">✅ Selesai</option>
-                            <option value="cancelled">❌ Batal</option>
-                            <option value="trashed">🗑️ Terhapus</option>
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="renting">Rent</option>
+                            <option value="completed">Done</option>
+                            <option value="cancelled">Cancel</option>
+                            <option value="trashed">Trashed</option>
                         </select>
                     </div>
                 </div>

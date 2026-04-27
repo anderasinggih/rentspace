@@ -130,7 +130,7 @@ class Monitoring extends Component
 
         if ($this->completingTrxId) {
             $rental = Rental::findOrFail($this->completingTrxId);
-            if (in_array($rental->status, ['pending', 'paid', 'renting'])) {
+            if ($rental->status === 'renting') {
                 $newGrandTotal = $rental->grand_total + (int)$this->dendaAmount + (int)$this->dendaKerusakanAmount;
                 $rental->update([
                     'status' => 'completed',
@@ -152,7 +152,7 @@ class Monitoring extends Component
     {
         if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $rental = Rental::findOrFail($id);
-        if (in_array($rental->status, ['pending', 'paid', 'renting'])) {
+        if ($rental->status === 'renting') {
             $rental->update(['status' => 'completed', 'denda' => 0, 'denda_payment_method' => null, 'completed_at' => now()]);
             $this->calculateAffiliateCommission($rental);
             $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} tanpa denda via Monitoring");

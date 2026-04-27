@@ -220,7 +220,7 @@ class Transactions extends Component
 
         if ($this->completingTrxId) {
             $rental = Rental::findOrFail($this->completingTrxId);
-            if (in_array($rental->status, ['pending', 'paid', 'renting'])) {
+            if ($rental->status === 'renting') {
                 $newGrandTotal = $rental->grand_total + (int)$this->dendaAmount + (int)$this->dendaKerusakanAmount;
                 $rental->update([
                     'status' => 'completed',
@@ -245,7 +245,7 @@ class Transactions extends Component
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
-        if (in_array($rental->status, ['pending', 'paid', 'renting'])) {
+        if ($rental->status === 'renting') {
             $rental->update([
                 'status' => 'completed',
                 'denda' => 0,
@@ -468,10 +468,10 @@ class Transactions extends Component
                 $q->where('status', $this->filterStatus);
             })
             ->when($this->dateStart, function ($q) {
-                $q->whereDate('created_at', '>=', $this->dateStart);
+                $q->whereDate('waktu_mulai', '>=', $this->dateStart);
             })
             ->when($this->dateEnd, function ($q) {
-                $q->whereDate('created_at', '<=', $this->dateEnd);
+                $q->whereDate('waktu_mulai', '<=', $this->dateEnd);
             })
             ->orderBy('created_at', 'desc')
             ->get();
@@ -575,10 +575,10 @@ class Transactions extends Component
             $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
         })
             ->when($this->dateStart, function ($q) {
-            $q->whereDate('created_at', '>=', $this->dateStart);
+            $q->whereDate('waktu_mulai', '>=', $this->dateStart);
         })
             ->when($this->dateEnd, function ($q) {
-            $q->whereDate('created_at', '<=', $this->dateEnd);
+            $q->whereDate('waktu_mulai', '<=', $this->dateEnd);
         })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);

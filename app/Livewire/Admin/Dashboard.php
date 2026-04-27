@@ -315,9 +315,7 @@ class Dashboard extends Component
         $heatmapData = $chartInfo['heatmap'];
 
         $activeRentals = Rental::with(['units' => function($q) { $q->withTrashed(); }])
-            ->whereIn('status', ['paid', 'pending', 'renting'])
-            ->where(fn($q) => $q->where('waktu_mulai', '<=', now()))
-            ->where(fn($q) => $q->where('waktu_selesai', '>=', now()))
+            ->where('status', 'renting')
             ->get();
 
         // Advanced Analysis

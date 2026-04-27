@@ -382,7 +382,7 @@
                             <tr>
                                 <td colspan="3"
                                     class="px-6 py-12 text-center text-muted-foreground text-[10px] font-semibold uppercase">
-                                    No Active Rentals</td>
+                                    No Units Currently Rented</td>
                             </tr>
                         @endforelse
                     </tbody>
