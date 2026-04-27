@@ -291,10 +291,10 @@
                         </div>
                         <div>
                             <label class="text-sm font-medium leading-none">Alamat Email (Untuk Terima Invoice)</label>
-                            <input type="email" wire:model="email"
-                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            <input type="email" wire:model.live.debounce.500ms="email"
+                                class="mt-2 flex h-10 w-full rounded-md border {{ $errors->has('email') ? 'border-red-500 bg-red-50' : 'border-input bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
                                 placeholder="nama@email.com">
-                            @error('email') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            @error('email') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="text-sm font-medium leading-none">Nomor Telepon / WhatsApp</label>
@@ -534,6 +534,19 @@
                     @error('agree') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                <!-- General Error Message -->
+                @if($errors->any())
+                    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs font-bold text-center animate-in fade-in slide-in-from-top-1 duration-300">
+                        <p>Ups! Ada data yang belum sesuai:</p>
+                        <ul class="mt-2 list-none space-y-1 opacity-80">
+                            @foreach ($errors->all() as $error)
+                                <li>• {{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <p class="mt-3 text-[10px] uppercase tracking-widest opacity-60">Mohon perbaiki data pada langkah sebelumnya.</p>
+                    </div>
+                @endif
+
                 <button type="submit" wire:loading.attr="disabled"
                     class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-8.5 font-bold text-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all">
                     <span wire:loading.remove wire:target="submit">Sewa & Lanjut Pembayaran</span>
@@ -707,8 +720,15 @@
                 const wa = $wire.get('no_wa');
                 const sm = $wire.get('sosial_media');
                 const em = $wire.get('email');
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                
                 if(!nk || !nm || !wa || !sm || !em) {
                     alert('Harap lengkapi Data Diri (NIK, Nama, Email, No. WhatsApp, Sosial Media) terlebih dahulu.');
+                    return;
+                }
+                
+                if(!emailRegex.test(em)) {
+                    alert('Format alamat email tidak valid.');
                     return;
                 }
                 this.step = 3;

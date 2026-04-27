@@ -383,6 +383,11 @@
                                                                                                                                     @foreach($inspectTrx->units as $u)
                                                                                                                                         <span class="inline-flex items-center rounded-md border border-border bg-muted/30 px-2 py-0.5 text-[10px] font-semibold text-foreground">
                                                                                                                                             {{ $u->seri }}
+                                                                                                                                            @if($u->imei)
+                                                                                                                                                <span class="ml-1 opacity-60 font-mono text-[9px] tracking-tighter">
+                                                                                                                                                    (...{{ substr($u->imei, -4) }})
+                                                                                                                                                </span>
+                                                                                                                                            @endif
                                                                                                                                         </span>
                                                                                                                                     @endforeach
                                                                                                                                 </div>
@@ -682,6 +687,11 @@
                                 <div>
                                     <label class="block text-xs font-medium text-muted-foreground mb-1">NIK</label>
                                     <input type="text" wire:model="edit_nik"
+                                        class="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-muted-foreground mb-1">Email</label>
+                                    <input type="email" wire:model="edit_email"
                                         class="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary outline-none">
                                 </div>
                                 <div>

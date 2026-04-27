@@ -34,7 +34,12 @@
         <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
             @foreach($rental->items as $item)
             <tr>
-                <td style="padding: 8px 0; color: #09090b; font-weight: 500;">{{ $item->unit->seri }}</td>
+                <td style="padding: 8px 0; color: #09090b; font-weight: 500;">
+                    {{ $item->unit->seri }}
+                    @if($item->unit->imei)
+                        <span style="font-size: 11px; color: #71717a; font-family: monospace;">(...{{ substr($item->unit->imei, -4) }})</span>
+                    @endif
+                </td>
                 <td style="padding: 8px 0; text-align: right; color: #09090b; font-weight: 600;">Rp{{ number_format($item->price_snapshot, 0, ',', '.') }}</td>
             </tr>
             @endforeach

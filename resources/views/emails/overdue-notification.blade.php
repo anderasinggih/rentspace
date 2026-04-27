@@ -29,6 +29,18 @@
                 <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">Jadwal Kembali</td>
                 <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: right; color: #e11d48; font-weight: 700;">{{ \Carbon\Carbon::parse($rental->waktu_selesai)->format('H:i') }} WIB</td>
             </tr>
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">Unit Belum Kembali</td>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600;">
+                    @foreach($rental->units as $unit)
+                        <div>{{ $unit->seri }} 
+                            @if($unit->imei)
+                                <span style="font-size: 11px; color: #64748b; font-family: monospace; font-weight: 400;">(...{{ substr($unit->imei, -4) }})</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </td>
+            </tr>
         </table>
 
         <div style="margin-top: 30px; text-align: center; space-x-10">

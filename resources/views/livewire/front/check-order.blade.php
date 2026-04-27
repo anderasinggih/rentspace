@@ -202,7 +202,11 @@
                                                     <div class="bg-muted/40 rounded-xl px-4 py-3">
                                                         <div>
                                                             <p class="text-sm font-semibold text-foreground leading-tight">
-                                                                {{ $unit->seri }}</p>
+                                                                {{ $unit->seri }}
+                                                                @if($unit->imei)
+                                                                    <span class="opacity-50 text-[10px] font-mono">(...{{ substr($unit->imei, -4) }})</span>
+                                                                @endif
+                                                            </p>
                                                             <p class="text-xs text-muted-foreground">{{ $unit->warna }} &bull;
                                                                 {{ $unit->memori }}</p>
                                                         </div>

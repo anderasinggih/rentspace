@@ -132,6 +132,12 @@ class BookingForm extends Component
         if (in_array($propertyName, ['selected_category_id', 'unit_search'])) {
             $this->checkAvailability();
         }
+
+        if ($propertyName === 'email') {
+            $this->validateOnly('email', [
+                'email' => 'required|email'
+            ]);
+        }
     }
 
     public function checkAvailability()

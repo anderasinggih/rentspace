@@ -51,7 +51,7 @@ class Transactions extends Component
     // Edit & Completion Properties
     public $isEditingTrx = false;
     public $editTrxId = null;
-    public $edit_nama, $edit_nik, $edit_no_wa, $edit_alamat, $edit_sosial_media;
+    public $edit_nama, $edit_nik, $edit_email, $edit_no_wa, $edit_alamat, $edit_sosial_media;
     public $edit_waktu_mulai, $edit_waktu_selesai;
     public $edit_subtotal, $edit_diskon, $edit_denda, $edit_denda_kerusakan;
     public $edit_status, $edit_metode_pembayaran, $edit_catatan_kerusakan;
@@ -374,6 +374,7 @@ class Transactions extends Component
         $this->editTrxId = $trx->id;
         $this->edit_nama = $trx->nama;
         $this->edit_nik = $trx->nik;
+        $this->edit_email = $trx->email;
         $this->edit_no_wa = $trx->no_wa;
         $this->edit_alamat = $trx->alamat;
         $this->edit_sosial_media = $trx->sosial_media;
@@ -418,6 +419,7 @@ class Transactions extends Component
         $trx->update([
             'nama' => strtoupper($this->edit_nama),
             'nik' => $this->edit_nik,
+            'email' => $this->edit_email,
             'no_wa' => $this->edit_no_wa,
             'alamat' => strtoupper($this->edit_alamat),
             'sosial_media' => $this->edit_sosial_media,

@@ -87,7 +87,12 @@
                 <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">Item Yang Disewa</p>
                 @foreach($rental->units as $unit)
                     <div class="flex items-center justify-between text-sm">
-                        <span class="font-semibold text-foreground">{{ $unit->seri }}</span>
+                        <span class="font-semibold text-foreground">
+                            {{ $unit->seri }}
+                            @if($unit->imei)
+                                <span class="opacity-50 text-[10px] font-mono">(...{{ substr($unit->imei, -4) }})</span>
+                            @endif
+                        </span>
                         <span class="text-xs text-muted-foreground">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
                     </div>
                 @endforeach
