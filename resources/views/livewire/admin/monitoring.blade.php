@@ -474,7 +474,7 @@
                                                                 const h = Math.floor((diff % 86400) / 3600);
                                                                 const m = Math.floor((diff % 3600) / 60);
                                                                 
-                                                                this.timeLeft = d > 0 ? `${d}h ${h}m` : `${h}j ${m}m`;
+                                                                this.timeLeft = d > 0 ? `${d}d ${h}h` : (h > 0 ? `${h}h ${m}m` : `${m}m`);
                                                             }
                                                         }" x-init="update(); setInterval(() => update(), 60000)">
                                             <p
@@ -1129,10 +1129,20 @@
             </div>
             
             <div class="p-6 space-y-5">
-                <!-- Info Telat -->
-                <div class="p-3 rounded-xl {{ str_contains($lateDurationText, 'Tidak telat') ? 'bg-emerald-500/5 border border-emerald-500/10' : 'bg-rose-500/5 border border-rose-500/10' }}">
-                    <p class="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Durasi Keterlambatan</p>
-                    <p class="text-sm font-black {{ str_contains($lateDurationText, 'Tidak telat') ? 'text-emerald-600' : 'text-rose-600' }} mt-1">{{ $lateDurationText }}</p>
+                <div class="mb-6 flex items-center justify-between p-4 rounded-2xl {{ $isOverdue ? 'bg-rose-500/5 border border-rose-500/10' : 'bg-emerald-500/5 border border-emerald-500/10' }}">
+                    <div class="flex flex-col">
+                        <p class="text-[8px] font-black {{ $isOverdue ? 'text-rose-600' : 'text-emerald-600' }} tracking-widest uppercase mb-1">
+                            {{ $isOverdue ? 'Telat' : 'Sisa Waktu' }}
+                        </p>
+                        <p class="text-2xl font-black {{ $isOverdue ? 'text-rose-600' : 'text-emerald-600' }} font-mono tracking-tighter leading-none">
+                            {{ $lateDurationText }}
+                        </p>
+                    </div>
+                    <div class="h-10 w-10 rounded-xl {{ $isOverdue ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500' }} flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="space-y-4">
@@ -1185,7 +1195,7 @@
                 </div>
             </div>
         </div>
-    @endif
+    
 
 
 </div>

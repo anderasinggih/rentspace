@@ -568,14 +568,20 @@
                     <h3 class="text-lg font-bold mb-1 text-foreground">Validasi Pengembalian Unit</h3>
                     <p class="text-[11px] text-muted-foreground mb-1 leading-relaxed italic">Catat jika ada denda tambahan
                         sebelum menutup pesanan.</p>
-                    <div
-                        class="mb-4 inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200/50 dark:border-amber-900/50 text-[10px] font-bold uppercase">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        Durasi: {{ $lateDurationText }}
+                    <div class="mb-6 flex items-center justify-between p-4 rounded-2xl {{ $isOverdue ? 'bg-rose-500/5 border border-rose-500/10' : 'bg-emerald-500/5 border border-emerald-500/10' }}">
+                        <div class="flex flex-col">
+                            <p class="text-[8px] font-black {{ $isOverdue ? 'text-rose-600' : 'text-emerald-600' }} tracking-widest uppercase mb-1">
+                                {{ $isOverdue ? 'Telat' : 'Sisa Waktu' }}
+                            </p>
+                            <p class="text-2xl font-black {{ $isOverdue ? 'text-rose-600' : 'text-emerald-600' }} font-mono tracking-tighter leading-none">
+                                {{ $lateDurationText }}
+                            </p>
+                        </div>
+                        <div class="h-10 w-10 rounded-xl {{ $isOverdue ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500' }} flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
                     </div>
 
                     <div class="space-y-4">

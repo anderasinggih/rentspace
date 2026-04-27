@@ -62,6 +62,7 @@ class Transactions extends Component
     public $catatanKerusakan = '';
     public $dendaMethod = 'cash';
     public $lateDurationText = '';
+    public $isOverdue = false;
 
     // Inspect Modal
     public $inspectTrxId = null;
@@ -188,19 +189,13 @@ class Transactions extends Component
         // Calculate late duration
         $end = \Carbon\Carbon::parse($trx->waktu_selesai);
         $diff = now()->diff($end);
-        if (now() > $end) {
-            $parts = [];
-            if ($diff->d > 0)
-                $parts[] = $diff->d . ' hari';
-            if ($diff->h > 0)
-                $parts[] = $diff->h . ' jam';
-            if ($diff->i > 0)
-                $parts[] = $diff->i . ' menit';
-            $this->lateDurationText = implode(' ', $parts);
-        }
-        else {
-            $this->lateDurationText = 'Tidak telat (Dalam masa sewa)';
-        }
+        $this->isOverdue = now() > $end;
+
+        $parts = [];
+        if ($diff->d > 0) $parts[] = $diff->d . 'd';
+        if ($diff->h > 0) $parts[] = $diff->h . 'h';
+        if ($diff->i > 0) $parts[] = $diff->i . 'm';
+        $this->lateDurationText = !empty($parts) ? implode(' ', $parts) : '0m';
     }
 
     public function closeDendaModal()
