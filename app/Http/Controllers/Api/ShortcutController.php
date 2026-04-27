@@ -14,6 +14,12 @@ class ShortcutController extends Controller
 {
     public function handleAction(Request $request)
     {
+        \Log::info('Shortcut API Hit', [
+            'raw_input' => $request->all(),
+            'headers' => $request->headers->all(),
+            'method' => $request->method(),
+            'ip' => $request->ip()
+        ]);
         // 1. Validasi Token Keamanan
         $token = $request->header('X-Shortcut-Token');
         if (!$token || $token !== config('services.shortcut.token')) {
@@ -41,11 +47,11 @@ class ShortcutController extends Controller
             ], 404);
         }
 
-        // 4. Cari Transaksi Aktif (Status 'paid' dan belum 'completed')
+        // 4. Cari Transaksi Aktif (Status 'paid' atau 'renting')
         $rental = Rental::whereHas('units', function ($query) use ($unit) {
                 $query->where('units.id', $unit->id);
             })
-            ->where('status', 'paid')
+            ->whereIn('status', ['paid', 'renting'])
             ->whereNull('completed_at')
             ->latest()
             ->first();
@@ -87,8 +93,29 @@ class ShortcutController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Berhasil! Sewa unit {$unit->seri} oleh {$rental->nama} telah diselesaikan.",
+                'message' => "Berhasil! Penyerahan unit {$unit->seri} dari penyewa {$rental->nama} telah SELESAI.",
                 'completed_at' => Carbon::now()->format('H:i:s')
+            ]);
+        }
+
+        // 5.b Eksekusi Aksi 'handover' (Serah Terima - JADI RENTING)
+        if ($request->action === 'handover') {
+            if (!$rental || $rental->status !== 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unit tidak dalam status "Siap Ambil" atau tidak ada transaksi.'
+                ], 400);
+            }
+
+            $rental->update([
+                'status' => 'renting',
+                'handed_over_at' => Carbon::now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil! Unit {$unit->seri} telah DISERAHKAN ke {$rental->nama}. Status sekarang: DISUWA.",
+                'handed_over_at' => Carbon::now()->format('H:i:s')
             ]);
         }
 
