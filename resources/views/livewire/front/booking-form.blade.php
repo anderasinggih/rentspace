@@ -295,7 +295,7 @@
                             <label class="text-sm font-medium leading-none">Alamat Email (Untuk Terima Invoice)</label>
                             <input type="email" wire:model.live.debounce.500ms="email"
                                 maxlength="50"
-                                class="mt-2 flex h-10 w-full rounded-md border {{ $errors->has('email') ? 'border-red-500 bg-red-50 dark:bg-red-950/20' : 'border-input bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                class="mt-2 flex h-10 w-full rounded-md border {{ $errors->has('email') ? 'border-red-500 bg-rose-500/10' : 'border-input bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
                                 placeholder="nama@email.com">
                             @error('email') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                         </div>
