@@ -478,7 +478,7 @@
                                                             }
                                                         }" x-init="update(); setInterval(() => update(), 60000)">
                                             <p
-                                                class="text-[7px] sm:text-[8px] font-black text-muted-foreground tracking-widest uppercase">
+                                                class="text-[7px] sm:text-[8px] font-black text-muted-foreground tracking-widest">
                                                 {{ $isOverdue ? 'Telat' : 'Sisa' }}</p>
                                             <p x-text="timeLeft"
                                                 class="text-sm sm:text-xl font-black {{ $isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} font-mono">
