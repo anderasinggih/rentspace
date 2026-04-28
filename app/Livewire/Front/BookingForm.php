@@ -142,6 +142,7 @@ class BookingForm extends Component
 
     public function checkAvailability()
     {
+        $this->resetError('waktu_selesai');
         if (!$this->waktu_mulai || !$this->waktu_selesai)
             return;
 
@@ -150,7 +151,7 @@ class BookingForm extends Component
 
         if ($end->lte($start)) {
             $this->addError('waktu_selesai', 'Harus setelah waktu mulai');
-            $this->available_units = [];
+            $this->available_units = collect();
             return;
         }
 
@@ -504,6 +505,8 @@ class BookingForm extends Component
         ]);
 
         $this->checkAvailability();
+        if ($this->getErrorBag()->any()) return;
+
         foreach ($this->selected_unit_ids as $sid) {
             if (!$this->available_units->contains('id', $sid)) {
                 $this->addError('selected_unit_ids', 'Beberapa unit tidak tersedia di slot waktu yang Anda pilih.');
