@@ -142,7 +142,7 @@ class BookingForm extends Component
 
     public function checkAvailability()
     {
-        $this->resetError('waktu_selesai');
+        $this->resetErrorBag('waktu_selesai');
         if (!$this->waktu_mulai || !$this->waktu_selesai)
             return;
 
