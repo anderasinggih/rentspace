@@ -454,10 +454,10 @@
             </div>
         </div>
 
-        <div class="liquid-glass rounded-2xl overflow-hidden h-full">
-            <div
-                class="p-3 border-b border-border bg-muted/20 text-[10px] font-semibold text-foreground opacity-60 uppercase">
-                Top Active Tenants</div>
+        <div class="liquid-glass rounded-2xl overflow-hidden shadow-xl">
+            <div class="px-5 py-3.5 border-b border-border bg-primary/5 flex items-center justify-between uppercase">
+                <span class="text-[11px] font-semibold text-primary">Top Active Tenants</span>
+            </div>
             <div class="overflow-y-auto max-h-[300px]">
                 <table class="w-full text-left font-sans text-[11px]">
                     <thead
@@ -486,9 +486,8 @@
         </div>
         <!-- Report Export Section -->
         <div class="liquid-glass rounded-2xl overflow-hidden shadow-xl mb-6">
-            <div class="px-5 py-3.5 border-b border-border bg-indigo-500/5 flex items-center justify-between uppercase">
-                <span class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Analytic Performance
-                    Reports</span>
+            <div class="px-5 py-3.5 border-b border-border bg-primary/5 flex items-center justify-between uppercase">
+                <span class="text-[11px] font-semibold text-primary">Analytic Performance Reports</span>
             </div>
 
             <div class="p-6">
