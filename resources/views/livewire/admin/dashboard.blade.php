@@ -63,50 +63,102 @@
 
     <!-- 1. Snapshot Grid -->
     <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 md:gap-3 mb-6">
-        <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-muted/10">
-            <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1 uppercase">Active Units</p>
-            <div class="flex items-baseline gap-1">
-                <span class="text-xl font-semibold text-foreground leading-none">{{ $activeUnits }}</span>
-                <span class="text-[9px] font-medium text-stock-label">/{{ $totalUnits }}</span>
+        <div
+            class="liquid-glass glass-highlight rounded-xl p-3 border-indigo-500/40 bg-indigo-500/5 transition-all hover:bg-indigo-500/10 dark:border-indigo-500/20">
+            <div class="flex items-center justify-between mb-1">
+                <p class="text-[8px] md:text-[9px] font-semibold text-indigo-600 uppercase">Discount Spent</p>
+                @if($gainDiscounts !== null)
+                    <span class="text-[8px] font-bold {{ $gainDiscounts >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
+                        {{ $gainDiscounts >= 0 ? '▲' : '▼' }}{{ abs($gainDiscounts) }}%
+                    </span>
+                @endif
+            </div>
+            <div class="flex items-baseline gap-0.5">
+                <span class="text-[8px] font-medium text-indigo-600/50">Rp</span>
+                <span class="text-xl font-semibold text-indigo-600 leading-none">
+                    {{ $periodDiscounts >= 1000 ? round($periodDiscounts / 1000, 1) . 'k' : number_format($periodDiscounts, 0, ',', '.') }}
+                </span>
             </div>
         </div>
+
         <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-muted/10">
-            <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1 uppercase">Order Queue</p>
+            <div class="flex items-center justify-between mb-1">
+                <p class="text-[8px] md:text-[9px] font-semibold text-stock-label uppercase">Order Queue</p>
+                @if($gainPendingRentals !== null)
+                    <span class="text-[8px] font-bold {{ $gainPendingRentals >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
+                        {{ $gainPendingRentals >= 0 ? '▲' : '▼' }}{{ abs($gainPendingRentals) }}%
+                    </span>
+                @endif
+            </div>
             <div class="flex items-baseline gap-1">
                 <span class="text-xl font-semibold text-foreground leading-none">{{ $pendingRentals }}</span>
                 <span class="text-[8px] font-semibold text-stock-label bg-white/5 px-1 rounded">Trx</span>
             </div>
         </div>
+
         <div
             class="liquid-glass glass-highlight rounded-xl p-3 border-amber-500/40 bg-amber-500/5 transition-all hover:bg-amber-500/10 dark:border-amber-500/20">
-            <p class="text-[8px] md:text-[9px] font-semibold text-amber-600 mb-1 uppercase">Pending Balance</p>
+            <div class="flex items-center justify-between mb-1">
+                <p class="text-[8px] md:text-[9px] font-semibold text-amber-600 uppercase">Pending Balance</p>
+                @if($gainPendingRevenue !== null)
+                    <span class="text-[8px] font-bold {{ $gainPendingRevenue >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
+                        {{ $gainPendingRevenue >= 0 ? '▲' : '▼' }}{{ abs($gainPendingRevenue) }}%
+                    </span>
+                @endif
+            </div>
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-amber-600/50">Rp</span>
-                <span
-                    class="text-xl font-semibold text-amber-600 leading-none">
+                <span class="text-xl font-semibold text-amber-600 leading-none">
                     {{ $pendingRevenue >= 1000 ? round($pendingRevenue / 1000, 1) . 'k' : number_format($pendingRevenue, 0, ',', '.') }}
                 </span>
             </div>
         </div>
+
         <div
             class="liquid-glass glass-highlight rounded-xl p-3 border-emerald-500/40 bg-emerald-500/5 transition-all hover:bg-emerald-500/10 dark:border-emerald-500/20">
-            <p class="text-[8px] md:text-[9px] font-semibold text-emerald-600 mb-1 uppercase">Unrealized Income</p>
+            <div class="flex items-center justify-between mb-1">
+                <p class="text-[8px] md:text-[9px] font-semibold text-emerald-600 uppercase">Unrealized Income</p>
+                @if($gainUnrealizedRevenue !== null)
+                    <span
+                        class="text-[8px] font-bold {{ $gainUnrealizedRevenue >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
+                        {{ $gainUnrealizedRevenue >= 0 ? '▲' : '▼' }}{{ abs($gainUnrealizedRevenue) }}%
+                    </span>
+                @endif
+            </div>
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-emerald-600/50">Rp</span>
-                <span
-                    class="text-xl font-semibold text-emerald-600 leading-none">
+                <span class="text-xl font-semibold text-emerald-600 leading-none">
                     {{ $unrealizedRevenue >= 1000 ? round($unrealizedRevenue / 1000, 1) . 'k' : number_format($unrealizedRevenue, 0, ',', '.') }}
                 </span>
             </div>
         </div>
+
         <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-muted/10">
-            <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1 uppercase">Realized Today</p>
-            <span class="text-xl font-semibold text-foreground leading-none">
-                Rp{{ $todayRevenue >= 1000 ? round($todayRevenue / 1000, 1) . 'k' : number_format($todayRevenue, 0, ',', '.') }}
-            </span>
+            <div class="flex items-center justify-between mb-1">
+                <p class="text-[8px] md:text-[9px] font-semibold text-stock-label uppercase">Realized Today</p>
+                @if($gainTodayRevenue !== null)
+                    <span class="text-[8px] font-bold {{ $gainTodayRevenue >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
+                        {{ $gainTodayRevenue >= 0 ? '▲' : '▼' }}{{ abs($gainTodayRevenue) }}%
+                    </span>
+                @endif
+            </div>
+            <div class="flex items-baseline gap-0.5">
+                <span class="text-[8px] font-medium text-stock-label opacity-40">Rp</span>
+                <span class="text-xl font-semibold text-foreground leading-none">
+                    {{ $todayRevenue >= 1000 ? round($todayRevenue / 1000, 1) . 'k' : number_format($todayRevenue, 0, ',', '.') }}
+                </span>
+            </div>
         </div>
+
         <div class="liquid-glass glass-highlight rounded-xl p-3 transition-all hover:bg-muted/10">
-            <p class="text-[8px] md:text-[9px] font-semibold text-stock-label mb-1 uppercase">Today's Rentals</p>
+            <div class="flex items-center justify-between mb-1">
+                <p class="text-[8px] md:text-[9px] font-semibold text-stock-label uppercase">Today's Rentals</p>
+                @if($gainTodayRentals !== null)
+                    <span class="text-[8px] font-bold {{ $gainTodayRentals >= 0 ? 'text-stock-up' : 'text-stock-down' }}">
+                        {{ $gainTodayRentals >= 0 ? '▲' : '▼' }}{{ abs($gainTodayRentals) }}%
+                    </span>
+                @endif
+            </div>
             <div class="flex items-baseline gap-1">
                 <span class="text-xl font-semibold text-foreground leading-none">{{ $todayRentals }}</span>
                 <span class="text-[10px] font-medium text-stock-label uppercase">Units</span>
@@ -213,10 +265,16 @@
                         <span id="chart-revenue-nominal"
                             class="text-3xl font-semibold text-foreground leading-none">0k</span>
                     </div>
-                    <div
-                        class="px-1.5 py-0.5 rounded text-[10px] font-bold {{ $gainNetRevenue >= 0 ? 'bg-emerald-500/10 text-stock-up' : 'bg-red-500/10 text-stock-down' }}">
-                        {{ $gainNetRevenue >= 0 ? '▲' : '▼' }} {{ abs($gainNetRevenue) }}%
-                    </div>
+                    @if($gainNetRevenue !== null)
+                        <div id="chart-revenue-gain"
+                            class="px-1.5 py-0.5 rounded text-[10px] font-bold transition-opacity {{ $gainNetRevenue >= 0 ? 'bg-emerald-500/10 text-stock-up' : 'bg-red-500/10 text-stock-down' }}">
+                            {{ $gainNetRevenue >= 0 ? '▲' : '▼' }} {{ abs($gainNetRevenue) }}%
+                        </div>
+                    @else
+                        <div id="chart-revenue-gain"
+                            class="transition-opacity px-1.5 py-0.5 rounded text-[10px] font-bold bg-muted/50 text-muted-foreground">
+                            N/A</div>
+                    @endif
                 </div>
                 <p class="text-[9px] font-medium text-muted-foreground mt-2">{{ $dateRangeLabel }}</p>
                 <p id="chart-revenue-date"
@@ -237,10 +295,16 @@
                         <span
                             class="text-xs font-semibold {{ $gainRentals >= 0 ? 'text-stock-up' : 'text-stock-down' }} opacity-50">Trx</span>
                     </div>
-                    <div
-                        class="px-1.5 py-0.5 rounded text-[10px] font-bold {{ $gainRentals >= 0 ? 'bg-emerald-500/10 text-stock-up' : 'bg-red-500/10 text-stock-down' }}">
-                        {{ $gainRentals >= 0 ? '▲' : '▼' }} {{ abs($gainRentals) }}%
-                    </div>
+                    @if($gainRentals !== null)
+                        <div id="chart-trx-gain"
+                            class="px-1.5 py-0.5 rounded text-[10px] font-bold transition-opacity {{ $gainRentals >= 0 ? 'bg-emerald-500/10 text-stock-up' : 'bg-red-500/10 text-stock-down' }}">
+                            {{ $gainRentals >= 0 ? '▲' : '▼' }} {{ abs($gainRentals) }}%
+                        </div>
+                    @else
+                        <div id="chart-trx-gain"
+                            class="transition-opacity px-1.5 py-0.5 rounded text-[10px] font-bold bg-muted/50 text-muted-foreground">
+                            N/A</div>
+                    @endif
                 </div>
                 <p class="text-[9px] font-medium text-muted-foreground mt-2">{{ $dateRangeLabel }}</p>
                 <p id="chart-trx-date"
@@ -420,242 +484,405 @@
                 </table>
             </div>
         </div>
+        <!-- Report Export Section -->
+        <div class="liquid-glass rounded-2xl overflow-hidden shadow-xl mb-6">
+            <div class="px-5 py-3.5 border-b border-border bg-indigo-500/5 flex items-center justify-between uppercase">
+                <span class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Analytic Performance
+                    Reports</span>
+            </div>
+
+            <div class="p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                    <div>
+                        <h2 class="text-lg font-bold text-foreground">Export Engine</h2>
+                        <p class="text-[11px] text-muted-foreground mt-1">Generate high-fidelity, boardroom-ready PDF
+                            analytics.
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="bg-background/80 border border-border rounded-xl p-1 flex items-center gap-1 shadow-sm">
+                            <select wire:model.live="reportMonth"
+                                class="bg-transparent border-none text-[11px] font-semibold focus:ring-0 px-2 cursor-pointer h-8">
+                                @foreach(range(1, 12) as $m)
+                                    <option value="{{ $m }}">{{ Carbon\Carbon::create()->month($m)->format('F') }}</option>
+                                @endforeach
+                            </select>
+                            <div class="w-px h-3 bg-border"></div>
+                            <select wire:model.live="reportYear"
+                                class="bg-transparent border-none text-[11px] font-semibold focus:ring-0 px-2 cursor-pointer h-8">
+                                @foreach($availableYears as $y)
+                                    <option value="{{ $y }}">{{ $y }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button wire:click="generateMonthlyReport" wire:loading.attr="disabled"
+                            class="h-10 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95">
+                            <span wire:loading.remove wire:target="generateMonthlyReport">Monthly</span>
+                            <span wire:loading wire:target="generateMonthlyReport">Generating...</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round" class="opacity-70">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" x2="12" y1="15" y2="3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div
+                        class="flex-1 bg-muted/20 border border-border/50 rounded-2xl p-6 flex flex-col justify-between group">
+                        <div>
+                            <h3 class="font-bold text-foreground text-sm">Annual Review {{ $heatmapYear }}</h3>
+                            <p class="text-[10px] text-muted-foreground mt-1">Full year financial summary and unit
+                                performance metrics.</p>
+                        </div>
+                        <button wire:click="generateYearlyReport" wire:loading.attr="disabled"
+                            class="mt-6 h-9 px-5 w-fit bg-indigo-600/10 hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-xl text-[10px] font-bold transition-all flex items-center gap-2 active:scale-95">
+                            <span wire:loading.remove wire:target="generateYearlyReport">Download Annual PDF</span>
+                            <span wire:loading wire:target="generateYearlyReport">Wait...</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round" class="opacity-70">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" x2="12" y1="15" y2="3" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 bg-muted/20 border border-border/50 rounded-2xl p-6 flex items-center gap-4">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-[11px] font-bold text-indigo-600/80 uppercase">Verified Insights</h4>
+                            <p class="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
+                                Data is strictly audited against validated system transactions for accuracy.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-</div>
 
-@script
-<script>
-    if (typeof ApexCharts !== 'undefined') {
-        const initCharts = () => {
-            // -- Elements --
-            const elRevVal = document.getElementById('chart-revenue-nominal');
-            const elRevDate = document.getElementById('chart-revenue-date');
-            const elTrxVal = document.getElementById('chart-trx-nominal');
-            const elTrxDate = document.getElementById('chart-trx-date');
+    @script
+    <script>
+        if (typeof ApexCharts !== 'undefined') {
+            const initCharts = () => {
+                // -- Elements --
+                const elRevVal = document.getElementById('chart-revenue-nominal');
+                const elRevDate = document.getElementById('chart-revenue-date');
+                const elTrxVal = document.getElementById('chart-trx-nominal');
+                const elTrxDate = document.getElementById('chart-trx-date');
 
-            // -- Data --
-            const netData = @json($chartNetRevenue);
-            const trxData = @json($chartTransactions);
-            const categories = @json($chartCategories);
+                // -- Data --
+                const netData = @json($chartNetRevenue);
+                const trxData = @json($chartTransactions);
+                const prevNetData = @json($prevNetRevenue);
+                const prevTrxData = @json($prevTransactions);
+                const categories = @json($chartCategories);
 
-            const latRev = netData.length > 0 ? netData[netData.length - 1] : 0;
-            const latTrx = trxData.length > 0 ? trxData[trxData.length - 1] : 0;
+                const latRev = netData.length > 0 ? netData[netData.length - 1] : 0;
+                const latTrx = trxData.length > 0 ? trxData[trxData.length - 1] : 0;
 
-            if (elRevVal) elRevVal.innerText = latRev.toLocaleString('id-ID');
-            if (elTrxVal) elTrxVal.innerText = latTrx.toLocaleString('id-ID');
+                if (elRevVal) elRevVal.innerText = latRev.toLocaleString('id-ID');
+                if (elTrxVal) elTrxVal.innerText = latTrx.toLocaleString('id-ID');
 
-            const gainRev = @json($gainNetRevenue);
-            const gainTrx = @json($gainRentals);
-            const revColor = (gainRev >= 0) ? '#10b981' : '#ef4444';
-            const trxColor = (gainTrx >= 0) ? '#10b981' : '#ef4444';
+                const gainRev = @json($gainNetRevenue);
+                const gainTrx = @json($gainRentals);
+                const revColor = (gainRev >= 0) ? '#10b981' : '#ef4444';
+                const trxColor = (gainTrx >= 0) ? '#10b981' : '#ef4444';
 
-            const currentYear = new Date().getFullYear();
-            const fmtCategories = categories.map(cat => cat.includes(currentYear) ? cat : cat + ' ' + currentYear);
-
-            // -- Theme Helper --
-            const getChartStyles = () => {
-                const isDark = document.documentElement.classList.contains('dark');
-                return {
-                    grid: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.08)',
-                    crosshair: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                    tooltip: isDark ? 'dark' : 'light',
-                    label: isDark ? '#666' : '#999',
-                    bg: isDark ? '#0c0c0e' : '#ffffff'
-                };
-            };
-
-            let styles = getChartStyles();
-
-            // -- Chart Helper Config --
-            const baseConfig = (seriesData, color, nominalEl, dateEl, isTrx = false) => ({
-                series: [{ name: isTrx ? 'Orders' : 'Net', data: seriesData }],
-                chart: {
-                    type: 'area', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: true },
-                    events: {
-                        mouseMove: function (ev, ctx, config) {
-                            if (config.dataPointIndex !== -1 && ctx.w.globals) {
-                                try {
-                                    const v = ctx.w.globals.series[0][config.dataPointIndex];
-                                    const l = fmtCategories[config.dataPointIndex];
-                                    if (v !== undefined && nominalEl) {
-                                        nominalEl.innerText = isTrx ? v.toLocaleString('id-ID') : v.toLocaleString('id-ID');
-                                        if (dateEl) { dateEl.innerText = l || '---'; dateEl.style.opacity = '1'; }
-                                    }
-                                } catch (e) { }
-                            }
-                        }
+                const currentYear = new Date().getFullYear();
+                const fmtCategories = categories.map(cat => {
+                    // If it's just "28 Apr", add current year. If it's "Apr 2026", leave it.
+                    if (cat.split(' ').length === 2 && !isNaN(cat.split(' ')[0])) {
+                        return cat + ' ' + currentYear;
                     }
-                },
-                grid: {
-                    show: true,
-                    borderColor: styles.grid,
-                    strokeDashArray: 4,
-                    position: 'back',
-                    xaxis: { lines: { show: true } },
-                    yaxis: { lines: { show: true } }
-                },
-                colors: [color],
-                stroke: { width: 2, curve: 'smooth' },
-                fill: { type: 'gradient', gradient: { shade: styles.tooltip, type: "vertical", shadeIntensity: 0.5, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
-                markers: { size: 0, strokeColors: color, strokeWidth: 1, hover: { size: 2.5 } },
-                tooltip: { enabled: true, theme: styles.tooltip, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
-                xaxis: { 
-                    categories: fmtCategories, 
-                    tickAmount: 6,
-                    crosshairs: { show: true, width: 1, position: 'back', stroke: { color: styles.crosshair, width: 1, dashArray: 4 } }, 
-                    tooltip: { enabled: false } 
-                },
-                yaxis: { tickAmount: 4, tooltip: { enabled: false } }
-            });
+                    return cat;
+                });
 
-            const rv = new ApexCharts(document.querySelector("#revenueChart"), baseConfig(netData, revColor, elRevVal, elRevDate));
-            const tr = new ApexCharts(document.querySelector("#transactionsChart"), baseConfig(trxData, trxColor, elTrxVal, elTrxDate, true));
+                // -- Theme Helper --
+                const getChartStyles = () => {
+                    const isDark = document.documentElement.classList.contains('dark');
+                    return {
+                        grid: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.08)',
+                        crosshair: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                        tooltip: isDark ? 'dark' : 'light',
+                        label: isDark ? '#666' : '#999',
+                        bg: isDark ? '#0c0c0e' : '#ffffff'
+                    };
+                };
 
-            rv.render();
-            tr.render();
+                let styles = getChartStyles();
 
-            let dn = new ApexCharts(document.querySelector("#paymentDonutChart"), {
-                series: @json($paymentCounts),
-                chart: { type: 'donut', height: '100%', toolbar: { show: false } },
-                colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#18181b'],
-                labels: @json($paymentLabels),
-                dataLabels: { enabled: true, formatter: (val, opts) => opts.w.globals.labels[opts.seriesIndex], style: { fontSize: '9px', fontWeight: 600 } },
-                legend: { show: false },
-                plotOptions: { pie: { donut: { size: '75%', labels: { show: true, name: { show: true, fontSize: '10px', color: styles.label, offsetY: -5 }, value: { show: true, fontSize: '14px', color: styles.label === '#666' ? '#fff' : '#000', offsetY: 5, fontWeight: 700 } } } } },
-                stroke: { width: 1, colors: [styles.grid] }
-            });
-            dn.render();
+                // -- Chart Helper Config --
+                const baseConfig = (seriesData, prevSeriesData, originalColor, nominalEl, dateEl, gainEl, originalTotalGain, isTrx = false) => {
+                    let currentStatusColor = originalColor;
 
-            // -- Heatmap Range Helper --
-            const getHeatmapRanges = (isDark) => {
-                return isDark ? [
-                    { from: 0, to: 0, color: 'rgba(255,255,255,0.06)' },
-                    { from: 1, to: 1, color: '#064e3b' },
-                    { from: 2, to: 5, color: '#065f46' },
-                    { from: 6, to: 9, color: '#059669' },
-                    { from: 10, to: 1000, color: '#34d399' }
-                ] : [
-                    { from: 0, to: 0, color: '#ebedf0' },
-                    { from: 1, to: 1, color: '#d1fae5' },
-                    { from: 2, to: 5, color: '#6ee7b7' },
-                    { from: 6, to: 9, color: '#10b981' },
-                    { from: 10, to: 1000, color: '#047857' }
-                ];
-            };
+                    return {
+                        series: [{ name: isTrx ? 'Orders' : 'Net', data: seriesData }],
+                        chart: {
+                            type: 'area', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: true },
+                            events: {
+                                mouseMove: function (ev, ctx, config) {
+                                    if (config.dataPointIndex !== -1 && ctx.w.globals) {
+                                        try {
+                                            const series = ctx.w.globals.series[0];
+                                            const v = series[config.dataPointIndex];
+                                            const l = fmtCategories[config.dataPointIndex];
 
-            let hm = new ApexCharts(document.querySelector("#heatmapChart"), {
-                series: @json($heatmapData),
-                chart: {
-                    type: 'heatmap', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, animations: { enabled: true, easing: 'easeinout', speed: 800 },
-                    events: {
-                        mouseMove: function (ev, ctx, config) {
-                            if (config.seriesIndex !== -1 && config.dataPointIndex !== -1) {
-                                const v = ctx.w.globals.initialSeries[config.seriesIndex].data[config.dataPointIndex].y;
-                                const d = ctx.w.globals.initialSeries[config.seriesIndex].data[config.dataPointIndex].d;
-                                const evV = document.getElementById('hm-dynamic-val');
-                                const evD = document.getElementById('hm-dynamic-date');
-                                if (evV) evV.innerText = v + ' Orders';
-                                if (evD) { evD.innerText = d; evD.style.opacity = '1'; }
+                                            if (v !== undefined && nominalEl) {
+                                                nominalEl.innerText = v.toLocaleString('id-ID');
+                                                if (dateEl) { dateEl.innerText = l || '---'; dateEl.style.opacity = '1'; }
+
+                                                // Improved Gain Calculation: Compare CURRENT Accumulation with PREVIOUS PARALLEL Accumulation
+                                                if (gainEl && prevSeriesData && prevSeriesData.length > config.dataPointIndex) {
+                                                    const pv = prevSeriesData[config.dataPointIndex];
+                                                    let pointGain = 0;
+                                                    if (pv > 0) {
+                                                        pointGain = ((v - pv) / pv) * 100;
+                                                    } else {
+                                                        pointGain = v > 0 ? 100 : 0;
+                                                    }
+
+                                                    const isUp = pointGain >= 0;
+                                                    const targetColor = isUp ? '#10b981' : '#ef4444';
+
+                                                    // Dynamic Color Change
+                                                    if (currentStatusColor !== targetColor) {
+                                                        currentStatusColor = targetColor;
+                                                        ctx.updateOptions({
+                                                            colors: [targetColor],
+                                                            fill: { gradient: { stops: [0, 90, 100] } },
+                                                            markers: { strokeColors: targetColor }
+                                                        }, false, false);
+                                                    }
+
+                                                    gainEl.innerHTML = `${isUp ? '▲' : '▼'} ${Math.abs(pointGain).toFixed(1)}%`;
+                                                    gainEl.className = `px-1.5 py-0.5 rounded text-[10px] font-bold transition-opacity ${isUp ? 'bg-emerald-500/10 text-stock-up' : 'bg-red-500/10 text-stock-down'}`;
+                                                } else if (gainEl) {
+                                                    gainEl.innerHTML = '---';
+                                                    gainEl.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold transition-opacity bg-muted/50 text-muted-foreground';
+                                                }
+                                            }
+                                        } catch (e) { }
+                                    }
+                                },
+                                mouseLeave: function (ev, ctx) {
+                                    if (nominalEl) nominalEl.innerText = (seriesData.length > 0 ? seriesData[seriesData.length - 1] : 0).toLocaleString('id-ID');
+                                    if (dateEl) dateEl.style.opacity = '0';
+
+                                    // Restore Color
+                                    if (currentStatusColor !== originalColor) {
+                                        currentStatusColor = originalColor;
+                                        ctx.updateOptions({
+                                            colors: [originalColor],
+                                            markers: { strokeColors: originalColor }
+                                        }, false, false);
+                                    }
+
+                                    // Restore Original Total Period Gain
+                                    if (gainEl) {
+                                        if (originalTotalGain !== null) {
+                                            const isUp = originalTotalGain >= 0;
+                                            gainEl.innerHTML = `${isUp ? '▲' : '▼'} ${Math.abs(originalTotalGain).toFixed(1)}%`;
+                                            gainEl.className = `px-1.5 py-0.5 rounded text-[10px] font-bold transition-opacity ${isUp ? 'bg-emerald-500/10 text-stock-up' : 'bg-red-500/10 text-stock-down'}`;
+                                        } else {
+                                            gainEl.innerHTML = 'N/A';
+                                            gainEl.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold transition-opacity bg-muted/50 text-muted-foreground';
+                                        }
+                                    }
+                                }
                             }
                         },
-                        mouseLeave: function () {
-                            const evV = document.getElementById('hm-dynamic-val');
-                            const evD = document.getElementById('hm-dynamic-date');
-                            if (evV) evV.innerText = '0 Orders';
-                            if (evD) evD.style.opacity = '0';
+                        grid: {
+                            show: true,
+                            borderColor: styles.grid,
+                            strokeDashArray: 4,
+                            position: 'back',
+                            xaxis: { lines: { show: true } },
+                            yaxis: { lines: { show: true } }
+                        },
+                        colors: [originalColor],
+                        stroke: { width: 2, curve: 'smooth' },
+                        fill: { type: 'gradient', gradient: { shade: styles.tooltip, type: "vertical", shadeIntensity: 0.5, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
+                        markers: { size: 0, strokeColors: originalColor, strokeWidth: 1, hover: { size: 2.5 } },
+                        tooltip: { enabled: true, theme: styles.tooltip, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
+                        xaxis: {
+                            categories: fmtCategories,
+                            tickAmount: 6,
+                            crosshairs: { show: true, width: 1, position: 'back', stroke: { color: styles.crosshair, width: 1, dashArray: 4 } },
+                            tooltip: { enabled: false }
+                        },
+                        yaxis: { tickAmount: 4, tooltip: { enabled: false } }
+                    };
+                };
+
+                const elRevGain = document.getElementById('chart-revenue-gain');
+                const elTrxGain = document.getElementById('chart-trx-gain');
+
+                const rv = new ApexCharts(document.querySelector("#revenueChart"), baseConfig(netData, prevNetData, revColor, elRevVal, elRevDate, elRevGain, gainRev));
+                const tr = new ApexCharts(document.querySelector("#transactionsChart"), baseConfig(trxData, prevTrxData, trxColor, elTrxVal, elTrxDate, elTrxGain, gainTrx, true));
+
+                rv.render();
+                tr.render();
+
+                let dn = new ApexCharts(document.querySelector("#paymentDonutChart"), {
+                    series: @json($paymentCounts),
+                    chart: { type: 'donut', height: '100%', toolbar: { show: false } },
+                    colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#18181b'],
+                    labels: @json($paymentLabels),
+                    dataLabels: { enabled: true, formatter: (val, opts) => opts.w.globals.labels[opts.seriesIndex], style: { fontSize: '9px', fontWeight: 600 } },
+                    legend: { show: false },
+                    plotOptions: { pie: { donut: { size: '75%', labels: { show: true, name: { show: true, fontSize: '10px', color: styles.label, offsetY: -5 }, value: { show: true, fontSize: '14px', color: styles.label === '#666' ? '#fff' : '#000', offsetY: 5, fontWeight: 700 } } } } },
+                    stroke: { width: 1, colors: [styles.grid] }
+                });
+                dn.render();
+
+                // -- Heatmap Range Helper --
+                const getHeatmapRanges = (isDark) => {
+                    return isDark ? [
+                        { from: 0, to: 0, color: 'rgba(255,255,255,0.06)' },
+                        { from: 1, to: 1, color: '#064e3b' },
+                        { from: 2, to: 5, color: '#065f46' },
+                        { from: 6, to: 9, color: '#059669' },
+                        { from: 10, to: 1000, color: '#34d399' }
+                    ] : [
+                        { from: 0, to: 0, color: '#ebedf0' },
+                        { from: 1, to: 1, color: '#d1fae5' },
+                        { from: 2, to: 5, color: '#6ee7b7' },
+                        { from: 6, to: 9, color: '#10b981' },
+                        { from: 10, to: 1000, color: '#047857' }
+                    ];
+                };
+
+                let hm = new ApexCharts(document.querySelector("#heatmapChart"), {
+                    series: @json($heatmapData),
+                    chart: {
+                        type: 'heatmap', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, animations: { enabled: true, easing: 'easeinout', speed: 800 },
+                        events: {
+                            mouseMove: function (ev, ctx, config) {
+                                if (config.seriesIndex !== -1 && config.dataPointIndex !== -1) {
+                                    const v = ctx.w.globals.initialSeries[config.seriesIndex].data[config.dataPointIndex].y;
+                                    const d = ctx.w.globals.initialSeries[config.seriesIndex].data[config.dataPointIndex].d;
+                                    const evV = document.getElementById('hm-dynamic-val');
+                                    const evD = document.getElementById('hm-dynamic-date');
+                                    if (evV) evV.innerText = v + ' Orders';
+                                    if (evD) { evD.innerText = d; evD.style.opacity = '1'; }
+                                }
+                            },
+                            mouseLeave: function () {
+                                const evV = document.getElementById('hm-dynamic-val');
+                                const evD = document.getElementById('hm-dynamic-date');
+                                if (evV) evV.innerText = '0 Orders';
+                                if (evD) evD.style.opacity = '0';
+                            }
                         }
-                    }
-                },
-                dataLabels: { enabled: false },
-                colors: ["#10b981"],
-                xaxis: { labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false }, crosshairs: { show: false } },
-                yaxis: { labels: { style: { fontSize: '9px', colors: styles.label, fontWeight: 500 }, offsetX: -12 } },
-                grid: { show: false, padding: { top: -20, bottom: 0, left: 20, right: 10 } },
-                legend: { show: false },
-                states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
-                plotOptions: {
-                    heatmap: {
-                        radius: 4,
-                        enableShades: false,
-                        useFillColorAsStroke: false,
-                        colorScale: {
-                            ranges: getHeatmapRanges(document.documentElement.classList.contains('dark'))
+                    },
+                    dataLabels: { enabled: false },
+                    colors: ["#10b981"],
+                    xaxis: { labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false }, crosshairs: { show: false } },
+                    yaxis: { labels: { style: { fontSize: '9px', colors: styles.label, fontWeight: 500 }, offsetX: -12 } },
+                    grid: { show: false, padding: { top: -20, bottom: 0, left: 20, right: 10 } },
+                    legend: { show: false },
+                    states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
+                    plotOptions: {
+                        heatmap: {
+                            radius: 4,
+                            enableShades: false,
+                            useFillColorAsStroke: false,
+                            colorScale: {
+                                ranges: getHeatmapRanges(document.documentElement.classList.contains('dark'))
+                            }
                         }
-                    }
-                },
-                stroke: { width: 4, colors: [styles.bg] },
-                tooltip: {
-                    enabled: true, theme: styles.tooltip,
-                    custom: function ({ series, seriesIndex, dataPointIndex, w }) {
-                        const val = series[seriesIndex][dataPointIndex];
-                        const date = w.globals.initialSeries[seriesIndex].data[dataPointIndex].d;
-                        return `<div class="px-3 py-2 bg-background border border-border rounded-lg shadow-xl">
+                    },
+                    stroke: { width: 4, colors: [styles.bg] },
+                    tooltip: {
+                        enabled: true, theme: styles.tooltip,
+                        custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+                            const val = series[seriesIndex][dataPointIndex];
+                            const date = w.globals.initialSeries[seriesIndex].data[dataPointIndex].d;
+                            return `<div class="px-3 py-2 bg-background border border-border rounded-lg shadow-xl">
                                     <div class="text-[10px] font-bold text-foreground mb-1">${val} Orders</div>
                                     <div class="text-[8px] font-medium text-muted-foreground uppercase tracking-widest">${date}</div>
                                 </div>`;
-                    }
-                }
-            });
-            hm.render();
-
-            let latestRev = latRev;
-            let latestTrx = latTrx;
-
-            const snapBack = () => {
-                if (elRevVal) elRevVal.innerText = latestRev.toLocaleString('id-ID');
-                if (elRevDate) elRevDate.style.opacity = '0';
-                if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString('id-ID');
-                if (elTrxDate) elTrxDate.style.opacity = '0';
-            };
-
-            Livewire.on('chartDataUpdated', (d) => {
-                const x = d[0] || d;
-                rv?.updateSeries([{ name: 'Net', data: x.netRevenue }]);
-                tr?.updateSeries([{ name: 'Orders', data: x.transactions }]);
-                latestRev = x.netRevenue.length > 0 ? x.netRevenue[x.netRevenue.length - 1] : 0;
-                latestTrx = x.transactions.length > 0 ? x.transactions[x.transactions.length - 1] : 0;
-                hm?.updateSeries(x.heatmap);
-                snapBack();
-            });
-
-            window.addEventListener('theme-changed', (e) => {
-                const s = getChartStyles();
-                const isDark = document.documentElement.classList.contains('dark');
-
-                const commonOpt = {
-                    grid: { borderColor: s.grid },
-                    tooltip: { theme: s.tooltip },
-                    xaxis: { crosshairs: { stroke: { color: s.crosshair } } }
-                };
-
-                rv.updateOptions(commonOpt);
-                tr.updateOptions(commonOpt);
-
-                hm.updateOptions({
-                    grid: { borderColor: s.grid },
-                    stroke: { width: 4, colors: [s.bg] },
-                    tooltip: { theme: s.tooltip },
-                    yaxis: { labels: { style: { colors: s.label } } },
-                    plotOptions: {
-                        heatmap: {
-                            colorScale: {
-                                ranges: getHeatmapRanges(isDark)
-                            }
                         }
                     }
                 });
-            });
+                hm.render();
 
-            ['#revenueChart', '#transactionsChart', '#heatmapChart'].forEach(id => {
-                const el = document.querySelector(id);
-                if (el) {
-                    ['mouseup', 'touchend', 'mouseleave'].forEach(evt => {
-                        el.addEventListener(evt, snapBack);
+                let latestRev = latRev;
+                let latestTrx = latTrx;
+
+                const snapBack = () => {
+                    if (elRevVal) elRevVal.innerText = latestRev.toLocaleString('id-ID');
+                    if (elRevDate) elRevDate.style.opacity = '0';
+                    if (elTrxVal) elTrxVal.innerText = latestTrx.toLocaleString('id-ID');
+                    if (elTrxDate) elTrxDate.style.opacity = '0';
+                };
+
+                Livewire.on('chartDataUpdated', (d) => {
+                    const x = d[0] || d;
+                    rv?.updateSeries([{ name: 'Net', data: x.netRevenue }]);
+                    tr?.updateSeries([{ name: 'Orders', data: x.transactions }]);
+                    latestRev = x.netRevenue.length > 0 ? x.netRevenue[x.netRevenue.length - 1] : 0;
+                    latestTrx = x.transactions.length > 0 ? x.transactions[x.transactions.length - 1] : 0;
+                    hm?.updateSeries(x.heatmap);
+                    snapBack();
+                });
+
+                window.addEventListener('theme-changed', (e) => {
+                    const s = getChartStyles();
+                    const isDark = document.documentElement.classList.contains('dark');
+
+                    const commonOpt = {
+                        grid: { borderColor: s.grid },
+                        tooltip: { theme: s.tooltip },
+                        xaxis: { crosshairs: { stroke: { color: s.crosshair } } }
+                    };
+
+                    rv.updateOptions(commonOpt);
+                    tr.updateOptions(commonOpt);
+
+                    hm.updateOptions({
+                        grid: { borderColor: s.grid },
+                        stroke: { width: 4, colors: [s.bg] },
+                        tooltip: { theme: s.tooltip },
+                        yaxis: { labels: { style: { colors: s.label } } },
+                        plotOptions: {
+                            heatmap: {
+                                colorScale: {
+                                    ranges: getHeatmapRanges(isDark)
+                                }
+                            }
+                        }
                     });
-                }
-            });
-        };
-        initCharts();
-    }
-</script>
-@endscript
+                });
+
+                ['#revenueChart', '#transactionsChart', '#heatmapChart'].forEach(id => {
+                    const el = document.querySelector(id);
+                    if (el) {
+                        ['mouseup', 'touchend', 'mouseleave'].forEach(evt => {
+                            el.addEventListener(evt, snapBack);
+                        });
+                    }
+                });
+
+            };
+            initCharts();
+        }
+    </script>
+    @endscript
+</div>

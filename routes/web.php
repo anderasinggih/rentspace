@@ -47,6 +47,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/scan', \App\Livewire\Admin\QuickScan::class)->name('admin.scan');
         Route::get('/admin/radar', \App\Livewire\Admin\RadarDevices::class)->name('admin.radar');
 
+        // Printable Report Routes
+        Route::get('/admin/report/monthly', [\App\Http\Controllers\Admin\ReportController::class, 'monthly'])->name('admin.report.monthly');
+        Route::get('/admin/report/yearly', [\App\Http\Controllers\Admin\ReportController::class, 'yearly'])->name('admin.report.yearly');
+
         // Email Preview Routes
         Route::get('/admin/email-preview/{type}', function($type) {
             $rental = \App\Models\Rental::latest()->first();
