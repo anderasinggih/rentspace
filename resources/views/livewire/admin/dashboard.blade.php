@@ -889,6 +889,8 @@
                     const x = d[0] || d;
                     rv?.updateSeries([{ name: 'Net', data: x.netRevenue }]);
                     tr?.updateSeries([{ name: 'Orders', data: x.transactions }]);
+                    rv?.updateOptions({ xaxis: { categories: x.categories } });
+                    tr?.updateOptions({ xaxis: { categories: x.categories } });
                     latestRev = x.netRevenue.length > 0 ? x.netRevenue[x.netRevenue.length - 1] : 0;
                     latestTrx = x.transactions.length > 0 ? x.transactions[x.transactions.length - 1] : 0;
                     hm?.updateSeries(x.heatmap);
