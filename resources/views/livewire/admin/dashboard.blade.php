@@ -511,8 +511,8 @@
                             <td class="px-4 py-2.5">
                                 <div class="flex flex-wrap gap-1">
                                     @foreach($rental->units as $u)
-                                        <span class="px-1.5 py-0.5 rounded bg-muted text-[8px] font-bold text-foreground border border-border uppercase">
-                                            {{ $u->seri }}
+                                        <span class="px-1 py-0.5 rounded bg-muted text-[7px] font-bold text-foreground border border-border uppercase">
+                                            #{{ $u->id }} {{ $u->seri }}
                                         </span>
                                     @endforeach
                                 </div>
