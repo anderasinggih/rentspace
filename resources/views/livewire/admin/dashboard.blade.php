@@ -686,7 +686,7 @@
                     return {
                         series: [{ name: isTrx ? 'Orders' : 'Net', data: seriesData }],
                         chart: {
-                            type: 'area', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: true },
+                            type: 'area', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: false },
                             events: {
                                 mouseMove: function (ev, ctx, config) {
                                     if (config.dataPointIndex !== -1 && ctx.w.globals) {
@@ -774,11 +774,14 @@
                         tooltip: { enabled: true, theme: styles.tooltip, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
                         xaxis: {
                             categories: fmtCategories,
-                            tickAmount: 6,
+                            tickAmount: fmtCategories.length > 31 ? 12 : 6,
+                            labels: { show: true, style: { fontSize: '9px', colors: styles.label } },
+                            axisBorder: { show: false },
+                            axisTicks: { show: false },
                             crosshairs: { show: true, width: 1, position: 'back', stroke: { color: styles.crosshair, width: 1, dashArray: 4 } },
                             tooltip: { enabled: false }
                         },
-                        yaxis: { tickAmount: 4, tooltip: { enabled: false } }
+                        yaxis: { show: true, tickAmount: 4, labels: { style: { fontSize: '9px', colors: styles.label }, formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v }, tooltip: { enabled: false } }
                     };
                 };
 

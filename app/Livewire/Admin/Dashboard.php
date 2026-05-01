@@ -116,7 +116,7 @@ class Dashboard extends Component
         $start = Carbon::parse($this->startDate)->startOfDay();
         $end = Carbon::parse($this->endDate)->endOfDay();
         $diffDays = $start->diffInDays($end);
-        $isMonthly = $diffDays > 90;
+        $isMonthly = $diffDays > 62 || in_array($this->preset, ['ytd', 'all']);
 
         // Current Period
         $current = $this->fetchSeries($start, $end, $isMonthly);
