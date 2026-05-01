@@ -188,7 +188,10 @@ class Success extends Component
                 }
 
                 if (($transactionStatus == 'settlement' || $transactionStatus == 'capture') && $this->rental->status === 'pending') {
-                    $this->rental->update(['status' => 'paid']);
+                    $this->rental->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
                 } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
                     $this->rental->update(['status' => 'cancelled']);
                 }
@@ -208,7 +211,10 @@ class Success extends Component
     public function validateOrder()
     {
         if (!auth()->check() || auth()->user()->role !== 'admin') return;
-        $this->rental->update(['status' => 'paid']);
+        $this->rental->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
         $this->rental = $this->rental->fresh();
     }
 

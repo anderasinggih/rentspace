@@ -76,7 +76,10 @@ class Monitoring extends Component
             return;
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'pending') {
-            $rental->update(['status' => 'paid']);
+            $rental->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+            ]);
             $this->calculateAffiliateCommission($rental);
             
             $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id} via Monitoring");

@@ -137,9 +137,9 @@ class Dashboard extends Component
         $cumulativeTrx = 0;
 
         if ($isMonthly) {
-            $data = Rental::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
+            $data = Rental::selectRaw('DATE_FORMAT(paid_at, "%Y-%m") as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
                 ->whereIn('status', ['paid', 'renting', 'completed'])
-                ->whereBetween('created_at', [$start, $end])
+                ->whereBetween('paid_at', [$start, $end])
                 ->groupBy('val')->orderBy('val')->get()->keyBy('val');
 
             $commissions = \App\Models\AffiliateCommission::whereHas('rental')
@@ -171,9 +171,9 @@ class Dashboard extends Component
                 $count++;
             }
         } else {
-            $data = Rental::selectRaw('DATE(created_at) as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
+            $data = Rental::selectRaw('DATE(paid_at) as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
                 ->whereIn('status', ['paid', 'renting', 'completed'])
-                ->whereBetween('created_at', [$start, $end])
+                ->whereBetween('paid_at', [$start, $end])
                 ->groupBy('val')->orderBy('val')->get()->keyBy('val');
 
             $commissions = \App\Models\AffiliateCommission::whereHas('rental')
@@ -267,7 +267,7 @@ class Dashboard extends Component
         // Period Metrics
         $periodRentals = Rental::whereBetween('created_at', [$start, $end])->count();
         $periodRevenue = Rental::whereIn('status', ['paid', 'renting', 'completed'])
-                            ->whereBetween('created_at', [$start, $end])->sum('grand_total');
+                            ->whereBetween('paid_at', [$start, $end])->sum('grand_total');
         $periodDiscounts = Rental::whereBetween('created_at', [$start, $end])->sum('potongan_diskon');
         $unrealizedRevenue = Rental::whereIn('status', ['pending', 'paid'])
                                 ->where('waktu_selesai', '>', $end)
@@ -279,9 +279,9 @@ class Dashboard extends Component
         $periodNetRevenue = $periodRevenue - $periodCommissions;
 
         $todayRevenue = Rental::whereIn('status', ['paid', 'renting', 'completed'])
-                            ->whereDate('created_at', Carbon::today())->sum('grand_total');
+                            ->whereDate('paid_at', Carbon::today())->sum('grand_total');
         $yesterdayRevenue = Rental::whereIn('status', ['paid', 'renting', 'completed'])
-                            ->whereDate('created_at', Carbon::yesterday())->sum('grand_total');
+                            ->whereDate('paid_at', Carbon::yesterday())->sum('grand_total');
         $gainTodayRevenue = $yesterdayRevenue > 0 ? round((($todayRevenue - $yesterdayRevenue) / $yesterdayRevenue) * 100, 1) : null;
         
         $todayRentals = Rental::whereDate('created_at', Carbon::today())->count();
@@ -289,7 +289,7 @@ class Dashboard extends Component
         // Previous Period Metrics (for gain delta)
         $prevRentals = Rental::whereBetween('created_at', [$prevStart, $prevEnd])->count();
         $prevRevenue = Rental::whereIn('status', ['paid', 'renting', 'completed'])
-                            ->whereBetween('created_at', [$prevStart, $prevEnd])->sum('grand_total');
+                            ->whereBetween('paid_at', [$prevStart, $prevEnd])->sum('grand_total');
         $prevCommissions = \App\Models\AffiliateCommission::whereBetween('created_at', [$prevStart, $prevEnd])->sum('amount');
         $prevNetRevenue = $prevRevenue - $prevCommissions;
         $prevDiscounts = Rental::whereBetween('created_at', [$prevStart, $prevEnd])->sum('potongan_diskon');
@@ -315,7 +315,7 @@ class Dashboard extends Component
         // Leaderboards scoped by date to reflect trends
         $topTenants = Rental::selectRaw('nik, nama, no_wa, COUNT(id) as total_rentals, SUM(grand_total) as total_spent')
             ->whereIn('status', ['paid', 'renting', 'completed'])
-            ->whereBetween('created_at', [$start, $end])
+            ->whereBetween('paid_at', [$start, $end])
             ->groupBy('nik', 'nama', 'no_wa')
             ->orderByDesc('total_spent')
             ->limit(5)
@@ -335,7 +335,7 @@ class Dashboard extends Component
         $topUnits = \App\Models\RentalItem::query()
             ->whereHas('rental', function($q) use ($start, $end) {
                 $q->whereIn('status', ['paid', 'renting', 'completed'])
-                  ->whereBetween('created_at', [$start, $end]);
+                  ->whereBetween('paid_at', [$start, $end]);
             })
             ->with(['unit' => function($q) { $q->withTrashed(); }, 'rental'])
             ->get()
@@ -360,7 +360,7 @@ class Dashboard extends Component
 
         // Payment Method Breakdown
         $paymentSplit = Rental::whereIn('status', ['paid', 'renting', 'completed'])
-            ->whereBetween('created_at', [$start, $end])
+            ->whereBetween('paid_at', [$start, $end])
             ->selectRaw('metode_pembayaran, COUNT(id) as cnt')
             ->groupBy('metode_pembayaran')
             ->get();
@@ -387,7 +387,7 @@ class Dashboard extends Component
                             ->sum('grand_total');
         
         // Avg Duration for the period
-        $avgDuration = Rental::whereBetween('created_at', [$start, $end])
+        $avgDuration = Rental::whereBetween('paid_at', [$start, $end])
             ->whereIn('status', ['paid', 'renting', 'completed'])
             ->get()
             ->avg(function($r) {
@@ -425,8 +425,8 @@ class Dashboard extends Component
 
     private function fetchAnalyticReportData($start, $end)
     {
-        $rentalsQuery = Rental::whereBetween('created_at', [$start, $end]);
-        $paidRentalsQuery = (clone $rentalsQuery)->whereIn('status', ['paid', 'renting', 'completed']);
+        $rentalsQuery = Rental::whereBetween('created_at', [$start, $end]); // Keep created_at for general volume
+        $paidRentalsQuery = Rental::whereBetween('paid_at', [$start, $end])->whereIn('status', ['paid', 'renting', 'completed']);
 
         $revenue = $paidRentalsQuery->sum('grand_total');
         $commissions = \App\Models\AffiliateCommission::whereHas('rental')
@@ -442,7 +442,7 @@ class Dashboard extends Component
         $topUnits = \App\Models\RentalItem::query()
             ->whereHas('rental', function($q) use ($start, $end) {
                 $q->whereIn('status', ['paid', 'renting', 'completed'])
-                  ->whereBetween('created_at', [$start, $end]);
+                  ->whereBetween('paid_at', [$start, $end]);
             })
             ->with(['unit' => function($q) { $q->withTrashed(); }])
             ->get()->groupBy('unit_id')->map(fn($g) => [
@@ -459,7 +459,7 @@ class Dashboard extends Component
         $isYearly = $start->diffInMonths($end) > 1;
         $breakdown = [];
         if ($isYearly) {
-            $monthlyData = $paidRentalsQuery->selectRaw('DATE_FORMAT(created_at, "%m") as grp, SUM(grand_total) as rev, COUNT(id) as trx')
+            $monthlyData = $paidRentalsQuery->selectRaw('DATE_FORMAT(paid_at, "%m") as grp, SUM(grand_total) as rev, COUNT(id) as trx')
                 ->groupBy('grp')->orderBy('grp')->get()->keyBy('grp');
             for ($m = 1; $m <= 12; $m++) {
                 $k = str_pad($m, 2, '0', STR_PAD_LEFT);
@@ -470,7 +470,7 @@ class Dashboard extends Component
                 ];
             }
         } else {
-            $dailyData = $paidRentalsQuery->selectRaw('DATE(created_at) as grp, SUM(grand_total) as rev, COUNT(id) as trx')
+            $dailyData = $paidRentalsQuery->selectRaw('DATE(paid_at) as grp, SUM(grand_total) as rev, COUNT(id) as trx')
                 ->groupBy('grp')->orderBy('grp')->get()->keyBy('grp');
             $cursor = $start->copy();
             while ($cursor <= $end) {

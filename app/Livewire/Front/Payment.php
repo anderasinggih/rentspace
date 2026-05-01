@@ -128,7 +128,10 @@ class Payment extends Component
                 $this->paymentInfo = $this->rental->payment_details;
 
                 if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
-                    $this->rental->update(['status' => 'paid']);
+                    $this->rental->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
                     return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
 

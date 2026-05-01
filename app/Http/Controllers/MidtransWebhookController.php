@@ -56,7 +56,10 @@ class MidtransWebhookController extends Controller
                 if ($fraud == 'challenge') {
                     $rental->update(['status' => 'pending']);
                 } else {
-                    $rental->update(['status' => 'paid']);
+                    $rental->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
                     Log::info("MIDTRANS WEBHOOK: Pembayaran Berhasil untuk Booking Code: " . $booking_code);
                     
                     // Send Email Notification
