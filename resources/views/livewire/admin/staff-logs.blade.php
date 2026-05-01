@@ -103,7 +103,49 @@
                             </span>
                         </td>
                         <td class="px-3 sm:px-4 py-4 text-xs text-muted-foreground leading-relaxed">
-                            {{ $log->description }}
+                            <div x-data="{ open: false }">
+                                <div>{{ $log->description }}</div>
+                                
+                                @if($log->data_before || $log->data_after)
+                                    <button @click="open = !open" class="mt-2 text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
+                                        <span x-show="!open">Lihat Detail Perubahan</span>
+                                        <span x-show="open">Sembunyikan Detail</span>
+                                        <svg :class="open ? 'rotate-180' : ''" class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+
+                                    <div x-show="open" x-collapse x-cloak class="mt-3 overflow-hidden rounded-lg border border-border bg-muted/30">
+                                        <table class="w-full text-[10px]">
+                                            <thead class="bg-muted border-b border-border">
+                                                <tr>
+                                                    <th class="px-2 py-1.5 text-left font-black uppercase tracking-tighter">Field</th>
+                                                    <th class="px-2 py-1.5 text-left font-black uppercase tracking-tighter">Sebelum</th>
+                                                    <th class="px-2 py-1.5 text-left font-black uppercase tracking-tighter text-primary">Sesudah</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-border/50">
+                                                @php
+                                                    $before = $log->data_before ?? [];
+                                                    $after = $log->data_after ?? [];
+                                                    $allKeys = array_unique(array_merge(array_keys($before), array_keys($after)));
+                                                @endphp
+                                                @foreach($allKeys as $key)
+                                                    @if(($before[$key] ?? null) != ($after[$key] ?? null))
+                                                        <tr class="hover:bg-background/50">
+                                                            <td class="px-2 py-1.5 font-bold text-foreground capitalize">{{ str_replace('_', ' ', $key) }}</td>
+                                                            <td class="px-2 py-1.5 text-rose-600 line-through decoration-rose-300 opacity-70">
+                                                                {{ is_array($before[$key] ?? '') ? json_encode($before[$key]) : (is_numeric($before[$key] ?? '') ? number_format($before[$key], 0, ',', '.') : ($before[$key] ?? '-')) }}
+                                                            </td>
+                                                            <td class="px-2 py-1.5 text-emerald-600 font-black">
+                                                                {{ is_array($after[$key] ?? '') ? json_encode($after[$key]) : (is_numeric($after[$key] ?? '') ? number_format($after[$key], 0, ',', '.') : ($after[$key] ?? '-')) }}
+                                                            </td>
+                                                        </tr>
+                                                    @endif
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
+                            </div>
                         </td>
                         <td class="whitespace-nowrap px-3 sm:px-4 py-4 text-[10px] font-mono text-muted-foreground">
                             {{ $log->ip_address }}

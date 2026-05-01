@@ -102,13 +102,13 @@ class Transactions extends Component
             return;
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'pending') {
-            $rental->update([
-                'status' => 'paid',
-                'paid_at' => now(),
-            ]);
-            $this->calculateAffiliateCommission($rental);
+            $before = ['status' => $rental->status];
+            $rental->update(['status' => 'paid', 'paid_at' => now()]);
+            $after = ['status' => 'paid'];
             
-            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id}");
+            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id}", $before, $after);
+            
+            $this->calculateAffiliateCommission($rental);
 
             // Send Email Notification
             $this->sendEmailNotification($rental, 'paid');
@@ -120,8 +120,10 @@ class Transactions extends Component
         if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'paid') {
+            $before = ['status' => $rental->status];
             $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
-            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi #{$rental->id} (via Transaksi)");
+            $after = ['status' => 'renting'];
+            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi #{$rental->id} (via Transaksi)", $before, $after);
             session()->flash('message', 'Unit berhasil divalidasi ambil.');
         }
     }
@@ -132,8 +134,10 @@ class Transactions extends Component
             return;
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid'])) {
+            $before = ['status' => $rental->status];
             $rental->update(['status' => 'cancelled']);
-            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id}");
+            $after = ['status' => 'cancelled'];
+            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id}", $before, $after);
 
             // Send Email Notification
             $this->sendEmailNotification($rental, 'cancelled');
@@ -219,6 +223,13 @@ class Transactions extends Component
         if ($this->completingTrxId) {
             $rental = Rental::findOrFail($this->completingTrxId);
             if ($rental->status === 'renting') {
+                $before = [
+                    'status' => $rental->status,
+                    'denda' => $rental->denda,
+                    'denda_kerusakan' => $rental->denda_kerusakan,
+                    'grand_total' => $rental->grand_total,
+                ];
+
                 $newGrandTotal = $rental->grand_total + (int)$this->dendaAmount + (int)$this->dendaKerusakanAmount;
                 $rental->update([
                     'status' => 'completed',
@@ -229,9 +240,17 @@ class Transactions extends Component
                     'denda_payment_method' => ($this->dendaAmount > 0 || $this->dendaKerusakanAmount > 0) ? $this->dendaMethod : null,
                     'completed_at' => now(),
                 ]);
+
+                $after = [
+                    'status' => 'completed',
+                    'denda' => (int)$this->dendaAmount,
+                    'denda_kerusakan' => (int)$this->dendaKerusakanAmount,
+                    'grand_total' => $newGrandTotal,
+                ];
+
                 $this->calculateAffiliateCommission($rental);
                 
-                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} dengan denda Rp" . number_format($this->dendaAmount + $this->dendaKerusakanAmount, 0, ',', '.'));
+                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} dengan total denda Rp" . number_format($this->dendaAmount + $this->dendaKerusakanAmount, 0, ',', '.'), $before, $after);
             }
         }
 
@@ -422,6 +441,16 @@ class Transactions extends Component
 
         $trx = Rental::findOrFail($this->editTrxId);
 
+        $before = [
+            'nama' => $trx->nama,
+            'subtotal' => $trx->subtotal_harga,
+            'diskon' => $trx->potongan_diskon,
+            'denda' => $trx->denda,
+            'denda_kerusakan' => $trx->denda_kerusakan,
+            'grand_total' => $trx->grand_total,
+            'status' => $trx->status,
+        ];
+
         // Recalculate Grand Total
         $grandTotal = $this->edit_subtotal - $this->edit_diskon + $this->edit_denda + $this->edit_denda_kerusakan + $trx->kode_unik_pembayaran;
 
@@ -444,7 +473,17 @@ class Transactions extends Component
             'metode_pembayaran' => strtolower($this->edit_metode_pembayaran),
         ]);
 
-        $this->logActivity('edit_transaction', $trx, "Mengedit data transaksi #{$trx->id}");
+        $after = [
+            'nama' => strtoupper($this->edit_nama),
+            'subtotal' => (float)$this->edit_subtotal,
+            'diskon' => (float)$this->edit_diskon,
+            'denda' => (float)$this->edit_denda,
+            'denda_kerusakan' => (float)$this->edit_denda_kerusakan,
+            'grand_total' => (float)$grandTotal,
+            'status' => $this->edit_status,
+        ];
+
+        $this->logActivity('edit_transaction', $trx, "Mengedit data transaksi #{$trx->id}", $before, $after);
 
         $this->closeEditModal();
         session()->flash('message', 'Transaksi berhasil diperbarui.');
