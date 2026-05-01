@@ -459,7 +459,7 @@
 
                                     <div class="flex items-center gap-2 sm:gap-6">
                                         <!-- Countdown Column -->
-                                        <div class="text-right w-20 sm:w-32 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
+                                        <div class="text-right w-24 sm:w-44 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
                                             x-data="{ 
                                                             timeLeft: '',
                                                             endTime: {{ $rental->waktu_selesai->timestamp }},
@@ -486,7 +486,7 @@
                                                 class="text-[7px] sm:text-[8px] font-black text-muted-foreground tracking-widest">
                                                 {{ $isOverdue ? 'Telat' : 'Sisa' }}</p>
                                             <p x-text="timeLeft"
-                                                class="text-sm sm:text-xl font-black {{ $isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} font-mono">
+                                                class="text-sm sm:text-lg font-black {{ $isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} font-mono whitespace-nowrap">
                                             </p>
                                         </div>
                                         <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-muted-foreground transition-transform duration-300"
@@ -767,7 +767,7 @@
 
                                     <div class="flex items-center gap-2 sm:gap-6">
                                         <!-- Timeleft Column -->
-                                        <div class="text-right w-24 sm:w-36 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
+                                        <div class="text-right w-28 sm:w-48 shrink-0 pr-2 sm:pr-4 border-r border-border/50"
                                             x-data="{ 
                                                             timeleft: '',
                                                             startTime: {{ $rental->waktu_mulai->timestamp }},
@@ -791,7 +791,7 @@
                                                 class="text-[7px] sm:text-[8px] font-bold text-muted-foreground tracking-widest leading-none mb-1">
                                                 Mulai</p>
                                             <p x-text="timeleft"
-                                                class="text-sm sm:text-xl font-bold text-amber-600 dark:text-amber-400 font-mono tracking-tight">
+                                                class="text-sm sm:text-lg font-bold text-amber-600 dark:text-amber-400 font-mono tracking-tight whitespace-nowrap">
                                             </p>
                                         </div>
                                         <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-muted-foreground transition-transform duration-300"
