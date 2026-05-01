@@ -252,6 +252,9 @@ class Payment extends Component
                 'payment_details' => $paymentInfo
             ]);
 
+            // Beri jeda 2 detik agar user bisa melihat proses loading-nya (tidak terlalu kaget)
+            sleep(2);
+
             return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }
 
