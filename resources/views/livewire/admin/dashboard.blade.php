@@ -496,19 +496,19 @@
             <table class="w-full text-left border-collapse text-[11px]">
                 <thead class="bg-muted/10 text-[9px] font-semibold text-stock-label uppercase sticky top-0 bg-background z-10">
                     <tr>
-                        <th class="px-6 py-3">Time</th>
-                        <th class="px-6 py-3">Units</th>
-                        <th class="px-6 py-3">Tenant</th>
-                        <th class="px-6 py-3 text-right">Amount</th>
+                        <th class="px-4 py-2">Time</th>
+                        <th class="px-4 py-2">Units</th>
+                        <th class="px-4 py-2">Tenant</th>
+                        <th class="px-4 py-2 text-right">Amount</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-border font-sans">
                     @forelse($todayRealizedRentals as $rental)
                         <tr class="hover:bg-muted/30 transition-all">
-                            <td class="px-6 py-4 text-muted-foreground">
+                            <td class="px-4 py-2.5 text-muted-foreground">
                                 {{ $rental->paid_at ? $rental->paid_at->format('H:i') : '-' }}
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-2.5">
                                 <div class="flex flex-wrap gap-1">
                                     @foreach($rental->units as $u)
                                         <span class="px-1.5 py-0.5 rounded bg-muted text-[8px] font-bold text-foreground border border-border uppercase">
@@ -517,11 +517,13 @@
                                     @endforeach
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="font-semibold text-foreground uppercase">{{ $rental->nama }}</div>
-                                <div class="text-[9px] text-stock-label">{{ $rental->no_wa }}</div>
+                            <td class="px-4 py-2.5">
+                                <div class="font-semibold text-foreground uppercase text-[10px] truncate max-w-[80px]">
+                                    {{ explode(' ', trim($rental->nama))[0] }}
+                                </div>
+                                <div class="text-[8px] text-stock-label">{{ $rental->no_wa }}</div>
                             </td>
-                            <td class="px-6 py-4 text-right font-bold text-emerald-600">
+                            <td class="px-4 py-2.5 text-right font-bold text-emerald-600">
                                 Rp{{ number_format($rental->grand_total, 0, ',', '.') }}
                             </td>
                         </tr>
@@ -686,7 +688,7 @@
                     return {
                         series: [{ name: isTrx ? 'Orders' : 'Net', data: seriesData }],
                         chart: {
-                            type: 'area', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: false },
+                            type: 'area', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: true },
                             events: {
                                 mouseMove: function (ev, ctx, config) {
                                     if (config.dataPointIndex !== -1 && ctx.w.globals) {
@@ -774,14 +776,11 @@
                         tooltip: { enabled: true, theme: styles.tooltip, shared: false, intersect: false, marker: { show: false }, x: { show: false }, y: { show: false } },
                         xaxis: {
                             categories: fmtCategories,
-                            tickAmount: fmtCategories.length > 31 ? 12 : 6,
-                            labels: { show: true, style: { fontSize: '9px', colors: styles.label } },
-                            axisBorder: { show: false },
-                            axisTicks: { show: false },
+                            tickAmount: 6,
                             crosshairs: { show: true, width: 1, position: 'back', stroke: { color: styles.crosshair, width: 1, dashArray: 4 } },
                             tooltip: { enabled: false }
                         },
-                        yaxis: { show: true, tickAmount: 4, labels: { style: { fontSize: '9px', colors: styles.label }, formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v }, tooltip: { enabled: false } }
+                        yaxis: { tickAmount: 4, tooltip: { enabled: false } }
                     };
                 };
 
@@ -892,8 +891,6 @@
                     const x = d[0] || d;
                     rv?.updateSeries([{ name: 'Net', data: x.netRevenue }]);
                     tr?.updateSeries([{ name: 'Orders', data: x.transactions }]);
-                    rv?.updateOptions({ xaxis: { categories: x.categories } });
-                    tr?.updateOptions({ xaxis: { categories: x.categories } });
                     latestRev = x.netRevenue.length > 0 ? x.netRevenue[x.netRevenue.length - 1] : 0;
                     latestTrx = x.transactions.length > 0 ? x.transactions[x.transactions.length - 1] : 0;
                     hm?.updateSeries(x.heatmap);
