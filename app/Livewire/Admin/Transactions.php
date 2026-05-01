@@ -67,7 +67,7 @@ class Transactions extends Component
     // Inspect Modal
     public $inspectTrxId = null;
     public $inspectTrx = null;
-    public $sortField = 'created_at';
+    public $sortField = 'waktu_mulai';
     public $sortDirection = 'desc';
 
     protected $queryString = [
@@ -75,7 +75,7 @@ class Transactions extends Component
         'filterStatus' => ['except' => ''],
         'dateStart' => ['except' => ''],
         'dateEnd' => ['except' => ''],
-        'sortField' => ['except' => 'created_at'],
+        'sortField' => ['except' => 'waktu_mulai'],
         'sortDirection' => ['except' => 'desc'],
         'perPage' => ['except' => 25],
     ];
