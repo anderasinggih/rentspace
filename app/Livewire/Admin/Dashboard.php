@@ -57,8 +57,14 @@ class Dashboard extends Component
             } elseif ($this->preset === 'mth') {
                 $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
                 $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+            } elseif ($this->preset === '30') {
+                $this->startDate = Carbon::now()->subMonth()->format('Y-m-d');
+                $this->endDate = Carbon::now()->format('Y-m-d');
+            } elseif ($this->preset === '90') {
+                $this->startDate = Carbon::now()->subMonths(3)->format('Y-m-d');
+                $this->endDate = Carbon::now()->format('Y-m-d');
             } else {
-                // Handle 7, 30, 90
+                // Handle 7
                 $this->startDate = Carbon::now()->subDays((int)$this->preset - 1)->format('Y-m-d');
                 $this->endDate = Carbon::now()->format('Y-m-d');
             }
