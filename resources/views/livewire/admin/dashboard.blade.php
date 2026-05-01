@@ -524,7 +524,7 @@
                                 <div class="text-[8px] text-stock-label">{{ $rental->no_wa }}</div>
                             </td>
                             <td class="px-4 py-2.5 text-right font-bold text-emerald-600">
-                                Rp{{ number_format($rental->grand_total, 0, ',', '.') }}
+                                {{ number_format($rental->grand_total / 1000, 0) }}K
                             </td>
                         </tr>
                     @empty
