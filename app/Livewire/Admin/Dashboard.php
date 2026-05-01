@@ -9,7 +9,7 @@ use Livewire\Component;
 
 class Dashboard extends Component
 {
-    public $preset = '30';
+    public $preset = 'mth';
     public $startDate;
     public $endDate;
     public $dateRangeLabel;
@@ -24,8 +24,8 @@ class Dashboard extends Component
             abort(403);
         }
 
-        $this->startDate = Carbon::now()->subDays(29)->format('Y-m-d');
-        $this->endDate = Carbon::now()->format('Y-m-d');
+        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
         $this->heatmapYear = (int)date('Y');
         $this->updateDateRangeLabel();
         
@@ -54,8 +54,11 @@ class Dashboard extends Component
             } elseif ($this->preset === 'ytd') {
                 $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
                 $this->endDate = Carbon::now()->format('Y-m-d');
+            } elseif ($this->preset === 'mth') {
+                $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+                $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
             } else {
-                // Handle 7, 30, 90, 180
+                // Handle 7, 30, 90
                 $this->startDate = Carbon::now()->subDays((int)$this->preset - 1)->format('Y-m-d');
                 $this->endDate = Carbon::now()->format('Y-m-d');
             }

@@ -174,7 +174,7 @@
                     ['val' => '7', 'label' => '7D'],
                     ['val' => '30', 'label' => '1M'],
                     ['val' => '90', 'label' => '3M'],
-                    ['val' => '180', 'label' => '6M'],
+                    ['val' => 'mth', 'label' => 'MTH'],
                     ['val' => 'ytd', 'label' => 'YTD'],
                     ['val' => 'all', 'label' => 'ALL'],
                 ];
