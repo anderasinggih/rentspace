@@ -379,6 +379,12 @@ class Dashboard extends Component
             ->where('status', 'renting')
             ->get();
 
+        $todayRealizedRentals = Rental::with(['units' => function($q) { $q->withTrashed(); }])
+            ->whereIn('status', ['paid', 'renting', 'completed'])
+            ->whereDate('paid_at', Carbon::today())
+            ->orderByDesc('paid_at')
+            ->get();
+
         // Advanced Analysis
         $avgOrderValue = $periodRentals > 0 ? $periodRevenue / $periodRentals : 0;
         $profitEfficiency = $periodRevenue > 0 ? ($periodNetRevenue / $periodRevenue) * 100 : 0;
@@ -400,7 +406,7 @@ class Dashboard extends Component
             'periodCommissions', 'periodNetRevenue',
             'gainRentals', 'gainRevenue', 'gainAbsRevenue', 'gainNetRevenue', 'gainDiscounts', 'gainTodayRevenue',
             'gainPendingRevenue', 'gainUnrealizedRevenue', 'gainTodayRentals', 'gainPendingRentals',
-            'activeRentals', 'topTenants', 'topUnits', 'topAffiliates',
+            'activeRentals', 'todayRealizedRentals', 'topTenants', 'topUnits', 'topAffiliates',
             'chartCategories', 'chartNetRevenue', 'chartTransactions', 'heatmapData',
             'prevNetRevenue', 'prevTransactions',
             'paymentLabels', 'paymentCounts',

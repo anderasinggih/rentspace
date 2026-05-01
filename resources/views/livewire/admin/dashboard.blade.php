@@ -484,7 +484,60 @@
                 </table>
             </div>
         </div>
-        <!-- Report Export Section -->
+        <!-- 7. Realized Today Breakdown -->
+    <div class="liquid-glass rounded-2xl overflow-hidden shadow-xl mb-6">
+        <div class="px-5 py-3.5 border-b border-border bg-emerald-500/5 flex items-center justify-between uppercase">
+            <span class="text-[11px] font-semibold text-emerald-600">Realized Today Transactions</span>
+            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                Rp{{ number_format($todayRevenue, 0, ',', '.') }}
+            </span>
+        </div>
+        <div class="overflow-x-auto max-h-[400px]">
+            <table class="w-full text-left border-collapse text-[11px]">
+                <thead class="bg-muted/10 text-[9px] font-semibold text-stock-label uppercase sticky top-0 bg-background z-10">
+                    <tr>
+                        <th class="px-6 py-3">Time</th>
+                        <th class="px-6 py-3">Units</th>
+                        <th class="px-6 py-3">Tenant</th>
+                        <th class="px-6 py-3 text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border font-sans">
+                    @forelse($todayRealizedRentals as $rental)
+                        <tr class="hover:bg-muted/30 transition-all">
+                            <td class="px-6 py-4 text-muted-foreground">
+                                {{ $rental->paid_at ? $rental->paid_at->format('H:i') : '-' }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach($rental->units as $u)
+                                        <span class="px-1.5 py-0.5 rounded bg-muted text-[8px] font-bold text-foreground border border-border uppercase">
+                                            {{ $u->seri }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-semibold text-foreground uppercase">{{ $rental->nama }}</div>
+                                <div class="text-[9px] text-stock-label">{{ $rental->no_wa }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-right font-bold text-emerald-600">
+                                Rp{{ number_format($rental->grand_total, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-muted-foreground text-[10px] font-semibold uppercase">
+                                No Transactions Realized Today Yet
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Report Export Section -->
         <div class="liquid-glass rounded-2xl overflow-hidden shadow-xl mb-6">
             <div class="px-5 py-3.5 border-b border-border bg-primary/5 flex items-center justify-between uppercase">
                 <span class="text-[11px] font-semibold text-primary">Analytic Performance Reports</span>
