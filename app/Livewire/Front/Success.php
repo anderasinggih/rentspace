@@ -40,8 +40,13 @@ class Success extends Component
         $this->isOwner = in_array($booking_code, session('owned_bookings', []));
 
         // 0. JALUR CEPAT: Kalau metodenya masih 'online' (belum milih bank), lempar balik ke halaman milih bank
+        // Khusus untuk CASH, kita beri toleransi jika database belum terupdate (race condition)
         if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran === 'online') {
-            return redirect()->route('public.payment', $this->rental->booking_code);
+            // Cek sekali lagi dari database murni (tanpa cache)
+            $this->rental->refresh();
+            if ($this->rental->metode_pembayaran === 'online') {
+                return redirect()->route('public.payment', $this->rental->booking_code);
+            }
         }
 
         // 1. CEK MIDTRANS DULU (Prioritas Utama)

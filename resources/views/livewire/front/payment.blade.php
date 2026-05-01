@@ -7,8 +7,8 @@
                 <div class="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent shadow-[0_0_15px_rgba(var(--primary),0.3)]"></div>
             </div>
             <div class="flex flex-col">
-                <p class="text-sm font-bold text-foreground tracking-tight leading-none">Memproses Transaksi</p>
-                <p class="text-[10px] text-muted-foreground mt-1.5 leading-tight">Mohon tunggu sebentar, kami sedang menyiapkan pesanan Anda...</p>
+                <p class="text-sm font-bold text-foreground tracking-tight leading-none">Memproses Pesanan</p>
+                <p class="text-[10px] text-muted-foreground mt-1.5 leading-tight">Sedang mengamankan stok unit dan menyiapkan metode pembayaran Anda...</p>
             </div>
         </div>
     </div>

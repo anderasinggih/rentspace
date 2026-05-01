@@ -236,8 +236,6 @@ class Payment extends Component
 
         // LOGIKA BAYAR TUNAI (CASH)
         if ($channel === 'cash') {
-            sleep(1); // Delay 1 detik biar gercep
-            
             // Bayar di tempat tidak perlu kode unik
             $newGrandTotal = $this->rental->subtotal_harga - $this->rental->potongan_diskon;
             
@@ -254,7 +252,7 @@ class Payment extends Component
                 'payment_details' => $paymentInfo
             ]);
 
-            return redirect()->route('public.success', $this->rental->booking_code);
+            return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }
 
         // LOGIKA BAYAR QRIS STATIS (MANUAL)
