@@ -578,6 +578,7 @@ class Transactions extends Component
             ->when($this->dateEnd, function ($q) {
             $q->whereDate('waktu_mulai', '<=', $this->dateEnd);
         })
+            ->orderByRaw("CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END ASC")
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
