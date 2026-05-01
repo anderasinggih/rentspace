@@ -473,17 +473,15 @@
                                                                 const d = Math.floor(diff / 86400);
                                                                 const h = Math.floor((diff % 86400) / 3600);
                                                                 const m = Math.floor((diff % 3600) / 60);
-                                                                const s = Math.floor(diff % 60);
 
                                                                 let parts = [];
                                                                 if (d > 0) parts.push(`${d}h`);
                                                                 if (h > 0) parts.push(`${h}j`);
-                                                                if (m > 0) parts.push(`${m}m`);
-                                                                if (s > 0 || parts.length === 0) parts.push(`${s}s`);
+                                                                if (m > 0 || parts.length === 0) parts.push(`${m}m`);
 
                                                                 this.timeLeft = parts.join(' ');
                                                             }
-                                                        }" x-init="update(); setInterval(() => update(), 1000)">
+                                                        }" x-init="update(); setInterval(() => update(), 60000)">
                                             <p
                                                 class="text-[7px] sm:text-[8px] font-black text-muted-foreground tracking-widest">
                                                 {{ $isOverdue ? 'Telat' : 'Sisa' }}</p>
@@ -780,17 +778,15 @@
                                                                 const d = Math.floor(diff / 86400);
                                                                 const h = Math.floor((diff % 86400) / 3600);
                                                                 const m = Math.floor((diff % 3600) / 60);
-                                                                const s = Math.floor(diff % 60);
 
                                                                 let parts = [];
                                                                 if (d > 0) parts.push(`${d}h`);
                                                                 if (h > 0) parts.push(`${h}j`);
-                                                                if (m > 0) parts.push(`${m}m`);
-                                                                if (s > 0 || parts.length === 0) parts.push(`${s}s`);
+                                                                if (m > 0 || parts.length === 0) parts.push(`${m}m`);
 
                                                                 this.timeleft = parts.join(' ');
                                                             }
-                                                        }" x-init="update(); setInterval(() => update(), 1000)">
+                                                        }" x-init="update(); setInterval(() => update(), 60000)">
                                             <p
                                                 class="text-[7px] sm:text-[8px] font-bold text-muted-foreground tracking-widest leading-none mb-1">
                                                 Mulai</p>

@@ -117,7 +117,6 @@ class Monitoring extends Component
         if ($diff->d > 0) $parts[] = $diff->d . 'h';
         if ($diff->h > 0) $parts[] = $diff->h . 'j';
         if ($diff->i > 0) $parts[] = $diff->i . 'm';
-        if ($diff->s > 0) $parts[] = $diff->s . 's';
         $this->lateDurationText = !empty($parts) ? implode(' ', $parts) : '0m';
     }
 
