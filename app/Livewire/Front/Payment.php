@@ -252,10 +252,14 @@ class Payment extends Component
                 'payment_details' => $paymentInfo
             ]);
 
-            // Beri jeda singkat agar user bisa melihat proses loading-nya (tidak terlalu kaget)
-            usleep(1500000);
+            // Refresh data model agar state terbaru tersimpan di instance ini
+            $this->rental->refresh();
 
-            return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
+            // Beri jeda singkat agar user bisa melihat proses loading
+            usleep(1000000);
+
+            // Redirect TANPA 'navigate: true' untuk memastikan transisi halaman bersih
+            return redirect()->route('public.success', $this->rental->booking_code);
         }
 
         // LOGIKA BAYAR QRIS STATIS (MANUAL)
