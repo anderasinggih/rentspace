@@ -252,8 +252,8 @@ class Payment extends Component
                 'payment_details' => $paymentInfo
             ]);
 
-            // Beri jeda 9 detik agar user bisa melihat proses loading-nya (tidak terlalu kaget)
-            usleep(9000000);
+            // Beri jeda singkat agar user bisa melihat proses loading-nya (tidak terlalu kaget)
+            usleep(1500000);
 
             return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
         }
