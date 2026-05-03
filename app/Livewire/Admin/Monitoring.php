@@ -11,12 +11,23 @@ use Carbon\Carbon;
 #[Title('Monitoring Timeline - Admin')]
 class Monitoring extends Component
 {
+    use \App\Traits\LogsStaffActivity;
+
     public $timeframe = '14'; 
     public $filterCategoryId = '';
     public $search = '';
     public $customStartDate;
     public $customEndDate;
     public $selectedRentalId = null;
+
+    // Completion/Denda Properties
+    public $completingTrxId = null;
+    public $dendaAmount = 0;
+    public $dendaKerusakanAmount = 0;
+    public $catatanKerusakan = '';
+    public $dendaMethod = 'cash';
+    public $lateDurationText = '';
+    public $isOverdue = false;
 
     public function mount()
     {
@@ -54,7 +65,128 @@ class Monitoring extends Component
     public function getSelectedRentalProperty()
     {
         if (!$this->selectedRentalId) return null;
-        return Rental::with('units')->find($this->selectedRentalId);
+        return Rental::with(['units.locations' => function($q) {
+            $q->latest()->limit(50);
+        }])->find($this->selectedRentalId);
+    }
+
+    public function markAsPaid($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+        $rental = Rental::findOrFail($id);
+        if ($rental->status === 'pending') {
+            $rental->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+            ]);
+            $this->calculateAffiliateCommission($rental);
+            
+            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id} via Monitoring");
+        }
+    }
+
+    public function cancel($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+        $rental = Rental::findOrFail($id);
+        if (in_array($rental->status, ['pending', 'paid'])) {
+            $rental->update(['status' => 'cancelled']);
+            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id} via Monitoring");
+        }
+    }
+
+    public function openDendaModal($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+        $trx = Rental::findOrFail($id);
+        $this->completingTrxId = $id;
+        $this->dendaAmount = 0;
+        $this->dendaKerusakanAmount = 0;
+        $this->catatanKerusakan = '';
+        $this->dendaMethod = 'cash';
+
+        // Calculate late duration
+        $end = \Carbon\Carbon::parse($trx->waktu_selesai);
+        $this->isOverdue = $end->isPast();
+        $diff = now()->diff($end);
+
+        $parts = [];
+        if ($diff->d > 0) $parts[] = $diff->d . 'h';
+        if ($diff->h > 0) $parts[] = $diff->h . 'j';
+        if ($diff->i > 0) $parts[] = $diff->i . 'm';
+        $this->lateDurationText = !empty($parts) ? implode(' ', $parts) : '0m';
+    }
+
+    public function closeDendaModal()
+    {
+        $this->completingTrxId = null;
+    }
+
+    public function confirmDenda()
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $this->validate(['dendaAmount' => 'required|numeric|min:0', 'dendaKerusakanAmount' => 'required|numeric|min:0', 'dendaMethod' => 'required|in:cash,qris']);
+
+        if ($this->completingTrxId) {
+            $rental = Rental::findOrFail($this->completingTrxId);
+            if ($rental->status === 'renting') {
+                $newGrandTotal = $rental->grand_total + (int)$this->dendaAmount + (int)$this->dendaKerusakanAmount;
+                $rental->update([
+                    'status' => 'completed',
+                    'denda' => (int)$this->dendaAmount,
+                    'denda_kerusakan' => (int)$this->dendaKerusakanAmount,
+                    'catatan_kerusakan' => $this->catatanKerusakan,
+                    'grand_total' => $newGrandTotal,
+                    'denda_payment_method' => ($this->dendaAmount > 0 || $this->dendaKerusakanAmount > 0) ? $this->dendaMethod : null,
+                    'completed_at' => now(),
+                ]);
+                $this->calculateAffiliateCommission($rental);
+                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} via Monitoring");
+            }
+        }
+        $this->closeDendaModal();
+    }
+
+    public function finishWithoutDenda($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $rental = Rental::findOrFail($id);
+        if ($rental->status === 'renting') {
+            $rental->update(['status' => 'completed', 'denda' => 0, 'denda_payment_method' => null, 'completed_at' => now()]);
+            $this->calculateAffiliateCommission($rental);
+            $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} tanpa denda via Monitoring");
+        }
+    }
+
+    public function handover($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $rental = Rental::findOrFail($id);
+        if ($rental->status === 'paid') {
+            $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
+            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi #{$rental->id}");
+            session()->flash('message', 'Unit berhasil divalidasi ambil. Status sekarang: Renting.');
+        }
+    }
+
+    private function calculateAffiliateCommission($rental)
+    {
+        if ($rental->affiliator_id) {
+            $exists = \App\Models\AffiliateCommission::where('rental_id', $rental->id)->exists();
+            if ($exists) return;
+            $profile = \App\Models\AffiliatorProfile::where('user_id', $rental->affiliator_id)->first();
+            if ($profile && $profile->status === 'approved') {
+                $amount = $rental->subtotal_harga * ($profile->commission_rate / 100);
+                \App\Models\AffiliateCommission::create(['affiliator_id' => $rental->affiliator_id, 'rental_id' => $rental->id, 'amount' => $amount, 'status' => 'earned']);
+                $totalEarned = \App\Models\AffiliateCommission::where('affiliator_id', $rental->affiliator_id)->sum('amount');
+                $totalWithdrawn = \App\Models\AffiliatePayout::where('affiliator_id', $rental->affiliator_id)->sum('amount');
+                $profile->balance = $totalEarned - $totalWithdrawn;
+                $profile->save();
+            }
+        }
     }
 
     public function render()
@@ -94,8 +226,9 @@ class Monitoring extends Component
             $dates[] = $startDate->copy()->addDays($i);
         }
 
+        // 1. Fetch Timeline Units & Rentals
         $unitsQuery = Unit::query()->with(['category', 'rentals' => function ($q) use ($startDate, $endDate) {
-            $q->whereIn('status', ['paid', 'pending', 'completed'])
+            $q->whereIn('status', ['paid', 'pending', 'completed', 'renting'])
               ->where('waktu_mulai', '<=', $endDate)
               ->where('waktu_selesai', '>=', $startDate)
               ->when($this->search, function($q) {
@@ -124,10 +257,11 @@ class Monitoring extends Component
         $categories = \App\Models\Category::orderBy('name')->get();
 
         // 3. Fetch Currently Rented Units (Active Now)
-        $activeRentalsQuery = Rental::with('units')
-            ->where('status', 'paid')
-            ->where('waktu_mulai', '<=', now())
-            ->where('waktu_selesai', '>=', now());
+        // 3. Fetch Currently Rented Units (Status is 'renting' and started)
+        $activeRentalsQuery = Rental::with(['units.category', 'units.locations' => function($q) use ($startDate, $endDate) {
+            $q->latest()->limit(1);
+        }])
+            ->where('status', 'renting');
             
         if ($this->search) {
             $activeRentalsQuery->where(function($q) {
@@ -137,12 +271,13 @@ class Monitoring extends Component
             });
         }
         
-        $activeRentals = $activeRentalsQuery->latest()->get();
+        $activeRentals = $activeRentalsQuery->orderBy('waktu_selesai', 'asc')->get();
 
-        // 4. Fetch Upcoming Rentals (Booked for Future)
-        $upcomingRentalsQuery = Rental::with('units')
-            ->whereIn('status', ['paid', 'pending'])
-            ->where('waktu_mulai', '>', now());
+        // 4. Fetch Upcoming & Ready to Collect (Status is 'paid' or 'pending')
+        $upcomingRentalsQuery = Rental::with(['units.category'])
+            ->whereIn('status', ['paid', 'pending']);
+            // Note: we don't strictly filter by waktu_mulai > now anymore, 
+            // since a PAID rental that is supposed to start might be waiting for pickup
 
         if ($this->search) {
             $upcomingRentalsQuery->where(function($q) {
@@ -155,7 +290,7 @@ class Monitoring extends Component
         $upcomingRentals = $upcomingRentalsQuery->orderBy('waktu_mulai', 'asc')->get();
 
         // 5. Fetch Available Units (Not currently rented)
-        $activeUnitIds = Rental::where('status', 'paid')
+        $activeUnitIds = Rental::whereIn('status', ['paid', 'renting'])
             ->where('waktu_mulai', '<=', now())
             ->where('waktu_selesai', '>=', now())
             ->get()
@@ -173,7 +308,7 @@ class Monitoring extends Component
         $availableUnits = $availableUnitsQuery->orderBy('category_id')->get();
 
         // 6. Stats for Summary Cards
-        $endingSoonCount = Rental::where('status', 'paid')
+        $endingSoonCount = Rental::whereIn('status', ['paid', 'renting'])
             ->where('waktu_selesai', '>', now())
             ->where('waktu_selesai', '<=', now()->addHours(6))
             ->count();

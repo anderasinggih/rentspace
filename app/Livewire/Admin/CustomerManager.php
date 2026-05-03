@@ -14,6 +14,7 @@ class CustomerManager extends Component
     use WithPagination;
 
     public $search = '';
+    public $perPage = 15;
     public $selectedNik = null;
     public $vipThreshold = 5; // 5+ orders = VIP
 
@@ -57,7 +58,7 @@ class CustomerManager extends Component
             ->groupBy('nik', 'nama', 'no_wa')
             ->orderByDesc('ltv');
 
-        $customers = $customersQuery->paginate(15);
+        $customers = $customersQuery->paginate($this->perPage);
 
         $customerDetails = null;
         if ($this->selectedNik) {

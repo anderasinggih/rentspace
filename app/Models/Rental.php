@@ -14,6 +14,8 @@ class Rental extends Model
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
         'completed_at' => 'datetime',
+        'handed_over_at' => 'datetime',
+        'paid_at' => 'datetime',
         'payment_details' => 'array',
     ];
 

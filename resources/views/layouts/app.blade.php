@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 
@@ -24,6 +24,58 @@
         applyTheme();
         // Re-apply after Livewire 3 attribute morphs the HTML tag
         document.addEventListener('livewire:navigated', applyTheme);
+    </script>
+
+    <style>
+        html,
+        body {
+            touch-action: pan-x pan-y;
+            -webkit-text-size-adjust: 100%;
+            overscroll-behavior-y: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Allow selection in inputs */
+        input,
+        textarea {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+        }
+
+        /* Prevent input auto-zoom on iOS */
+        @media screen and (max-width: 768px) {
+
+            input,
+            select,
+            textarea {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+    <script>
+        // Force disable zooming
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, {
+            passive: false
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            let now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
     </script>
 </head>
 

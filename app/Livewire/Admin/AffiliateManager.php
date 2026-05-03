@@ -17,6 +17,7 @@ class AffiliateManager extends Component
     public $review_id = null;
     
     public $search = '';
+    public $perPage = 10;
 
     #[Url]
     public $tab = 'request'; // request, account, payouts, history
@@ -59,6 +60,11 @@ class AffiliateManager extends Component
     public function updatedTab($value)
     {
         $this->review_id = null;
+        $this->resetPage();
+    }
+
+    public function updatedSearch()
+    {
         $this->resetPage();
     }
 
@@ -245,7 +251,7 @@ class AffiliateManager extends Component
     public function getWaNotificationLink($payout)
     {
         $profile = $payout->affiliator->affiliateProfile;
-        $no_wa = $profile->no_hp ?? '';
+        $no_wa = $profile?->no_hp ?? '';
         if (empty($no_wa)) return '#';
 
         // Format to 62...
@@ -318,7 +324,7 @@ class AffiliateManager extends Component
                   }], 'amount');
             })
             ->latest()
-            ->paginate(10);
+            ->paginate($this->perPage, ['*'], 'profilesPage');
 
         $payoutsQuery = AffiliatePayout::with('affiliator', 'affiliator.affiliateProfile')
             ->when($this->tab === 'payouts', function($q) {
@@ -338,7 +344,7 @@ class AffiliateManager extends Component
             $payoutsQuery->orderBy($this->sortField, $this->sortDirection);
         }
 
-        $payouts = $payoutsQuery->paginate(10);
+        $payouts = $payoutsQuery->paginate($this->perPage, ['*'], 'payoutsPage');
 
         return view('livewire.admin.affiliate-manager', [
             'profiles' => $profiles,

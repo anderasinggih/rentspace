@@ -1,5 +1,5 @@
-<div class="py-0 px-4 sm:py-16 flex flex-col items-center" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
-    <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-4">
+<div class="min-h-screen bg-background py-4 px-4 sm:py-16 flex flex-col items-center justify-start sm:justify-center" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
+    <div id="invoice-content" class="w-full max-w-md mx-auto bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
 
         <!-- Header -->
         <div class="p-6 text-center border-b border-border/50 bg-muted/20">
@@ -14,13 +14,16 @@
                 <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Dibatalkan</h1>
                 <p class="text-[10px] text-rose-500/70 mt-1 font-medium italic">Status: Sesi Pembayaran Berakhir (Unit Dilepas)</p>
             @elseif($rental->status === 'paid')
+                <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Terima Kasih!</h1>
+                <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Siap Diambil / Lunas</p>
+            @elseif($rental->status === 'renting')
                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-500 mb-4 animate-in zoom-in duration-500">
                     <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Pembayaran Berhasil!</h1>
-                <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Lunas / Terbayar</p>
+                <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Unit Sedang Disewa</h1>
+                <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Aktif / Dibawa Penyewa</p>
             @elseif($rental->metode_pembayaran === 'cash' && $rental->status === 'pending')
                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-500/10 text-blue-500 mb-4 animate-in zoom-in duration-500">
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -59,7 +62,7 @@
                         this.status = this.seconds < 10 ? 'red' : (this.seconds < 30 ? 'amber' : 'green');
                         this.seconds--;
                     }
-                }" x-init="update(); setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center min-h-[60px] justify-center">
+                }" x-init="update(); setInterval(() => update(), 1000)" class="mt-2 flex flex-col items-center min-h-[60px] justify-center no-pdf">
                     <span class="text-[9px] text-muted-foreground mb-0.5 uppercase font-bold tracking-widest">Batas Waktu Pembayaran</span>
                     <div x-text="timeLeft" 
                         class="text-3xl font-black font-mono tracking-tighter transition-all duration-500 min-w-[120px] text-center"
@@ -75,7 +78,7 @@
             <p class="text-xs text-muted-foreground mt-3 font-medium">{{ $rental->nama }} &bull; <span class="bg-muted px-1.5 py-0.5 rounded text-foreground font-bold tracking-tight">{{ $rental->booking_code }}</span></p>
 
             @if($debugError && auth()->check() && auth()->user()->role === 'admin')
-                <div class="mt-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-[10px] text-red-600 font-mono text-left">
+                <div class="mt-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-[10px] text-red-600 font-mono text-left no-pdf">
                     Debug Error: {{ $debugError }}
                 </div>
             @endif
@@ -87,12 +90,15 @@
                 <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">Item Yang Disewa</p>
                 @foreach($rental->units as $unit)
                     <div class="flex items-center justify-between text-sm">
-                        <span class="font-semibold text-foreground">{{ $unit->seri }}</span>
+                        <span class="font-semibold text-foreground">
+                            {{ $unit->seri }}
+                                <span class="opacity-50 text-[10px] font-mono">[#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}]</span>
+                        </span>
                         <span class="text-xs text-muted-foreground">{{ $unit->warna }} &bull; {{ $unit->memori }}</span>
                     </div>
                 @endforeach
                 @if($rental->status == 'pending' && $rental->metode_pembayaran != 'cash')
-                    <div class="mt-4 pt-4 border-t border-dashed border-border/50">
+                    <div class="mt-4 pt-4 border-t border-dashed border-border/50 no-pdf">
                         <a href="{{ route('public.payment', $rental->booking_code) }}?change=1" 
                             class="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                             ← Ubah Metode Pembayaran
@@ -160,9 +166,8 @@
             </div>
 
             <!-- Conditional Actions Based on Ownership and Status -->
-            <!-- Conditional Actions Based on Ownership and Status -->
             @if($isOwner)
-                <div class="space-y-3 pt-4">
+                <div class="space-y-3 pt-4 no-pdf">
                     @if($rental->status === 'pending')
                         {{-- Jika Online, kasih tombol Bayar Sekarang --}}
                         @if($rental->metode_pembayaran !== 'cash')
@@ -175,32 +180,22 @@
                                 <a href="{{ route('public.payment', ['booking_code' => $rental->booking_code, 'change' => 1]) }}"
                                    class="text-[10px] font-bold text-muted-foreground hover:text-foreground transition-all uppercase tracking-widest border-b border-muted hover:border-foreground pb-0.5">
                                    Ganti Metode Pembayaran
-                                </a>
+                                 </a>
                             </div>
                         @endif
 
                         {{-- Jika Cash, tetap tombol WA --}}
                         @if($rental->metode_pembayaran === 'cash')
-                            <a href="{{ $waUrl }}" target="_blank"
-                                class="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-emerald-600 text-white text-sm font-bold border border-emerald-500/10 transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                                <span>Konfirmasi WhatsApp</span>
-                            </a>
+                            {{-- Tombol konfirmasi WA dihapus agar alur murni via email otomatis --}}
+                            <p class="text-[10px] text-center text-muted-foreground px-4 italic bg-muted/30 py-3 rounded-xl border border-dashed border-border/50">Admin telah menerima laporan pesanan Anda. Silakan datang ke lokasi sesuai jadwal.</p>
                         @else
                             <p class="text-[10px] text-center text-muted-foreground px-4">Setelah membayar, halaman ini akan otomatis berubah menjadi struk berhasil.</p>
                         @endif
                     @elseif($rental->status === 'paid')
                         <!-- Success Notifications -->
-                        <div class="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-xl flex items-start gap-3">
-                            <div class="p-1 bg-emerald-500 rounded-full text-white mt-0.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            </div>
-                            <p class="text-xs text-emerald-800 leading-relaxed font-medium">Lunas! Silakan <span class="font-bold underline">SCREENSHOT</span> halaman ini dan tunjukkan saat pengambilan unit.</p>
-                        </div>
-                        <a href="{{ $waUrl }}" target="_blank"
-                            class="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-zinc-900 text-white text-sm font-bold transition-all">
-                            <span>Konfirmasi ke WhatsApp</span>
-                        </a>
+                        {{-- Peringatan screenshot dihapus karena digantikan sistem notifikasi email otomatis --}}
+                        {{-- Tombol konfirmasi WA lunas dihapus --}}
+                        <p class="text-[10px] text-center text-emerald-600/70 px-4 font-medium italic">Invoice digital telah dikirimkan ke email Anda.</p>
                     @else
                         <!-- Cancelled Case -->
                         <a href="{{ route('public.booking') }}" wire:navigate
@@ -208,6 +203,7 @@
                             Sewa Unit Lain
                         </a>
                     @endif
+
 
                     <div class="grid grid-cols-2 gap-2 mt-2">
                         <a href="{{ route('public.check-order') }}" wire:navigate
@@ -225,23 +221,23 @@
             <!-- Admin Panel (Keep as requested) -->
             @if(auth()->check() && auth()->user()->role === 'admin')
                 @if($rental->metode_pembayaran == 'online' && $rental->status === 'pending')
-                <div class="py-10 flex flex-col items-center justify-center text-center px-4">
-                    <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary animate-pulse"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <div class="py-10 flex flex-col items-center justify-center text-center px-4 no-pdf">
+                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary animate-pulse"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-foreground">Metode Belum Dipilih</h3>
+                        <p class="text-[10px] text-muted-foreground mt-1 max-w-[200px]">Silakan klik tombol di bawah untuk memilih bank atau QRIS.</p>
                     </div>
-                    <h3 class="text-sm font-bold text-foreground">Metode Belum Dipilih</h3>
-                    <p class="text-[10px] text-muted-foreground mt-1 max-w-[200px]">Silakan klik tombol di bawah untuk memilih bank atau QRIS.</p>
-                </div>
-            @elseif($rental->metode_pembayaran != 'cash' && $rental->status === 'pending')
-                <!-- VA Detail -->
-                <div class="flex flex-col items-center p-6 bg-muted/20">
-                    <p class="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">{{ str_replace('_', ' ', $rental->metode_pembayaran) }}</p>
-                    @if(isset($rental->payment_details['va_numbers']))
-                        <p class="text-2xl font-mono font-bold tracking-tighter">{{ $rental->payment_details['va_numbers'][0]['va_number'] }}</p>
-                    @endif
-                </div>
-            @endif
-                <div class="pt-6 border-t border-border mt-6 space-y-3">
+                @elseif($rental->metode_pembayaran != 'cash' && $rental->status === 'pending')
+                    <!-- VA Detail -->
+                    <div class="flex flex-col items-center p-6 bg-muted/20 no-pdf">
+                        <p class="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">{{ str_replace('_', ' ', $rental->metode_pembayaran) }}</p>
+                        @if(isset($rental->payment_details['va_numbers']))
+                            <p class="text-2xl font-mono font-bold tracking-tighter">{{ $rental->payment_details['va_numbers'][0]['va_number'] }}</p>
+                        @endif
+                    </div>
+                @endif
+                <div class="pt-6 border-t border-border mt-6 space-y-3 no-pdf">
                     <div class="flex items-center justify-between">
                         <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Admin Control</p>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $rental->status === 'paid' ? 'bg-emerald-500/10 text-emerald-600' : ($rental->status === 'cancelled' ? 'bg-rose-500/10 text-rose-600' : 'bg-amber-500/10 text-amber-600') }}">
@@ -278,4 +274,58 @@
             </p>
         </div>
     </div>
+    <!-- Feedback Modal with 4s Delay -->
+    @if($showFeedbackModal)
+    <div x-data="{ showDelayed: false }" x-init="setTimeout(() => showDelayed = true, 4000)">
+        <div x-show="showDelayed" 
+            x-transition:enter="transition ease-out duration-500"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm no-pdf"
+            x-cloak>
+            <div class="bg-card w-full max-w-sm rounded-[2.5rem] shadow-2xl border border-border p-6 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                </div>
+                <h3 class="text-2xl font-bold tracking-tight text-foreground ">Gimana Servis Kami?</h3>
+                <p class="text-xs text-muted-foreground mt-2 px-4 leading-relaxed">Puas sama layanannya? Kasih bintang & feedback ya biar kami makin semangat!</p>
+            </div>
+
+            <div class="mt-8">
+                <!-- Star Rating -->
+                <div class="flex justify-center gap-2.5 mb-8">
+                    @for($i = 1; $i <= 5; $i++)
+                    <button wire:click="$set('rating', {{ $i }})" class="transition-all active:scale-75 hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" 
+                            fill="{{ $rating >= $i ? 'currentColor' : 'none' }}" 
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" 
+                            class="{{ $rating >= $i ? 'text-amber-500' : 'text-zinc-300 dark:text-zinc-700' }}">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                    </button>
+                    @endfor
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Testimoni Kamu</label>
+                    <textarea wire:model="feedback" 
+                        placeholder="Tulis kesan & pesan kamu di sini..."
+                        class="w-full min-h-[120px] rounded-[1.5rem] border border-border bg-muted/30 p-5 text-sm focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500/30 transition-all outline-none resize-none"></textarea>
+                </div>
+            </div>
+
+            <div class="mt-8 flex flex-col gap-3">
+                <button wire:click="submitFeedback" 
+                    class="h-14 w-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-bold text-sm shadow-xl shadow-zinc-950/20 active:scale-95 transition-all">
+                    Kirim Review
+                </button>
+                <button wire:click="skipFeedback" class="h-10 w-full text-xs text-muted-foreground font-bold hover:text-foreground transition-colors uppercase tracking-widest">
+                    Nanti Saja
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 </div>

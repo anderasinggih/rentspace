@@ -28,7 +28,13 @@ class CheckMaintenanceMode
                 // If it's not an admin route, show maintenance page
                 // Exempting logout and login routes if necessary, 
                 // but usually we just block everything frontend.
-                $isPathsExempt = $request->is('admin/*') || $request->is('login') || $request->is('logout');
+                // If it's not an admin route or auth route, show maintenance page
+                // We must exempt livewire routes so components keep working
+                $isPathsExempt = $request->is('admin') || 
+                                 $request->is('admin/*') || 
+                                 $request->is('login') || 
+                                 $request->is('logout') ||
+                                 $request->is('livewire/*');
 
                 if (!$isPathsExempt) {
                     return response()->view('errors.maintenance', [

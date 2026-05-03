@@ -5,12 +5,14 @@ namespace App\Livewire\Front;
 use App\Models\Unit;
 use App\Models\Rental;
 use App\Models\PricingRule;
+use App\Mail\NewOrderNotification;
+use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Livewire\Component;
 
 class BookingForm extends Component
 {
-    public $nik, $nama, $alamat, $no_wa;
+    public $nik, $nama, $email, $alamat, $no_wa, $sosial_media;
     public $waktu_mulai, $waktu_selesai;
     public $unit_id; // Keeping for backward compat/initial select
     public $selected_unit_ids = [];
@@ -62,7 +64,9 @@ class BookingForm extends Component
 
             if ($lastRental) {
                 $this->nama = $lastRental->nama;
+                $this->email = $lastRental->email;
                 $this->alamat = $lastRental->alamat;
+                $this->sosial_media = $lastRental->sosial_media;
 
                 $firstName = explode(' ', $this->nama)[0];
                 $this->nikFoundMessage = "Halo {$firstName}, data otomatis terisi dari sesi Anda.";
@@ -128,10 +132,17 @@ class BookingForm extends Component
         if (in_array($propertyName, ['selected_category_id', 'unit_search'])) {
             $this->checkAvailability();
         }
+
+        if ($propertyName === 'email') {
+            $this->validateOnly('email', [
+                'email' => 'required|email'
+            ]);
+        }
     }
 
     public function checkAvailability()
     {
+        $this->resetErrorBag('waktu_selesai');
         if (!$this->waktu_mulai || !$this->waktu_selesai)
             return;
 
@@ -140,7 +151,7 @@ class BookingForm extends Component
 
         if ($end->lte($start)) {
             $this->addError('waktu_selesai', 'Harus setelah waktu mulai');
-            $this->available_units = [];
+            $this->available_units = collect();
             return;
         }
 
@@ -148,7 +159,7 @@ class BookingForm extends Component
         // We check only the range the user is actually picking [start, end]
         $this->schedule_available_unit_ids = Unit::query()->where('is_active', true)
             ->whereDoesntHave('rentals', function ($query) use ($start, $end) {
-                $query->whereIn('status', ['pending', 'paid'])
+                $query->whereIn('status', ['pending', 'paid', 'renting'])
                     ->where(function ($q) use ($start, $end) {
                         $q->whereBetween('waktu_mulai', [$start, $end])
                             ->orWhereBetween('waktu_selesai', [$start, $end])
@@ -176,7 +187,7 @@ class BookingForm extends Component
             // Check if any selected unit has a conflict in the BONUS period [end, effectiveEnd]
             $clashingUnitIds = Unit::whereIn('id', $this->selected_unit_ids)
                 ->whereHas('rentals', function ($query) use ($end, $effectiveEnd) {
-                    $query->whereIn('status', ['pending', 'paid'])
+                    $query->whereIn('status', ['pending', 'paid', 'renting'])
                         ->where(function ($q) use ($end, $effectiveEnd) {
                             $q->whereBetween('waktu_mulai', [$end, $effectiveEnd])
                                 ->orWhereBetween('waktu_selesai', [$end, $effectiveEnd])
@@ -479,7 +490,9 @@ class BookingForm extends Component
         $this->validate([
             'nik' => 'required|numeric',
             'nama' => 'required',
+            'email' => 'required|email',
             'no_wa' => 'required|numeric',
+            'sosial_media' => 'required',
             'alamat' => 'required',
             'waktu_mulai' => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
@@ -492,6 +505,8 @@ class BookingForm extends Component
         ]);
 
         $this->checkAvailability();
+        if ($this->getErrorBag()->any()) return;
+
         foreach ($this->selected_unit_ids as $sid) {
             if (!$this->available_units->contains('id', $sid)) {
                 $this->addError('selected_unit_ids', 'Beberapa unit tidak tersedia di slot waktu yang Anda pilih.');
@@ -519,7 +534,9 @@ class BookingForm extends Component
             'unit_id' => $this->selected_unit_ids[0] ?? null, // Backward compatibility
             'nik' => $this->nik,
             'nama' => strtoupper($this->nama),
+            'email' => strtolower($this->email),
             'alamat' => strtoupper($this->alamat),
+            'sosial_media' => $this->sosial_media,
             'no_wa' => $this->no_wa,
             'waktu_mulai' => $this->waktu_mulai,
             'waktu_selesai' => $finalWaktuSelesai,
@@ -562,6 +579,8 @@ class BookingForm extends Component
 
         $this->dispatch('booking-submitted');
 
+
+
         return redirect()->route('public.payment', $rental->booking_code);
     }
 
@@ -580,8 +599,10 @@ class BookingForm extends Component
 
         if ($lastRental) {
             $this->nama = $lastRental->nama;
+            $this->email = $lastRental->email;
             $this->no_wa = $lastRental->no_wa;
             $this->alamat = $lastRental->alamat;
+            $this->sosial_media = $lastRental->sosial_media;
             $firstName = explode(' ', $this->nama)[0];
             $this->nikFoundMessage = "Halo {$firstName}, data Anda berhasil ditemukan!";
             $this->nikFoundType = 'success';

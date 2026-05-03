@@ -1,4 +1,4 @@
-<div class="py-0 px-4 sm:py-16 flex flex-col items-center font-sans tracking-normal" @if($rental->status === 'pending') wire:poll.15s="checkStatus" @endif>
+<div class="pt-0 pb-16 px-4 sm:pt-16 flex flex-col items-center font-sans tracking-normal" @if($rental->status === 'pending') wire:poll.15s="checkStatus" @endif>
     <!-- Processing Loading Overlay -->
     <div wire:loading wire:target="selectChannel" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex flex-col items-center w-full animate-in fade-in duration-300 px-6">
         <div class="bg-card p-5 rounded-2xl shadow-2xl flex flex-row items-center gap-4 text-left max-w-[320px] w-full border border-border/50 mt-[40vh]">
@@ -7,13 +7,13 @@
                 <div class="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent shadow-[0_0_15px_rgba(var(--primary),0.3)]"></div>
             </div>
             <div class="flex flex-col">
-                <p class="text-sm font-bold text-foreground tracking-tight leading-none">Memproses Transaksi</p>
-                <p class="text-[10px] text-muted-foreground mt-1.5 leading-tight">Mohon tunggu sebentar, kami sedang menyiapkan pesanan Anda...</p>
+                <p class="text-sm font-bold text-foreground tracking-tight leading-none">Memproses Pesanan</p>
+                <p class="text-[10px] text-muted-foreground mt-1.5 leading-tight">Sedang mengamankan stok unit dan menyiapkan metode pembayaran Anda...</p>
             </div>
         </div>
     </div>
 
-    <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-4 animate-in fade-in duration-500">
+    <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm overflow-hidden mt-2 sm:mt-8 animate-in fade-in duration-500">
         
         <!-- Header -->
         <div class="p-4 text-center border-b border-border/50 bg-muted/10">
@@ -137,7 +137,8 @@
                             ['id' => 'permata', 'name' => 'Permata', 'sub' => 'Transfer bank', 'icon' => 'PRM', 'color' => 'bg-violet-500/10 text-violet-600 border-violet-500/20'],
                             ['id' => 'bsi', 'name' => 'BSI', 'sub' => 'Transfer otomatis', 'icon' => 'BSI', 'color' => 'bg-teal-500/10 text-teal-600 border-teal-500/20'],
                             ['id' => 'cimb', 'name' => 'CIMB', 'sub' => 'Transfer otomatis', 'icon' => 'CMB', 'color' => 'bg-red-500/10 text-red-600 border-red-500/20'],
-                            ['id' => 'qris', 'name' => 'QRIS', 'sub' => 'Gopay / ShopeePay / QR', 'icon' => 'QR', 'color' => 'bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/20'],
+                            ['id' => 'qris', 'name' => 'QRIS (Otomatis)', 'sub' => 'Scan langsung, konfirmasi instan', 'icon' => 'QR', 'color' => 'bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/20'],
+                            ['id' => 'manual_qris', 'name' => 'QRIS Statis (Manual)', 'sub' => 'Scan barcode & kirim bukti bayar', 'icon' => 'SCAN', 'color' => 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'],
                             ['id' => 'cash', 'name' => 'Bayar di Tempat', 'sub' => 'Tunai / Cash di Lokasi', 'icon' => 'CSH', 'color' => 'bg-zinc-500/10 text-zinc-600 border-zinc-500/20'],
                         ];
                         
@@ -177,8 +178,6 @@
                                     $qrAction = collect($paymentInfo['actions'])->where('name', 'generate-qr-code')->first();
                                     $qrUrl = $qrAction['url'] ?? null;
                                 }
-                                
-                                // FALLBACK: Jika action ga ada, tapi ada qr_string, kita pake generator luar
                                 if (!$qrUrl && isset($paymentInfo['qr_string'])) {
                                     $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . $paymentInfo['qr_string'];
                                 }
@@ -188,25 +187,38 @@
                                 <div class="inline-block p-4 bg-white rounded-xl border border-border shadow-xl">
                                     <img src="{{ $qrUrl }}" alt="QRIS" class="w-56 h-56 mx-auto">
                                 </div>
-
-                                {{-- FITUR KOPI UNTUK SIMULATOR (Khusus Sandbox) --}}
-                                @if(!config('midtrans.is_production') && isset($paymentInfo['qr_string']))
-                                    <div class="mt-4 p-3 bg-muted/50 rounded-lg border border-dashed border-border group">
-                                        <p class="text-[9px] font-bold text-muted-foreground uppercase mb-1">Raw QR String (Untuk Simulator)</p>
-                                        <div class="flex items-center gap-2">
-                                            <code class="text-[10px] bg-background px-1.5 py-0.5 rounded border flex-1 truncate">{{ $paymentInfo['qr_string'] }}</code>
-                                            <button onclick="navigator.clipboard.writeText('{{ $paymentInfo['qr_string'] }}'); alert('Teks QR berhasil disalin! Pindahkan ke Simulator.')" 
-                                                class="h-7 px-2 bg-primary text-white text-[10px] font-bold rounded hover:opacity-90 transition-all shrink-0">
-                                                Copy
-                                            </button>
-                                        </div>
-                                    </div>
-                                @endif
                             @else
                                 <div class="p-4 bg-red-50 text-red-600 rounded-lg text-xs italic">
                                     Gagal memuat Kode QR. Pastikan metode QRIS sudah aktif di Dashboard Midtrans Anda.
                                 </div>
                             @endif
+                        @elseif($selectedChannel === 'manual_qris')
+                            <p class="font-bold text-foreground mb-4">Silakan Scan QRIS Berikut</p>
+                            <div class="inline-block p-4 bg-white rounded-xl border border-border shadow-xl mb-4">
+                                <img src="/uploads/{{ data_get($paymentInfo, 'qris_image', 'default.jpg') }}?t={{ time() }}" 
+                                     alt="QRIS Statis" 
+                                     class="w-56 h-56 mx-auto object-contain"
+                                     onerror="this.src='https://placehold.co/300x300/18181b/ffffff?text=Scan+QRIS'">
+                            </div>
+
+                            <div class="p-2.5 bg-emerald-500/[0.03] border border-emerald-500/10 rounded-xl text-emerald-700/80 text-[11px] font-bold mb-4 leading-tight">
+                                Silakan screenshot bukti transfer & kirim ke WhatsApp untuk konfirmasi.
+                            </div>
+
+                            @php
+                                $unitNames = $rental->units->pluck('seri')->join(', ');
+                                $waMessage = "Halo Admin, saya ingin konfirmasi pembayaran via QRIS STATIS.\n\n"
+                                           . "Kode Booking: " . $rental->booking_code . "\n"
+                                           . "Unit: " . $unitNames . "\n"
+                                           . "Total: Rp " . number_format($rental->grand_total, 0, ',', '.') . "\n\n"
+                                           . "Berikut bukti transfer saya...";
+                                $waUrl = "https://wa.me/" . \App\Models\Setting::getVal('admin_wa') . "?text=" . urlencode($waMessage);
+                            @endphp
+
+                            <a href="{{ $waUrl }}" target="_blank"
+                               class="w-full h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center gap-2 font-bold hover:bg-emerald-700 transition-all text-xs">
+                                Kirim Bukti ke WhatsApp
+                            </a>
                         @else
                             <div class="space-y-4">
                                 @if(data_get($paymentInfo, 'payment_type') === 'cash')
@@ -339,7 +351,7 @@
 
             @if($paymentInfo)
                 <div class="mt-3">
-                    <button wire:click="resetPayment" class="mt-16 w-full h-11 rounded-xl bg-white text-zinc-900 flex items-center justify-center gap-2 font-bold border border-zinc-200 hover:bg-zinc-50 transition-all text-sm active:scale-95 shadow-sm">
+                    <button wire:click="resetPayment" class="mt-4 w-full h-11 rounded-xl bg-white text-zinc-900 flex items-center justify-center gap-2 font-bold border border-zinc-200 hover:bg-zinc-50 transition-all text-sm active:scale-95 shadow-sm">
                         Ubah Metode Pembayaran
                     </button>
                 </div>

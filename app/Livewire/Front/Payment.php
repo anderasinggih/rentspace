@@ -63,9 +63,9 @@ class Payment extends Component
             $this->rental->refresh();
         }
 
-        // 4. GARI POLISI: Baru cek apakah sudah basi (Hanya jika masih pending)
+        // 4. GARIS POLISI: Baru cek apakah sudah basi (Hanya jika masih pending & BUKAN cash)
         $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
-        if ($this->rental->status === 'pending' && $isExpired) {
+        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && $isExpired) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -128,7 +128,10 @@ class Payment extends Component
                 $this->paymentInfo = $this->rental->payment_details;
 
                 if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
-                    $this->rental->update(['status' => 'paid']);
+                    $this->rental->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
                     return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
 
@@ -139,8 +142,8 @@ class Payment extends Component
             } catch (\Exception $e) { }
         }
 
-        // 2. CEK TIMER (Hanya jika di Midtrans memang belum dibayar)
-        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
+        // 2. CEK TIMER (Hanya jika di Midtrans memang belum dibayar & BUKAN cash)
+        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -233,8 +236,6 @@ class Payment extends Component
 
         // LOGIKA BAYAR TUNAI (CASH)
         if ($channel === 'cash') {
-            sleep(1); // Delay 1 detik biar gercep
-            
             // Bayar di tempat tidak perlu kode unik
             $newGrandTotal = $this->rental->subtotal_harga - $this->rental->potongan_diskon;
             
@@ -251,7 +252,36 @@ class Payment extends Component
                 'payment_details' => $paymentInfo
             ]);
 
+            // Refresh data model agar state terbaru tersimpan di instance ini
+            $this->rental->refresh();
+
+            // Beri jeda singkat agar user bisa melihat proses loading
+            usleep(1000000);
+
+            // Redirect TANPA 'navigate: true' untuk memastikan transisi halaman bersih
             return redirect()->route('public.success', $this->rental->booking_code);
+        }
+
+        // LOGIKA BAYAR QRIS STATIS (MANUAL)
+        if ($channel === 'manual_qris') {
+            sleep(1);
+            
+            $paymentInfo = [
+                'payment_type' => 'manual_qris',
+                'status_message' => 'Silakan scan QRIS di bawah ini dan konfirmasi ke Admin.',
+                'qris_image' => \App\Models\Setting::getVal('qris', 'default.jpg')
+            ];
+
+            $this->rental->update([
+                'metode_pembayaran' => 'manual_qris',
+                'kode_unik_pembayaran' => 0,
+                'grand_total' => $baseTotal,
+                'payment_details' => $paymentInfo
+            ]);
+
+            $this->paymentInfo = $paymentInfo;
+            $this->selectedChannel = $channel;
+            return;
         }
 
         // --- JURUS ANTI-DUPLICATE ---

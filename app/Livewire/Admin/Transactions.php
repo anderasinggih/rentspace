@@ -3,6 +3,9 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Rental;
+use App\Mail\PaymentConfirmedNotification;
+use App\Mail\OrderCancelledNotification;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -11,7 +14,36 @@ class Transactions extends Component
     use WithPagination, \App\Traits\LogsStaffActivity;
 
     public $search = '';
-    public $filterStatus = '';
+    public $filterStatus = 'all';
+
+    public function getPaymentMethodsProperty()
+    {
+        $allMethods = [
+            'cash' => 'CASH / TUNAI',
+            'qris' => 'QRIS',
+            'bca' => 'BANK BCA',
+            'mandiri' => 'BANK MANDIRI',
+            'bni' => 'BANK BNI',
+            'bri' => 'BANK BRI',
+            'permata' => 'BANK PERMATA',
+            'bsi' => 'BANK BSI',
+            'cimb' => 'BANK CIMB',
+        ];
+
+        // Ambil pengaturan metode yang aktif
+        $savedPayment = \App\Models\Setting::getVal('payment_methods', '[]');
+        $activeMethods = json_decode($savedPayment, true) ?: [];
+
+        // Untuk Admin, kita tampilkan SEMUA metode master yang ada, 
+        // tapi kita bisa nambahin yang baru kalau memang terdaftar di settings tapi belum ada di master
+        foreach ($activeMethods as $id => $isActive) {
+            if (!isset($allMethods[$id])) {
+                $allMethods[$id] = strtoupper(str_replace('_', ' ', $id));
+            }
+        }
+
+        return $allMethods;
+    }
     public $dateStart = '';
     public $dateEnd = '';
     public $perPage = 25;
@@ -19,7 +51,7 @@ class Transactions extends Component
     // Edit & Completion Properties
     public $isEditingTrx = false;
     public $editTrxId = null;
-    public $edit_nama, $edit_nik, $edit_no_wa, $edit_alamat;
+    public $edit_nama, $edit_nik, $edit_email, $edit_no_wa, $edit_alamat, $edit_sosial_media;
     public $edit_waktu_mulai, $edit_waktu_selesai;
     public $edit_subtotal, $edit_diskon, $edit_denda, $edit_denda_kerusakan;
     public $edit_status, $edit_metode_pembayaran, $edit_catatan_kerusakan;
@@ -30,11 +62,12 @@ class Transactions extends Component
     public $catatanKerusakan = '';
     public $dendaMethod = 'cash';
     public $lateDurationText = '';
+    public $isOverdue = false;
 
     // Inspect Modal
     public $inspectTrxId = null;
     public $inspectTrx = null;
-    public $sortField = 'created_at';
+    public $sortField = 'waktu_mulai';
     public $sortDirection = 'desc';
 
     protected $queryString = [
@@ -42,7 +75,7 @@ class Transactions extends Component
         'filterStatus' => ['except' => ''],
         'dateStart' => ['except' => ''],
         'dateEnd' => ['except' => ''],
-        'sortField' => ['except' => 'created_at'],
+        'sortField' => ['except' => 'waktu_mulai'],
         'sortDirection' => ['except' => 'desc'],
         'perPage' => ['except' => 25],
     ];
@@ -69,10 +102,29 @@ class Transactions extends Component
             return;
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'pending') {
-            $rental->update(['status' => 'paid']);
-            $this->calculateAffiliateCommission($rental);
+            $before = ['status' => $rental->status];
+            $rental->update(['status' => 'paid', 'paid_at' => now()]);
+            $after = ['status' => 'paid'];
             
-            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id}");
+            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id}", $before, $after);
+            
+            $this->calculateAffiliateCommission($rental);
+
+            // Send Email Notification
+            $this->sendEmailNotification($rental, 'paid');
+        }
+    }
+
+    public function handover($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $rental = Rental::findOrFail($id);
+        if ($rental->status === 'paid') {
+            $before = ['status' => $rental->status];
+            $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
+            $after = ['status' => 'renting'];
+            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi #{$rental->id} (via Transaksi)", $before, $after);
+            session()->flash('message', 'Unit berhasil divalidasi ambil.');
         }
     }
 
@@ -82,8 +134,51 @@ class Transactions extends Component
             return;
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid'])) {
+            $before = ['status' => $rental->status];
             $rental->update(['status' => 'cancelled']);
-            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id}");
+            $after = ['status' => 'cancelled'];
+            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id}", $before, $after);
+
+            // Send Email Notification
+            $this->sendEmailNotification($rental, 'cancelled');
+        }
+    }
+
+    private function sendEmailNotification($rental, $type)
+    {
+        $isAdminEmailEnabled = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+        $isUserEmailEnabled = \App\Models\Setting::getVal('is_user_email_active', '1') == '1';
+        
+        if (!$isAdminEmailEnabled && !$isUserEmailEnabled) return;
+
+        try {
+            // 1. Prepare recipients
+            $emails = [];
+            
+            if ($isAdminEmailEnabled) {
+                $adminEmail = \App\Models\Setting::getVal('admin_email_recipients');
+                if (!$adminEmail) {
+                    $adminEmail = config('mail.admin_email') ?: config('mail.from.address');
+                }
+                if ($adminEmail) {
+                    $emails = array_merge($emails, array_map('trim', explode(',', $adminEmail)));
+                }
+            }
+
+            if ($isUserEmailEnabled && $rental->email) {
+                $emails[] = $rental->email;
+            }
+
+            // 2. Send the right notification
+            if (!empty($emails)) {
+                if ($type === 'paid') {
+                    Mail::to($emails)->queue(new PaymentConfirmedNotification($rental));
+                } elseif ($type === 'cancelled') {
+                    Mail::to($emails)->queue(new OrderCancelledNotification($rental));
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("TRANSACTION EMAIL FAILED: " . $e->getMessage());
         }
     }
 
@@ -101,19 +196,13 @@ class Transactions extends Component
         // Calculate late duration
         $end = \Carbon\Carbon::parse($trx->waktu_selesai);
         $diff = now()->diff($end);
-        if (now() > $end) {
-            $parts = [];
-            if ($diff->d > 0)
-                $parts[] = $diff->d . ' hari';
-            if ($diff->h > 0)
-                $parts[] = $diff->h . ' jam';
-            if ($diff->i > 0)
-                $parts[] = $diff->i . ' menit';
-            $this->lateDurationText = implode(' ', $parts);
-        }
-        else {
-            $this->lateDurationText = 'Tidak telat (Dalam masa sewa)';
-        }
+        $this->isOverdue = now() > $end;
+
+        $parts = [];
+        if ($diff->d > 0) $parts[] = $diff->d . 'd';
+        if ($diff->h > 0) $parts[] = $diff->h . 'h';
+        if ($diff->i > 0) $parts[] = $diff->i . 'm';
+        $this->lateDurationText = !empty($parts) ? implode(' ', $parts) : '0m';
     }
 
     public function closeDendaModal()
@@ -133,7 +222,14 @@ class Transactions extends Component
 
         if ($this->completingTrxId) {
             $rental = Rental::findOrFail($this->completingTrxId);
-            if (in_array($rental->status, ['pending', 'paid'])) {
+            if ($rental->status === 'renting') {
+                $before = [
+                    'status' => $rental->status,
+                    'denda' => $rental->denda,
+                    'denda_kerusakan' => $rental->denda_kerusakan,
+                    'grand_total' => $rental->grand_total,
+                ];
+
                 $newGrandTotal = $rental->grand_total + (int)$this->dendaAmount + (int)$this->dendaKerusakanAmount;
                 $rental->update([
                     'status' => 'completed',
@@ -144,9 +240,17 @@ class Transactions extends Component
                     'denda_payment_method' => ($this->dendaAmount > 0 || $this->dendaKerusakanAmount > 0) ? $this->dendaMethod : null,
                     'completed_at' => now(),
                 ]);
+
+                $after = [
+                    'status' => 'completed',
+                    'denda' => (int)$this->dendaAmount,
+                    'denda_kerusakan' => (int)$this->dendaKerusakanAmount,
+                    'grand_total' => $newGrandTotal,
+                ];
+
                 $this->calculateAffiliateCommission($rental);
                 
-                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} dengan denda Rp" . number_format($this->dendaAmount + $this->dendaKerusakanAmount, 0, ',', '.'));
+                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} dengan total denda Rp" . number_format($this->dendaAmount + $this->dendaKerusakanAmount, 0, ',', '.'), $before, $after);
             }
         }
 
@@ -158,7 +262,7 @@ class Transactions extends Component
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
-        if (in_array($rental->status, ['pending', 'paid'])) {
+        if ($rental->status === 'renting') {
             $rental->update([
                 'status' => 'completed',
                 'denda' => 0,
@@ -298,8 +402,10 @@ class Transactions extends Component
         $this->editTrxId = $trx->id;
         $this->edit_nama = $trx->nama;
         $this->edit_nik = $trx->nik;
+        $this->edit_email = $trx->email;
         $this->edit_no_wa = $trx->no_wa;
         $this->edit_alamat = $trx->alamat;
+        $this->edit_sosial_media = $trx->sosial_media;
         $this->edit_waktu_mulai = $trx->waktu_mulai->format('Y-m-d\TH:i');
         $this->edit_waktu_selesai = $trx->waktu_selesai->format('Y-m-d\TH:i');
         $this->edit_subtotal = $trx->subtotal_harga;
@@ -308,7 +414,7 @@ class Transactions extends Component
         $this->edit_denda_kerusakan = $trx->denda_kerusakan;
         $this->edit_catatan_kerusakan = $trx->catatan_kerusakan;
         $this->edit_status = $trx->status;
-        $this->edit_metode_pembayaran = $trx->metode_pembayaran;
+        $this->edit_metode_pembayaran = strtolower($trx->metode_pembayaran);
         $this->isEditingTrx = true;
     }
 
@@ -335,14 +441,26 @@ class Transactions extends Component
 
         $trx = Rental::findOrFail($this->editTrxId);
 
+        $before = [
+            'nama' => $trx->nama,
+            'subtotal' => $trx->subtotal_harga,
+            'diskon' => $trx->potongan_diskon,
+            'denda' => $trx->denda,
+            'denda_kerusakan' => $trx->denda_kerusakan,
+            'grand_total' => $trx->grand_total,
+            'status' => $trx->status,
+        ];
+
         // Recalculate Grand Total
         $grandTotal = $this->edit_subtotal - $this->edit_diskon + $this->edit_denda + $this->edit_denda_kerusakan + $trx->kode_unik_pembayaran;
 
         $trx->update([
             'nama' => strtoupper($this->edit_nama),
             'nik' => $this->edit_nik,
+            'email' => $this->edit_email,
             'no_wa' => $this->edit_no_wa,
             'alamat' => strtoupper($this->edit_alamat),
+            'sosial_media' => $this->edit_sosial_media,
             'waktu_mulai' => $this->edit_waktu_mulai,
             'waktu_selesai' => $this->edit_waktu_selesai,
             'subtotal_harga' => $this->edit_subtotal,
@@ -352,10 +470,20 @@ class Transactions extends Component
             'catatan_kerusakan' => $this->edit_catatan_kerusakan,
             'grand_total' => $grandTotal,
             'status' => $this->edit_status,
-            'metode_pembayaran' => $this->edit_metode_pembayaran,
+            'metode_pembayaran' => strtolower($this->edit_metode_pembayaran),
         ]);
 
-        $this->logActivity('edit_transaction', $trx, "Mengedit data transaksi #{$trx->id}");
+        $after = [
+            'nama' => strtoupper($this->edit_nama),
+            'subtotal' => (float)$this->edit_subtotal,
+            'diskon' => (float)$this->edit_diskon,
+            'denda' => (float)$this->edit_denda,
+            'denda_kerusakan' => (float)$this->edit_denda_kerusakan,
+            'grand_total' => (float)$grandTotal,
+            'status' => $this->edit_status,
+        ];
+
+        $this->logActivity('edit_transaction', $trx, "Mengedit data transaksi #{$trx->id}", $before, $after);
 
         $this->closeEditModal();
         session()->flash('message', 'Transaksi berhasil diperbarui.');
@@ -377,10 +505,10 @@ class Transactions extends Component
                 $q->where('status', $this->filterStatus);
             })
             ->when($this->dateStart, function ($q) {
-                $q->whereDate('created_at', '>=', $this->dateStart);
+                $q->whereDate('waktu_mulai', '>=', $this->dateStart);
             })
             ->when($this->dateEnd, function ($q) {
-                $q->whereDate('created_at', '<=', $this->dateEnd);
+                $q->whereDate('waktu_mulai', '<=', $this->dateEnd);
             })
             ->orderBy('created_at', 'desc')
             ->get();
@@ -480,15 +608,16 @@ class Transactions extends Component
             ->orWhere('booking_code', 'like', '%' . $this->search . '%')
             ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
         })
-            ->when($this->filterStatus && $this->filterStatus !== 'trashed', function ($q) {
+            ->when($this->filterStatus && $this->filterStatus !== 'all' && $this->filterStatus !== 'trashed', function ($q) {
             $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
         })
             ->when($this->dateStart, function ($q) {
-            $q->whereDate('created_at', '>=', $this->dateStart);
+            $q->whereDate('waktu_mulai', '>=', $this->dateStart);
         })
             ->when($this->dateEnd, function ($q) {
-            $q->whereDate('created_at', '<=', $this->dateEnd);
+            $q->whereDate('waktu_mulai', '<=', $this->dateEnd);
         })
+            ->orderByRaw("CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END ASC")
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 

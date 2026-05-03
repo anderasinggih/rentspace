@@ -4,6 +4,8 @@ namespace App\Livewire\Front;
 
 use App\Models\Rental;
 use App\Models\Setting;
+use App\Mail\NewOrderNotification;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Midtrans\Config;
 use Midtrans\Transaction;
@@ -17,6 +19,9 @@ class Success extends Component
     public $waUrl;
     public $isOwner = false;
     public $debugError = null;
+    public $rating = 5;
+    public $feedback = '';
+    public $showFeedbackModal = false;
 
     public function boot()
     {
@@ -35,8 +40,13 @@ class Success extends Component
         $this->isOwner = in_array($booking_code, session('owned_bookings', []));
 
         // 0. JALUR CEPAT: Kalau metodenya masih 'online' (belum milih bank), lempar balik ke halaman milih bank
+        // Khusus untuk CASH, kita beri toleransi jika database belum terupdate (race condition)
         if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran === 'online') {
-            return redirect()->route('public.payment', $this->rental->booking_code);
+            // Cek sekali lagi dari database murni (tanpa cache)
+            $this->rental->refresh();
+            if ($this->rental->metode_pembayaran === 'online') {
+                return redirect()->route('public.payment', $this->rental->booking_code);
+            }
         }
 
         // 1. CEK MIDTRANS DULU (Prioritas Utama)
@@ -45,9 +55,9 @@ class Success extends Component
             $this->rental->refresh();
         }
 
-        // 2. GARI POLISI: Baru cek apakah sudah basi (Hanya jika masih pending)
+        // 2. GARIS POLISI: Baru cek apakah sudah basi (Hanya jika masih pending & BUKAN cash)
         $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
-        if ($this->rental->status === 'pending' && $isExpired) {
+        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && $isExpired) {
             // --- JURUS SAPU JAGAT: CANCEL SEMUA KEMUNGKINAN BANK ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -70,6 +80,55 @@ class Success extends Component
         ]);
 
         $this->waUrl = $this->generateWaUrl();
+
+        // Show feedback modal if paid/completed or cash-pending and not yet rated
+        $isCashPending = ($this->rental->status === 'pending' && $this->rental->metode_pembayaran === 'cash');
+        if ((in_array($this->rental->status, ['paid', 'completed']) || $isCashPending) && 
+            \Illuminate\Support\Facades\Schema::hasColumn('rentals', 'rating') && 
+            !($this->rental->rating)) {
+            $this->showFeedbackModal = true;
+        }
+
+        // SEND EMAIL NOTIFICATION TO ADMIN (ONLY ONCE)
+        $this->notifyAdmin();
+    }
+
+    private function notifyAdmin()
+    {
+        $isAdminEmailEnabled = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+        $isUserEmailEnabled = \App\Models\Setting::getVal('is_user_email_active', '1') == '1';
+        
+        if (!$isAdminEmailEnabled && !$isUserEmailEnabled) return;
+
+        if (!$this->rental->is_admin_notified) {
+            try {
+                // 1. Send to Admin(s)
+                if ($isAdminEmailEnabled) {
+                    $adminEmail = \App\Models\Setting::getVal('admin_email_recipients');
+                    if (!$adminEmail) {
+                        $adminEmail = config('mail.admin_email') ?: config('mail.from.address');
+                    }
+                    
+                    if ($adminEmail) {
+                        $emails = array_map('trim', explode(',', $adminEmail));
+                        if (!empty($emails)) {
+                            Mail::to($emails)->queue(new NewOrderNotification($this->rental));
+                        }
+                    }
+                }
+
+                // 2. Send to Customer
+                if ($isUserEmailEnabled && $this->rental->email) {
+                    Mail::to($this->rental->email)->queue(new NewOrderNotification($this->rental));
+                }
+                
+                $this->rental->update(['is_admin_notified' => true]);
+                Log::info("Notifikasi Berhasil Diproses (A:" . ($isAdminEmailEnabled?'ON':'OFF') . "/P:" . ($isUserEmailEnabled?'ON':'OFF') . ") untuk: " . $this->rental->booking_code);
+
+            } catch (\Exception $e) {
+                Log::error("Failed to notify admin/customer on Success page: " . $e->getMessage());
+            }
+        }
     }
 
     public function refreshStatus()
@@ -82,8 +141,8 @@ class Success extends Component
             $this->rental->refresh();
         }
 
-        // 2. CEK TIMER (Hanya jika di Midtrans belum dibayar)
-        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
+        // 2. CEK TIMER (Hanya jika di Midtrans belum dibayar & BUKAN cash)
+        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -133,8 +192,11 @@ class Success extends Component
                     $this->rental->update(['payment_details' => $updatedDetails]);
                 }
 
-                if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
-                    $this->rental->update(['status' => 'paid']);
+                if (($transactionStatus == 'settlement' || $transactionStatus == 'capture') && $this->rental->status === 'pending') {
+                    $this->rental->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
                 } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
                     $this->rental->update(['status' => 'cancelled']);
                 }
@@ -154,7 +216,10 @@ class Success extends Component
     public function validateOrder()
     {
         if (!auth()->check() || auth()->user()->role !== 'admin') return;
-        $this->rental->update(['status' => 'paid']);
+        $this->rental->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
         $this->rental = $this->rental->fresh();
     }
 
@@ -163,6 +228,29 @@ class Success extends Component
         if (!auth()->check() || auth()->user()->role !== 'admin') return;
         $this->rental->update(['status' => 'cancelled']);
         $this->rental = $this->rental->fresh();
+    }
+
+    public function submitFeedback()
+    {
+        $this->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'feedback' => 'nullable|string|max:500'
+        ]);
+
+        $this->rental->update([
+            'rating' => $this->rating,
+            'feedback' => $this->feedback,
+            'is_feedback_shown' => true
+        ]);
+
+        $this->showFeedbackModal = false;
+        session()->flash('feedback_success', 'Terima kasih atas masukan Anda!');
+    }
+
+    public function skipFeedback()
+    {
+        $this->rental->update(['is_feedback_shown' => true]);
+        $this->showFeedbackModal = false;
     }
 
     private function generateWaUrl()

@@ -164,100 +164,102 @@
             </div>
         </div>
 
+        <!-- Modal Form -->
         @if($showModal)
-        <div class="relative z-50">
-            <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"></div>
-            <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div
-                    class="relative w-full max-w-lg rounded-xl border border-border bg-background p-6 shadow-lg sm:p-8">
+        <div class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity" wire:click="$set('showModal', false)"></div>
+
+            <!-- Modal Content Wrapper -->
+            <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-background p-6 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-8 border border-border">
                     <h2 class="text-lg font-semibold">{{ $isEditing ? 'Edit Rule' : 'Tambah Rule / Promo Baru' }}</h2>
                     <form wire:submit="save" class="mt-6 space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="col-span-1">
-                                <label class="text-sm font-medium leading-none">Nama Promo</label>
+                                <label class="text-[11px] sm:text-sm font-medium leading-none">Nama Promo</label>
                                 <input type="text" wire:model="nama_promo"
-                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     placeholder="Diskon Lebaran">
-                                @error('nama_promo') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                @error('nama_promo') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
                             </div>
                             <div class="col-span-1">
-                                <label class="text-sm font-medium leading-none">Kode Promo (Voucher)</label>
+                                <label class="text-[11px] sm:text-sm font-medium leading-none">Kode Promo (Voucher)</label>
                                 <input type="text" wire:model="kode_promo"
-                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     placeholder="COBACOBA">
-                                @error('kode_promo') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                @error('kode_promo') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="text-sm font-medium leading-none">Tipe Potongan</label>
+                                <label class="text-[11px] sm:text-sm font-medium leading-none">Tipe Potongan</label>
                                 <select wire:model="tipe"
-                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                    <option value="diskon_persen">Diskon Persentase (%) — misal 20%</option>
-                                    <option value="diskon_nominal">Diskon Nominal (Rp) — misal Rp 50.000</option>
-                                    <option value="hari_gratis">Gratis Hari Tambahan — misal +1 hari</option>
-                                    <option value="jam_gratis">Gratis Jam Tambahan — misal +3 jam</option>
-                                    <option value="fix_price">Harga Pas (Fix Price) — total jadi Rp X</option>
-                                    <option value="cashback">Cashback Tunai (Rp) — dikembalikan saat selesai</option>
+                                    class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-xs sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                    <option value="diskon_persen">Diskon Persentase (%)</option>
+                                    <option value="diskon_nominal">Diskon Nominal (Rp)</option>
+                                    <option value="hari_gratis">Gratis Hari Tambahan</option>
+                                    <option value="jam_gratis">Gratis Jam Tambahan</option>
+                                    <option value="fix_price">Harga Pas (Fix Price)</option>
+                                    <option value="cashback">Cashback Tunai (Rp)</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="text-sm font-medium leading-none">Value</label>
+                                <label class="text-[11px] sm:text-sm font-medium leading-none">Value</label>
                                 <input type="number" wire:model="value"
-                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     placeholder="Misal: 35">
-                                @error('value') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                @error('value') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="text-sm font-medium leading-none">Tanggal Mulai (Opsional)</label>
+                                <label class="text-[11px] sm:text-sm font-medium leading-none">Tgl Mulai (Opsional)</label>
                                 <input type="date" wire:model="start_date"
-                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                @error('start_date') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-[11px] sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                @error('start_date') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
                             </div>
                             <div>
-                                <label class="text-sm font-medium leading-none">Tanggal Berakhir (Opsional)</label>
+                                <label class="text-[11px] sm:text-sm font-medium leading-none">Tgl Berakhir (Opsional)</label>
                                 <input type="date" wire:model="end_date"
-                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                @error('end_date') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-[11px] sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                @error('end_date') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 border-t border-border pt-4 mt-2">
                             <div>
-                                <label class="text-sm font-medium leading-none">Berlaku Minimal Durasi
-                                    (Opsional)</label>
+                                <label class="text-[11px] sm:text-sm font-medium leading-none whitespace-nowrap">Min. Durasi (Opsional)</label>
                                 <input type="number" wire:model="syarat_minimal_durasi"
-                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                    placeholder="Misal: 12">
-                                <p class="text-[10px] text-muted-foreground mt-1">Kosongkan jika selalu berlaku.</p>
+                                    class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    placeholder="0">
+                                <p class="text-[9px] text-muted-foreground mt-1">Acuhkan jika tanpa syarat.</p>
                             </div>
                             <div>
-                                <label class="text-sm font-medium leading-none">Satuan Durasi Syarat</label>
+                                <label class="text-[11px] sm:text-sm font-medium leading-none">Satuan</label>
                                 <select wire:model="syarat_tipe_durasi"
-                                    class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                    class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-xs sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="jam">Jam</option>
                                     <option value="hari">Hari</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div class="mt-4 p-4 rounded-xl bg-muted/50 border border-border">
-                            <label class="text-sm font-bold text-foreground">Kuota Penggunaan Promo</label>
-                            <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-3">
-                                <div class="w-full sm:w-32">
+                        <div class="mt-4 p-3 rounded-xl bg-muted/30 border border-border">
+                            <label class="text-[11px] sm:text-sm font-bold text-foreground">Kuota Penggunaan Promo</label>
+                            <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                                <div class="w-full sm:w-24">
                                     <input type="number" wire:model="usage_limit"
-                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        class="flex h-8 sm:h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                         placeholder="0">
                                 </div>
-                                <div class="text-[10px] sm:text-xs text-muted-foreground bg-background px-3 py-2 rounded-md border border-border flex-1">
-                                    Total kuota tersedia untuk dipakai seluruh pelanggan. Kosongkan untuk unlimited.
+                                <div class="text-[9px] sm:text-[10px] text-muted-foreground bg-background/50 px-2.5 py-1.5 rounded border border-border/50 flex-1">
+                                    Kosongkan untuk unlimited.
                                 </div>
                             </div>
-                            @error('usage_limit') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            @error('usage_limit') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 py-3 border-y border-border mt-2">

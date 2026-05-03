@@ -85,16 +85,17 @@
                         @forelse ($orders as $order)
                             @php
                                 $statusConfig = [
-                                    'pending' => ['class' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'dot' => 'bg-amber-500', 'label' => 'Menunggu Bayar'],
-                                    'paid' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Sudah Dibayar'],
-                                    'completed' => ['class' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20', 'dot' => 'bg-blue-500', 'label' => 'Selesai'],
-                                    'cancelled' => ['class' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20', 'dot' => 'bg-rose-500', 'label' => 'Dibatalkan'],
+                                    'pending' => ['class' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'dot' => 'bg-amber-500', 'label' => 'Pending'],
+                                    'paid' => ['class' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20', 'dot' => 'bg-blue-500', 'label' => 'Paid'],
+                                    'renting' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Rent'],
+                                    'completed' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Done'],
+                                    'cancelled' => ['class' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20', 'dot' => 'bg-rose-500', 'label' => 'Cancel'],
                                 ];
                                 $sc = $statusConfig[$order->status] ?? $statusConfig['pending'];
                             @endphp
 
                             @php
-                                $isActiveRental = $order->status === 'paid' && $order->waktu_selesai->isFuture();
+                                $isActiveRental = in_array($order->status, ['paid', 'renting']) && $order->waktu_selesai->isFuture();
                                 $selesaiTimestamp = $order->waktu_selesai->timestamp * 1000;
                             @endphp
                             <div x-data="{
@@ -138,7 +139,7 @@
                                                 <span
                                                     class="inline-flex items-center gap-1 px-1.5 py-0 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                                                     <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
-                                                    Berlangsung
+                                                    {{ $sc['label'] }}
                                                 </span>
                                             @else
                                                 <span
@@ -202,7 +203,9 @@
                                                     <div class="bg-muted/40 rounded-xl px-4 py-3">
                                                         <div>
                                                             <p class="text-sm font-semibold text-foreground leading-tight">
-                                                                {{ $unit->seri }}</p>
+                                                                {{ $unit->seri }}
+                                                                    <span class="opacity-50 text-[10px] font-mono">[#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}]</span>
+                                                            </p>
                                                             <p class="text-xs text-muted-foreground">{{ $unit->warna }} &bull;
                                                                 {{ $unit->memori }}</p>
                                                         </div>

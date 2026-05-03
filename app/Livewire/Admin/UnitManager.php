@@ -11,12 +11,13 @@ class UnitManager extends Component
 {
     use WithPagination, \App\Traits\LogsStaffActivity;
     public $perPage = 20;
-    public $unit_id, $seri, $imei, $memori, $warna, $kondisi;
+    public $unit_id, $seri, $imei, $memori, $warna, $kondisi, $is_active;
     public $category_id, $harga_per_jam, $harga_per_hari;
     public $specs = []; // Dynamic specifications
-    public $is_active = true;
     public $isEditing = false;
     public $showModal = false;
+    public $showQrModal = false;
+    public $selectedUnitForQr = null;
 
     // Search & Filter
     public $search = '';
@@ -36,8 +37,8 @@ class UnitManager extends Component
 
     public function create()
     {
-        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
-        $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing']);
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing', 'is_active']);
         $this->category_id = '';
         $this->is_active = true;
         $this->showModal = true;
@@ -45,7 +46,7 @@ class UnitManager extends Component
 
     public function edit($id)
     {
-        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $unit = Unit::findOrFail($id);
         $this->unit_id = $unit->id;
         $this->category_id = $unit->category_id;
@@ -64,7 +65,7 @@ class UnitManager extends Component
 
     public function save()
     {
-        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
         $selectedCat = \App\Models\Category::find($this->category_id);
         $isIphone = $selectedCat && str_contains(strtolower($selectedCat->slug), 'iphone');
 
@@ -135,12 +136,19 @@ class UnitManager extends Component
         $this->logActivity('force_delete_unit', null, "Menghapus permanen unit: {$name}");
         session()->flash('message', 'Unit dihapus secara permanen.');
     }
+    public function showQr($id)
+    {
+        $this->selectedUnitForQr = Unit::withTrashed()->findOrFail($id);
+        $this->showQrModal = true;
+    }
 
     // --- Category Management Methods ---
     public function setTab($tab)
     {
         $this->activeTab = $tab;
         $this->search = '';
+        $this->resetPage('unitsPage');
+        $this->resetPage('catsPage');
     }
 
     public function updatedCatName($value)
@@ -236,24 +244,38 @@ class UnitManager extends Component
             ->with('category')
             ->when($this->filterStatus === 'trashed', fn($q) => $q->onlyTrashed())
             ->when($this->filterStatus !== 'trashed', fn($q) => $q->withoutTrashed())
-            ->when($this->search && $this->activeTab === 'units', fn($q) => $q->where(fn($qq) => 
-                $qq->where('seri', 'like', '%' . $this->search . '%')
-                ->orWhere('imei', 'like', '%' . $this->search . '%')
-                ->orWhere('warna', 'like', '%' . $this->search . '%')
-            ))
+            ->when($this->search && $this->activeTab === 'units', function($q) {
+                $search = $this->search;
+                return $q->where(function($qq) use ($search) {
+                    if (is_numeric($search)) {
+                        $qq->where('id', $search)
+                           ->orWhere('imei', 'like', '%' . $search . '%');
+                    } else {
+                        $qq->where('seri', 'like', '%' . $search . '%')
+                           ->orWhere('imei', 'like', '%' . $search . '%')
+                           ->orWhere('warna', 'like', '%' . $search . '%');
+                    }
+                });
+            })
             ->when($this->filterKategori, fn($q) => $q->where('category_id', $this->filterKategori))
             ->when($this->filterStatus !== '' && $this->filterStatus !== 'trashed', function ($q) {
                 if ($this->filterStatus === 'active')
                     return $q->where('is_active', true);
                 if ($this->filterStatus === 'inactive')
                     return $q->where('is_active', false);
+                if ($this->filterStatus === 'rented') {
+                    return $q->whereHas('rentals', function($sq) {
+                        $sq->whereIn('status', ['paid', 'renting'])
+                           ->where('waktu_selesai', '>=', now());
+                    });
+                }
             })
             ->orderBy('is_active', 'desc')
             ->orderBy('seri', 'asc');
 
         return view('livewire.admin.unit-manager', [
-            'units' => $unitsQuery->paginate($this->perPage),
-            'categories' => $categoriesQuery->get(),
+            'units' => $unitsQuery->paginate($this->perPage, ['*'], 'unitsPage'),
+            'categories' => $categoriesQuery->paginate($this->perPage, ['*'], 'catsPage'),
             'all_categories' => \App\Models\Category::orderBy('name')->get() // For the dropdowns
         ])->layout('layouts.admin');
     }
