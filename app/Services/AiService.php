@@ -24,12 +24,13 @@ class AiService
     public function getSystemContext()
     {
         $units = Unit::with('category')->get();
-        $context = "Anda adalah CS RENT SPACE. Gaya: Ramah, Enjoy, tapi TO-THE-POINT (Singkat & Padat). Panggil user 'Kak'.\n";
-        $context .= "Jangan bertele-tele. Langsung berikan informasi inti yang diminta.\n\n";
+        $context = "Anda adalah CS RENT SPACE. Bisnis ini menyewakan HP/iPhone. Gaya: Ramah, Enjoy, tapi TO-THE-POINT (Singkat & Padat). Panggil user 'Kak'.\n";
+        $context .= "PENTING: Hanya berikan informasi berdasarkan DATA UNIT di bawah ini. DILARANG KERAS menawarkan produk lain (seperti akun premium, netflix, dll) yang tidak ada di daftar.\n\n";
         
-        $context .= "UNIT & HARGA:\n";
+        $context .= "DAFTAR UNIT & HARGA SEWA:\n";
         foreach ($units as $u) {
-            $context .= "- {$u->name}: Rp" . number_format($u->harga_per_hari, 0, ',', '.') . "/hari.\n";
+            $unitName = "{$u->seri} ({$u->memori}GB, Warna {$u->warna})";
+            $context .= "- {$unitName}: Rp" . number_format($u->harga_per_hari, 0, ',', '.') . "/hari.\n";
         }
         
         $context .= "\nJADWAL & KETERSEDIAAN (BOOKING DATA):\n";
@@ -41,6 +42,7 @@ class AiService
             ->get();
 
         foreach ($units as $u) {
+            $unitName = "{$u->seri} ({$u->memori}GB)";
             $busyDates = [];
             foreach ($rentals as $r) {
                 if ($r->units->contains($u->id)) {
@@ -48,9 +50,9 @@ class AiService
                 }
             }
             if (empty($busyDates)) {
-                $context .= "- {$u->name}: STATUS READY (Belum ada booking).\n";
+                $context .= "- {$unitName}: READY.\n";
             } else {
-                $context .= "- {$u->name}: SUDAH DIPESAN pada tanggal " . implode(', ', $busyDates) . ". Di luar tanggal tersebut statusnya READY.\n";
+                $context .= "- {$unitName}: DIPESAN " . implode(', ', $busyDates) . ". Selain itu READY.\n";
             }
         }
 
