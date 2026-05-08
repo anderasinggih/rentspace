@@ -1094,8 +1094,8 @@
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 hidden md:table-cell">
-                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[120px]" title="{{ $log->subject }}">{{ $log->subject }}</div>
-                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[120px]" title="{{ $log->type }}">{{ $log->type }}</div>
+                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[280px]" title="{{ $log->subject }}">{{ $log->subject }}</div>
+                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[280px]" title="{{ $log->type }}">{{ $log->type }}</div>
                                                     </td>
                                                     <td class="px-4 py-3">
                                                         @if($log->status === 'sent')
@@ -1200,8 +1200,8 @@
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 hidden md:table-cell">
-                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[120px]" title="{{ $log->subject }}">{{ $log->subject }}</div>
-                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[120px]" title="{{ $log->type }}">{{ $log->type }}</div>
+                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[280px]" title="{{ $log->subject }}">{{ $log->subject }}</div>
+                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[280px]" title="{{ $log->type }}">{{ $log->type }}</div>
                                                     </td>
                                                     <td class="px-4 py-3">
                                                         @if($log->status === 'sent')
