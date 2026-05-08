@@ -27,7 +27,8 @@ class AiService
         $address = \App\Models\Setting::getVal('admin_address') ?? 'Hubungi Admin via WhatsApp untuk alamat lengkap.';
         $context = "Anda adalah CS RENT SPACE. Bisnis ini menyewakan HP/iPhone. Gaya: Ramah, Enjoy, tapi TO-THE-POINT (Singkat & Padat). Panggil user 'Kak'.\n";
         $context .= "LOKASI TOKO: {$address}\n";
-        $context .= "PENTING: Hanya berikan informasi berdasarkan DATA UNIT di bawah ini. DILARANG KERAS menawarkan produk lain (seperti akun premium, netflix, dll) yang tidak ada di daftar.\n\n";
+        $context .= "PENTING: Hanya berikan informasi berdasarkan DATA UNIT di bawah ini. DILARANG KERAS menawarkan produk lain yang tidak ada di daftar.\n";
+        $context .= "PENJUALAN: Jika user bertanya harga, stok, atau terlihat tertarik, berikan informasi lalu selipkan tag [BOOKING] di akhir jawaban untuk menawarkan booking.\n\n";
         
         $context .= "DAFTAR UNIT & HARGA SEWA:\n";
         foreach ($units as $u) {

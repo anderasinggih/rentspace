@@ -24,7 +24,7 @@
             x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
             x-transition:leave-end="opacity-0 translate-y-10 scale-95"
-            class="absolute bottom-16 right-0 w-[90vw] sm:w-[360px] h-[500px] sm:h-[600px] bg-white/10 dark:bg-zinc-950/30 backdrop-blur-[20px] backdrop-saturate-[180%] border border-white/30 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col overflow-hidden pointer-events-auto">
+            class="absolute bottom-16 right-0 w-[90vw] sm:w-[360px] h-[450px] sm:h-[600px] bg-white/10 dark:bg-zinc-950/30 backdrop-blur-[20px] backdrop-saturate-[180%] border border-white/30 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col overflow-hidden pointer-events-auto">
 
             {{-- Header --}}
             <div class="px-4 py-3 bg-white/5 border-b border-white/20 flex items-center justify-between">
@@ -72,6 +72,12 @@
                                 $content = e($chat['content']);
                                 // Handle Bold
                                 $content = preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', $content);
+                                // Handle Booking Button
+                                if (str_contains($content, '[BOOKING]')) {
+                                    $bookingBtn = '<a href="#explore" @click="$store.chat.close()" class="mt-2 flex items-center justify-center w-full py-1.5 bg-primary text-primary-foreground rounded-lg font-black text-[9px] tracking-widest transition-all active:scale-95 shadow-lg shadow-primary/20 uppercase">BOOKING SEKARANG</a>';
+                                    $content = str_replace('[BOOKING]', $bookingBtn, $content);
+                                }
+
                                 // Handle WA Button
                                 if (str_contains($content, '[CHAT_WA]')) {
                                     $waNumber = \App\Models\Setting::getVal('admin_wa') ?? '628123456789';
