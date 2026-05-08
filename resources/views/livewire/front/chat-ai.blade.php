@@ -35,7 +35,12 @@
             </div>
 
             {{-- Messages Body --}}
-            <div class="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide" id="chat-body" x-init="$el.scrollTop = $el.scrollHeight" x-effect="$el.scrollTop = $el.scrollHeight">
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide" id="chat-body" 
+                x-init="
+                    $watch('$store.chat.isOpen', value => { if(value) { $nextTick(() => { $el.scrollTop = $el.scrollHeight; }) } });
+                "
+                x-effect="$nextTick(() => { $el.scrollTop = $el.scrollHeight; })"
+                @scroll-bottom.window="$nextTick(() => { $el.scrollTop = $el.scrollHeight; })">
                 @foreach($chatHistory as $chat)
                     <div class="flex {{ $chat['role'] === 'user' ? 'justify-end' : 'justify-start' }} animate-in fade-in slide-in-from-bottom-1 duration-300">
                         <div class="max-w-[88%] rounded-xl px-3 py-2 text-[12px] leading-relaxed {{ $chat['role'] === 'user' ? 'bg-primary text-primary-foreground rounded-tr-none shadow-md shadow-primary/20' : 'bg-white/15 dark:bg-white/5 backdrop-blur-md border border-white/20 shadow-sm rounded-tl-none text-foreground' }}">

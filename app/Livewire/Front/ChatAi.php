@@ -48,6 +48,7 @@ class ChatAi extends Component
         
         // Dispatch event to process AI response in a separate request to keep UI responsive
         $this->dispatch('process-ai');
+        $this->dispatch('scroll-bottom');
     }
 
     #[\Livewire\Attributes\On('process-ai')]
@@ -73,6 +74,7 @@ class ChatAi extends Component
 
         $this->chatHistory[] = ['role' => 'model', 'content' => $response];
         $this->isTyping = false;
+        $this->dispatch('scroll-bottom');
     }
 
     /**
