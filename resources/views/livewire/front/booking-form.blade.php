@@ -113,7 +113,7 @@
                                     </div>
                                     <div>
                                         <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                            <p class="text-sm font-black text-foreground">{{ $member_checked ? 'Member Terverifikasi' : 'Punya Member?' }}</p>
+                                            <p class="text-sm font-black text-foreground">{{ $member_checked ? ($nama ?: 'Member Terverifikasi') : 'Punya Member?' }}</p>
                                             @if($member_checked && $this->tier)
                                                 <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $this->tier->color }} badge-shine shadow-sm shrink-0">
                                                     {{ $this->tier->label }}
