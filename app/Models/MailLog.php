@@ -16,6 +16,10 @@ class MailLog extends Model
         'sent_at'
     ];
 
+    protected $casts = [
+        'sent_at' => 'datetime'
+    ];
+
     public function rental()
     {
         return $this->belongsTo(Rental::class);
