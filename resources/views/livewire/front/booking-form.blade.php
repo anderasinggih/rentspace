@@ -104,7 +104,7 @@
                             
                             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
                                 <div class="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
-                                    <div class="h-12 w-12 rounded-2xl flex items-center justify-center border transition-all duration-500 {{ $member_checked ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-primary/10 border-primary/20 text-primary' }}">
+                                    <div class="hidden sm:flex h-12 w-12 rounded-2xl items-center justify-center border transition-all duration-500 {{ $member_checked ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-primary/10 border-primary/20 text-primary' }}">
                                         @if($member_checked)
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                         @else
