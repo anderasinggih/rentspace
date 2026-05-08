@@ -1213,7 +1213,9 @@
             </template>
         </div>
     @endif
-    <livewire:front.chat-ai />
+    @if(\App\Models\Setting::getVal('is_chatbot_active', '1') == '1')
+        <livewire:front.chat-ai />
+    @endif
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.store('chat', {

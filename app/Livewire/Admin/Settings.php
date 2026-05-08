@@ -82,6 +82,9 @@ class Settings extends Component
     public $greeting_morning = '', $greeting_day = '', $greeting_afternoon = '', $greeting_evening = '', $greeting_night = '';
     public $is_greeting_active = true;
 
+    public $is_chatbot_active = true;
+    public $chatbot_api_key = '';
+
     public $importFile;
 
     public function mount()
@@ -138,6 +141,10 @@ class Settings extends Component
         $this->overdue_minutes_after = \App\Models\Setting::getVal('overdue_minutes_after', '15');
         
         $this->is_greeting_active = \App\Models\Setting::getVal('is_greeting_active', '1') == '1';
+        
+        // Load Chatbot Settings
+        $this->is_chatbot_active = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
+        $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
     }
 
     // Removed loadUsers() to use paginate in render()
@@ -335,6 +342,10 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'reminder_hours_before'], ['value' => $this->reminder_hours_before]);
         \App\Models\Setting::updateOrCreate(['key' => 'is_overdue_active'], ['value' => $this->is_overdue_active ? '1' : '0']);
         \App\Models\Setting::updateOrCreate(['key' => 'overdue_minutes_after'], ['value' => $this->overdue_minutes_after]);
+
+        // Save Chatbot Settings
+        \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
 
         session()->flash('general_message', 'Pengaturan Umum berhasil disimpan.');
     }

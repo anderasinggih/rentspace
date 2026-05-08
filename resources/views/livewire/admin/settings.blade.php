@@ -803,7 +803,7 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium mb-2">Link Media Sosial <span
+                            <label class="block text-sm font-medium mb-1">Link Media Sosial <span
                                     class="text-xs text-muted-foreground">(Tampil di Footer)</span></label>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
@@ -822,6 +822,40 @@
                                     <label class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Nama Akun TikTok</label>
                                     <input type="text" wire:model="social_tiktok_name" class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="@namaakun">
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Chatbot Integration -->
+                        <div class="p-4 border border-primary/20 bg-primary/5 rounded-xl">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-primary/10 text-primary rounded-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"/><circle cx="17" cy="7" r="5"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-foreground">AI Chatbot (Gemini Flash)</h3>
+                                        <p class="text-[10px] text-muted-foreground/80 lowercase">Aktifkan asisten pintar untuk melayani pelanggan 24/7.</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" wire:model="is_chatbot_active" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+
+                            <div class="space-y-2 {{ !$is_chatbot_active ? 'opacity-40 pointer-events-none' : '' }} transition-all">
+                                <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider">Gemini API Key</label>
+                                <div class="relative">
+                                    <input type="password" wire:model="chatbot_api_key" 
+                                        class="w-full rounded-md border border-input bg-background pl-3 pr-10 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        placeholder="AIzaSy...">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground/40">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    </div>
+                                </div>
+                                <p class="text-[9px] text-muted-foreground leading-tight italic">
+                                    Dapatkan kunci gratis di <a href="https://aistudio.google.com/" target="_blank" class="text-primary hover:underline">Google AI Studio</a>. Kosongkan untuk pakai default.
+                                </p>
                             </div>
                         </div>
 
