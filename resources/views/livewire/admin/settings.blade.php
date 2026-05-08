@@ -871,7 +871,7 @@
         @endif
 
         @if($activeTab === 'email')
-            <div class="bg-background rounded-xl border border-border shadow-sm flex flex-col overflow-hidden">
+            <div class="bg-background sm:rounded-xl sm:border sm:border-border sm:shadow-sm flex flex-col overflow-hidden">
                 <div class="p-4 border-b border-border bg-muted/30">
                     <h2 class="text-lg font-semibold">Pengaturan Notifikasi & Otomatisasi Email</h2>
                     <p class="text-xs text-muted-foreground">Konfigurasi bagaimana sistem mengirimkan email otomatis ke Admin dan Pelanggan.</p>
@@ -889,7 +889,7 @@
                         <div class="space-y-6">
                             <div class="space-y-5 px-1">
                                 {{-- Baris 1: Notifikasi Admin --}}
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:rounded-xl sm:border sm:border-border sm:bg-muted/10 transition-colors hover:bg-muted/20 border-b border-border/50 last:border-0 sm:border-b-0 pb-6 sm:pb-4">
                                     <div class="max-w-md">
                                         <h4 class="text-xs font-bold text-foreground tracking-tight">Email Notifikasi Tim Admin</h4>
                                         <p class="text-[10px] text-muted-foreground mt-1">Admin akan dikirimi rincian setiap ada pesanan masuk.</p>
@@ -909,7 +909,7 @@
                                 </div>
 
                                 {{-- Baris 2: Notifikasi Pelanggan --}}
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:rounded-xl sm:border sm:border-border sm:bg-muted/10 transition-colors hover:bg-muted/20 border-b border-border/50 last:border-0 sm:border-b-0 pb-6 sm:pb-4">
                                     <div class="max-w-md">
                                         <h4 class="text-xs font-bold text-foreground tracking-tight">Email Salinan Invoice Pelanggan</h4>
                                         <p class="text-[10px] text-muted-foreground mt-1">Pelanggan akan otomatis dikirimi struk belanja digital setelah booking.</p>
@@ -921,7 +921,7 @@
                                 </div>
 
                                 {{-- Baris 3: Reminder Balik --}}
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:rounded-xl sm:border sm:border-border sm:bg-muted/10 transition-colors hover:bg-muted/20 border-b border-border/50 last:border-0 sm:border-b-0 pb-6 sm:pb-4">
                                     <div class="max-w-md">
                                         <h4 class="text-xs font-bold text-foreground tracking-tight">Pengingat Waktu Pengembalian</h4>
                                         <p class="text-[10px] text-muted-foreground mt-1">Email otomatis kepada penyewa sebelum masa sewa berakhir.</p>
@@ -939,7 +939,7 @@
                                 </div>
 
                                 {{-- Baris 4: Notifikasi Telat --}}
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:rounded-xl sm:border sm:border-border sm:bg-muted/10 transition-colors hover:bg-muted/20 border-b border-border/50 last:border-0 sm:border-b-0 pb-6 sm:pb-4">
                                     <div class="max-w-md">
                                         <h4 class="text-xs font-bold text-foreground tracking-tight">Peringatan Keterlambatan</h4>
                                         <p class="text-[10px] text-muted-foreground mt-1">Email teguran otomatis jika unit belum dikembalikan lewat dari jadwal.</p>
