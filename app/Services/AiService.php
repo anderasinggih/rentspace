@@ -145,7 +145,8 @@ class AiService
             }
 
             // Handle Errors with Raw Debug Info
-            return "DEBUG ERROR (Status: " . $response->status() . "): " . json_encode($response->json());
+            $keyEnding = substr($this->apiKey, -5);
+            return "DEBUG ERROR (Key: ...$keyEnding | Status: " . $response->status() . "): " . json_encode($response->json());
         } catch (\Exception $e) {
             return "DEBUG EXCEPTION: " . $e->getMessage();
         }

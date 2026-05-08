@@ -846,7 +846,7 @@
                             <div class="space-y-2 {{ !$is_chatbot_active ? 'opacity-40 pointer-events-none' : '' }} transition-all">
                                 <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider">Gemini API Key</label>
                                 <div class="relative">
-                                    <input type="password" wire:model="chatbot_api_key" 
+                                    <input type="password" wire:model.live="chatbot_api_key" 
                                         class="w-full rounded-md border border-input bg-background pl-3 pr-24 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono"
                                         placeholder="••••••••••••••••">
                                     <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
