@@ -14,9 +14,10 @@ class MailHelper
      * @param string|array $to
      * @param \Illuminate\Mail\Mailable $mailable
      * @param string|null $type
+     * @param int|null $updateLogId
      * @return void
      */
-    public static function logAndSend($to, $mailable, $type = null)
+    public static function logAndSend($to, $mailable, $type = null, $updateLogId = null)
     {
         $rentalId = null;
         if (isset($mailable->rental)) {
@@ -30,6 +31,19 @@ class MailHelper
         try {
             Mail::to($to)->send($mailable);
             
+            if ($updateLogId) {
+                $log = MailLog::find($updateLogId);
+                if ($log) {
+                    $log->update([
+                        'status' => 'sent',
+                        'sent_at' => now(),
+                        'resend_count' => $log->resend_count + 1,
+                        'error' => null
+                    ]);
+                    return;
+                }
+            }
+
             MailLog::create([
                 'rental_id' => $rentalId,
                 'recipient' => $recipientStr,
@@ -41,6 +55,19 @@ class MailHelper
         } catch (\Exception $e) {
             Log::error("MailHelper Error: " . $e->getMessage());
             
+            if ($updateLogId) {
+                $log = MailLog::find($updateLogId);
+                if ($log) {
+                    $log->update([
+                        'status' => 'failed',
+                        'error' => $e->getMessage(),
+                        'sent_at' => now(),
+                        'resend_count' => $log->resend_count + 1,
+                    ]);
+                    return;
+                }
+            }
+
             MailLog::create([
                 'rental_id' => $rentalId,
                 'recipient' => $recipientStr,
@@ -56,7 +83,7 @@ class MailHelper
     /**
      * Queue email and log it
      */
-    public static function logAndQueue($to, $mailable, $type = null)
+    public static function logAndQueue($to, $mailable, $type = null, $updateLogId = null)
     {
         $rentalId = null;
         if (isset($mailable->rental)) {
@@ -67,18 +94,27 @@ class MailHelper
         $subject = $mailable->envelope()->subject;
         $mailableClass = $type ?: get_class($mailable);
 
-        // For queue, we log as 'queued' initially? 
-        // Actually, let's just log as 'sent' because usually queue works or logs error in worker.
-        // But for simplicity of history, 'queued' or 'sent' is fine.
-        
         Mail::to($to)->queue($mailable);
+
+        if ($updateLogId) {
+            $log = MailLog::find($updateLogId);
+            if ($log) {
+                $log->update([
+                    'status' => 'sent',
+                    'sent_at' => now(),
+                    'resend_count' => $log->resend_count + 1,
+                    'error' => null
+                ]);
+                return;
+            }
+        }
 
         MailLog::create([
             'rental_id' => $rentalId,
             'recipient' => $recipientStr,
             'subject' => $subject,
             'type' => $mailableClass,
-            'status' => 'sent', // Or 'queued'
+            'status' => 'sent',
             'sent_at' => now(),
         ]);
     }

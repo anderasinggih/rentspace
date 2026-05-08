@@ -1099,9 +1099,19 @@
                                                     </td>
                                                     <td class="px-4 py-3">
                                                         @if($log->status === 'sent')
-                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
+                                                            <div class="flex items-center gap-1">
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
+                                                                @if($log->resend_count > 0)
+                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 tracking-tighter">Resent {{ $log->resend_count }}x</span>
+                                                                @endif
+                                                            </div>
                                                         @else
-                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
+                                                            <div class="flex items-center gap-1">
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
+                                                                @if($log->resend_count > 0)
+                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 tracking-tighter">Retried {{ $log->resend_count }}x</span>
+                                                                @endif
+                                                            </div>
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 text-right">
@@ -1189,9 +1199,19 @@
                                                     </td>
                                                     <td class="px-4 py-3">
                                                         @if($log->status === 'sent')
-                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
+                                                            <div class="flex items-center gap-1">
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
+                                                                @if($log->resend_count > 0)
+                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 tracking-tighter">Resent {{ $log->resend_count }}x</span>
+                                                                @endif
+                                                            </div>
                                                         @else
-                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
+                                                            <div class="flex items-center gap-1">
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
+                                                                @if($log->resend_count > 0)
+                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 tracking-tighter">Retried {{ $log->resend_count }}x</span>
+                                                                @endif
+                                                            </div>
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 text-right">

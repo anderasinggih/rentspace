@@ -580,7 +580,7 @@ class Settings extends Component
 
             if ($mailable) {
                 $recipients = array_map('trim', explode(',', $log->recipient));
-                \App\Helpers\MailHelper::logAndQueue($recipients, $mailable, $log->type . ' (Resend)');
+                \App\Helpers\MailHelper::logAndQueue($recipients, $mailable, $log->type, $log->id);
                 session()->flash('email_message', 'Email berhasil dikirim ulang ke ' . $log->recipient);
             } else {
                 session()->flash('email_error', 'Format email tidak dikenali.');

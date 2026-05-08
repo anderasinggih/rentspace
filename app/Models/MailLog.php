@@ -12,6 +12,7 @@ class MailLog extends Model
         'subject',
         'type',
         'status',
+        'resend_count',
         'error',
         'sent_at'
     ];
