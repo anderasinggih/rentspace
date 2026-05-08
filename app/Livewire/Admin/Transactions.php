@@ -172,9 +172,9 @@ class Transactions extends Component
             // 2. Send the right notification
             if (!empty($emails)) {
                 if ($type === 'paid') {
-                    Mail::to($emails)->queue(new PaymentConfirmedNotification($rental));
+                    \App\Helpers\MailHelper::logAndQueue($emails, new \App\Mail\PaymentConfirmedNotification($rental), 'Payment Confirmation');
                 } elseif ($type === 'cancelled') {
-                    Mail::to($emails)->queue(new OrderCancelledNotification($rental));
+                    \App\Helpers\MailHelper::logAndQueue($emails, new \App\Mail\OrderCancelledNotification($rental), 'Order Cancellation');
                 }
             }
         } catch (\Exception $e) {

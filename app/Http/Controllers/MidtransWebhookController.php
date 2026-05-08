@@ -105,9 +105,9 @@ class MidtransWebhookController extends Controller
             // 2. Send the right notification
             if (!empty($emails)) {
                 if ($type === 'paid') {
-                    Mail::to($emails)->queue(new PaymentConfirmedNotification($rental));
+                    \App\Helpers\MailHelper::logAndQueue($emails, new \App\Mail\PaymentConfirmedNotification($rental), 'Payment Confirmation (Auto)');
                 } elseif ($type === 'cancelled') {
-                    Mail::to($emails)->queue(new OrderCancelledNotification($rental));
+                    \App\Helpers\MailHelper::logAndQueue($emails, new \App\Mail\OrderCancelledNotification($rental), 'Order Cancellation (Auto)');
                 }
             }
         } catch (\Exception $e) {

@@ -113,14 +113,14 @@ class Success extends Component
                     if ($adminEmail) {
                         $emails = array_map('trim', explode(',', $adminEmail));
                         if (!empty($emails)) {
-                            Mail::to($emails)->queue(new NewOrderNotification($this->rental));
+                            \App\Helpers\MailHelper::logAndQueue($emails, new \App\Mail\NewOrderNotification($this->rental), 'Admin Notification');
                         }
                     }
                 }
 
                 // 2. Send to Customer
                 if ($isUserEmailEnabled && $this->rental->email) {
-                    Mail::to($this->rental->email)->queue(new NewOrderNotification($this->rental));
+                    \App\Helpers\MailHelper::logAndQueue($this->rental->email, new \App\Mail\NewOrderNotification($this->rental), 'Customer Receipt');
                 }
                 
                 $this->rental->update(['is_admin_notified' => true]);

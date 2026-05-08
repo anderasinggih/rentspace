@@ -548,6 +548,48 @@ class Settings extends Component
     }
 
 
+    public function resendMail($logId)
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        $log = \App\Models\MailLog::findOrFail($logId);
+        $rental = $log->rental;
+        
+        if (!$rental) {
+            session()->flash('email_error', 'Data rental tidak ditemukan untuk kirim ulang.');
+            return;
+        }
+
+        try {
+            $mailable = null;
+            $type = $log->type;
+
+            // Map type to mailable class if it's just a label
+            if (str_contains($type, 'Admin Notification') || str_contains($type, 'Customer Receipt') || str_contains($type, 'NewOrderNotification')) {
+                $mailable = new \App\Mail\NewOrderNotification($rental);
+            } elseif (str_contains($type, 'Payment Confirmation') || str_contains($type, 'PaymentConfirmedNotification')) {
+                $mailable = new \App\Mail\PaymentConfirmedNotification($rental);
+            } elseif (str_contains($type, 'Order Cancellation') || str_contains($type, 'OrderCancelledNotification')) {
+                $mailable = new \App\Mail\OrderCancelledNotification($rental);
+            } else {
+                // If it's a class name
+                if (class_exists($type)) {
+                    $mailable = new $type($rental);
+                }
+            }
+
+            if ($mailable) {
+                $recipients = array_map('trim', explode(',', $log->recipient));
+                \App\Helpers\MailHelper::logAndQueue($recipients, $mailable, $log->type . ' (Resend)');
+                session()->flash('email_message', 'Email berhasil dikirim ulang ke ' . $log->recipient);
+            } else {
+                session()->flash('email_error', 'Format email tidak dikenali.');
+            }
+        } catch (\Exception $e) {
+            session()->flash('email_error', 'Gagal kirim ulang: ' . $e->getMessage());
+        }
+    }
+
     public function render()
     {
         $usersQuery = \App\Models\User::query()
@@ -557,8 +599,13 @@ class Settings extends Component
             })
             ->orderBy($this->sortField, $this->sortDirection);
         
+        $mailLogs = \App\Models\MailLog::with('rental')
+            ->orderBy('sent_at', 'desc')
+            ->paginate(10, ['*'], 'mailPage');
+
         return view('livewire.admin.settings', [
-            'users' => $usersQuery->paginate($this->perPage)
+            'users' => $usersQuery->paginate($this->perPage, ['*'], 'userPage'),
+            'mailLogs' => $mailLogs
         ])->layout('layouts.admin');
     }
 }
