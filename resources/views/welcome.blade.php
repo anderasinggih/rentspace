@@ -195,7 +195,7 @@
 
                 $closestActiveRental = \App\Models\Rental::where('nik', $customerSession['nik'])
                     ->where('no_wa', $customerSession['no_wa'])
-                    ->where('status', 'paid')
+                    ->whereIn('status', ['paid', 'renting'])
                     ->where('waktu_selesai', '>', now())
                     ->orderBy('waktu_selesai', 'asc')
                     ->first();

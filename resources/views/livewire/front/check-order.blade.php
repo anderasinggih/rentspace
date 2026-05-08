@@ -432,9 +432,9 @@
                                     }
                                 @endphp
 
-                                <div class="relative flex items-center gap-0 overflow-x-auto pb-8 pt-12 hide-scrollbar snap-x scroll-smooth">
+                                <div class="relative flex items-center gap-0 overflow-x-auto pb-10 pt-16 hide-scrollbar snap-x scroll-smooth">
                                     <!-- Unified Sleek Roadmap Line -->
-                                    <div class="absolute top-[3.625rem] left-12 right-12 h-1 bg-muted/20 z-0 rounded-full">
+                                    <div class="absolute top-[4.625rem] left-16 right-16 h-1 bg-muted/40 z-0 rounded-full">
                                         <div class="h-full bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.6)] rounded-full transition-all duration-1000 ease-out" 
                                              style="width: {{ $totalProgress }}%">
                                             <!-- Shimmering Light -->
@@ -447,26 +447,26 @@
                                             $isAchieved = $ltv >= $t['threshold'];
                                             $isCurrent = $tier->label === $t['label'];
                                         @endphp
-                                        <div class="snap-center shrink-0 w-24 sm:w-32 flex flex-col items-center relative z-10">
+                                        <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
                                             <!-- Milestone Dot -->
-                                            <div class="relative flex items-center justify-center h-4 w-4">
+                                            <div class="relative flex items-center justify-center h-5 w-5">
                                                 @if($isCurrent)
-                                                    <div class="absolute h-8 w-8 bg-primary/20 rounded-full animate-pulse blur-xl"></div>
+                                                    <div class="absolute h-10 w-10 bg-primary/20 rounded-full animate-pulse blur-xl"></div>
                                                 @endif
-                                                <div class="h-3 w-3 rounded-full border-2 transition-all duration-700 {{ $isAchieved ? 'bg-primary border-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.4)]' : 'bg-muted/30 border-muted/30' }}">
+                                                <div class="h-4 w-4 rounded-full border-[3px] transition-all duration-700 {{ $isAchieved ? 'bg-primary border-background shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'bg-muted border-background' }}">
                                                 </div>
                                             </div>
 
                                             <!-- Badge (Floating Below) -->
                                             <div class="mt-4 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 scale-100' : 'opacity-40 scale-90' }}">
-                                                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[7px] font-black {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-sm' : 'border-dashed opacity-50 grayscale' }}">
+                                                <span class="inline-flex items-center rounded-full border px-3 py-0.5 text-[8px] font-black {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-sm' : 'border-dashed opacity-50 grayscale' }}">
                                                     {{ $t['label'] }}
                                                 </span>
                                             </div>
 
                                             <!-- Threshold -->
                                             <div class="mt-2 text-center">
-                                                <p class="text-[8px] font-bold {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/40' }} tracking-tight">
+                                                <p class="text-[9px] font-bold {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/40' }} tracking-tight">
                                                     {{ $index === 0 ? 'Mulai' : 'Rp ' . number_format($t['threshold'] / 1000, 0, ',', '.') . 'k' }}
                                                 </p>
                                             </div>
