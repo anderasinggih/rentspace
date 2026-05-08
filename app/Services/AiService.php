@@ -69,13 +69,22 @@ class AiService
     public function ask($message, $history = [])
     {
         if (!$this->apiKey) {
-            return "Maaf Bos, fitur AI belum dikonfigurasi (API Key kosong). Silakan hubungi Admin.";
+            return "Maaf Kak, fitur AI belum dikonfigurasi (API Key kosong). Silakan hubungi Admin.";
         }
 
         $systemPrompt = $this->getSystemContext();
         
         $contents = [];
-        // User Message
+        
+        // Add History
+        foreach ($history as $chat) {
+            $contents[] = [
+                'role' => ($chat['role'] === 'user' ? 'user' : 'model'),
+                'parts' => [['text' => $chat['content']]]
+            ];
+        }
+
+        // Add current message
         $contents[] = [
             'role' => 'user',
             'parts' => [['text' => $message]]
@@ -88,14 +97,14 @@ class AiService
                 ],
                 'contents' => $contents,
                 'generationConfig' => [
-                    'temperature' => 0.7,
-                    'maxOutputTokens' => 500,
+                    'temperature' => 0.8,
+                    'maxOutputTokens' => 1000,
                 ]
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Maaf Bos, saya lagi blank. Bisa tanya lagi?";
+                return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Maaf Kak, saya lagi blank. Bisa tanya lagi?";
             }
 
             $errorDetail = $response->json('error.message') ?? $response->body();
