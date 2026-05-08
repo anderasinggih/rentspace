@@ -12,6 +12,6 @@ class PricingRule extends Model
 
     public function rentals()
     {
-        return $this->hasMany(Rental::class, 'applied_promo_id');
+        return $this->belongsToMany(Rental::class, 'rental_pricing_rule');
     }
 }

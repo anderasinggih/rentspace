@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\PricingRule;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 
@@ -94,7 +95,7 @@ class PricingRules extends Component
                 'kode_promo' => $this->kode_promo ?: null,
                 'tipe' => $this->tipe,
                 'value' => $this->value,
-                'syarat_minimal_durasi' => $this->syarat_minimal_durasi,
+                'syarat_minimal_durasi' => ($this->syarat_minimal_durasi === '' || $this->syarat_minimal_durasi === null) ? null : $this->syarat_minimal_durasi,
                 'syarat_tipe_durasi' => $this->syarat_tipe_durasi,
                 'usage_limit' => $this->usage_limit ?: null,
                 'start_date' => $this->start_date ?: null,
@@ -108,6 +109,7 @@ class PricingRules extends Component
             ]
         );
 
+        $this->clearCache();
         $this->showModal = false;
     }
 
@@ -115,6 +117,7 @@ class PricingRules extends Component
     {
         if (auth()->user()->role !== 'admin') return;
         PricingRule::withTrashed()->findOrFail($id)->restore();
+        $this->clearCache();
     }
 
     public function delete($id)
@@ -126,6 +129,12 @@ class PricingRules extends Component
         } else {
             $rule->delete();
         }
+        $this->clearCache();
+    }
+
+    private function clearCache()
+    {
+        \Illuminate\Support\Facades\Cache::forget('active_pricing_rules_global');
     }
 
     public function render()

@@ -145,14 +145,18 @@ class Dashboard extends Component
         $cumulativeNet = 0;
         $cumulativeTrx = 0;
 
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
         if ($isMonthly) {
-            $data = Rental::selectRaw('DATE_FORMAT(paid_at, "%Y-%m") as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
+            $formatStr = $driver === 'pgsql' ? "TO_CHAR(paid_at, 'YYYY-MM')" : ($driver === 'sqlite' ? "strftime('%Y-%m', paid_at)" : "DATE_FORMAT(paid_at, '%Y-%m')");
+            
+            $data = Rental::selectRaw("$formatStr as val, SUM(grand_total) as revenue, COUNT(id) as trx_count")
                 ->whereIn('status', ['paid', 'renting', 'completed'])
                 ->whereBetween('paid_at', [$start, $end])
                 ->groupBy('val')->orderBy('val')->get()->keyBy('val');
 
+            $formatStrComm = $driver === 'pgsql' ? "TO_CHAR(created_at, 'YYYY-MM')" : ($driver === 'sqlite' ? "strftime('%Y-%m', created_at)" : "DATE_FORMAT(created_at, '%Y-%m')");
             $commissions = \App\Models\AffiliateCommission::whereHas('rental')
-                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as val, SUM(amount) as total_commission')
+                ->selectRaw("$formatStrComm as val, SUM(amount) as total_commission")
                 ->whereBetween('created_at', [$start, $end])
                 ->groupBy('val')->get()->keyBy('val');
 
@@ -180,13 +184,15 @@ class Dashboard extends Component
                 $count++;
             }
         } else {
-            $data = Rental::selectRaw('DATE(paid_at) as val, SUM(grand_total) as revenue, COUNT(id) as trx_count')
+            $formatStrDay = $driver === 'pgsql' ? 'paid_at::date' : 'DATE(paid_at)';
+            $data = Rental::selectRaw("$formatStrDay as val, SUM(grand_total) as revenue, COUNT(id) as trx_count")
                 ->whereIn('status', ['paid', 'renting', 'completed'])
                 ->whereBetween('paid_at', [$start, $end])
                 ->groupBy('val')->orderBy('val')->get()->keyBy('val');
 
+            $formatStrCommDay = $driver === 'pgsql' ? 'created_at::date' : 'DATE(created_at)';
             $commissions = \App\Models\AffiliateCommission::whereHas('rental')
-                ->selectRaw('DATE(created_at) as val, SUM(amount) as total_commission')
+                ->selectRaw("$formatStrCommDay as val, SUM(amount) as total_commission")
                 ->whereBetween('created_at', [$start, $end])
                 ->groupBy('val')->get()->keyBy('val');
 
@@ -230,9 +236,12 @@ class Dashboard extends Component
             $heatmap[] = ['name' => $l, 'data' => []];
         }
 
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+
+        $formatStrHeat = $driver === 'pgsql' ? 'created_at::date' : 'DATE(created_at)';
         $rentals = Rental::whereIn('status', ['paid', 'renting', 'completed'])
             ->whereBetween('created_at', [$start, $end])
-            ->selectRaw('DATE(created_at) as date, COUNT(id) as cnt')
+            ->selectRaw("$formatStrHeat as date, COUNT(id) as cnt")
             ->groupBy('date')
             ->get()
             ->keyBy('date');
@@ -367,14 +376,15 @@ class Dashboard extends Component
             ->sortByDesc('revenue')
             ->take(5);
 
-        // Payment Method Breakdown
+        // Payment Method Breakdown - Handle NULLs and ensure labels are present
         $paymentSplit = Rental::whereIn('status', ['paid', 'renting', 'completed'])
             ->whereBetween('paid_at', [$start, $end])
-            ->selectRaw('metode_pembayaran, COUNT(id) as cnt')
-            ->groupBy('metode_pembayaran')
+            ->selectRaw("COALESCE(metode_pembayaran, 'QRIS') as method, COUNT(id) as cnt")
+            ->groupBy('method')
             ->get();
-        $paymentLabels = $paymentSplit->pluck('metode_pembayaran')->map(fn($v) => strtoupper($v ?? 'QRIS'))->values()->toArray();
-        $paymentCounts = $paymentSplit->pluck('cnt')->values()->toArray();
+        
+        $paymentLabels = $paymentSplit->pluck('method')->map(fn($v) => strtoupper($v ?: 'QRIS'))->values()->toArray();
+        $paymentCounts = $paymentSplit->pluck('cnt')->map(fn($v) => (int)$v)->values()->toArray();
 
         $chartInfo = $this->getChartData();
         $chartCategories = $chartInfo['categories'];
@@ -409,6 +419,11 @@ class Dashboard extends Component
                 return abs(Carbon::parse($r->waktu_selesai)->diffInHours(Carbon::parse($r->waktu_mulai)));
             }) ?? 0;
 
+        $latestRatings = Rental::whereNotNull('rating')
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
+
         return view('livewire.admin.dashboard', compact(
             'totalUnits', 'activeUnits', 'pendingRentals', 'pendingRevenue',
             'periodRentals', 'periodRevenue', 'periodDiscounts', 'todayRevenue', 'todayRentals',
@@ -419,7 +434,8 @@ class Dashboard extends Component
             'chartCategories', 'chartNetRevenue', 'chartTransactions', 'heatmapData',
             'prevNetRevenue', 'prevTransactions',
             'paymentLabels', 'paymentCounts',
-            'avgOrderValue', 'profitEfficiency', 'avgDuration', 'unrealizedRevenue'
+            'avgOrderValue', 'profitEfficiency', 'avgDuration', 'unrealizedRevenue',
+            'latestRatings'
         ))->layout('layouts.admin');
     }
 
@@ -473,8 +489,10 @@ class Dashboard extends Component
         // Monthly/Daily breakdown for table depending on range
         $isYearly = $start->diffInMonths($end) > 1;
         $breakdown = [];
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
         if ($isYearly) {
-            $monthlyData = $paidRentalsQuery->selectRaw('DATE_FORMAT(paid_at, "%m") as grp, SUM(grand_total) as rev, COUNT(id) as trx')
+            $formatStrMonth = $driver === 'pgsql' ? "TO_CHAR(paid_at, 'MM')" : ($driver === 'sqlite' ? "strftime('%m', paid_at)" : "DATE_FORMAT(paid_at, '%m')");
+            $monthlyData = $paidRentalsQuery->selectRaw("$formatStrMonth as grp, SUM(grand_total) as rev, COUNT(id) as trx")
                 ->groupBy('grp')->orderBy('grp')->get()->keyBy('grp');
             for ($m = 1; $m <= 12; $m++) {
                 $k = str_pad($m, 2, '0', STR_PAD_LEFT);
@@ -485,7 +503,8 @@ class Dashboard extends Component
                 ];
             }
         } else {
-            $dailyData = $paidRentalsQuery->selectRaw('DATE(paid_at) as grp, SUM(grand_total) as rev, COUNT(id) as trx')
+            $formatStrReport = $driver === 'pgsql' ? 'paid_at::date' : 'DATE(paid_at)';
+            $dailyData = $paidRentalsQuery->selectRaw("$formatStrReport as grp, SUM(grand_total) as rev, COUNT(id) as trx")
                 ->groupBy('grp')->orderBy('grp')->get()->keyBy('grp');
             $cursor = $start->copy();
             while ($cursor <= $end) {

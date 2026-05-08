@@ -1,4 +1,4 @@
-<div class="relative min-h-screen pb-12 overflow-x-hidden" style="touch-action: pan-y;">
+<div class="relative min-h-screen pb-12 overflow-x-hidden">
     <style>
         body {
             overflow-x: hidden !important;
@@ -363,15 +363,22 @@
         <div class="lg:col-span-1 liquid-glass rounded-2xl p-5 flex flex-col h-[260px]">
             <h3 class="text-[10px] font-semibold text-stock-label mb-3 uppercase leading-none">Payment Methods</h3>
             <div class="flex-1 flex items-center justify-center">
-                <div id="paymentDonutChart" class="w-full h-full" wire:ignore></div>
+                @if(!empty($paymentCounts))
+                    <div id="paymentDonutChart" class="w-full h-full" wire:ignore></div>
+                @else
+                    <div class="flex flex-col items-center justify-center text-muted-foreground opacity-40">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                        <span class="text-[10px] font-bold uppercase">No Payment Data</span>
+                    </div>
+                @endif
             </div>
         </div>
 
-        <div class="lg:col-span-2 liquid-glass rounded-2xl overflow-hidden h-[260px]">
+        <div class="lg:col-span-2 liquid-glass rounded-2xl overflow-hidden h-auto md:h-[260px]">
             <div
                 class="p-3 border-b border-border bg-muted/20 text-[10px] font-semibold text-foreground opacity-60 uppercase">
                 Top Performing Units</div>
-            <div class="overflow-y-auto h-[215px]">
+            <div class="overflow-y-auto md:h-[215px]">
                 <table class="w-full text-left font-sans text-[11px]">
                     <thead
                         class="text-[9px] font-semibold text-stock-label border-b border-border uppercase sticky top-0 bg-background z-10">
@@ -404,7 +411,7 @@
             <div class="px-5 py-3.5 border-b border-border bg-primary/5 flex items-center justify-between uppercase">
                 <span class="text-[11px] font-semibold text-primary">Live Activity Monitor</span>
             </div>
-            <div class="overflow-x-auto max-h-[300px]">
+            <div class="overflow-x-auto md:max-h-[300px]">
                 <table class="w-full text-left border-collapse text-[11px]">
                     <thead
                         class="bg-muted/10 text-[9px] font-semibold text-stock-label uppercase sticky top-0 bg-background z-10">
@@ -458,7 +465,7 @@
             <div class="px-5 py-3.5 border-b border-border bg-primary/5 flex items-center justify-between uppercase">
                 <span class="text-[11px] font-semibold text-primary">Top Active Tenants</span>
             </div>
-            <div class="overflow-y-auto max-h-[300px]">
+            <div class="overflow-y-auto md:max-h-[300px]">
                 <table class="w-full text-left font-sans text-[11px]">
                     <thead
                         class="text-[9px] font-semibold text-stock-label border-b border-border uppercase sticky top-0 bg-background z-10">
@@ -484,58 +491,92 @@
                 </table>
             </div>
         </div>
-        <!-- 7. Realized Today Breakdown -->
-    <div class="liquid-glass rounded-2xl overflow-hidden shadow-xl mb-6">
-        <div class="px-5 py-3.5 border-b border-border bg-emerald-500/5 flex items-center justify-between uppercase">
-            <span class="text-[11px] font-semibold text-emerald-600">Realized Today Transactions</span>
-            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                Rp{{ number_format($todayRevenue, 0, ',', '.') }}
-            </span>
-        </div>
-        <div class="overflow-x-auto max-h-[400px]">
-            <table class="w-full text-left border-collapse text-[11px]">
-                <thead class="bg-muted/10 text-[9px] font-semibold text-stock-label uppercase sticky top-0 bg-background z-10">
-                    <tr>
-                        <th class="px-4 py-2">Time</th>
-                        <th class="px-4 py-2">Units</th>
-                        <th class="px-4 py-2">Tenant</th>
-                        <th class="px-4 py-2 text-right">Amount</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-border font-sans">
-                    @forelse($todayRealizedRentals as $rental)
-                        <tr class="hover:bg-muted/30 transition-all">
-                            <td class="px-4 py-2.5 text-muted-foreground">
-                                {{ $rental->paid_at ? $rental->paid_at->format('H:i') : '-' }}
-                            </td>
-                            <td class="px-4 py-2.5">
-                                <div class="flex flex-wrap gap-1">
-                                    @foreach($rental->units as $u)
-                                        <span class="px-1 py-0.5 rounded bg-muted text-[7px] font-bold text-foreground border border-border uppercase">
-                                            #{{ $u->id }} {{ $u->seri }}
-                                        </span>
-                                    @endforeach
-                                </div>
-                            </td>
-                            <td class="px-4 py-2.5">
-                                <div class="font-semibold text-foreground uppercase text-[10px] truncate max-w-[80px]">
-                                    {{ explode(' ', trim($rental->nama))[0] }}
-                                </div>
-                                <div class="text-[8px] text-stock-label">{{ $rental->no_wa }}</div>
-                            </td>
-                            <td class="px-4 py-2.5 text-right font-bold text-emerald-600">
-                                {{ number_format($rental->grand_total / 1000, 0) }}K
-                            </td>
-                        </tr>
-                    @empty
+    </div>
+
+    <!-- 7. Feedback & Realized Today Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Feedback Card -->
+        <div class="liquid-glass rounded-2xl overflow-hidden shadow-xl">
+            <div class="px-5 py-3.5 border-b border-border bg-primary/5 flex items-center justify-between uppercase">
+                <span class="text-[11px] font-semibold text-primary">Recent Customer Feedback</span>
+            </div>
+            <div class="overflow-x-auto md:max-h-[300px]">
+                <table class="w-full text-left font-sans text-[11px]">
+                    <thead class="text-[9px] font-semibold text-stock-label border-b border-border uppercase sticky top-0 bg-background z-10">
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-muted-foreground text-[10px] font-semibold uppercase">
-                                No Transactions Realized Today Yet
-                            </td>
+                            <th class="px-4 py-2">Customer</th>
+                            <th class="px-4 py-2 text-center">Rating</th>
+                            <th class="px-4 py-2">Feedback</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        @forelse($latestRatings as $r)
+                            <tr class="hover:bg-muted/30 transition-colors">
+                                <td class="px-4 py-3">
+                                    <div class="font-bold text-foreground uppercase truncate max-w-[80px]">{{ explode(' ', trim($r->nama))[0] }}</div>
+                                    <div class="text-[8px] text-stock-label mt-0.5">{{ $r->created_at->format('d M') }}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center justify-center gap-0.5">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="{{ $i <= $r->rating ? '#f59e0b' : 'none' }}" stroke="{{ $i <= $r->rating ? '#f59e0b' : 'currentColor' }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="{{ $i > $r->rating ? 'opacity-20' : '' }}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        @endfor
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 italic text-muted-foreground leading-tight" title="{{ $r->feedback }}">
+                                    "{{ $r->feedback ? Str::limit($r->feedback, 60) : 'No comment.' }}"
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-6 py-12 text-center text-muted-foreground text-[10px] font-semibold uppercase">No Ratings</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Realized Today Card -->
+        <div class="liquid-glass rounded-2xl overflow-hidden shadow-xl">
+            <div class="px-5 py-3.5 border-b border-border bg-emerald-500/5 flex items-center justify-between uppercase">
+                <span class="text-[11px] font-semibold text-emerald-600">Realized Today Transactions</span>
+                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                    Rp{{ number_format($todayRevenue, 0, ',', '.') }}
+                </span>
+            </div>
+            <div class="overflow-x-auto md:max-h-[300px]">
+                <table class="w-full text-left border-collapse text-[11px]">
+                    <thead class="bg-muted/10 text-[9px] font-semibold text-stock-label uppercase sticky top-0 bg-background z-10">
+                        <tr>
+                            <th class="px-4 py-2">Time</th>
+                            <th class="px-4 py-2">Tenant</th>
+                            <th class="px-4 py-2 text-right">Amt</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border font-sans">
+                        @forelse($todayRealizedRentals as $rental)
+                            <tr class="hover:bg-muted/30 transition-all">
+                                <td class="px-4 py-2.5 text-muted-foreground">
+                                    {{ $rental->paid_at ? $rental->paid_at->format('H:i') : '-' }}
+                                </td>
+                                <td class="px-4 py-2.5">
+                                    <div class="font-semibold text-foreground uppercase text-[10px] truncate max-w-[80px]">
+                                        {{ explode(' ', trim($rental->nama))[0] }}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-2.5 text-right font-bold text-emerald-600">
+                                    {{ number_format($rental->grand_total / 1000, 0) }}K
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-6 py-12 text-center text-muted-foreground text-[10px] font-semibold uppercase">No Trx</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

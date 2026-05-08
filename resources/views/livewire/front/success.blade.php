@@ -316,9 +316,14 @@
                     @endfor
                 </div>
 
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Testimoni Kamu</label>
+                <div class="space-y-1" x-data="{ count: 0 }">
+                    <div class="flex justify-between items-center ml-1">
+                        <label class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Testimoni Kamu</label>
+                        <span class="text-[10px] font-bold text-muted-foreground/50 tabular-nums" x-text="count + '/100'"></span>
+                    </div>
                     <textarea wire:model="feedback" 
+                        x-on:input="count = $el.value.length"
+                        maxlength="100"
                         placeholder="Tulis kesan & pesan kamu di sini..."
                         class="w-full min-h-[120px] rounded-[1.5rem] border border-border bg-muted/30 p-5 text-sm focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500/30 transition-all outline-none resize-none"></textarea>
                 </div>

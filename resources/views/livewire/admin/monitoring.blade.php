@@ -521,7 +521,13 @@
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
                                                     <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">NIK / Identitas</p>
-                                                    <p class="text-xs font-medium text-foreground mt-1.5">{{ $rental->nik }}</p>
+                                                    <p class="text-xs font-medium text-foreground mt-1.5 cursor-pointer hover:text-primary transition-colors"
+                                                        x-data="{ copied: false }"
+                                                        @click="navigator.clipboard.writeText('{{ $rental->nik }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                                        :title="copied ? 'Copied!' : 'Click to copy NIK'">
+                                                        <span x-show="!copied">{{ $rental->nik }}</span>
+                                                        <span x-show="copied" class="text-primary font-bold animate-in fade-in zoom-in duration-200">Copied!</span>
+                                                    </p>
                                                 </div>
                                                 <div>
                                                     <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">Booking Code</p>
@@ -829,7 +835,13 @@
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
                                                     <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">NIK / Identitas</p>
-                                                    <p class="text-xs font-medium text-foreground mt-1.5">{{ $rental->nik }}</p>
+                                                    <p class="text-xs font-medium text-foreground mt-1.5 cursor-pointer hover:text-primary transition-colors"
+                                                        x-data="{ copied: false }"
+                                                        @click="navigator.clipboard.writeText('{{ $rental->nik }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                                        :title="copied ? 'Copied!' : 'Click to copy NIK'">
+                                                        <span x-show="!copied">{{ $rental->nik }}</span>
+                                                        <span x-show="copied" class="text-primary font-bold animate-in fade-in zoom-in duration-200">Copied!</span>
+                                                    </p>
                                                 </div>
                                                 <div>
                                                     <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">Booking Code</p>
@@ -1001,7 +1013,13 @@
                                 </div>
                                 <div>
                                     <p class="text-[9px] font-bold text-muted-foreground mb-0.5 uppercase">Identitas (NIK)</p>
-                                    <p class="text-xs font-medium text-foreground tracking-widest">{{ $r->nik }}</p>
+                                    <p class="text-xs font-medium text-foreground tracking-widest cursor-pointer hover:text-primary transition-colors"
+                                        x-data="{ copied: false }"
+                                        @click="navigator.clipboard.writeText('{{ $r->nik }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                        :title="copied ? 'Copied!' : 'Click to copy NIK'">
+                                        <span x-show="!copied">{{ $r->nik }}</span>
+                                        <span x-show="copied" class="text-primary font-bold animate-in fade-in zoom-in duration-200">Copied!</span>
+                                    </p>
                                 </div>
                             </div>
                         </div>

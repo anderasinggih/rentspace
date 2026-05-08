@@ -120,6 +120,7 @@ class BookingForm extends Component
             $this->calculatePrice();
         }
         if ($propertyName === 'promo_code_input') {
+            $this->resetErrorBag('promo_code_input');
             $this->loadAvailablePromos();
         }
         if (in_array($propertyName, ['waktu_mulai', 'waktu_selesai'])) {
@@ -239,16 +240,10 @@ class BookingForm extends Component
 
         $now = Carbon::now();
 
-        // 1. Fetch rules (Cached for 10 minutes)
+        // 1. Fetch rules (Global active rules cached for 10 minutes)
         if ($this->all_pricing_rules === null) {
-            $this->all_pricing_rules = \Illuminate\Support\Facades\Cache::remember('active_pricing_rules_v2', 600, function () use ($now) {
+            $this->all_pricing_rules = \Illuminate\Support\Facades\Cache::remember('active_pricing_rules_global', 600, function () {
                 return PricingRule::where('is_active', true)
-                    ->where(function ($q) use ($now) {
-                        $q->whereNull('start_date')->orWhere('start_date', '<=', $now->format('Y-m-d'));
-                    })
-                    ->where(function ($q) use ($now) {
-                        $q->whereNull('end_date')->orWhere('end_date', '>=', $now->format('Y-m-d'));
-                    })
                     ->withCount(['rentals' => function($q) {
                         $q->where('status', '!=', 'cancelled');
                     }])
@@ -271,7 +266,12 @@ class BookingForm extends Component
         $rules = $this->all_pricing_rules;
 
         // 3. Filter and Map
-        $this->available_promos = $rules->filter(function ($rule) use ($isEligibleForAffiliatePromos) {
+        $this->available_promos = $rules->filter(function ($rule) use ($isEligibleForAffiliatePromos, $start) {
+            // Filter by Date (Check against Rental Start Date, not current time)
+            $startDateMatch = $rule->start_date === null || $rule->start_date <= $start->format('Y-m-d');
+            $endDateMatch = $rule->end_date === null || $rule->end_date >= $start->format('Y-m-d');
+            if (!$startDateMatch || !$endDateMatch) return false;
+
             if ($rule->is_affiliate_only && !$isEligibleForAffiliatePromos) return false;
             if ($rule->requires_referral && empty($this->referral_code)) return false;
 
@@ -287,7 +287,8 @@ class BookingForm extends Component
             return true;
         })->map(function ($rule) use ($days, $diffInHours, $start, $end) {
             $durasiTerkonversi = $rule->syarat_tipe_durasi === 'hari' ? $days : $diffInHours;
-            $is_eligible = !$rule->syarat_minimal_durasi || $durasiTerkonversi >= $rule->syarat_minimal_durasi;
+            $minDurasi = $rule->syarat_minimal_durasi;
+            $is_eligible = ($minDurasi === null || $minDurasi === '') || $durasiTerkonversi >= (float)$minDurasi;
             $ineligible_reason = null;
 
             // Check for Bonus Time Clash if units are already selected
@@ -461,9 +462,10 @@ class BookingForm extends Component
                 } elseif ($rule->tipe === 'diskon_nominal') {
                     $this->potongan_diskon += $rule->value;
                 } elseif ($rule->tipe === 'fix_price') {
-                    // Fix price is tricky with multiple. We'll take the lowest fix price or cap the discount.
-                    // Usually fix_price shouldn't be stackable, but if it is, we treat it as a discount off subtotal.
-                    $discountFromFix = max(0, $this->subtotal - $rule->value);
+                    // Fix price is applied per unit to prevent massive losses on multi-unit rentals
+                    $unitCount = count($this->selected_unit_ids);
+                    $targetTotal = $rule->value * $unitCount;
+                    $discountFromFix = max(0, $this->subtotal - $targetTotal);
                     $this->potongan_diskon += $discountFromFix;
                 } elseif ($rule->tipe === 'cashback') {
                     // Cashback doesn't affect grand_total right now, maybe just label? 
@@ -553,6 +555,11 @@ class BookingForm extends Component
             'affiliate_code' => $this->referral_code ?: null,
             'affiliator_id' => $this->referral_code ? (\App\Models\AffiliatorProfile::where('referral_code', strtoupper($this->referral_code))->first()->user_id ?? null) : null,
         ]);
+        
+        // Attach all selected promos for accurate usage tracking (including stacked ones)
+        if (!empty($this->selected_promo_ids)) {
+            $rental->appliedPromos()->attach($this->selected_promo_ids);
+        }
 
         // Create customer session for auto-login/auto-persistence
         session(['customer_session' => [

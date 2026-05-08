@@ -235,7 +235,7 @@ class Success extends Component
     {
         $this->validate([
             'rating' => 'required|integer|min:1|max:5',
-            'feedback' => 'nullable|string|max:500'
+            'feedback' => 'nullable|string|max:100'
         ]);
 
         $this->rental->update([
