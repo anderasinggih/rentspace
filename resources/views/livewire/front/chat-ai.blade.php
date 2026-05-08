@@ -1,6 +1,6 @@
 <div class="fixed bottom-6 right-6 z-[100] font-sans" x-data="{ open: @entangle('isOpen') }" 
     @toggle-chat.window="open = !open"
-    @open-chat.window="open = true">
+    @open-chat.window="$wire.isOpen = true">
     {{-- Floating Toggle Button --}}
     <button @click="open = !open" 
         class="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 relative group">

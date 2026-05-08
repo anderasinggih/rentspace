@@ -389,7 +389,7 @@
                     </a>
                     
                     <!-- Button Hubungi Admin (Liquid Glass) -->
-                    <button @click="window.dispatchEvent(new CustomEvent('open-chat'))"
+                    <button @click="$dispatch('open-chat')"
                         data-haptic="medium"
                         class="group/wa relative w-full sm:w-auto inline-flex items-center justify-center rounded-2xl font-bold transition-all bg-zinc-950/30 dark:bg-white/10 backdrop-blur-[4px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/40 border-r border-b border-zinc-950/20 text-foreground hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
                         <!-- Liquid Shine Overlay -->
