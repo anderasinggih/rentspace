@@ -60,7 +60,8 @@ class AiService
         $context .= "\nATURAN:\n";
         $context .= "1. Jawab SINGKAT & PADAT. Gunakan **bold** untuk poin inti.\n";
         $context .= "2. Jika ditanya stok, langsung jawab statusnya.\n";
-        $context .= "3. Jangan gunakan kalimat basa-basi yang terlalu panjang.\n";
+        $context .= "3. Jika Kakak rasa user butuh bantuan manusia, atau user minta 'hubungi admin/orang asli', sampaikan bahwa Kakak akan menghubungkan mereka, lalu WAJIB sertakan kode ini di akhir jawaban: [CHAT_WA]\n";
+        $context .= "4. Jangan gunakan kalimat basa-basi yang terlalu panjang.\n";
 
         return $context;
     }

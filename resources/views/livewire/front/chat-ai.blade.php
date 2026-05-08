@@ -39,7 +39,21 @@
                 @foreach($chatHistory as $chat)
                     <div class="flex {{ $chat['role'] === 'user' ? 'justify-end' : 'justify-start' }} animate-in fade-in slide-in-from-bottom-1 duration-300">
                         <div class="max-w-[88%] rounded-xl px-3 py-2 text-[12px] leading-relaxed {{ $chat['role'] === 'user' ? 'bg-primary text-primary-foreground rounded-tr-none shadow-md shadow-primary/20' : 'bg-white/15 dark:bg-white/5 backdrop-blur-md border border-white/20 shadow-sm rounded-tl-none text-foreground' }}">
-                            {!! nl2br(preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', e($chat['content']))) !!}
+                            @php
+                                $content = e($chat['content']);
+                                // Handle Bold
+                                $content = preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', $content);
+                                // Handle WA Button
+                                if (str_contains($content, '[CHAT_WA]')) {
+                                    $waNumber = \App\Models\Setting::getVal('admin_wa') ?? '628123456789';
+                                    $waBtn = '<a href="https://wa.me/'.$waNumber.'" target="_blank" class="mt-2 flex items-center justify-center gap-2 w-full py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-500 border border-emerald-500/40 rounded-lg font-bold text-[10px] transition-all active:scale-95 shadow-lg shadow-emerald-500/10">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                        HUBUNGI ADMIN VIA WA
+                                    </a>';
+                                    $content = str_replace('[CHAT_WA]', $waBtn, $content);
+                                }
+                            @endphp
+                            {!! nl2br($content) !!}
                         </div>
                     </div>
                 @endforeach
