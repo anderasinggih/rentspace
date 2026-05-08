@@ -192,6 +192,13 @@
             $statsTotalUsers = $statsTotalUsers > 0 ? $statsTotalUsers : 1;
             $statsTotalHours = $statsTotalHours > 0 ? $statsTotalHours : 24;
 
+            $customerLtv = 0;
+            $customerTier = null;
+            if ($isCustomerLoggedIn) {
+                $customerLtv = \App\Helpers\CustomerHelper::getLtv($customerSession['nik']);
+                $customerTier = \App\Helpers\CustomerHelper::getTier($customerLtv);
+            }
+
             // Social Proof Ticker Data
             $recentRentals = \App\Models\Rental::with('units')
                 ->whereIn('status', ['paid', 'pending', 'cancelled'])
@@ -512,9 +519,16 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="font-bold text-foreground text-sm">
-                                {{ $onlinePendingTotal > 0 ? 'Pesanan Menunggu Pembayaran' : 'Pesanan Menunggu Pembayaran di Lokasi' }}
-                            </p>
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-foreground text-sm">
+                                    {{ $onlinePendingTotal > 0 ? 'Pesanan Menunggu Pembayaran' : 'Pesanan Menunggu Pembayaran di Lokasi' }}
+                                </p>
+                                @if($customerTier)
+                                    <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }}">
+                                        {{ $customerTier->label }}
+                                    </span>
+                                @endif
+                            </div>
                             <p class="text-xs text-muted-foreground mt-0.5">
                                 Anda memiliki <span class="font-bold text-amber-500">{{ $pendingOrders->count() }}
                                     pesanan</span> {{ $onlinePendingTotal > 0 ? 'yang belum dibayar' : 'dengan metode bayar di tempat' }}.
@@ -602,8 +616,15 @@
                         </div>
                         <div class="flex-1 min-w-0 flex justify-between sm:block sm:w-auto items-center">
                             <div>
-                                <p class="font-bold text-foreground text-sm flex items-center gap-2"
-                                    x-text="status === 'red' ? 'Masa Sewa Mau Habis' : 'Penyewaan Berlangsung'"></p>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-bold text-foreground text-sm flex items-center gap-2"
+                                        x-text="status === 'red' ? 'Masa Sewa Mau Habis' : 'Penyewaan Berlangsung'"></p>
+                                    @if($customerTier)
+                                        <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }}">
+                                            {{ $customerTier->label }}
+                                        </span>
+                                    @endif
+                                </div>
                                 <p class="text-xs text-muted-foreground mt-0.5 truncate pr-2 sm:pr-0">
                                     KODE <span
                                         class="font-bold text-primary uppercase tracking-tighter">{{ $closestActiveRental->booking_code }}</span>
@@ -664,7 +685,14 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="font-bold text-foreground text-sm">Sesi Peminjam Aktif</p>
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-foreground text-sm">Sesi Peminjam Aktif</p>
+                                @if($customerTier)
+                                    <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }}">
+                                        {{ $customerTier->label }}
+                                    </span>
+                                @endif
+                            </div>
                             <p class="text-xs text-muted-foreground mt-0.5">
                                 Akses pesanan lebih cepat karena Anda sudah masuk.
                             </p>

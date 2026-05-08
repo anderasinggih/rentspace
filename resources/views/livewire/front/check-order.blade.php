@@ -344,11 +344,16 @@
 
                     {{-- Simple Shadcn-style Profile Card --}}
                     <div class="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
-                        <div class="bg-muted/30 px-6 py-5 border-b border-border flex items-center justify-between">
-                            <div>
-                                <h3 class="font-bold text-lg text-foreground">{{ $firstOrder?->nama ?? 'Akun Peminjam' }}
-                                </h3>
-                                <p class="text-xs text-muted-foreground font-medium">Sesi Identitas Aktif Tersimpan</p>
+                            <div class="flex flex-col">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-bold text-lg text-foreground leading-none">{{ $firstOrder?->nama ?? 'Akun Peminjam' }}</h3>
+                                    @if($this->tier)
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter {{ $this->tier->color }}">
+                                            {{ $this->tier->label }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-muted-foreground font-medium mt-2">Sesi Identitas Aktif Tersimpan</p>
                             </div>
                             <div
                                 class="h-10 w-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">

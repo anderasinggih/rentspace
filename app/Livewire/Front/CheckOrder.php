@@ -63,7 +63,13 @@ class CheckOrder extends Component
     {
         if (!$this->orders)
             return 0;
-        return $this->orders->whereIn('status', ['pending', 'paid', 'completed'])->sum('grand_total');
+        return $this->orders->whereIn('status', ['pending', 'paid', 'completed', 'renting'])->sum('grand_total');
+    }
+
+    public function getTierProperty()
+    {
+        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        return \App\Helpers\CustomerHelper::getTier($ltv);
     }
 
     public function getActiveRentalsCountProperty()
