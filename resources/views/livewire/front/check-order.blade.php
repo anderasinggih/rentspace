@@ -396,94 +396,83 @@
                                 </div>
                             </div>
 
-                            <!-- Gamified Roadmap Overview -->
-                            <div class="space-y-6 pt-4">
-                                <h4 class="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] px-1">Roadmap Eksklusivitas</h4>
-                                <div class="relative flex items-center gap-0 overflow-x-auto pb-10 pt-16 hide-scrollbar snap-x scroll-smooth">
+                            <!-- Integrated Gamified Roadmap & Progress -->
+                            <div class="space-y-12 pt-4">
+                                <div class="flex items-center justify-between px-1">
+                                    <h4 class="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Roadmap Eksklusivitas</h4>
+                                    @if($nextTier)
+                                        <p class="text-[9px] font-black text-primary italic">Sisa Rp {{ number_format($nextTier->threshold - $ltv, 0, ',', '.') }} ke {{ $nextTier->label }}</p>
+                                    @endif
+                                </div>
+
+                                <div class="relative flex items-center gap-0 overflow-x-auto pb-10 pt-12 hide-scrollbar snap-x scroll-smooth">
                                     @php
                                         $tiers = \App\Helpers\CustomerHelper::tiers();
                                         $totalTiers = count($tiers);
-                                        // Calculate total progress percentage for the line
-                                        $achievedCount = 0;
-                                        foreach($tiers as $t) { if($ltv >= $t['threshold']) $achievedCount++; }
-                                        $lineProgress = (($achievedCount - 1) / ($totalTiers - 1)) * 100;
                                     @endphp
-
-                                    <!-- Roadmap Line (Background) -->
-                                    <div class="absolute top-[4.55rem] left-16 right-16 h-1 bg-muted z-0 rounded-full">
-                                        <!-- Active Progress Line -->
-                                        <div class="h-full bg-gradient-to-r from-primary to-violet-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" 
-                                             style="width: {{ $lineProgress }}%">
-                                        </div>
-                                    </div>
 
                                     @foreach($tiers as $index => $t)
                                         @php 
                                             $isAchieved = $ltv >= $t['threshold'];
                                             $isCurrent = $tier->label === $t['label'];
+                                            $nextT = ($index + 1 < $totalTiers) ? $tiers[$index + 1] : null;
+                                            $isNextAchieved = $nextT && ($ltv >= $nextT['threshold']);
+                                            
+                                            // Calculate progress to next dot for the line segment
+                                            $segmentProgress = 0;
+                                            if ($isAchieved && $nextT) {
+                                                if ($ltv >= $nextT['threshold']) {
+                                                    $segmentProgress = 100;
+                                                } else {
+                                                    $currentRange = $nextT['threshold'] - $t['threshold'];
+                                                    $currentProgress = $ltv - $t['threshold'];
+                                                    $segmentProgress = ($currentProgress / $currentRange) * 100;
+                                                }
+                                            }
                                         @endphp
                                         <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
-                                            <!-- Badge (Floating Above Dot) -->
-                                            <div class="absolute -top-12 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 translate-y-0 scale-100' : 'opacity-40 translate-y-1 scale-90' }}">
-                                                <div class="relative">
-                                                    @if($isCurrent)
-                                                        <div class="absolute -inset-2 bg-primary/20 rounded-full blur-xl"></div>
+                                            <!-- Line Segments (Fused with Dots) -->
+                                            <div class="absolute top-[0.625rem] left-0 w-full h-1.5 flex z-0">
+                                                <!-- Left side of dot -->
+                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : ($isAchieved ? 'bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]' : 'bg-muted') }}"></div>
+                                                <!-- Right side of dot -->
+                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : 'bg-muted' }}">
+                                                    @if($segmentProgress > 0)
+                                                        <div class="absolute inset-y-0 left-0 bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)] transition-all duration-1000" style="width: {{ $segmentProgress }}%">
+                                                            @if($segmentProgress < 100)
+                                                                <div class="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:8px_8px] animate-[progress_1s_linear_infinite]"></div>
+                                                            @endif
+                                                        </div>
                                                     @endif
-                                                    <span class="relative inline-flex items-center rounded-full border px-2.5 py-1 text-[8px] font-black uppercase tracking-widest {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-md' : 'grayscale border-dashed' }}">
-                                                        {{ $t['label'] }}
-                                                    </span>
                                                 </div>
                                             </div>
 
-                                            <!-- Milestone Dot (Perfectly on Line) -->
-                                            <div class="relative flex items-center justify-center h-5 w-5 mt-1">
+                                            <!-- Milestone Dot -->
+                                            <div class="relative flex items-center justify-center h-6 w-6 z-20">
                                                 @if($isCurrent)
-                                                    <div class="absolute h-8 w-8 bg-primary/20 rounded-full animate-pulse"></div>
+                                                    <div class="absolute h-10 w-10 bg-primary/20 rounded-full animate-pulse"></div>
                                                 @endif
-                                                <div class="h-4 w-4 rounded-full border-[3px] transition-all duration-700 {{ $isAchieved ? 'bg-primary border-background shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'bg-muted border-background' }}">
+                                                <div class="h-5 w-5 rounded-full border-[4px] transition-all duration-700 shadow-sm {{ $isAchieved ? 'bg-primary border-background ring-2 ring-primary/20' : 'bg-muted border-background' }}">
                                                 </div>
                                             </div>
 
-                                            <!-- Threshold Info (Below Dot) -->
-                                            <div class="mt-4 text-center">
-                                                <p class="text-[9px] font-black {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/50' }} tracking-tight">
-                                                    {{ $index === 0 ? 'Mulai' : 'Rp ' . number_format($t['threshold'] / 1000, 0, ',', '.') . 'k' }}
+                                            <!-- Badge (Floating Below Dot Now for better line visibility) -->
+                                            <div class="mt-4 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 scale-100' : 'opacity-40 scale-90' }}">
+                                                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[7px] font-black uppercase tracking-widest {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-sm' : 'grayscale border-dashed' }}">
+                                                    {{ $t['label'] }}
+                                                </span>
+                                            </div>
+
+                                            <!-- Threshold Info -->
+                                            <div class="mt-2 text-center">
+                                                <p class="text-[8px] font-black {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/40' }} tracking-tight">
+                                                    {{ $index === 0 ? 'Start' : 'Rp ' . number_format($t['threshold'] / 1000, 0, ',', '.') . 'k' }}
                                                 </p>
-                                                @if($isCurrent)
-                                                    <span class="text-[7px] font-bold text-primary uppercase mt-1 block tracking-tighter opacity-80">Pangkat Saat Ini</span>
-                                                @endif
                                             </div>
                                         </div>
                                     @endforeach
                                 </div>
                             </div>
-
-                            @if($nextTier)
-                                @php
-                                    $progress = min(100, ($ltv / $nextTier->threshold) * 100);
-                                    $remaining = $nextTier->threshold - $ltv;
-                                @endphp
-                                <div class="space-y-3 pt-2">
-                                    <div class="flex justify-between items-end">
-                                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                            Langkah Menuju <span class="text-primary">{{ $nextTier->label }}</span>
-                                        </p>
-                                        <p class="text-[10px] font-black text-foreground">
-                                            Kurang <span class="text-primary italic">Rp {{ number_format($remaining, 0, ',', '.') }}</span>
-                                        </p>
-                                    </div>
-                                    <div class="relative h-3 w-full bg-muted rounded-full overflow-hidden border border-border/50 p-0.5">
-                                        <div class="absolute inset-y-0.5 left-0.5 bg-gradient-to-r from-primary to-violet-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]" style="width: calc({{ $progress }}% - 4px)">
-                                            <div class="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.3)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.3)_50%,rgba(255,255,255,0.3)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress_1s_linear_infinite]"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @else
-                                <div class="bg-primary/10 border border-primary/30 rounded-2xl p-5 text-center shadow-inner shadow-primary/5">
-                                    <p class="text-xs font-black text-primary uppercase tracking-[0.2em] animate-pulse">RANK TERTINGGI: LEGEND</p>
-                                    <p class="text-[10px] text-muted-foreground mt-2 leading-relaxed">Anda adalah pahlawan kami. Nikmati seluruh layanan prioritas tanpa batas.</p>
-                                </div>
-                            @endif
                         </div>
                     @endif
 
