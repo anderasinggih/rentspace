@@ -48,8 +48,28 @@
                 font-size: 16px !important;
             }
         }
+        /* Mobile Hover & Active Feedback Fix */
+        @media (hover: none) {
+            .hover\:scale-\[1\.05\]:active, 
+            .hover\:scale-105:active { transform: scale(1.05) !important; }
+            
+            .group:active .group-hover\:opacity-100,
+            .group:active .group-hover\:bg-white\/10,
+            .group:active .group-hover\:bg-white\/5,
+            .group:active .group-hover\:text-blue-600,
+            .group:active .group-hover\:text-violet-600 { opacity: 1 !important; background-color: rgba(255,255,255,0.1) !important; }
+            
+            .group\/btn:active .group-hover\/btn\:opacity-100,
+            .group\/wa:active .group-hover\/wa\:opacity-100 { opacity: 1 !important; }
+            
+            .group:active .group-hover\:scale-110,
+            .group:active .group-hover\:scale-150 { transform: scale(1.1) !important; }
+        }
     </style>
     <script>
+        // Force enable :active styles on iOS Safari immediately on touch
+        document.addEventListener('touchstart', function() {}, {passive: true});
+
         // Force disable zooming
         document.addEventListener('gesturestart', function(e) {
             e.preventDefault();
