@@ -410,7 +410,7 @@
                                     @endphp
 
                                     <!-- Roadmap Line (Background) -->
-                                    <div class="absolute top-[4.45rem] left-16 right-16 h-1 bg-muted z-0 rounded-full">
+                                    <div class="absolute top-[4.55rem] left-16 right-16 h-1 bg-muted z-0 rounded-full">
                                         <!-- Active Progress Line -->
                                         <div class="h-full bg-gradient-to-r from-primary to-violet-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" 
                                              style="width: {{ $lineProgress }}%">
@@ -424,10 +424,10 @@
                                         @endphp
                                         <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
                                             <!-- Badge (Floating Above Dot) -->
-                                            <div class="absolute -top-12 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 translate-y-0 scale-100' : 'opacity-40 translate-y-2 scale-90' }}">
+                                            <div class="absolute -top-12 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 translate-y-0 scale-100' : 'opacity-40 translate-y-1 scale-90' }}">
                                                 <div class="relative">
                                                     @if($isCurrent)
-                                                        <div class="absolute -inset-2 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+                                                        <div class="absolute -inset-2 bg-primary/20 rounded-full blur-xl"></div>
                                                     @endif
                                                     <span class="relative inline-flex items-center rounded-full border px-2.5 py-1 text-[8px] font-black uppercase tracking-widest {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-md' : 'grayscale border-dashed' }}">
                                                         {{ $t['label'] }}
@@ -435,22 +435,22 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Milestone Dot -->
-                                            <div class="relative flex items-center justify-center">
+                                            <!-- Milestone Dot (Perfectly on Line) -->
+                                            <div class="relative flex items-center justify-center h-5 w-5 mt-1">
                                                 @if($isCurrent)
-                                                    <div class="absolute h-8 w-8 bg-primary/20 rounded-full animate-ping"></div>
+                                                    <div class="absolute h-8 w-8 bg-primary/20 rounded-full animate-pulse"></div>
                                                 @endif
-                                                <div class="h-5 w-5 rounded-full border-4 transition-all duration-700 {{ $isAchieved ? 'bg-primary border-background shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'bg-muted border-background' }}">
+                                                <div class="h-4 w-4 rounded-full border-[3px] transition-all duration-700 {{ $isAchieved ? 'bg-primary border-background shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'bg-muted border-background' }}">
                                                 </div>
                                             </div>
 
                                             <!-- Threshold Info (Below Dot) -->
                                             <div class="mt-4 text-center">
                                                 <p class="text-[9px] font-black {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/50' }} tracking-tight">
-                                                    {{ $index === 0 ? 'Start' : 'Rp ' . number_format($t['threshold'] / 1000, 0, ',', '.') . 'k' }}
+                                                    {{ $index === 0 ? 'Mulai' : 'Rp ' . number_format($t['threshold'] / 1000, 0, ',', '.') . 'k' }}
                                                 </p>
                                                 @if($isCurrent)
-                                                    <span class="text-[7px] font-bold text-primary uppercase animate-bounce mt-1 block">Level Anda</span>
+                                                    <span class="text-[7px] font-bold text-primary uppercase mt-1 block tracking-tighter opacity-80">Pangkat Saat Ini</span>
                                                 @endif
                                             </div>
                                         </div>
