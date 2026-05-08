@@ -492,29 +492,6 @@
                                         Aktif (Tersedia disewa)</label>
                                 </div>
 
-                                <div class="pt-4 border-t border-border mt-4 space-y-4">
-                                    <label class="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Pengaturan Upselling (Rekomendasi Pintar)</label>
-                                    
-                                    <div>
-                                        <label class="text-sm font-medium leading-none">Unit yang Direkomendasikan</label>
-                                        <select wire:model="upsell_unit_id"
-                                            class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                            <option value="">-- Tidak ada rekomendasi --</option>
-                                            @foreach(\App\Models\Unit::where('id', '!=', $unit_id)->orderBy('seri')->get() as $u)
-                                                <option value="{{ $u->id }}">{{ $u->seri }} {{ $u->warna ? '('.$u->warna.')' : '' }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label class="text-sm font-medium leading-none">Pesan Rekomendasi</label>
-                                        <input type="text" wire:model="upsell_message"
-                                            class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                            placeholder="Contoh: biar konten makin sinematik">
-                                        <p class="text-[10px] text-muted-foreground mt-1 italic">Teks ini akan muncul setelah nama unit. Contoh: "...juga sewa DJI Osmo biar konten makin sinematik"</p>
-                                    </div>
-                                </div>
-
                                 <div class="mt-6 flex justify-end gap-3">
                                     <button type="button" wire:click="$set('showModal', false)"
                                         class="inline-flex items-center justify-center rounded-md border border-input bg-background h-9 px-4 text-sm font-medium shadow-sm hover:bg-muted hover:text-foreground">

@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('units', function (Blueprint $table) {
-            $table->foreignId('upsell_unit_id')->nullable()->constrained('units')->nullOnDelete();
-            $table->string('upsell_message')->nullable();
+            //
         });
     }
 
@@ -23,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('units', function (Blueprint $table) {
-            $table->dropForeign(['upsell_unit_id']);
-            $table->dropColumn(['upsell_unit_id', 'upsell_message']);
+            //
         });
     }
 };

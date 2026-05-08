@@ -13,7 +13,6 @@ class UnitManager extends Component
     public $perPage = 20;
     public $unit_id, $seri, $imei, $memori, $warna, $kondisi, $is_active;
     public $category_id, $harga_per_jam, $harga_per_hari;
-    public $upsell_unit_id, $upsell_message;
     public $specs = []; // Dynamic specifications
     public $isEditing = false;
     public $showModal = false;
@@ -39,7 +38,7 @@ class UnitManager extends Component
     public function create()
     {
         if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
-        $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing', 'is_active', 'upsell_unit_id', 'upsell_message']);
+        $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing', 'is_active']);
         $this->category_id = '';
         $this->is_active = true;
         $this->showModal = true;
@@ -59,8 +58,6 @@ class UnitManager extends Component
         $this->specs = $unit->specs ?? [];
         $this->harga_per_jam = $unit->harga_per_jam;
         $this->harga_per_hari = $unit->harga_per_hari;
-        $this->upsell_unit_id = $unit->upsell_unit_id;
-        $this->upsell_message = $unit->upsell_message;
         $this->is_active = $unit->is_active;
         $this->isEditing = true;
         $this->showModal = true;
@@ -102,8 +99,6 @@ class UnitManager extends Component
                 'specs' => $this->specs,
                 'harga_per_jam' => $this->harga_per_jam,
                 'harga_per_hari' => $this->harga_per_hari,
-                'upsell_unit_id' => $this->upsell_unit_id ?: null,
-                'upsell_message' => $this->upsell_message,
                 'is_active' => $this->is_active,
             ]
         );
