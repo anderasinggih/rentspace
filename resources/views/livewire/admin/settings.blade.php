@@ -877,7 +877,7 @@
                     <p class="text-xs text-muted-foreground">Konfigurasi bagaimana sistem mengirimkan email otomatis ke Admin dan Pelanggan.</p>
                 </div>
                 
-                <div class="p-6">
+                <div class="p-4 sm:p-6">
                     @if (session()->has('general_message'))
                         <div class="p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-100 border border-green-200">
                             {{ session('general_message') }}
@@ -887,7 +887,7 @@
                     <form wire:submit="saveGeneralSettings" class="space-y-8">
                         {{-- Section: Notifikasi & Otomatisasi --}}
                         <div class="space-y-6">
-                            <div class="space-y-4 px-1">
+                            <div class="space-y-5 px-1">
                                 {{-- Baris 1: Notifikasi Admin --}}
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
                                     <div class="max-w-md">
@@ -1073,11 +1073,11 @@
                                     <table class="w-full text-left border-collapse">
                                         <thead class="bg-muted/50 text-[10px] font-bold text-muted-foreground border-b border-border">
                                             <tr>
-                                                <th class="px-4 py-3">Waktu</th>
-                                                <th class="px-4 py-3">Penerima</th>
-                                                <th class="px-4 py-3">Subjek & Tipe</th>
-                                                <th class="px-4 py-3">Status</th>
-                                                <th class="px-4 py-3 text-right">Aksi</th>
+                                                <th class="px-4 py-3 text-[10px]">Waktu</th>
+                                                <th class="px-4 py-3 text-[10px]">Penerima</th>
+                                                <th class="px-4 py-3 text-[10px] hidden md:table-cell">Subjek & Tipe</th>
+                                                <th class="px-4 py-3 text-[10px]">Status</th>
+                                                <th class="px-4 py-3 text-[10px] text-right">Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-border">
@@ -1093,7 +1093,7 @@
                                                             <div class="text-[9px] text-primary font-bold">INV #{{ $log->rental->id }}</div>
                                                         @endif
                                                     </td>
-                                                    <td class="px-4 py-3">
+                                                    <td class="px-4 py-3 hidden md:table-cell">
                                                         <div class="text-[11px] font-semibold text-foreground truncate max-w-[200px]">{{ $log->subject }}</div>
                                                         <div class="text-[9px] text-muted-foreground">{{ $log->type }}</div>
                                                     </td>
@@ -1173,11 +1173,11 @@
                                     <table class="w-full text-left border-collapse">
                                         <thead class="bg-muted/50 text-[10px] font-bold text-muted-foreground border-b border-border">
                                             <tr>
-                                                <th class="px-4 py-3">Waktu</th>
-                                                <th class="px-4 py-3">Penerima</th>
-                                                <th class="px-4 py-3">Subjek & Tipe</th>
-                                                <th class="px-4 py-3">Status</th>
-                                                <th class="px-4 py-3 text-right">Aksi</th>
+                                                <th class="px-4 py-3 text-[10px]">Waktu</th>
+                                                <th class="px-4 py-3 text-[10px]">Penerima</th>
+                                                <th class="px-4 py-3 text-[10px] hidden md:table-cell">Subjek & Tipe</th>
+                                                <th class="px-4 py-3 text-[10px]">Status</th>
+                                                <th class="px-4 py-3 text-[10px] text-right">Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-border">
@@ -1193,7 +1193,7 @@
                                                             <div class="text-[9px] text-primary font-bold">INV #{{ $log->rental->id }}</div>
                                                         @endif
                                                     </td>
-                                                    <td class="px-4 py-3">
+                                                    <td class="px-4 py-3 hidden md:table-cell">
                                                         <div class="text-[11px] font-semibold text-foreground truncate max-w-[200px]">{{ $log->subject }}</div>
                                                         <div class="text-[9px] text-muted-foreground">{{ $log->type }}</div>
                                                     </td>
