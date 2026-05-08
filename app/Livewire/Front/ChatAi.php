@@ -14,6 +14,13 @@ class ChatAi extends Component
     public $chatHistory = [];
     public $isTyping = false;
 
+    protected $listeners = ['open-chat' => 'openChat'];
+
+    public function openChat()
+    {
+        $this->isOpen = true;
+    }
+
     public function mount()
     {
         // Initialize with a welcome message if history is empty
