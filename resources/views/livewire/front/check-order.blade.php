@@ -4,6 +4,25 @@
             0% { background-position: 0 0; }
             100% { background-position: 10px 0; }
         }
+        @keyframes shine {
+            from { left: -100%; }
+            to { left: 200%; }
+        }
+        .badge-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        .badge-shine::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transform: skewX(-20deg);
+            animation: shine 3s infinite;
+        }
     </style>
     <div class="max-w-3xl mx-auto space-y-8">
 
@@ -355,15 +374,15 @@
 
                     {{-- Premium Rank Progress --}}
                     @if($tier)
-                        <div class="bg-card border border-border rounded-3xl overflow-hidden shadow-sm p-6 space-y-5 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                        <div class="bg-card border border-border rounded-3xl overflow-hidden shadow-sm p-6 space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                            <!-- Header Info -->
                             <div class="flex items-center justify-between">
                                 <div>
                                     <h4 class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">Pangkat Anda</h4>
                                     <div class="flex items-center gap-2">
                                         <div class="relative group">
                                             <div class="absolute -inset-1 bg-gradient-to-r from-primary/50 to-violet-500/50 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                                            <span class="relative inline-flex items-center rounded-full border px-3.5 py-1 text-[10px] font-black uppercase tracking-widest {{ $tier->color }} shadow-sm">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M20 21H4"/><path d="M15 21v-4a3 3 0 0 0-6 0v4"/></svg>
+                                            <span class="relative inline-flex items-center rounded-full border px-4 py-1 text-[10px] font-black uppercase tracking-widest {{ $tier->color }} shadow-md badge-shine">
                                                 {{ $tier->label }}
                                             </span>
                                         </div>
@@ -377,34 +396,62 @@
                                 </div>
                             </div>
 
+                            <!-- Scrollable Tiers Overview -->
+                            <div class="space-y-3">
+                                <h4 class="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Daftar Pangkat Eksklusif</h4>
+                                <div class="flex gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x scroll-smooth">
+                                    @foreach(\App\Helpers\CustomerHelper::tiers() as $t)
+                                        @php 
+                                            $isAchieved = $ltv >= $t['threshold'];
+                                            $isCurrent = $tier->label === $t['label'];
+                                        @endphp
+                                        <div class="snap-start shrink-0 w-32 rounded-2xl border {{ $isCurrent ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-muted/30' }} p-3 flex flex-col items-center gap-2 transition-all duration-500">
+                                            <span class="text-[8px] font-bold {{ $isAchieved ? 'text-primary' : 'text-muted-foreground/50' }} uppercase tracking-tighter">
+                                                @if($isAchieved)
+                                                    Tercapai
+                                                @else
+                                                    Min Rp {{ number_format($t['threshold'], 0, ',', '.') }}
+                                                @endif
+                                            </span>
+                                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $t['color'] }} {{ $isAchieved ? 'badge-shine' : 'opacity-40 grayscale' }}">
+                                                {{ $t['label'] }}
+                                            </span>
+                                            @if($isAchieved)
+                                                <div class="h-1 w-full bg-primary/20 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-primary w-full"></div>
+                                                </div>
+                                            @else
+                                                <div class="h-1 w-full bg-muted rounded-full"></div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             @if($nextTier)
                                 @php
                                     $progress = min(100, ($ltv / $nextTier->threshold) * 100);
                                     $remaining = $nextTier->threshold - $ltv;
                                 @endphp
-                                <div class="space-y-3">
+                                <div class="space-y-3 pt-2">
                                     <div class="flex justify-between items-end">
                                         <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                            Kejar <span class="text-primary">{{ $nextTier->label }}</span>
+                                            Langkah Menuju <span class="text-primary">{{ $nextTier->label }}</span>
                                         </p>
                                         <p class="text-[10px] font-black text-foreground">
-                                            Sisa <span class="text-primary italic">Rp {{ number_format($remaining, 0, ',', '.') }}</span>
+                                            Kurang <span class="text-primary italic">Rp {{ number_format($remaining, 0, ',', '.') }}</span>
                                         </p>
                                     </div>
-                                    <div class="relative h-2.5 w-full bg-muted rounded-full overflow-hidden border border-border/50 p-0.5">
-                                        <div class="absolute inset-y-0.5 left-0.5 bg-gradient-to-r from-primary to-violet-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]" style="width: calc({{ $progress }}% - 4px)">
-                                            <div class="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:10px_10px] animate-[progress_1s_linear_infinite]"></div>
+                                    <div class="relative h-3 w-full bg-muted rounded-full overflow-hidden border border-border/50 p-0.5">
+                                        <div class="absolute inset-y-0.5 left-0.5 bg-gradient-to-r from-primary to-violet-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]" style="width: calc({{ $progress }}% - 4px)">
+                                            <div class="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.3)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.3)_50%,rgba(255,255,255,0.3)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress_1s_linear_infinite]"></div>
                                         </div>
                                     </div>
-                                    <p class="text-[9px] text-center text-muted-foreground italic">Tingkatkan transaksi Anda untuk membuka keuntungan eksklusif.</p>
                                 </div>
                             @else
-                                <div class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center">
-                                    <div class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 mb-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><path d="m12 15 2 2 4-4"/><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
-                                    </div>
-                                    <p class="text-xs font-bold text-primary uppercase tracking-widest">Rank Maksimal Tercapai!</p>
-                                    <p class="text-[10px] text-muted-foreground mt-1">Anda adalah salah satu pelanggan terbaik kami. Nikmati layanan prioritas.</p>
+                                <div class="bg-primary/10 border border-primary/30 rounded-2xl p-5 text-center shadow-inner shadow-primary/5">
+                                    <p class="text-xs font-black text-primary uppercase tracking-[0.2em] animate-pulse">RANK TERTINGGI: LEGEND</p>
+                                    <p class="text-[10px] text-muted-foreground mt-2 leading-relaxed">Anda adalah pahlawan kami. Nikmati seluruh layanan prioritas tanpa batas.</p>
                                 </div>
                             @endif
                         </div>
@@ -417,8 +464,7 @@
                                 <div class="flex items-center gap-2">
                                     <h3 class="font-bold text-lg text-foreground leading-none">{{ $firstOrder?->nama ?? 'Akun Peminjam' }}</h3>
                                     @if($tier)
-                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $tier->color }}">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="currentColor" class="mr-1"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $tier->color }} badge-shine">
                                             {{ $tier->label }}
                                         </span>
                                     @endif

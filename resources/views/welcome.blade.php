@@ -65,6 +65,25 @@
             .group:active .group-hover\:scale-110,
             .group:active .group-hover\:scale-150 { transform: scale(1.1) !important; }
         }
+        @keyframes shine {
+            from { left: -100%; }
+            to { left: 200%; }
+        }
+        .badge-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        .badge-shine::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transform: skewX(-20deg);
+            animation: shine 3s infinite;
+        }
     </style>
     <script>
         // Force enable :active styles on iOS Safari immediately on touch
@@ -524,7 +543,7 @@
                                     {{ $onlinePendingTotal > 0 ? 'Pesanan Menunggu Pembayaran' : 'Pesanan Menunggu Pembayaran di Lokasi' }}
                                 </p>
                                 @if($customerTier)
-                                    <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }}">
+                                    <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }} badge-shine">
                                         {{ $customerTier->label }}
                                     </span>
                                 @endif
@@ -620,7 +639,7 @@
                                     <p class="font-bold text-foreground text-sm flex items-center gap-2"
                                         x-text="status === 'red' ? 'Masa Sewa Mau Habis' : 'Penyewaan Berlangsung'"></p>
                                     @if($customerTier)
-                                        <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }}">
+                                        <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }} badge-shine">
                                             {{ $customerTier->label }}
                                         </span>
                                     @endif
@@ -688,7 +707,7 @@
                             <div class="flex items-center gap-2">
                                 <p class="font-bold text-foreground text-sm">Sesi Peminjam Aktif</p>
                                 @if($customerTier)
-                                    <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }}">
+                                    <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }} badge-shine">
                                         {{ $customerTier->label }}
                                     </span>
                                 @endif
