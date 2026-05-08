@@ -839,23 +839,22 @@
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" wire:model="is_chatbot_active" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                    <div class="w-11 h-6 bg-zinc-700/50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-transparent after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
                                 </label>
                             </div>
 
                             <div class="space-y-2 {{ !$is_chatbot_active ? 'opacity-40 pointer-events-none' : '' }} transition-all">
                                 <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider">Gemini API Key</label>
                                 <div class="relative">
-                                    <input type="password" wire:model="chatbot_api_key" 
-                                        class="w-full rounded-md border border-input bg-background pl-3 pr-10 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    <input type="text" wire:model="chatbot_api_key" 
+                                        class="w-full rounded-md border border-input bg-background pl-3 pr-24 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono"
                                         placeholder="AIzaSy...">
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground/40">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span class="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                                            Ending: {{ substr($chatbot_api_key, -5) ?: 'N/A' }}
+                                        </span>
                                     </div>
                                 </div>
-                                <p class="text-[9px] text-muted-foreground leading-tight italic">
-                                    Dapatkan kunci gratis di <a href="https://aistudio.google.com/" target="_blank" class="text-primary hover:underline">Google AI Studio</a>. Kosongkan untuk pakai default.
-                                </p>
                             </div>
                         </div>
 
