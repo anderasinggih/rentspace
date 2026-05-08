@@ -32,6 +32,33 @@ class AiService
             $unitName = "{$u->seri} ({$u->memori}GB, Warna {$u->warna})";
             $context .= "- {$unitName}: Rp" . number_format($u->harga_per_hari, 0, ',', '.') . "/hari.\n";
         }
+
+        // Add Public Promos
+        $now = Carbon::now();
+        $promos = \App\Models\PricingRule::where('is_active', 1)
+            ->where('is_hidden', 0)
+            ->where('is_affiliate_only', 0)
+            ->where('requires_referral', 0)
+            ->whereNull('target_loyalty_tier')
+            ->where(function($q) use ($now) {
+                $q->whereNull('start_date')->orWhere('start_date', '<=', $now);
+            })
+            ->where(function($q) use ($now) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', $now);
+            })
+            ->get();
+
+        if ($promos->isNotEmpty()) {
+            $context .= "\nPROMO/DISKON YANG SEDANG BERJALAN (HANYA BERIKAN JIKA RELEVAN):\n";
+            foreach ($promos as $p) {
+                $value = $p->tipe === 'percentage' ? $p->value . "%" : "Rp" . number_format($p->value, 0, ',', '.');
+                $context .= "- Kode: {$p->kode_promo} ({$p->nama_promo}). Potongan: {$value}.";
+                if ($p->syarat_minimal_durasi > 0) {
+                    $context .= " Syarat: Min. sewa {$p->syarat_minimal_durasi} {$p->syarat_tipe_durasi}.";
+                }
+                $context .= "\n";
+            }
+        }
         
         $context .= "\nJADWAL & KETERSEDIAAN (BOOKING DATA):\n";
         $start = Carbon::today();
