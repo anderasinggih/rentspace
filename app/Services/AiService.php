@@ -144,11 +144,13 @@ class AiService
                 return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Maaf Kak, saat ini saya sedang sedikit bingung. Bisa tanya lagi?";
             }
 
-            // Handle Errors with Raw Debug Info
-            $keyEnding = substr($this->apiKey, -5);
-            return "DEBUG ERROR (Key: ...$keyEnding | Status: " . $response->status() . "): " . json_encode($response->json());
+            if ($response->status() === 429) {
+                return "Aduh Kak, maaf banget. Saat ini kuota chat saya lagi penuh nih. 🙏\n\nBiar cepet, Kakak bisa langsung tanya ke Admin lewat WhatsApp ya! [CHAT_WA]";
+            }
+
+            return "Waduh, koneksi saya lagi agak terganggu nih Kak. 😅\n\nLangsung chat Admin aja yuk biar dibantu manual! [CHAT_WA]";
         } catch (\Exception $e) {
-            return "DEBUG EXCEPTION: " . $e->getMessage();
+            return "Maaf Kak, ada kendala teknis sebentar. Silakan hubungi Admin via WhatsApp ya! [CHAT_WA]";
         }
     }
 }
