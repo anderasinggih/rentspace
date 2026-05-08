@@ -26,8 +26,8 @@ class ChatAi extends Component
         // Initialize with a welcome message if history is empty
         if (empty($this->chatHistory)) {
             $this->chatHistory[] = [
-                'role' => 'assistant',
-                'content' => "Halo Bos! Saya CS AI RENT SPACE. Ada yang bisa saya bantu? Bisa tanya soal stok unit atau status pesanan Bos ya! 😎"
+                'role' => 'model',
+                'content' => "Halo Kak! Saya CS AI RENT SPACE. Ada yang bisa saya bantu? Bisa tanya soal stok unit atau status pesanan Kakak ya! 😊"
             ];
         }
     }
