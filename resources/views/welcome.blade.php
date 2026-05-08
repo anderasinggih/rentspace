@@ -83,13 +83,13 @@
             passive: false
         });
 
-        let lastTouchEnd = 0;
+        window.lastTouchEnd = 0;
         document.addEventListener('touchend', function(event) {
             let now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
+            if (now - window.lastTouchEnd <= 300) {
                 event.preventDefault();
             }
-            lastTouchEnd = now;
+            window.lastTouchEnd = now;
         }, false);
 
 
