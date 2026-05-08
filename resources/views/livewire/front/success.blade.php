@@ -14,6 +14,11 @@
                 <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Dibatalkan</h1>
                 <p class="text-[10px] text-rose-500/70 mt-1 font-medium italic">Status: Sesi Pembayaran Berakhir (Unit Dilepas)</p>
             @elseif($rental->status === 'paid')
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 mb-4 animate-in zoom-in duration-700">
+                    <svg viewBox="0 0 24 24" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
                 <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Terima Kasih!</h1>
                 <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Siap Diambil / Lunas</p>
             @elseif($rental->status === 'renting')
