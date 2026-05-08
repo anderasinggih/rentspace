@@ -109,13 +109,17 @@ class AiService
 
             if ($response->successful()) {
                 $data = $response->json();
-                return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Maaf Kak, saya lagi blank. Bisa tanya lagi?";
+                return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Maaf Kak, saat ini saya sedang sedikit bingung. Bisa tanya lagi?";
             }
 
-            $errorDetail = $response->json('error.message') ?? $response->body();
-            return "Koneksi terganggu (Status: " . $response->status() . "). Pesan: " . substr($errorDetail, 0, 100);
+            // Handle Quota Limit or other errors gracefully
+            if ($response->status() === 429) {
+                return "Aduh Kak, maaf banget. Saat ini kuota chat saya lagi penuh nih. 🙏\n\nBiar cepet, Kakak bisa langsung tanya ke Admin lewat WhatsApp ya! [CHAT_WA]";
+            }
+
+            return "Waduh, koneksi saya lagi agak terganggu nih Kak. 😅\n\nLangsung chat Admin aja yuk biar dibantu manual! [CHAT_WA]";
         } catch (\Exception $e) {
-            return "Kesalahan sistem: " . $e->getMessage();
+            return "Maaf Kak, ada kendala teknis sebentar. Silakan hubungi Admin via WhatsApp ya! [CHAT_WA]";
         }
     }
 }
