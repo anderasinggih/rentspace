@@ -104,3 +104,12 @@ Route::get('/clear-cache', function() {
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
     return "Semua cache berhasil dihapus!";
 });
+
+// Detective route to check available Gemini Models
+Route::get('/cek-ai', function() {
+    $key = config('services.gemini.key');
+    if (!$key) return "API Key Kosong di config!";
+    
+    $response = \Illuminate\Support\Facades\Http::get("https://generativelanguage.googleapis.com/v1beta/models?key={$key}");
+    return $response->json();
+});
