@@ -66,14 +66,6 @@
                 @endif
             </div>
 
-            {{-- Quick Actions --}}
-            <div class="px-4 py-2 border-t border-white/10 bg-white/5 flex gap-1.5 overflow-x-auto scrollbar-hide">
-                @foreach($recommendations as $rec)
-                    <button wire:click="quickAction('{{ $rec->name }} ready kapan?')" class="whitespace-nowrap px-3 py-1.5 bg-white/10 hover:bg-primary hover:text-white border border-white/20 rounded-lg text-[9px] font-bold tracking-tight transition-all active:scale-95 uppercase">Cek {{ $rec->name }}</button>
-                @endforeach
-                <button wire:click="quickAction('Status pesanan saya?')" class="whitespace-nowrap px-3 py-1.5 bg-white/10 hover:bg-primary hover:text-white border border-white/20 rounded-lg text-[9px] font-bold tracking-tight transition-all active:scale-95 uppercase">Lacak</button>
-            </div>
-
             {{-- Input Footer --}}
             <div class="p-4 bg-white/5 border-t border-white/10">
                 <form wire:submit.prevent="sendMessage" class="flex items-center gap-2">
