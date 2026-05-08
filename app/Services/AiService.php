@@ -32,15 +32,11 @@ class AiService
             $context .= "- {$u->name}: Rp" . number_format($u->harga_per_hari, 0, ',', '.') . "/hari.\n";
         }
         
-        $context .= "\nSTOK (7 Hari ke Depan):\n";
+        $context .= "\nJADWAL & KETERSEDIAAN (BOOKING DATA):\n";
         $start = Carbon::today();
-        $end = Carbon::today()->addDays(7);
         
         $rentals = Rental::where('status', '!=', 'cancelled')
-            ->where(function($q) use ($start, $end) {
-                $q->whereBetween('waktu_mulai', [$start, $end])
-                  ->orWhereBetween('waktu_selesai', [$start, $end]);
-            })
+            ->where('waktu_selesai', '>=', $start)
             ->with('units')
             ->get();
 
@@ -48,13 +44,13 @@ class AiService
             $busyDates = [];
             foreach ($rentals as $r) {
                 if ($r->units->contains($u->id)) {
-                    $busyDates[] = Carbon::parse($r->waktu_mulai)->format('d M') . "-" . Carbon::parse($r->waktu_selesai)->format('d M');
+                    $busyDates[] = Carbon::parse($r->waktu_mulai)->format('d M') . " s/d " . Carbon::parse($r->waktu_selesai)->format('d M');
                 }
             }
             if (empty($busyDates)) {
-                $context .= "- {$u->name}: READY.\n";
+                $context .= "- {$u->name}: STATUS READY (Belum ada booking).\n";
             } else {
-                $context .= "- {$u->name}: BOOKED " . implode(', ', $busyDates) . ". Selaian itu READY.\n";
+                $context .= "- {$u->name}: SUDAH DIPESAN pada tanggal " . implode(', ', $busyDates) . ". Di luar tanggal tersebut statusnya READY.\n";
             }
         }
 
