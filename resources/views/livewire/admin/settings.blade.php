@@ -1094,8 +1094,8 @@
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 hidden md:table-cell">
-                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[140px]">{{ $log->subject }}</div>
-                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[140px]">{{ $log->type }}</div>
+                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[120px]" title="{{ $log->subject }}">{{ $log->subject }}</div>
+                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[120px]" title="{{ $log->type }}">{{ $log->type }}</div>
                                                     </td>
                                                     <td class="px-4 py-3">
                                                         @if($log->status === 'sent')
@@ -1117,7 +1117,7 @@
                                                     <td class="px-4 py-3 text-right">
                                                         <button wire:click="resendMail({{ $log->id }})" wire:loading.attr="disabled"
                                                             wire:target="resendMail({{ $log->id }})"
-                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-black hover:bg-primary hover:text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-auto group">
+                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-black hover:bg-primary hover:text-zinc-950 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-auto group">
                                                             <svg wire:loading wire:target="resendMail({{ $log->id }})" class="animate-spin h-3 w-3 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -1200,8 +1200,8 @@
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 hidden md:table-cell">
-                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[140px]">{{ $log->subject }}</div>
-                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[140px]">{{ $log->type }}</div>
+                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[120px]" title="{{ $log->subject }}">{{ $log->subject }}</div>
+                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[120px]" title="{{ $log->type }}">{{ $log->type }}</div>
                                                     </td>
                                                     <td class="px-4 py-3">
                                                         @if($log->status === 'sent')
@@ -1223,7 +1223,7 @@
                                                     <td class="px-4 py-3 text-right">
                                                         <button wire:click="resendMail({{ $log->id }})" wire:loading.attr="disabled"
                                                             wire:target="resendMail({{ $log->id }})"
-                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-black hover:bg-primary hover:text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-auto group">
+                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-black hover:bg-primary hover:text-zinc-950 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-auto group">
                                                             <svg wire:loading wire:target="resendMail({{ $log->id }})" class="animate-spin h-3 w-3 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
