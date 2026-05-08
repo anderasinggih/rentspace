@@ -118,6 +118,7 @@ class BookingForm extends Component
         }
 
         if ($propertyName === 'selected_unit_ids') {
+            $this->checkAvailability();
             $this->loadAvailablePromos();
             $this->calculatePrice();
         }
@@ -226,7 +227,12 @@ class BookingForm extends Component
             }
         }
 
-        $this->available_units = $units;
+        $this->available_units = $units->sortBy(function($unit) {
+            $status = $unit->availability_status ?? 'full';
+            if ($status === 'ready') return 1;
+            if ($status === 'partial_until' || $status === 'partial_from') return 2;
+            return 3;
+        });
 
         // 4. Remove selected units ONLY if they are not available in the BASE range
         $this->selected_unit_ids = array_values(array_intersect($this->selected_unit_ids, $this->schedule_available_unit_ids));
