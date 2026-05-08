@@ -538,12 +538,12 @@
                             </svg>
                         </div>
                         <div>
-                            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                <p class="font-bold text-foreground text-sm shrink-0">
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-foreground text-sm">
                                     {{ $onlinePendingTotal > 0 ? 'Pesanan Menunggu Pembayaran' : 'Pesanan Menunggu Pembayaran di Lokasi' }}
                                 </p>
                                 @if($customerTier)
-                                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }} badge-shine shadow-sm shrink-0">
+                                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }} badge-shine shadow-sm shrink-0 mr-2">
                                         {{ $customerTier->label }}
                                     </span>
                                 @endif
@@ -635,11 +635,11 @@
                         </div>
                         <div class="flex-1 min-w-0 flex justify-between sm:block sm:w-auto items-center">
                             <div>
-                                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                    <p class="font-bold text-foreground text-sm shrink-0"
+                                <div class="flex items-center gap-2">
+                                    <p class="font-bold text-foreground text-sm"
                                         x-text="status === 'red' ? 'Masa Sewa Mau Habis' : 'Penyewaan Berlangsung'"></p>
                                     @if($customerTier)
-                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }} badge-shine shadow-sm shrink-0">
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }} badge-shine shadow-sm shrink-0 mr-2">
                                             {{ $customerTier->label }}
                                         </span>
                                     @endif
@@ -704,10 +704,10 @@
                             </svg>
                         </div>
                         <div>
-                            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                <p class="font-bold text-foreground text-sm shrink-0">Sesi Peminjam Aktif</p>
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-foreground text-sm">Sesi Peminjam Aktif</p>
                                 @if($customerTier)
-                                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }} badge-shine shadow-sm shrink-0">
+                                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $customerTier->color }} badge-shine shadow-sm shrink-0 mr-2">
                                         {{ $customerTier->label }}
                                     </span>
                                 @endif
