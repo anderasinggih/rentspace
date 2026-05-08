@@ -410,13 +410,13 @@
                                         $tiers = \App\Helpers\CustomerHelper::tiers();
                                         $totalTiers = count($tiers);
                                         
-                                        // High-Vibrancy Colors for Roadmap Path
+                                        // Ultra-Vibrant Neon Colors for Roadmap
                                         $pathColors = [
                                             'BRONZE' => 'bg-slate-400',
                                             'SILVER' => 'bg-slate-200',
-                                            'GOLD' => 'bg-amber-400',
-                                            'PLATINUM' => 'bg-indigo-500',
-                                            'DIAMOND' => 'bg-emerald-400',
+                                            'GOLD' => 'bg-yellow-400',
+                                            'PLATINUM' => 'bg-fuchsia-500',
+                                            'DIAMOND' => 'bg-cyan-400',
                                             'LEGEND' => 'bg-red-500',
                                         ];
                                     @endphp
@@ -443,27 +443,35 @@
                                             $nextVibrantColor = $nextT ? ($pathColors[$nextT['label']] ?? 'bg-primary') : 'bg-primary';
                                         @endphp
                                         <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
-                                            <!-- Line Segments (Fused with Dots) -->
-                                            <div class="absolute top-[0.625rem] left-0 w-full h-3 flex z-0">
-                                                <!-- Left side of dot (Coming from previous) -->
-                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : $vibrantColor }} {{ $isAchieved ? 'opacity-100 shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'opacity-40' }} border-none transition-all duration-700"></div>
+                                            <!-- Neon Line Segments -->
+                                            <div class="absolute top-[0.5rem] left-0 w-full h-4 flex z-0 overflow-hidden">
+                                                <!-- Left side of dot -->
+                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : $vibrantColor }} {{ $isAchieved ? 'opacity-100 shadow-[0_0_20px_rgba(255,255,255,0.4)]' : 'opacity-30' }} transition-all duration-700 relative">
+                                                    @if($isAchieved)
+                                                        <div class="absolute inset-y-[30%] inset-x-0 bg-white/40 blur-[1px]"></div>
+                                                    @endif
+                                                </div>
                                                 
-                                                <!-- Right side of dot (Going to next) -->
-                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : $nextVibrantColor }} {{ $isNextAchieved ?? false ? 'opacity-100' : 'opacity-20' }} transition-all duration-700">
+                                                <!-- Right side of dot (The path ahead) -->
+                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : $nextVibrantColor }} {{ $isNextAchieved ?? false ? 'opacity-100' : 'opacity-15' }} transition-all duration-700">
                                                     @if($segmentProgress > 0)
-                                                        <!-- Actual Active Progress on this segment -->
-                                                        <div class="absolute inset-y-0 left-0 {{ $nextVibrantColor }} opacity-100 shadow-[0_0_25px_rgba(255,255,255,0.3)] transition-all duration-1000 overflow-hidden badge-shine" style="width: {{ $segmentProgress }}%">
+                                                        <!-- Glowing Active Path -->
+                                                        <div class="absolute inset-y-0 left-0 {{ $nextVibrantColor }} opacity-100 shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-all duration-1000 overflow-hidden badge-shine" style="width: {{ $segmentProgress }}%">
+                                                            <div class="absolute inset-y-[30%] inset-x-0 bg-white/50 blur-[1px]"></div>
                                                         </div>
                                                     @endif
                                                 </div>
                                             </div>
 
-                                            <!-- Milestone Dot -->
-                                            <div class="relative flex items-center justify-center h-8 w-8 z-20">
+                                            <!-- Massive Milestone Dot -->
+                                            <div class="relative flex items-center justify-center h-10 w-10 z-20">
                                                 @if($isCurrent)
-                                                    <div class="absolute h-14 w-14 {{ $vibrantColor }} opacity-50 rounded-full animate-pulse blur-2xl"></div>
+                                                    <div class="absolute h-16 w-16 {{ $vibrantColor }} opacity-60 rounded-full animate-pulse blur-3xl"></div>
                                                 @endif
-                                                <div class="h-6 w-6 rounded-full border-[5px] transition-all duration-700 shadow-2xl {{ $vibrantColor }} {{ $isAchieved ? 'border-background scale-110 shadow-white/10' : 'opacity-60 border-background grayscale-[0.2]' }}">
+                                                <div class="h-8 w-8 rounded-full border-[5px] transition-all duration-700 shadow-2xl {{ $vibrantColor }} {{ $isAchieved ? 'border-background scale-110 shadow-white/20' : 'opacity-50 border-background grayscale-[0.1]' }}">
+                                                    @if($isAchieved)
+                                                        <div class="absolute inset-1 bg-white/30 rounded-full blur-[2px]"></div>
+                                                    @endif
                                                 </div>
                                             </div>
 
