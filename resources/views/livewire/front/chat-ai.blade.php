@@ -1,19 +1,8 @@
-<div class="fixed inset-0 z-[100] pointer-events-none" x-data>
-    {{-- Immersive Backdrop Blur --}}
-    <div x-show="$store.chat.isOpen" 
-        x-transition:enter="transition ease-out duration-500"
-        x-transition:enter-start="opacity-0 backdrop-blur-0"
-        x-transition:enter-end="opacity-100 backdrop-blur-md"
-        x-transition:leave="transition ease-in duration-300"
-        x-transition:leave-start="opacity-100 backdrop-blur-md"
-        x-transition:leave-end="opacity-0 backdrop-blur-0"
-        @click="$store.chat.close()"
-        class="fixed inset-0 bg-zinc-950/20 pointer-events-auto"></div>
-
+<div class="fixed bottom-6 right-6 z-[100] font-sans" x-data>
     {{-- Floating Toggle Button --}}
-    <div class="fixed bottom-6 right-6 pointer-events-auto">
+    <div class="relative">
         <button @click="$store.chat.toggle()" 
-            class="h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 relative group">
+            class="h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 relative group pointer-events-auto">
             <div class="absolute inset-0 rounded-full bg-primary animate-ping opacity-20 group-hover:opacity-40"></div>
             <svg x-show="!$store.chat.isOpen" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="relative z-10"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
             <svg x-show="$store.chat.isOpen" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="relative z-10"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
