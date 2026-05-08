@@ -1,4 +1,10 @@
 <div class="py-2 px-4 sm:px-6 lg:px-8 bg-background min-h-[calc(100vh-4rem)]">
+    <style>
+        @keyframes progress {
+            0% { background-position: 0 0; }
+            100% { background-position: 10px 0; }
+        }
+    </style>
     <div class="max-w-3xl mx-auto space-y-8">
 
         <!-- Header -->
@@ -339,8 +345,69 @@
                     </div>
                 @endif
         @elseif($currentTab === 'profil')
-                <div class="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-                    @php $firstOrder = $orders ? $orders->first() : null; @endphp
+                    @php 
+                        $firstOrder = $orders ? $orders->first() : null;
+                        $ltv = $this->ltv;
+                        $tier = $this->tier;
+                        $nextTier = $this->nextTier;
+                    @endphp
+
+                    {{-- Premium Rank Progress --}}
+                    @if($tier)
+                        <div class="bg-card border border-border rounded-3xl overflow-hidden shadow-sm p-6 space-y-5 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">Pangkat Anda</h4>
+                                    <div class="flex items-center gap-2">
+                                        <div class="relative group">
+                                            <div class="absolute -inset-1 bg-gradient-to-r from-primary/50 to-violet-500/50 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                                            <span class="relative inline-flex items-center rounded-full border px-3.5 py-1 text-[10px] font-black uppercase tracking-widest {{ $tier->color }} shadow-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M20 21H4"/><path d="M15 21v-4a3 3 0 0 0-6 0v4"/></svg>
+                                                {{ $tier->label }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <h4 class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-1">Total Belanja</h4>
+                                    <p class="text-xl font-black text-foreground">
+                                        <span class="text-xs font-medium text-muted-foreground mr-0.5">Rp</span>{{ number_format($ltv, 0, ',', '.') }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if($nextTier)
+                                @php
+                                    $progress = min(100, ($ltv / $nextTier->threshold) * 100);
+                                    $remaining = $nextTier->threshold - $ltv;
+                                @endphp
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-end">
+                                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                            Kejar <span class="text-primary">{{ $nextTier->label }}</span>
+                                        </p>
+                                        <p class="text-[10px] font-black text-foreground">
+                                            Sisa <span class="text-primary italic">Rp {{ number_format($remaining, 0, ',', '.') }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="relative h-2.5 w-full bg-muted rounded-full overflow-hidden border border-border/50 p-0.5">
+                                        <div class="absolute inset-y-0.5 left-0.5 bg-gradient-to-r from-primary to-violet-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]" style="width: calc({{ $progress }}% - 4px)">
+                                            <div class="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:10px_10px] animate-[progress_1s_linear_infinite]"></div>
+                                        </div>
+                                    </div>
+                                    <p class="text-[9px] text-center text-muted-foreground italic">Tingkatkan transaksi Anda untuk membuka keuntungan eksklusif.</p>
+                                </div>
+                            @else
+                                <div class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center">
+                                    <div class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 mb-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><path d="m12 15 2 2 4-4"/><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
+                                    </div>
+                                    <p class="text-xs font-bold text-primary uppercase tracking-widest">Rank Maksimal Tercapai!</p>
+                                    <p class="text-[10px] text-muted-foreground mt-1">Anda adalah salah satu pelanggan terbaik kami. Nikmati layanan prioritas.</p>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
 
                     {{-- Simple Shadcn-style Profile Card --}}
                     <div class="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
@@ -348,9 +415,10 @@
                             <div class="flex flex-col">
                                 <div class="flex items-center gap-2">
                                     <h3 class="font-bold text-lg text-foreground leading-none">{{ $firstOrder?->nama ?? 'Akun Peminjam' }}</h3>
-                                    @if($this->tier)
-                                        <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $this->tier->color }}">
-                                            {{ $this->tier->label }}
+                                    @if($tier)
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $tier->color }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="currentColor" class="mr-1"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                            {{ $tier->label }}
                                         </span>
                                     @endif
                                 </div>

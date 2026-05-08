@@ -6,15 +6,38 @@ use App\Models\Rental;
 
 class CustomerHelper
 {
+    public static function tiers()
+    {
+        return [
+            ['label' => 'BRONZE', 'threshold' => 0, 'color' => 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20'],
+            ['label' => 'SILVER', 'threshold' => 100000, 'color' => 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700 shadow-sm'],
+            ['label' => 'GOLD', 'threshold' => 500000, 'color' => 'bg-gradient-to-r from-amber-400/20 to-yellow-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30 shadow-sm shadow-amber-500/10'],
+            ['label' => 'PLATINUM', 'threshold' => 1000000, 'color' => 'bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-700 dark:text-indigo-400 border-indigo-500/30 shadow-sm shadow-indigo-500/10'],
+            ['label' => 'DIAMOND', 'threshold' => 3000000, 'color' => 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/10'],
+            ['label' => 'LEGEND', 'threshold' => 6000000, 'color' => 'bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-2 ring-primary/20'],
+        ];
+    }
+
     public static function getTier($ltv)
     {
-        if ($ltv >= 6000000) return (object)['label' => 'LEGEND', 'color' => 'bg-primary text-primary-foreground shadow-sm'];
-        if ($ltv >= 3000000) return (object)['label' => 'DIAMOND', 'color' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'];
-        if ($ltv >= 1000000) return (object)['label' => 'PLATINUM', 'color' => 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'];
-        if ($ltv >= 500000) return (object)['label' => 'GOLD', 'color' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'];
-        if ($ltv >= 100000) return (object)['label' => 'SILVER', 'color' => 'border-border bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'];
-        
-        return (object)['label' => 'BRONZE', 'color' => 'border-transparent bg-secondary text-secondary-foreground'];
+        $tiers = array_reverse(self::tiers());
+        foreach ($tiers as $tier) {
+            if ($ltv >= $tier['threshold']) {
+                return (object)$tier;
+            }
+        }
+        return (object)$tiers[count($tiers)-1];
+    }
+
+    public static function getNextTier($ltv)
+    {
+        $tiers = self::tiers();
+        foreach ($tiers as $tier) {
+            if ($ltv < $tier['threshold']) {
+                return (object)$tier;
+            }
+        }
+        return null; // Already Legend
     }
 
     public static function getLtv($nik)

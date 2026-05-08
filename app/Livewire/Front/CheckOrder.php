@@ -68,8 +68,17 @@ class CheckOrder extends Component
 
     public function getTierProperty()
     {
-        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
-        return \App\Helpers\CustomerHelper::getTier($ltv);
+        return \App\Helpers\CustomerHelper::getTier($this->ltv);
+    }
+
+    public function getNextTierProperty()
+    {
+        return \App\Helpers\CustomerHelper::getNextTier($this->ltv);
+    }
+
+    public function getLtvProperty()
+    {
+        return \App\Helpers\CustomerHelper::getLtv($this->nik);
     }
 
     public function getActiveRentalsCountProperty()
