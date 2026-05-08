@@ -772,6 +772,39 @@
             </div>
         </div>
     </div>
+    {{-- SMART UPSELLING POPUP --}}
+    @if($upsell_item)
+    <div class="fixed bottom-24 sm:bottom-6 right-0 sm:right-6 z-[60] w-full sm:max-w-[320px] px-4 sm:px-0 animate-in slide-in-from-bottom-10 duration-500">
+        <div class="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden shadow-primary/20">
+            <div class="p-4">
+                <div class="flex items-start gap-3">
+                    @if($upsell_item['thumbnail'])
+                    <img src="{{ Storage::url($upsell_item['thumbnail']) }}" class="w-14 h-14 rounded-xl object-cover border border-border shrink-0" alt="">
+                    @else
+                    <div class="w-14 h-14 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground/40"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                    </div>
+                    @endif
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[9px] font-black text-primary uppercase tracking-tighter">Rekomendasi Spesial</span>
+                            <button type="button" wire:click="$set('upsell_item', null)" class="text-muted-foreground hover:text-foreground shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                        </div>
+                        <p class="text-[10px] sm:text-xs text-foreground font-bold mt-1 leading-tight">
+                            Banyak member {{ $this->tier ? $this->tier->label : '' }} juga sewa <b>{{ $upsell_item['nama'] }}</b>. {{ $upsell_item['message'] }}
+                        </p>
+                        <button type="button" wire:click="addUpsell"
+                            class="mt-3 w-full py-2 bg-primary text-primary-foreground text-[10px] font-black rounded-lg hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+                            TAMBAH +Rp {{ number_format($upsell_item['harga'], 0, ',', '.') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 @script

@@ -41,6 +41,7 @@ class BookingForm extends Component
     public $loyalty_rule_id = null;
     public $loyalty_discount_value = 0;
     public $loyalty_discount_type = null;
+    public $upsell_item = null;
 
     // Internal cache for the request lifecycle
     protected $all_pricing_rules = null;
@@ -118,6 +119,7 @@ class BookingForm extends Component
         }
 
         if ($propertyName === 'selected_unit_ids') {
+            $this->checkUpsell();
             $this->loadAvailablePromos();
             $this->calculatePrice();
         }
@@ -757,6 +759,42 @@ class BookingForm extends Component
         }
         
         return $prices;
+    }
+
+    public function checkUpsell()
+    {
+        $this->upsell_item = null;
+        if (empty($this->selected_unit_ids)) return;
+
+        // Use the first unit as primary for suggestion
+        $primaryId = $this->selected_unit_ids[0];
+        $unit = \App\Models\Unit::find($primaryId);
+
+        if ($unit && $unit->upsell_unit_id) {
+            // Check if upsell unit is already selected
+            if (!in_array($unit->upsell_unit_id, $this->selected_unit_ids)) {
+                $upsell = \App\Models\Unit::find($unit->upsell_unit_id);
+                if ($upsell && $upsell->is_available && $upsell->is_active) {
+                    $this->upsell_item = [
+                        'id' => $upsell->id,
+                        'nama' => $upsell->nama,
+                        'harga' => $upsell->harga_per_hari,
+                        'message' => $unit->upsell_message ?: "Banyak member juga sewa ini lho!",
+                        'thumbnail' => $upsell->thumbnail
+                    ];
+                }
+            }
+        }
+    }
+
+    public function addUpsell()
+    {
+        if ($this->upsell_item) {
+            $this->selected_unit_ids[] = $this->upsell_item['id'];
+            $this->upsell_item = null;
+            $this->checkAvailability();
+            $this->calculatePrice();
+        }
     }
 
     public function render()
