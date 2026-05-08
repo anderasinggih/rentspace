@@ -399,9 +399,9 @@
                             <!-- Integrated Gamified Roadmap & Progress -->
                             <div class="space-y-12 pt-4">
                                 <div class="flex items-center justify-between px-1">
-                                    <h4 class="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Roadmap Eksklusivitas</h4>
+                                    <h4 class="text-[10px] font-bold text-muted-foreground tracking-tight">Perjalanan Pangkat</h4>
                                     @if($nextTier)
-                                        <p class="text-[9px] font-black text-primary italic">Sisa Rp {{ number_format($nextTier->threshold - $ltv, 0, ',', '.') }} ke {{ $nextTier->label }}</p>
+                                        <p class="text-[10px] font-bold text-primary">Sisa Rp {{ number_format($nextTier->threshold - $ltv, 0, ',', '.') }} lagi untuk mencapai {{ $nextTier->label }}</p>
                                     @endif
                                 </div>
 
@@ -416,7 +416,6 @@
                                             $isAchieved = $ltv >= $t['threshold'];
                                             $isCurrent = $tier->label === $t['label'];
                                             $nextT = ($index + 1 < $totalTiers) ? $tiers[$index + 1] : null;
-                                            $isNextAchieved = $nextT && ($ltv >= $nextT['threshold']);
                                             
                                             // Calculate progress to next dot for the line segment
                                             $segmentProgress = 0;
@@ -429,19 +428,20 @@
                                                     $segmentProgress = ($currentProgress / $currentRange) * 100;
                                                 }
                                             }
+
+                                            // Extract base color for the dot/line
+                                            $dotColorClass = $isAchieved ? $t['color'] : 'bg-muted text-muted-foreground';
                                         @endphp
                                         <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
                                             <!-- Line Segments (Fused with Dots) -->
                                             <div class="absolute top-[0.625rem] left-0 w-full h-1.5 flex z-0">
                                                 <!-- Left side of dot -->
-                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : ($isAchieved ? 'bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]' : 'bg-muted') }}"></div>
+                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : ($isAchieved ? $t['color'] : 'bg-muted') }} {{ $isAchieved ? 'opacity-60' : '' }} border-none"></div>
                                                 <!-- Right side of dot -->
-                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : 'bg-muted' }}">
+                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : 'bg-muted/50' }}">
                                                     @if($segmentProgress > 0)
-                                                        <div class="absolute inset-y-0 left-0 bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)] transition-all duration-1000" style="width: {{ $segmentProgress }}%">
-                                                            @if($segmentProgress < 100)
-                                                                <div class="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:8px_8px] animate-[progress_1s_linear_infinite]"></div>
-                                                            @endif
+                                                        <div class="absolute inset-y-0 left-0 {{ $t['color'] }} shadow-[0_0_15px_rgba(var(--primary-rgb),0.2)] transition-all duration-1000 overflow-hidden" style="width: {{ $segmentProgress }}%">
+                                                            <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress_1.5s_linear_infinite]"></div>
                                                         </div>
                                                     @endif
                                                 </div>
@@ -450,23 +450,23 @@
                                             <!-- Milestone Dot -->
                                             <div class="relative flex items-center justify-center h-6 w-6 z-20">
                                                 @if($isCurrent)
-                                                    <div class="absolute h-10 w-10 bg-primary/20 rounded-full animate-pulse"></div>
+                                                    <div class="absolute h-10 w-10 {{ $t['color'] }} opacity-20 rounded-full animate-pulse"></div>
                                                 @endif
-                                                <div class="h-5 w-5 rounded-full border-[4px] transition-all duration-700 shadow-sm {{ $isAchieved ? 'bg-primary border-background ring-2 ring-primary/20' : 'bg-muted border-background' }}">
+                                                <div class="h-5 w-5 rounded-full border-[3px] transition-all duration-700 shadow-lg {{ $isAchieved ? $t['color'] . ' border-background ring-2 ring-foreground/5' : 'bg-muted border-background' }}">
                                                 </div>
                                             </div>
 
-                                            <!-- Badge (Floating Below Dot Now for better line visibility) -->
-                                            <div class="mt-4 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 scale-100' : 'opacity-40 scale-90' }}">
-                                                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[7px] font-black uppercase tracking-widest {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-sm' : 'grayscale border-dashed' }}">
+                                            <!-- Badge -->
+                                            <div class="mt-5 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 scale-100' : 'opacity-40 scale-90' }}">
+                                                <span class="inline-flex items-center rounded-full border px-3 py-1 text-[8px] font-black {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-md' : 'grayscale border-dashed opacity-50' }}">
                                                     {{ $t['label'] }}
                                                 </span>
                                             </div>
 
                                             <!-- Threshold Info -->
                                             <div class="mt-2 text-center">
-                                                <p class="text-[8px] font-black {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/40' }} tracking-tight">
-                                                    {{ $index === 0 ? 'Start' : 'Rp ' . number_format($t['threshold'] / 1000, 0, ',', '.') . 'k' }}
+                                                <p class="text-[9px] font-bold {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/30' }} tracking-tight">
+                                                    {{ $index === 0 ? 'Mulai' : 'Rp ' . number_format($t['threshold'] / 1000, 0, ',', '.') . 'k' }}
                                                 </p>
                                             </div>
                                         </div>
