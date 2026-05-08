@@ -14,8 +14,8 @@ class AiService
 
     public function __construct()
     {
-        $dbKey = trim(\App\Models\Setting::getVal('chatbot_api_key') ?? '');
-        $this->apiKey = !empty($dbKey) ? $dbKey : config('services.gemini.key');
+        // Only use API Key from Database Settings
+        $this->apiKey = trim(\App\Models\Setting::getVal('chatbot_api_key') ?? '');
     }
 
     /**
