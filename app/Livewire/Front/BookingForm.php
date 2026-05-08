@@ -369,7 +369,6 @@ class BookingForm extends Component
     public function checkCode()
     {
         if (empty($this->promo_code_input)) {
-            $this->addError('promo_code_input', 'Silakan masukkan kode terlebih dahulu.');
             return;
         }
 
