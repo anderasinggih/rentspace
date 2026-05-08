@@ -424,6 +424,12 @@ class BookingForm extends Component
     {
         $this->resetErrorBag('nik');
         if (!$this->nik) return;
+
+        // Force 16 digits
+        if (strlen($this->nik) !== 16) {
+            $this->addError('nik', 'NIK harus terdiri dari 16 digit.');
+            return;
+        }
         
         $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
         

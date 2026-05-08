@@ -132,6 +132,7 @@
                                             <div class="flex items-center gap-2">
                                                 <div class="relative flex-1 sm:w-48">
                                                     <input type="text" wire:model.defer="nik" placeholder="Masukkan NIK..." maxlength="16"
+                                                        oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                                                         class="w-full h-10 px-3 py-2 text-xs border border-border rounded-lg bg-background focus:ring-1 focus:ring-primary outline-none transition-all shadow-sm">
                                                 </div>
                                                 <button type="button" wire:click="checkMember" wire:loading.attr="disabled"
