@@ -1048,97 +1048,192 @@
                     </form>
 
                     {{-- Section: Log Riwayat Email --}}
-                    <div class="mt-12 pt-10 border-t border-border/50">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="p-2.5 bg-muted text-muted-foreground rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="M20 16v6"/><path d="M17 19h6"/></svg>
+                    <div class="mt-12 pt-10 border-t border-border/50 space-y-12">
+                        
+                        {{-- Admin Notifications Table --}}
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2.5 bg-indigo-500/10 text-indigo-600 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-black text-foreground tracking-wide">Notifikasi Sistem (Tim Admin)</h3>
+                                    <p class="text-[10px] text-muted-foreground">Email otomatis yang dikirimkan ke tim admin/staff internal.</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 class="text-sm font-black text-foreground tracking-wide">Log Riwayat Email Terkirim</h3>
-                                <p class="text-[10px] text-muted-foreground">Lacak semua email otomatis yang dikirimkan sistem kepada admin & pelanggan.</p>
+
+                            @if (session()->has('email_message'))
+                                <div class="p-3 text-xs font-bold text-emerald-600 bg-emerald-50 rounded-lg border border-emerald-100 animate-in fade-in slide-in-from-top-1">
+                                    {{ session('email_message') }}
+                                </div>
+                            @endif
+
+                            <div class="border rounded-xl overflow-hidden bg-background shadow-sm">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead class="bg-muted/50 text-[10px] font-bold text-muted-foreground border-b border-border">
+                                            <tr>
+                                                <th class="px-4 py-3">Waktu</th>
+                                                <th class="px-4 py-3">Penerima</th>
+                                                <th class="px-4 py-3">Subjek & Tipe</th>
+                                                <th class="px-4 py-3">Status</th>
+                                                <th class="px-4 py-3 text-right">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-border">
+                                            @forelse($adminMailLogs as $log)
+                                                <tr class="hover:bg-muted/30 transition-colors">
+                                                    <td class="px-4 py-3 whitespace-nowrap">
+                                                        <div class="text-[11px] font-bold text-foreground">{{ $log->sent_at->format('d/m/Y') }}</div>
+                                                        <div class="text-[9px] text-muted-foreground">{{ $log->sent_at->format('H:i') }}</div>
+                                                    </td>
+                                                    <td class="px-4 py-3">
+                                                        <div class="text-[11px] font-medium text-foreground truncate max-w-[150px]" title="{{ $log->recipient }}">{{ $log->recipient }}</div>
+                                                        @if($log->rental)
+                                                            <div class="text-[9px] text-primary font-bold">INV #{{ $log->rental->id }}</div>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-4 py-3">
+                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[200px]">{{ $log->subject }}</div>
+                                                        <div class="text-[9px] text-muted-foreground">{{ $log->type }}</div>
+                                                    </td>
+                                                    <td class="px-4 py-3">
+                                                        @if($log->status === 'sent')
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
+                                                        @else
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-4 py-3 text-right">
+                                                        <button wire:click="resendMail({{ $log->id }})" wire:loading.attr="disabled"
+                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-bold hover:bg-primary hover:text-white transition-all active:scale-95 ml-auto">
+                                                            Resend
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="5" class="px-4 py-8 text-center text-muted-foreground italic">Belum ada riwayat notifikasi admin.</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @if($adminMailLogs->hasPages())
+                                    <div class="p-3 border-t border-border bg-muted/20">
+                                        <div class="flex items-center justify-between px-2">
+                                            <div class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
+                                                Total {{ $adminMailLogs->total() }} logs
+                                            </div>
+                                            <div class="flex items-center gap-3">
+                                                <button wire:click="previousPage('adminMailPage')" @disabled($adminMailLogs->onFirstPage())
+                                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                                </button>
+                                                <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
+                                                    <span class="text-xs font-black text-foreground">{{ $adminMailLogs->currentPage() }}</span>
+                                                    <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
+                                                    <span class="text-xs font-black text-foreground">{{ $adminMailLogs->lastPage() }}</span>
+                                                </div>
+                                                <button wire:click="nextPage('adminMailPage')" @disabled(!$adminMailLogs->hasMorePages())
+                                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
-                        @if (session()->has('email_message'))
-                            <div class="mb-4 p-3 text-xs font-bold text-emerald-600 bg-emerald-50 rounded-lg border border-emerald-100 animate-in fade-in slide-in-from-top-1">
-                                {{ session('email_message') }}
-                            </div>
-                        @endif
-                        @if (session()->has('email_error'))
-                            <div class="mb-4 p-3 text-xs font-bold text-red-600 bg-red-50 rounded-lg border border-red-100 animate-in fade-in slide-in-from-top-1">
-                                {{ session('email_error') }}
-                            </div>
-                        @endif
-
-                        <div class="border rounded-xl overflow-hidden bg-background shadow-sm">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse">
-                                    <thead class="bg-muted/50 text-[10px] font-bold text-muted-foreground border-b border-border">
-                                        <tr>
-                                            <th class="px-4 py-3">Waktu</th>
-                                            <th class="px-4 py-3">Penerima</th>
-                                            <th class="px-4 py-3">Subjek & Tipe</th>
-                                            <th class="px-4 py-3">Status</th>
-                                            <th class="px-4 py-3 text-right">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-border">
-                                        @forelse($mailLogs as $log)
-                                            <tr class="hover:bg-muted/30 transition-colors">
-                                                <td class="px-4 py-3 whitespace-nowrap">
-                                                    <div class="text-[11px] font-bold text-foreground">{{ $log->sent_at->format('d/m/Y') }}</div>
-                                                    <div class="text-[9px] text-muted-foreground">{{ $log->sent_at->format('H:i') }}</div>
-                                                </td>
-                                                <td class="px-4 py-3">
-                                                    <div class="text-[11px] font-medium text-foreground truncate max-w-[150px]" title="{{ $log->recipient }}">{{ $log->recipient }}</div>
-                                                    @if($log->rental)
-                                                        <div class="text-[9px] text-primary font-bold">INV #{{ $log->rental->id }} ({{ $log->rental->booking_code }})</div>
-                                                    @else
-                                                        <div class="text-[9px] text-muted-foreground italic">System Alert</div>
-                                                    @endif
-                                                </td>
-                                                <td class="px-4 py-3">
-                                                    <div class="text-[11px] font-semibold text-foreground truncate max-w-[200px]">{{ $log->subject }}</div>
-                                                    <div class="text-[9px] text-muted-foreground">{{ $log->type }}</div>
-                                                </td>
-                                                <td class="px-4 py-3">
-                                                    @if($log->status === 'sent')
-                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
-                                                    @else
-                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
-                                                    @endif
-                                                </td>
-                                                <td class="px-4 py-3 text-right">
-                                                    @if(auth()->user()->role === 'admin')
-                                                        <button wire:click="resendMail({{ $log->id }})" 
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="resendMail({{ $log->id }})"
-                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-bold hover:bg-primary hover:text-white transition-all active:scale-95 ml-auto">
-                                                            <span wire:loading.remove wire:target="resendMail({{ $log->id }})">Resend</span>
-                                                            <span wire:loading wire:target="resendMail({{ $log->id }})">...</span>
-                                                        </button>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="5" class="px-4 py-12 text-center">
-                                                    <div class="flex flex-col items-center gap-2 opacity-40">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                                                        <p class="text-xs font-bold tracking-tight">Belum ada riwayat email</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            @if($mailLogs->hasPages())
-                                <div class="p-3 border-t border-border bg-muted/20">
-                                    {{ $mailLogs->links() }}
+                        {{-- Customer Communications Table --}}
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2.5 bg-emerald-500/10 text-emerald-600 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                 </div>
-                            @endif
+                                <div>
+                                    <h3 class="text-sm font-black text-foreground tracking-wide">Komunikasi Pelanggan (Customer)</h3>
+                                    <p class="text-[10px] text-muted-foreground">Struk digital, konfirmasi, dan pengingat yang dikirim langsung ke penyewa.</p>
+                                </div>
+                            </div>
+
+                            <div class="border rounded-xl overflow-hidden bg-background shadow-sm">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead class="bg-muted/50 text-[10px] font-bold text-muted-foreground border-b border-border">
+                                            <tr>
+                                                <th class="px-4 py-3">Waktu</th>
+                                                <th class="px-4 py-3">Penerima</th>
+                                                <th class="px-4 py-3">Subjek & Tipe</th>
+                                                <th class="px-4 py-3">Status</th>
+                                                <th class="px-4 py-3 text-right">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-border">
+                                            @forelse($customerMailLogs as $log)
+                                                <tr class="hover:bg-muted/30 transition-colors">
+                                                    <td class="px-4 py-3 whitespace-nowrap">
+                                                        <div class="text-[11px] font-bold text-foreground">{{ $log->sent_at->format('d/m/Y') }}</div>
+                                                        <div class="text-[9px] text-muted-foreground">{{ $log->sent_at->format('H:i') }}</div>
+                                                    </td>
+                                                    <td class="px-4 py-3">
+                                                        <div class="text-[11px] font-medium text-foreground truncate max-w-[150px]" title="{{ $log->recipient }}">{{ $log->recipient }}</div>
+                                                        @if($log->rental)
+                                                            <div class="text-[9px] text-primary font-bold">INV #{{ $log->rental->id }}</div>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-4 py-3">
+                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[200px]">{{ $log->subject }}</div>
+                                                        <div class="text-[9px] text-muted-foreground">{{ $log->type }}</div>
+                                                    </td>
+                                                    <td class="px-4 py-3">
+                                                        @if($log->status === 'sent')
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
+                                                        @else
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-4 py-3 text-right">
+                                                        <button wire:click="resendMail({{ $log->id }})" wire:loading.attr="disabled"
+                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-bold hover:bg-primary hover:text-white transition-all active:scale-95 ml-auto">
+                                                            Resend
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="5" class="px-4 py-8 text-center text-muted-foreground italic">Belum ada riwayat email pelanggan.</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @if($customerMailLogs->hasPages())
+                                    <div class="p-3 border-t border-border bg-muted/20">
+                                        <div class="flex items-center justify-between px-2">
+                                            <div class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
+                                                Total {{ $customerMailLogs->total() }} logs
+                                            </div>
+                                            <div class="flex items-center gap-3">
+                                                <button wire:click="previousPage('customerMailPage')" @disabled($customerMailLogs->onFirstPage())
+                                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                                </button>
+                                                <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
+                                                    <span class="text-xs font-black text-foreground">{{ $customerMailLogs->currentPage() }}</span>
+                                                    <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
+                                                    <span class="text-xs font-black text-foreground">{{ $customerMailLogs->lastPage() }}</span>
+                                                </div>
+                                                <button wire:click="nextPage('customerMailPage')" @disabled(!$customerMailLogs->hasMorePages())
+                                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>

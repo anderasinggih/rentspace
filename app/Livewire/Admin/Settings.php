@@ -599,13 +599,20 @@ class Settings extends Component
             })
             ->orderBy($this->sortField, $this->sortDirection);
         
-        $mailLogs = \App\Models\MailLog::with('rental')
+        $adminMailLogs = \App\Models\MailLog::with('rental')
+            ->where('type', 'like', '%Admin%')
             ->orderBy('sent_at', 'desc')
-            ->paginate(10, ['*'], 'mailPage');
+            ->paginate(10, ['*'], 'adminMailPage');
+
+        $customerMailLogs = \App\Models\MailLog::with('rental')
+            ->where('type', 'not like', '%Admin%')
+            ->orderBy('sent_at', 'desc')
+            ->paginate(10, ['*'], 'customerMailPage');
 
         return view('livewire.admin.settings', [
             'users' => $usersQuery->paginate($this->perPage, ['*'], 'userPage'),
-            'mailLogs' => $mailLogs
+            'adminMailLogs' => $adminMailLogs,
+            'customerMailLogs' => $customerMailLogs
         ])->layout('layouts.admin');
     }
 }
