@@ -59,7 +59,7 @@
             </div>
 
             {{-- Messages Body --}}
-            <div class="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide" id="chat-body" x-init="
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide overscroll-contain" id="chat-body" x-init="
                     $watch('$store.chat.isOpen', value => { if(value) { $nextTick(() => { $el.scrollTop = $el.scrollHeight; }) } });
                 " x-effect="$nextTick(() => { $el.scrollTop = $el.scrollHeight; })"
                 @scroll-bottom.window="$nextTick(() => { $el.scrollTop = $el.scrollHeight; })">
