@@ -450,9 +450,9 @@ class BookingForm extends Component
         
         if ($lastRental) {
             $firstName = explode(' ', $this->nama)[0];
-            $this->nikFoundMessage = "Halo {$firstName}, kasta {$tier->label} Anda aktif!";
+            $this->nikFoundMessage = "Halo {$firstName}, promo spesial member {$tier->label} Anda sudah aktif!";
         } else {
-            $this->nikFoundMessage = "Kasta {$tier->label} Anda aktif! Silakan pilih unit.";
+            $this->nikFoundMessage = "Promo spesial member {$tier->label} Anda sudah aktif!";
         }
         $this->nikFoundType = 'success';
         

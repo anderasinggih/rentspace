@@ -121,7 +121,7 @@
                                             @endif
                                         </div>
                                         <p class="text-[10px] text-muted-foreground mt-0.5 text-center sm:text-left">
-                                            {{ $member_checked ? 'Harga spesial kasta Anda sudah aktif di katalog.' : 'Aktifkan harga spesial kasta Anda dengan cek NIK.' }}
+                                            {{ $member_checked ? 'Promo spesial member Anda sudah aktif di katalog.' : 'Nikmati promo spesial khusus member dengan cek NIK.' }}
                                         </p>
                                     </div>
                                 </div>
