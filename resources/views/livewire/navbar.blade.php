@@ -71,11 +71,11 @@
         <div class="flex items-center gap-2 sm:gap-4">
             <!-- Premium Rank Badge (Visible on all devices, but separate from links) -->
             @if($navIsLoggedIn && $navTier)
-                <div class="flex items-center">
-                    <span class="inline-flex items-center rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-tighter {{ $navTier->color }} badge-shine shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-transform hover:scale-105 active:scale-95 cursor-default">
+                <a href="{{ route('public.check-order', ['currentTab' => 'profil']) }}" wire:navigate class="flex items-center">
+                    <span class="inline-flex items-center rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-tighter {{ $navTier->color }} badge-shine shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-transform hover:scale-110 active:scale-95 cursor-pointer">
                         {{ $navTier->label }}
                     </span>
-                </div>
+                </a>
             @endif
             
             <!-- Dark Mode Toggle -->

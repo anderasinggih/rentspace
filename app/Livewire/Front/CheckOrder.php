@@ -12,6 +12,8 @@ class CheckOrder extends Component
     public $nik = '';
     public $no_wa = '';
     public $orders = null;
+    
+    #[\Livewire\Attributes\Url]
     public $currentTab = 'pesanan';
 
     public function mount()
