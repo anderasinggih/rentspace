@@ -428,20 +428,18 @@
                                                     $segmentProgress = ($currentProgress / $currentRange) * 100;
                                                 }
                                             }
-
-                                            // Extract base color for the dot/line
-                                            $dotColorClass = $isAchieved ? $t['color'] : 'bg-muted text-muted-foreground';
                                         @endphp
                                         <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
                                             <!-- Line Segments (Fused with Dots) -->
                                             <div class="absolute top-[0.625rem] left-0 w-full h-1.5 flex z-0">
-                                                <!-- Left side of dot -->
-                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : ($isAchieved ? $t['color'] : 'bg-muted') }} {{ $isAchieved ? 'opacity-60' : '' }} border-none"></div>
-                                                <!-- Right side of dot -->
-                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : 'bg-muted/50' }}">
+                                                <!-- Left side of dot (Coming from previous) -->
+                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : $t['color'] }} {{ $isAchieved ? 'opacity-100' : 'opacity-20' }} border-none shadow-[0_0_10px_rgba(var(--primary-rgb),0.1)]"></div>
+                                                
+                                                <!-- Right side of dot (Going to next) -->
+                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : ($nextT ? $nextT['color'] : 'bg-muted') }} {{ $isNextAchieved ?? false ? 'opacity-100' : 'opacity-10' }}">
                                                     @if($segmentProgress > 0)
-                                                        <div class="absolute inset-y-0 left-0 {{ $t['color'] }} shadow-[0_0_15px_rgba(var(--primary-rgb),0.2)] transition-all duration-1000 overflow-hidden" style="width: {{ $segmentProgress }}%">
-                                                            <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress_1.5s_linear_infinite]"></div>
+                                                        <!-- Actual Active Progress on this segment -->
+                                                        <div class="absolute inset-y-0 left-0 {{ $nextT ? $nextT['color'] : 'bg-primary' }} opacity-100 shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] transition-all duration-1000 overflow-hidden badge-shine" style="width: {{ $segmentProgress }}%">
                                                         </div>
                                                     @endif
                                                 </div>
@@ -450,15 +448,15 @@
                                             <!-- Milestone Dot -->
                                             <div class="relative flex items-center justify-center h-6 w-6 z-20">
                                                 @if($isCurrent)
-                                                    <div class="absolute h-10 w-10 {{ $t['color'] }} opacity-20 rounded-full animate-pulse"></div>
+                                                    <div class="absolute h-10 w-10 {{ $t['color'] }} opacity-30 rounded-full animate-pulse blur-md"></div>
                                                 @endif
-                                                <div class="h-5 w-5 rounded-full border-[3px] transition-all duration-700 shadow-lg {{ $isAchieved ? $t['color'] . ' border-background ring-2 ring-foreground/5' : 'bg-muted border-background' }}">
+                                                <div class="h-5 w-5 rounded-full border-[3px] transition-all duration-700 shadow-lg {{ $t['color'] }} {{ $isAchieved ? 'border-background ring-2 ring-foreground/5' : 'opacity-30 border-background grayscale-[0.5]' }}">
                                                 </div>
                                             </div>
 
                                             <!-- Badge -->
-                                            <div class="mt-5 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 scale-100' : 'opacity-40 scale-90' }}">
-                                                <span class="inline-flex items-center rounded-full border px-3 py-1 text-[8px] font-black {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-md' : 'grayscale border-dashed opacity-50' }}">
+                                            <div class="mt-5 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 scale-100' : 'opacity-60 scale-90' }}">
+                                                <span class="inline-flex items-center rounded-full border px-3 py-1 text-[8px] font-black {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-md' : 'border-dashed opacity-40' }}">
                                                     {{ $t['label'] }}
                                                 </span>
                                             </div>
