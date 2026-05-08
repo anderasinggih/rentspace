@@ -23,12 +23,19 @@ class ChatAi extends Component
 
     public function mount()
     {
+        // Load history from session if exists and not expired
+        $lastChatTime = Session::get('chat_ai_last_activity');
+        if ($lastChatTime && now()->diffInMinutes($lastChatTime) < 15) {
+            $this->chatHistory = Session::get('chat_ai_history', []);
+        }
+
         // Initialize with a welcome message if history is empty
         if (empty($this->chatHistory)) {
             $this->chatHistory[] = [
                 'role' => 'model',
                 'content' => "Halo Kak! Saya CS AI RENT SPACE. Ada yang bisa saya bantu? Bisa tanya soal stok unit atau status pesanan Kakak ya! 😊"
             ];
+            $this->saveToSession();
         }
     }
 
@@ -45,6 +52,7 @@ class ChatAi extends Component
         $this->chatHistory[] = ['role' => 'user', 'content' => $userMsg];
         $this->message = '';
         $this->isTyping = true;
+        $this->saveToSession();
         
         // Dispatch event to process AI response in a separate request to keep UI responsive
         $this->dispatch('process-ai');
@@ -74,7 +82,14 @@ class ChatAi extends Component
 
         $this->chatHistory[] = ['role' => 'model', 'content' => $response];
         $this->isTyping = false;
+        $this->saveToSession();
         $this->dispatch('scroll-bottom');
+    }
+
+    private function saveToSession()
+    {
+        Session::put('chat_ai_history', $this->chatHistory);
+        Session::put('chat_ai_last_activity', now());
     }
 
     /**
