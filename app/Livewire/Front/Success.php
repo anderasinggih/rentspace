@@ -22,6 +22,7 @@ class Success extends Component
     public $rating = 5;
     public $feedback = '';
     public $showFeedbackModal = false;
+    public $hideNavbar = true;
 
     public function boot()
     {

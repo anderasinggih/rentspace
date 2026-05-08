@@ -34,8 +34,8 @@ class Payment extends Component
             ->where('booking_code', $booking_code)
             ->firstOrFail();
 
-        // 1. Proteksi: Jika sudah 'LUNAS' atau 'DIBATALKAN', paksa ke halaman success
-        if (in_array($this->rental->status, ['paid', 'cancelled'])) {
+        // 1. Proteksi: Jika sudah 'LUNAS', 'RENT', 'SELESAI' atau 'DIBATALKAN', paksa ke halaman success
+        if (in_array($this->rental->status, ['paid', 'renting', 'completed', 'cancelled'])) {
             return redirect()->route('public.success', $this->rental->booking_code);
         }
 

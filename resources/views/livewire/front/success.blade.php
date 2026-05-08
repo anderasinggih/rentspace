@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-background py-4 px-4 sm:py-16 flex flex-col items-center justify-start sm:justify-center" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
+<div class="min-h-screen bg-background pt-0 px-4 flex flex-col items-center justify-start" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
     <div id="invoice-content" class="w-full max-w-md mx-auto bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
 
         <!-- Header -->
@@ -24,6 +24,15 @@
                 </div>
                 <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Unit Sedang Disewa</h1>
                 <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Aktif / Dibawa Penyewa</p>
+            @elseif($rental->status === 'completed')
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-500 mb-4 animate-in zoom-in duration-500">
+                    <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke-linecap="round" stroke-linejoin="round" />
+                        <polyline points="22 4 12 14.01 9 11.01" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-foreground text-emerald-600">Selesai Sewa</h1>
+                <p class="text-[10px] text-emerald-600/70 font-medium mt-1">Status: Selesai / Unit Telah Kembali</p>
             @elseif($rental->metode_pembayaran === 'cash' && $rental->status === 'pending')
                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-500/10 text-blue-500 mb-4 animate-in zoom-in duration-500">
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
