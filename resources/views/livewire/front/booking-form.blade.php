@@ -282,7 +282,7 @@
                                             {{ $this->tier->label }}
                                         </span>
                                     @endif
-                                    <span class="text-xs {{ $nikFoundType === 'success' ? 'text-green-600 font-bold' : 'text-amber-600 font-medium' }}">
+                                    <span class="text-[10px] {{ $nikFoundType === 'success' ? 'text-green-600 font-bold' : 'text-amber-600 font-medium' }}">
                                         {{ $nikFoundMessage }}
                                     </span>
                                 </div>
