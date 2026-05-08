@@ -75,10 +75,7 @@
                                 // Handle WA Button
                                 if (str_contains($content, '[CHAT_WA]')) {
                                     $waNumber = \App\Models\Setting::getVal('admin_wa') ?? '628123456789';
-                                    $waBtn = '<a href="https://wa.me/' . $waNumber . '" target="_blank" class="mt-3 flex items-center justify-center gap-2.5 w-full py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-xl font-bold text-[10px] tracking-wider transition-all active:scale-95 shadow-lg shadow-emerald-500/5 group">
-
-                                                                    HUBUNGI ADMIN VIA WA
-                                                                </a>';
+                                    $waBtn = '<a href="https://wa.me/' . $waNumber . '" target="_blank" class="mt-2 flex items-center justify-center w-full py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 rounded-lg font-black text-[9px] tracking-widest transition-all active:scale-95 shadow-sm shadow-emerald-500/5 uppercase">HUBUNGI ADMIN VIA WA</a>';
                                     $content = str_replace('[CHAT_WA]', $waBtn, $content);
                                 }
                             @endphp
