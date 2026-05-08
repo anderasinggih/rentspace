@@ -431,26 +431,26 @@
                                         @endphp
                                         <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
                                             <!-- Line Segments (Fused with Dots) -->
-                                            <div class="absolute top-[0.625rem] left-0 w-full h-1.5 flex z-0">
+                                            <div class="absolute top-[0.625rem] left-0 w-full h-2 flex z-0">
                                                 <!-- Left side of dot (Coming from previous) -->
-                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : $t['color'] }} {{ $isAchieved ? 'opacity-100' : 'opacity-20' }} border-none shadow-[0_0_10px_rgba(var(--primary-rgb),0.1)]"></div>
+                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : $t['color'] }} {{ $isAchieved ? 'opacity-100 shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'opacity-25' }} border-none transition-all duration-700"></div>
                                                 
                                                 <!-- Right side of dot (Going to next) -->
-                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : ($nextT ? $nextT['color'] : 'bg-muted') }} {{ $isNextAchieved ?? false ? 'opacity-100' : 'opacity-10' }}">
+                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : ($nextT ? $nextT['color'] : 'bg-muted') }} {{ $isNextAchieved ?? false ? 'opacity-100 shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'opacity-15' }} transition-all duration-700">
                                                     @if($segmentProgress > 0)
                                                         <!-- Actual Active Progress on this segment -->
-                                                        <div class="absolute inset-y-0 left-0 {{ $nextT ? $nextT['color'] : 'bg-primary' }} opacity-100 shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] transition-all duration-1000 overflow-hidden badge-shine" style="width: {{ $segmentProgress }}%">
+                                                        <div class="absolute inset-y-0 left-0 {{ $nextT ? $nextT['color'] : 'bg-primary' }} opacity-100 shadow-[0_0_20px_rgba(var(--primary-rgb),0.5)] transition-all duration-1000 overflow-hidden badge-shine" style="width: {{ $segmentProgress }}%">
                                                         </div>
                                                     @endif
                                                 </div>
                                             </div>
 
                                             <!-- Milestone Dot -->
-                                            <div class="relative flex items-center justify-center h-6 w-6 z-20">
+                                            <div class="relative flex items-center justify-center h-7 w-7 z-20">
                                                 @if($isCurrent)
-                                                    <div class="absolute h-10 w-10 {{ $t['color'] }} opacity-30 rounded-full animate-pulse blur-md"></div>
+                                                    <div class="absolute h-12 w-12 {{ $t['color'] }} opacity-40 rounded-full animate-pulse blur-xl"></div>
                                                 @endif
-                                                <div class="h-5 w-5 rounded-full border-[3px] transition-all duration-700 shadow-lg {{ $t['color'] }} {{ $isAchieved ? 'border-background ring-2 ring-foreground/5' : 'opacity-30 border-background grayscale-[0.5]' }}">
+                                                <div class="h-6 w-6 rounded-full border-[4px] transition-all duration-700 shadow-[0_0_20px_rgba(0,0,0,0.3)] {{ $t['color'] }} {{ $isAchieved ? 'border-background ring-4 ring-foreground/5' : 'opacity-40 border-background grayscale-[0.3]' }}">
                                                 </div>
                                             </div>
 
