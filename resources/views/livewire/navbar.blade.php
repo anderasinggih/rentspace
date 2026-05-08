@@ -50,17 +50,10 @@
                     }
                 @endphp
                 @if($navIsLoggedIn)
-                    <div class="flex items-center gap-2">
-                        @if($navTier)
-                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $navTier->color }} badge-shine shadow-sm">
-                                {{ $navTier->label }}
-                            </span>
-                        @endif
-                        <a href="{{ route('public.check-order') }}" wire:navigate
-                            class="text-sm font-medium transition-colors {{ request()->routeIs('public.check-order') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
-                            Cek Pesanan
-                        </a>
-                    </div>
+                    <a href="{{ route('public.check-order') }}" wire:navigate
+                        class="text-sm font-medium transition-colors {{ request()->routeIs('public.check-order') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
+                        Cek Pesanan
+                    </a>
                     <a href="{{ route('customer.logout') }}" wire:navigate wire:confirm="Apakah Anda yakin ingin keluar?"
                         class="text-sm font-medium text-red-500 hover:text-red-400 transition-colors">
                         Keluar
@@ -75,11 +68,11 @@
         </div>
 
         <!-- Right Side: Utils & CTA -->
-        <div class="flex items-center gap-1 sm:gap-3">
-            <!-- Rank Badge (Desktop Tablet alternative or small devices) -->
+        <div class="flex items-center gap-2 sm:gap-4">
+            <!-- Premium Rank Badge (Visible on all devices, but separate from links) -->
             @if($navIsLoggedIn && $navTier)
-                <div class="sm:hidden flex items-center mr-1">
-                    <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[7px] font-black uppercase tracking-tighter {{ $navTier->color }} badge-shine">
+                <div class="flex items-center">
+                    <span class="inline-flex items-center rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-tighter {{ $navTier->color }} badge-shine shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-transform hover:scale-105 active:scale-95 cursor-default">
                         {{ $navTier->label }}
                     </span>
                 </div>
