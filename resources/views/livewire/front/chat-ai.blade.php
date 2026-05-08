@@ -38,7 +38,7 @@
             @foreach($chatHistory as $chat)
                 <div class="flex {{ $chat['role'] === 'user' ? 'justify-end' : 'justify-start' }} animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div class="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm {{ $chat['role'] === 'user' ? 'bg-primary text-primary-foreground rounded-tr-none' : 'bg-background border border-border shadow-sm rounded-tl-none' }}">
-                        {!! nl2br(e($chat['content'])) !!}
+                        {!! nl2br(preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', e($chat['content']))) !!}
                     </div>
                 </div>
             @endforeach

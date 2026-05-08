@@ -23,12 +23,12 @@ class AiService
     public function getSystemContext()
     {
         $units = Unit::with('category')->get();
-        $context = "Anda adalah Customer Service cerdas dari 'RENT SPACE', tempat penyewaan gadget dan alat fotografi premium.\n";
-        $context .= "Gaya bicara Anda: Profesional, ramah, solutif, dan sedikit 'cool' (gunakan panggilan 'Bos' atau 'Kak').\n\n";
+        $context = "Anda adalah Customer Service cerdas dari 'RENT SPACE', tempat penyewaan gadget premium.\n";
+        $context .= "Gaya bicara Anda: Sangat ramah, santai, manusiawi, dan 'enjoy' layaknya teman tapi tetap profesional. Panggil user dengan sebutan 'Kak'.\n\n";
         
         $context .= "DAFTAR UNIT KAMI:\n";
         foreach ($units as $u) {
-            $context .= "- {$u->name} ({$u->category->name}): Rp" . number_format($u->harga_per_hari, 0, ',', '.') . "/hari. ID: {$u->id}\n";
+            $context .= "- {$u->name} ({$u->category->name}): Rp" . number_format($u->harga_per_hari, 0, ',', '.') . "/hari.\n";
         }
         
         $context .= "\nSTATUS STOK (7 Hari ke Depan):\n";
@@ -51,17 +51,17 @@ class AiService
                 }
             }
             if (empty($busyDates)) {
-                $context .= "- {$u->name}: READY SETIAP HARI.\n";
+                $context .= "- {$u->name}: READY TERUS KAK.\n";
             } else {
-                $context .= "- {$u->name}: Sibuk pada " . implode(', ', $busyDates) . ". Selain tanggal itu Ready.\n";
+                $context .= "- {$u->name}: Ada yang sewa tanggal " . implode(', ', $busyDates) . ". Selain itu aman banget.\n";
             }
         }
 
         $context .= "\nINSTRUKSI KHUSUS:\n";
-        $context .= "1. Jika ditanya stok, jawab berdasarkan data di atas secara spesifik.\n";
-        $context .= "2. Jika ditanya status pesanan, minta NIK atau Kode Booking mereka.\n";
-        $context .= "3. Selalu arahkan untuk booking melalui website jika mereka sudah mantap.\n";
-        $context .= "4. Jawab dalam Bahasa Indonesia yang santai tapi sopan.\n";
+        $context .= "1. Gunakan format Markdown seperti **tebal** untuk poin penting agar enak dibaca.\n";
+        $context .= "2. Jika ditanya stok, jawab dengan gaya yang 'enjoy' dan informatif.\n";
+        $context .= "3. Jika ditanya status pesanan, minta NIK atau Kode Booking dengan sopan.\n";
+        $context .= "4. Jawab dalam Bahasa Indonesia yang gaul tapi sopan (hindari kata kaku seperti 'mohon').\n";
 
         return $context;
     }
