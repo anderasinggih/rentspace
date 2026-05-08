@@ -107,6 +107,9 @@ class ChatAi extends Component
 
     public function render()
     {
-        return view('livewire.front.chat-ai');
+        $recommendations = \App\Models\Unit::inRandomOrder()->take(2)->get();
+        return view('livewire.front.chat-ai', [
+            'recommendations' => $recommendations
+        ]);
     }
 }

@@ -68,8 +68,9 @@
 
             {{-- Quick Actions --}}
             <div class="px-4 py-2 border-t border-white/10 bg-white/5 flex gap-1.5 overflow-x-auto scrollbar-hide">
-                <button wire:click="quickAction('iPhone 14 Pro ready kapan?')" class="whitespace-nowrap px-3 py-1.5 bg-white/10 hover:bg-primary hover:text-white border border-white/20 rounded-lg text-[9px] font-bold tracking-tight transition-all active:scale-95 uppercase">iPhone 14</button>
-                <button wire:click="quickAction('Sony A7IV ready besok?')" class="whitespace-nowrap px-3 py-1.5 bg-white/10 hover:bg-primary hover:text-white border border-white/20 rounded-lg text-[9px] font-bold tracking-tight transition-all active:scale-95 uppercase">Sony A7IV</button>
+                @foreach($recommendations as $rec)
+                    <button wire:click="quickAction('{{ $rec->name }} ready kapan?')" class="whitespace-nowrap px-3 py-1.5 bg-white/10 hover:bg-primary hover:text-white border border-white/20 rounded-lg text-[9px] font-bold tracking-tight transition-all active:scale-95 uppercase">Cek {{ $rec->name }}</button>
+                @endforeach
                 <button wire:click="quickAction('Status pesanan saya?')" class="whitespace-nowrap px-3 py-1.5 bg-white/10 hover:bg-primary hover:text-white border border-white/20 rounded-lg text-[9px] font-bold tracking-tight transition-all active:scale-95 uppercase">Lacak</button>
             </div>
 
