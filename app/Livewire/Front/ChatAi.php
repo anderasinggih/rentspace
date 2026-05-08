@@ -45,21 +45,33 @@ class ChatAi extends Component
         $this->chatHistory[] = ['role' => 'user', 'content' => $userMsg];
         $this->message = '';
         $this->isTyping = true;
+        
+        // Dispatch event to process AI response in a separate request to keep UI responsive
+        $this->dispatch('process-ai');
+    }
+
+    #[\Livewire\Attributes\On('process-ai')]
+    public function getAiResponse()
+    {
+        $lastMsg = end($this->chatHistory);
+        if ($lastMsg['role'] !== 'user') return;
+
+        $userMsg = $lastMsg['content'];
 
         // Determine if it's a specific order status query first (Deterministic)
         $statusInfo = $this->lookupOrderStatus($userMsg);
         
         if ($statusInfo) {
-            $this->chatHistory[] = ['role' => 'assistant', 'content' => $statusInfo];
+            $this->chatHistory[] = ['role' => 'model', 'content' => $statusInfo];
             $this->isTyping = false;
             return;
         }
 
         // Otherwise, ask the AI Service
         $ai = new AiService();
-        $response = $ai->ask($userMsg, $this->chatHistory);
+        $response = $ai->ask($userMsg, array_slice($this->chatHistory, 0, -1));
 
-        $this->chatHistory[] = ['role' => 'assistant', 'content' => $response];
+        $this->chatHistory[] = ['role' => 'model', 'content' => $response];
         $this->isTyping = false;
     }
 
@@ -91,9 +103,9 @@ class ChatAi extends Component
                 $status = $statusMap[$rental->status] ?? $rental->status;
                 $unitNames = $rental->units->pluck('name')->implode(', ');
                 
-                return "Ketemu Bos! Pesanan untuk **{$unitNames}** statusnya: **{$status}**. Ada lagi yang mau ditanyakan?";
+                return "Ketemu Kak! Pesanan untuk **{$unitNames}** statusnya: **{$status}**. Ada lagi yang mau ditanyakan?";
             }
-            return "Waduh Bos, NIK/Kode Booking itu nggak ketemu di data saya. Coba dicek lagi ya!";
+            return "Waduh Kak, NIK/Kode Booking itu nggak ketemu di data saya. Coba dicek lagi ya!";
         }
 
         return null;
