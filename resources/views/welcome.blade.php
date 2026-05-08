@@ -1213,6 +1213,17 @@
             </template>
         </div>
     @endif
+    <livewire:front.chat-ai />
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('chat', {
+                isOpen: false,
+                open() { this.isOpen = true },
+                close() { this.isOpen = false },
+                toggle() { this.isOpen = !this.isOpen }
+            })
+        })
+    </script>
 </body>
 
 </html>
