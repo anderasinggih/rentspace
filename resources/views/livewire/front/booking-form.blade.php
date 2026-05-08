@@ -2,13 +2,13 @@
 
 <div class="pt-0 pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
 
-    <div class="max-w-3xl mx-auto">
+    <div class="max-w-4xl mx-auto">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-8">
             <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Formulir Penyewaan</h1>
         </div>
 
         <div x-data="bookingForm()" 
-            class="bg-background rounded-2xl shadow-sm border border-border p-6 sm:p-8">
+            class="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-6">
             <form wire:submit.prevent="submit" class="space-y-8">
 
                 <!-- Progress Bar -->
