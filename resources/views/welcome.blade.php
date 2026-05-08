@@ -387,26 +387,18 @@
                         <div class="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/btn:opacity-100 opacity-60"></div>
                         <span class="relative z-10 tracking-wider">SEWA SEKARANG</span>
                     </a>
-
+                    
                     <!-- Button Hubungi Admin (Liquid Glass) -->
-                    <a href="https://wa.me/{{ \App\Models\Setting::getVal('admin_wa', '6281234567890') }}"
-                        target="_blank" rel="noopener"
+                    <button @click="window.dispatchEvent(new CustomEvent('open-chat'))"
                         data-haptic="medium"
                         class="group/wa relative w-full sm:w-auto inline-flex items-center justify-center rounded-2xl font-bold transition-all bg-zinc-950/30 dark:bg-white/10 backdrop-blur-[4px] backdrop-saturate-[180%] backdrop-contrast-[110%] border-t border-l border-white/40 border-r border-b border-zinc-950/20 text-foreground hover:scale-[1.05] active:scale-95 min-w-0 sm:min-w-[200px] h-12 px-2 sm:px-8 py-2 text-xs sm:text-base whitespace-nowrap overflow-hidden z-30">
                         <!-- Liquid Shine Overlay -->
                         <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none transition-opacity duration-300 group-hover/wa:opacity-100 opacity-40"></div>
-                        <span class="relative z-10 flex items-center justify-center tracking-wider">
-                            @php
-                                $whatsappIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                                                                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                                                                                                                                stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0">
-                                                                                                                                                <path
-                                                                                                                                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                                                                                                                            </svg>';
-                        @endphp
-                        {!! $whatsappIcon !!}
-                        HUBUNGI ADMIN
-                    </a>
+                        <span class="relative z-10 flex items-center justify-center tracking-wider uppercase">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2 shrink-0"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+                            Tanya CS AI
+                        </span>
+                    </button>
                 </div>
 
                 <!-- Hero Placement Announcement -->

@@ -33,9 +33,8 @@
             </a>
         </div>
 
-        <!-- Support Link -->
         <p class="mt-12 text-xs text-muted-foreground">
-            Butuh bantuan? <a href="https://wa.me/{{ \App\Models\Setting::getVal('admin_wa', '6281234567890') }}" class="font-bold text-primary hover:underline">Hubungi Admin</a>
+            Butuh bantuan? <button @click="window.dispatchEvent(new CustomEvent('open-chat'))" class="font-bold text-primary hover:underline">Tanya CS AI</button>
         </p>
     </div>
 @endcomponent
