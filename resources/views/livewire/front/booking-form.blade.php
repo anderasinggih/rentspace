@@ -276,9 +276,16 @@
                             </div>
                             @error('nik') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
                             @if($nikFoundMessage)
-                                <span class="text-xs {{ $nikFoundType === 'success' ? 'text-green-600 font-bold' : 'text-amber-600 font-medium' }} block mt-1">
-                                    {{ $nikFoundMessage }}
-                                </span>
+                                <div class="flex items-center gap-2 mt-2">
+                                    @if($this->tier)
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $this->tier->color }} badge-shine shadow-sm shrink-0">
+                                            {{ $this->tier->label }}
+                                        </span>
+                                    @endif
+                                    <span class="text-xs {{ $nikFoundType === 'success' ? 'text-green-600 font-bold' : 'text-amber-600 font-medium' }}">
+                                        {{ $nikFoundMessage }}
+                                    </span>
+                                </div>
                             @endif
                         </div>
                         <div>

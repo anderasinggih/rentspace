@@ -620,6 +620,13 @@ class BookingForm extends Component
         }
     }
 
+    public function getTierProperty()
+    {
+        if (!$this->nik) return null;
+        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        return \App\Helpers\CustomerHelper::getTier($ltv);
+    }
+
     public function render()
     {
         $unitPrices = \App\Models\Unit::select('id', 'harga_per_hari', 'harga_per_jam', 'seri', 'warna', 'memori')
