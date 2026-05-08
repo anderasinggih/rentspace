@@ -711,6 +711,7 @@ class BookingForm extends Component
     {
         if (!$this->nik) return null;
         $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        if ($ltv <= 0) return null;
         return \App\Helpers\CustomerHelper::getTier($ltv);
     }
 
