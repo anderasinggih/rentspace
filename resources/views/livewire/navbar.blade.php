@@ -43,12 +43,24 @@
                 @php
                     $navCustomer = session('customer_session');
                     $navIsLoggedIn = $navCustomer && isset($navCustomer['expires_at']) && now()->timestamp < $navCustomer['expires_at'];
+                    $navTier = null;
+                    if ($navIsLoggedIn) {
+                        $navLtv = \App\Helpers\CustomerHelper::getLtv($navCustomer['nik']);
+                        $navTier = \App\Helpers\CustomerHelper::getTier($navLtv);
+                    }
                 @endphp
                 @if($navIsLoggedIn)
-                    <a href="{{ route('public.check-order') }}" wire:navigate
-                        class="text-sm font-medium transition-colors {{ request()->routeIs('public.check-order') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
-                        Cek Pesanan
-                    </a>
+                    <div class="flex items-center gap-2">
+                        @if($navTier)
+                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $navTier->color }} badge-shine shadow-sm">
+                                {{ $navTier->label }}
+                            </span>
+                        @endif
+                        <a href="{{ route('public.check-order') }}" wire:navigate
+                            class="text-sm font-medium transition-colors {{ request()->routeIs('public.check-order') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
+                            Cek Pesanan
+                        </a>
+                    </div>
                     <a href="{{ route('customer.logout') }}" wire:navigate wire:confirm="Apakah Anda yakin ingin keluar?"
                         class="text-sm font-medium text-red-500 hover:text-red-400 transition-colors">
                         Keluar
@@ -64,6 +76,16 @@
 
         <!-- Right Side: Utils & CTA -->
         <div class="flex items-center gap-1 sm:gap-3">
+            <!-- Rank Badge (Desktop Tablet alternative or small devices) -->
+            @if($navIsLoggedIn && $navTier)
+                <div class="sm:hidden flex items-center mr-1">
+                    <span class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[7px] font-black uppercase tracking-tighter {{ $navTier->color }} badge-shine">
+                        {{ $navTier->label }}
+                    </span>
+                </div>
+            @endif
+            
+            <!-- Dark Mode Toggle -->
             <!-- Dark Mode Toggle -->
             <button @click="toggleTheme()"
                 class="flex p-2 items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors focus:outline-none">
