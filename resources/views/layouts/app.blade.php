@@ -89,7 +89,6 @@
         {{ $slot }}
     </main>
 
-    <livewire:front.chat-ai />
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.store('chat', {
