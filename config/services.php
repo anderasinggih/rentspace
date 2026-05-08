@@ -37,5 +37,7 @@ return [
     'shortcut' => [
         'token' => env('ADMIN_SHORTCUT_TOKEN'),
     ],
-
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+    ],
 ];
