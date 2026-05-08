@@ -1,16 +1,14 @@
-<div class="fixed bottom-6 right-6 z-[100] font-sans" x-data="{ open: @entangle('isOpen') }" 
-    @toggle-chat.window="open = !open"
-    @open-chat.window="$wire.isOpen = true">
+<div class="fixed bottom-6 right-6 z-[100] font-sans" x-data>
     {{-- Floating Toggle Button --}}
-    <button @click="open = !open" 
+    <button @click="$store.chat.toggle()" 
         class="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 relative group">
         <div class="absolute inset-0 rounded-full bg-primary animate-ping opacity-20 group-hover:opacity-40"></div>
-        <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="relative z-10"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
-        <svg x-show="open" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="relative z-10"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        <svg x-show="!$store.chat.isOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="relative z-10"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+        <svg x-show="$store.chat.isOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="relative z-10"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
     </button>
 
     {{-- Chat Window --}}
-    <div x-show="open" 
+    <div x-show="$store.chat.isOpen" 
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-10 scale-95"
         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
@@ -30,7 +28,7 @@
                     <p class="text-[10px] opacity-80 font-medium">Online 24/7 • Asisten Pintar</p>
                 </div>
             </div>
-            <button @click="open = false" class="hover:bg-background/20 p-1.5 rounded-full transition-colors">
+            <button @click="$store.chat.close()" class="hover:bg-background/20 p-1.5 rounded-full transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </button>
         </div>

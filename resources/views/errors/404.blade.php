@@ -34,7 +34,7 @@
         </div>
 
         <p class="mt-12 text-xs text-muted-foreground">
-            Butuh bantuan? <button @click="Livewire.dispatch('open-chat')" class="font-bold text-primary hover:underline">Tanya CS AI</button>
+            Butuh bantuan? <button @click="$store.chat.open()" class="font-bold text-primary hover:underline">Tanya CS AI</button>
         </p>
     </div>
 @endcomponent
