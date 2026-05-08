@@ -166,58 +166,20 @@ class BookingForm extends Component
             return;
         }
 
-        // 1. BASE Availability (Used for the main catalog list)
-        // We check only the range the user is actually picking [start, end]
-        $this->schedule_available_unit_ids = Unit::query()->where('is_active', true)
-            ->whereDoesntHave('rentals', function ($query) use ($start, $end) {
-                $query->whereIn('status', ['pending', 'paid', 'renting'])
-                    ->where(function ($q) use ($start, $end) {
-                        $q->whereBetween('waktu_mulai', [$start, $end])
-                            ->orWhereBetween('waktu_selesai', [$start, $end])
-                            ->orWhere(function ($q2) use ($start, $end) {
-                                $q2->where('waktu_mulai', '<=', $start)
-                                    ->where('waktu_selesai', '>=', $end);
-                            });
-                    });
-            })->pluck('id')->toArray();
-
-        // 2. EFFECTIVE Availability (Check bonus time for already selected units)
-        $hBonus = 0;
-        $jBonus = 0;
-        if (!empty($this->selected_promo_ids)) {
-            $appliedRules = PricingRule::whereIn('id', $this->selected_promo_ids)->get();
-            foreach ($appliedRules as $rule) {
-                if ($rule->tipe === 'hari_gratis') $hBonus += (int)$rule->value;
-                if ($rule->tipe === 'jam_gratis') $jBonus += (int)$rule->value;
-            }
-        }
-
-        if (($hBonus > 0 || $jBonus > 0) && !empty($this->selected_unit_ids)) {
-            $effectiveEnd = $end->copy()->addDays($hBonus)->addHours($jBonus);
-            
-            // Check if any selected unit has a conflict in the BONUS period [end, effectiveEnd]
-            $clashingUnitIds = Unit::whereIn('id', $this->selected_unit_ids)
-                ->whereHas('rentals', function ($query) use ($end, $effectiveEnd) {
-                    $query->whereIn('status', ['pending', 'paid', 'renting'])
-                        ->where(function ($q) use ($end, $effectiveEnd) {
-                            $q->whereBetween('waktu_mulai', [$end, $effectiveEnd])
-                                ->orWhereBetween('waktu_selesai', [$end, $effectiveEnd])
-                                ->orWhere(function ($q2) use ($end, $effectiveEnd) {
-                                    $q2->where('waktu_mulai', '<=', $end)
-                                        ->where('waktu_selesai', '>=', $effectiveEnd);
-                                });
-                        });
-                })->pluck('id')->toArray();
-
-            if (!empty($clashingUnitIds)) {
-                $names = Unit::whereIn('id', $clashingUnitIds)->pluck('seri')->implode(', ');
-                $this->addError('selected_promo_ids', "Promo bonus tidak bisa digunakan untuk unit ($names) karena bentrok dengan jadwal lain.");
-            }
-        }
-
-        // 3. Update Available Units Display (Based on BASE range)
-        $this->available_units = Unit::query()->with('category')
-            ->whereIn('id', $this->schedule_available_unit_ids)
+        // 1. Calculate Availability Status for ALL units
+        $units = Unit::query()->where('is_active', true)
+            ->with(['category', 'rentals' => function($q) use ($start, $end) {
+                $q->whereIn('status', ['pending', 'paid', 'renting'])
+                  ->where(function($qq) use ($start, $end) {
+                      $qq->whereBetween('waktu_mulai', [$start, $end])
+                         ->orWhereBetween('waktu_selesai', [$start, $end])
+                         ->orWhere(function($qq2) use ($start, $end) {
+                             $qq2->where('waktu_mulai', '<=', $start)
+                                ->where('waktu_selesai', '>=', $end);
+                         });
+                  })
+                  ->orderBy('waktu_mulai', 'asc');
+            }])
             ->when($this->selected_category_id, function ($q) {
                 $q->where('category_id', $this->selected_category_id);
             })
@@ -229,6 +191,42 @@ class BookingForm extends Component
                 });
             })
             ->get();
+
+        $this->schedule_available_unit_ids = [];
+        foreach ($units as $unit) {
+            $conflicts = $unit->rentals;
+            
+            if ($conflicts->isEmpty()) {
+                $unit->availability_status = 'ready';
+                $unit->availability_label = 'Ready Sekarang';
+                $this->schedule_available_unit_ids[] = $unit->id;
+            } else {
+                // Check if start time is occupied
+                $startOccupied = $conflicts->contains(function($r) use ($start) {
+                    return $start->gte($r->waktu_mulai) && $start->lt($r->waktu_selesai);
+                });
+
+                if (!$startOccupied) {
+                    // Ready from start, but conflict starts later
+                    $firstConflict = $conflicts->where('waktu_mulai', '>', $start)->first();
+                    $unit->availability_status = 'partial_until';
+                    $unit->availability_label = 'Ready s/d ' . Carbon::parse($firstConflict->waktu_mulai)->translatedFormat('d M, H:i');
+                } else {
+                    // Start is occupied, check if it becomes free before end
+                    $lastConflictInPeriod = $conflicts->where('waktu_selesai', '<', $end)->sortByDesc('waktu_selesai')->first();
+                    
+                    if ($lastConflictInPeriod) {
+                        $unit->availability_status = 'partial_from';
+                        $unit->availability_label = 'Ready mulai ' . Carbon::parse($lastConflictInPeriod->waktu_selesai)->translatedFormat('d M, H:i');
+                    } else {
+                        $unit->availability_status = 'full';
+                        $unit->availability_label = 'Full Booked';
+                    }
+                }
+            }
+        }
+
+        $this->available_units = $units;
 
         // 4. Remove selected units ONLY if they are not available in the BASE range
         $this->selected_unit_ids = array_values(array_intersect($this->selected_unit_ids, $this->schedule_available_unit_ids));

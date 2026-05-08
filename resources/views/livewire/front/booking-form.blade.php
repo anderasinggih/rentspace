@@ -201,20 +201,25 @@
                                 @foreach($available_units as $unit)
                                 <label
                                     x-bind:class="selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}') ? 'border-primary ring-1 ring-primary bg-primary/[0.04]' : 'border-border bg-background hover:border-primary/50'"
-                                    class="group relative flex cursor-pointer rounded-xl border p-3.5 shadow-sm transition-all focus:outline-none items-center justify-between">
+                                    class="group relative flex rounded-xl border p-3.5 shadow-sm transition-all focus:outline-none items-center justify-between {{ $unit->availability_status === 'full' ? 'opacity-50 grayscale cursor-not-allowed pointer-events-none' : 'cursor-pointer' }}">
                                     <input type="checkbox" wire:model.live="selected_unit_ids" value="{{ $unit->id }}"
-                                        class="sr-only">
+                                        class="sr-only" {{ $unit->availability_status === 'full' ? 'disabled' : '' }}>
                                     
-                                    <div class="flex flex-col min-w-0">
-                                        <span class="font-bold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors">
-                                            {{ $unit->seri }}
-                                        </span>
-                                        <div class="flex items-center gap-1.5 mt-0.5">
-                                            <span class="text-[10px] font-medium text-muted-foreground text-left">
-                                                {{ $unit->warna }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="font-bold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors">
+                                                {{ $unit->seri }}
                                             </span>
+                                            <div class="flex flex-col gap-0.5 mt-0.5">
+                                                <span class="text-[10px] font-medium text-muted-foreground text-left">
+                                                    {{ $unit->warna }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}
+                                                </span>
+                                                @if($unit->availability_label)
+                                                    <span class="text-[9px] font-bold uppercase tracking-tight {{ $unit->availability_status === 'ready' ? 'text-emerald-500' : ($unit->availability_status === 'full' ? 'text-red-500' : 'text-amber-500') }}">
+                                                        {{ $unit->availability_label }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
-                                    </div>
 
                                     <div class="flex items-center gap-4">
                                         <div class="flex flex-col items-end text-right shrink-0">
