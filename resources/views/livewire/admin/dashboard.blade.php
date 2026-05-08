@@ -674,7 +674,7 @@
     @script
     <script>
         if (typeof ApexCharts !== 'undefined') {
-            const initCharts = () => {
+            var initCharts = () => {
                 // -- Elements --
                 const elRevVal = document.getElementById('chart-revenue-nominal');
                 const elRevDate = document.getElementById('chart-revenue-date');
@@ -682,25 +682,25 @@
                 const elTrxDate = document.getElementById('chart-trx-date');
 
                 // -- Data --
-                const netData = @json($chartNetRevenue);
-                const trxData = @json($chartTransactions);
-                const prevNetData = @json($prevNetRevenue);
-                const prevTrxData = @json($prevTransactions);
-                const categories = @json($chartCategories);
+                var netData = @json($chartNetRevenue);
+                var trxData = @json($chartTransactions);
+                var prevNetData = @json($prevNetRevenue);
+                var prevTrxData = @json($prevTransactions);
+                var categories = @json($chartCategories);
 
-                const latRev = netData.length > 0 ? netData[netData.length - 1] : 0;
-                const latTrx = trxData.length > 0 ? trxData[trxData.length - 1] : 0;
+                var latRev = netData.length > 0 ? netData[netData.length - 1] : 0;
+                var latTrx = trxData.length > 0 ? trxData[trxData.length - 1] : 0;
 
                 if (elRevVal) elRevVal.innerText = latRev.toLocaleString('id-ID');
                 if (elTrxVal) elTrxVal.innerText = latTrx.toLocaleString('id-ID');
 
-                const gainRev = @json($gainNetRevenue);
-                const gainTrx = @json($gainRentals);
-                const revColor = (gainRev >= 0) ? '#10b981' : '#ef4444';
-                const trxColor = (gainTrx >= 0) ? '#10b981' : '#ef4444';
+                var gainRev = @json($gainNetRevenue);
+                var gainTrx = @json($gainRentals);
+                var revColor = (gainRev >= 0) ? '#10b981' : '#ef4444';
+                var trxColor = (gainTrx >= 0) ? '#10b981' : '#ef4444';
 
-                const currentYear = new Date().getFullYear();
-                const fmtCategories = categories.map(cat => {
+                var currentYear = new Date().getFullYear();
+                var fmtCategories = categories.map(cat => {
                     // If it's just "28 Apr", add current year. If it's "Apr 2026", leave it.
                     if (cat.split(' ').length === 2 && !isNaN(cat.split(' ')[0])) {
                         return cat + ' ' + currentYear;
@@ -709,7 +709,7 @@
                 });
 
                 // -- Theme Helper --
-                const getChartStyles = () => {
+                var getChartStyles = () => {
                     const isDark = document.documentElement.classList.contains('dark');
                     return {
                         grid: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.08)',
@@ -723,7 +723,7 @@
                 let styles = getChartStyles();
 
                 // -- Chart Helper Config --
-                const baseConfig = (seriesData, prevSeriesData, originalColor, nominalEl, dateEl, gainEl, originalTotalGain, isTrx = false) => {
+                var baseConfig = (seriesData, prevSeriesData, originalColor, nominalEl, dateEl, gainEl, originalTotalGain, isTrx = false) => {
                     let currentStatusColor = originalColor;
 
                     return {
@@ -825,11 +825,11 @@
                     };
                 };
 
-                const elRevGain = document.getElementById('chart-revenue-gain');
-                const elTrxGain = document.getElementById('chart-trx-gain');
+                var elRevGain = document.getElementById('chart-revenue-gain');
+                var elTrxGain = document.getElementById('chart-trx-gain');
 
-                const rv = new ApexCharts(document.querySelector("#revenueChart"), baseConfig(netData, prevNetData, revColor, elRevVal, elRevDate, elRevGain, gainRev));
-                const tr = new ApexCharts(document.querySelector("#transactionsChart"), baseConfig(trxData, prevTrxData, trxColor, elTrxVal, elTrxDate, elTrxGain, gainTrx, true));
+                var rv = new ApexCharts(document.querySelector("#revenueChart"), baseConfig(netData, prevNetData, revColor, elRevVal, elRevDate, elRevGain, gainRev));
+                var tr = new ApexCharts(document.querySelector("#transactionsChart"), baseConfig(trxData, prevTrxData, trxColor, elTrxVal, elTrxDate, elTrxGain, gainTrx, true));
 
                 rv.render();
                 tr.render();
@@ -847,7 +847,7 @@
                 dn.render();
 
                 // -- Heatmap Range Helper --
-                const getHeatmapRanges = (isDark) => {
+                var getHeatmapRanges = (isDark) => {
                     return isDark ? [
                         { from: 0, to: 0, color: 'rgba(255,255,255,0.06)' },
                         { from: 1, to: 1, color: '#064e3b' },
