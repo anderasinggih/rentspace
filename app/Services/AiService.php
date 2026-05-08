@@ -95,7 +95,8 @@ class AiService
                 return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Maaf Bos, saya lagi blank. Bisa tanya lagi?";
             }
 
-            return "Waduh, koneksi ke otak AI saya lagi terganggu (Error: " . $response->status() . "). Coba lagi nanti ya!";
+            $errorDetail = $response->json('error.message') ?? $response->body();
+            return "Koneksi terganggu (Status: " . $response->status() . "). Pesan: " . substr($errorDetail, 0, 100);
         } catch (\Exception $e) {
             return "Kesalahan sistem: " . $e->getMessage();
         }
