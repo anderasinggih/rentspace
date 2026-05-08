@@ -28,7 +28,7 @@ class AiService
         $context = "Anda adalah CS RENT SPACE. Bisnis ini menyewakan HP/iPhone. Gaya: Ramah, Enjoy, tapi TO-THE-POINT (Singkat & Padat). Panggil user 'Kak'.\n";
         $context .= "LOKASI TOKO: {$address}\n";
         $context .= "PENTING: Hanya berikan informasi berdasarkan DATA UNIT di bawah ini. DILARANG KERAS menawarkan produk lain yang tidak ada di daftar.\n";
-        $context .= "PENJUALAN: Anda harus proaktif. SELALU selipkan tag [BOOKING] di akhir jawaban Anda (terutama setelah memberikan info harga/stok) untuk mengajak user melakukan pemesanan sekarang juga.\n\n";
+        $context .= "PENJUALAN: Tawarkan tombol [BOOKING] hanya jika relevan, misalnya saat user bertanya harga, ketersediaan stok, jadwal, atau menunjukkan minat serius untuk menyewa. Jangan tawarkan di setiap pesan agar user merasa nyaman.\n\n";
         
         $context .= "DAFTAR UNIT & HARGA SEWA:\n";
         foreach ($units as $u) {
