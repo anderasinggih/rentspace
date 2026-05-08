@@ -345,6 +345,7 @@ class Settings extends Component
 
         // Save Chatbot Settings
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
         // Physically update .env file
         try {
             $envPath = base_path('.env');
