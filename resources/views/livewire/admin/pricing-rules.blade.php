@@ -30,6 +30,8 @@
                                         Kriteria</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
                                         Kode Promo</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground text-center">
+                                        Target Kasta</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
                                         Status</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-foreground">
@@ -84,6 +86,18 @@
                                         <code class="px-1.5 py-0.5 rounded bg-muted text-primary font-bold">{{ $rule->kode_promo }}</code>
                                         @else
                                         <span class="italic opacity-50">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-xs text-muted-foreground text-center">
+                                        @if($rule->target_loyalty_tier)
+                                            @php
+                                                $tierObj = collect(\App\Helpers\CustomerHelper::tiers())->where('label', $rule->target_loyalty_tier)->first();
+                                            @endphp
+                                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $tierObj['color'] ?? 'bg-muted' }} shadow-sm">
+                                                {{ $rule->target_loyalty_tier }}
+                                            </span>
+                                        @else
+                                            <span class="text-[10px] opacity-30 italic">Semua</span>
                                         @endif
                                     </td>
 
@@ -184,10 +198,26 @@
                                 @error('nama_promo') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
                             </div>
                             <div class="col-span-1">
+                                <label class="text-[11px] sm:text-sm font-medium leading-none">Target Kasta (Opsional)</label>
+                                <select wire:model="target_loyalty_tier"
+                                    class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-xs sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                    <option value="">Semua Pelanggan</option>
+                                    @foreach(\App\Helpers\CustomerHelper::tiers() as $tier)
+                                        <option value="{{ $tier['label'] }}">{{ $tier['label'] }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-[9px] text-muted-foreground mt-1 italic">Auto-apply ke kasta terpilih.</p>
+                                @error('target_loyalty_tier') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2">
                                 <label class="text-[11px] sm:text-sm font-medium leading-none">Kode Promo (Voucher)</label>
                                 <input type="text" wire:model="kode_promo"
                                     class="mt-1 flex h-8 sm:h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs sm:text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     placeholder="COBACOBA">
+                                <p class="text-[9px] text-muted-foreground mt-1 italic">Kosongkan jika ingin auto-apply berdasarkan kasta.</p>
                                 @error('kode_promo') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
                             </div>
                         </div>

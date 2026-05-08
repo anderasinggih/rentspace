@@ -37,6 +37,10 @@ class BookingForm extends Component
     public $selected_category_id = null;
     public $schedule_available_unit_ids = [];
     public $categories_list = [];
+    public $member_checked = false;
+    public $loyalty_rule_id = null;
+    public $loyalty_discount_value = 0;
+    public $loyalty_discount_type = null;
 
     // Internal cache for the request lifecycle
     protected $all_pricing_rules = null;
@@ -77,6 +81,8 @@ class BookingForm extends Component
             }
 
             $this->isNikVerified = true;
+            $this->member_checked = true;
+            $this->checkLoyaltyBenefits();
         }
 
         // 3. Handle auto-apply of referral from Cookie or Session
@@ -98,6 +104,10 @@ class BookingForm extends Component
             $this->nikFoundMessage = null;
             $this->nikFoundType = null;
             $this->isNikVerified = false;
+            $this->member_checked = false;
+            $this->loyalty_rule_id = null;
+            $this->loyalty_discount_value = 0;
+            $this->loyalty_discount_type = null;
             $this->loadAvailablePromos();
             $this->calculatePrice();
         }
@@ -410,6 +420,61 @@ class BookingForm extends Component
         }
     }
 
+    public function checkMember()
+    {
+        if (!$this->nik) return;
+        
+        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        $tier = \App\Helpers\CustomerHelper::getTier($ltv);
+        
+        // Find if name exists for friendly greeting
+        $lastRental = Rental::where('nik', $this->nik)->latest()->first();
+        $this->nama = $lastRental->nama ?? '';
+        
+        $this->member_checked = true;
+        $this->checkLoyaltyBenefits();
+        
+        if ($lastRental) {
+            $firstName = explode(' ', $this->nama)[0];
+            $this->nikFoundMessage = "Halo {$firstName}, kasta {$tier->label} Anda aktif!";
+        } else {
+            $this->nikFoundMessage = "Kasta {$tier->label} Anda aktif! Silakan pilih unit.";
+        }
+        $this->nikFoundType = 'success';
+        
+        $this->calculatePrice();
+    }
+
+    public function checkLoyaltyBenefits()
+    {
+        if (!$this->nik) return;
+        
+        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        $tier = \App\Helpers\CustomerHelper::getTier($ltv);
+        
+        // Find applicable loyalty rule for this tier
+        $rule = PricingRule::where('target_loyalty_tier', $tier->label)
+            ->where('is_active', true)
+            ->where(function($q) {
+                $q->whereNull('start_date')->orWhere('start_date', '<=', now());
+            })
+            ->where(function($q) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', now());
+            })
+            ->latest()
+            ->first();
+            
+        if ($rule) {
+            $this->loyalty_rule_id = $rule->id;
+            $this->loyalty_discount_value = $rule->value;
+            $this->loyalty_discount_type = $rule->tipe;
+        } else {
+            $this->loyalty_rule_id = null;
+            $this->loyalty_discount_value = 0;
+            $this->loyalty_discount_type = null;
+        }
+    }
+
     public function calculatePrice()
     {
         if (empty($this->selected_unit_ids) || !$this->waktu_mulai || !$this->waktu_selesai) {
@@ -442,6 +507,20 @@ class BookingForm extends Component
         $this->jam_bonus = 0;
         $this->applied_promo_label = '';
 
+        // 1. Apply Loyalty Discount (Auto-apply)
+        if ($this->loyalty_rule_id && $this->loyalty_discount_value > 0) {
+            if ($this->loyalty_discount_type === 'diskon_persen') {
+                $this->potongan_diskon += $this->subtotal * ($this->loyalty_discount_value / 100);
+            } elseif ($this->loyalty_discount_type === 'diskon_nominal') {
+                $this->potongan_diskon += $this->loyalty_discount_value;
+            } elseif ($this->loyalty_discount_type === 'fix_price') {
+                $unitCount = count($this->selected_unit_ids);
+                $targetTotal = $this->loyalty_discount_value * $unitCount;
+                $this->potongan_diskon += max(0, $this->subtotal - $targetTotal);
+            }
+        }
+
+        // 2. Apply Voucher/Promo Codes
         if (!empty($this->selected_promo_ids)) {
             if ($this->all_pricing_rules === null) {
                 $this->loadAvailablePromos();
@@ -625,6 +704,44 @@ class BookingForm extends Component
         if (!$this->nik) return null;
         $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
         return \App\Helpers\CustomerHelper::getTier($ltv);
+    }
+
+    public function getLoyaltyDiscountedUnitPricesProperty()
+    {
+        $prices = [];
+        // We use all units that are visible in the form
+        $units = Unit::all();
+        
+        foreach ($units as $unit) {
+            $original_hari = $unit->harga_per_hari;
+            $original_jam = $unit->harga_per_jam;
+            
+            $discounted_hari = $original_hari;
+            $discounted_jam = $original_jam;
+            
+            if ($this->loyalty_rule_id && $this->loyalty_discount_value > 0) {
+                if ($this->loyalty_discount_type === 'diskon_persen') {
+                    $discounted_hari = $original_hari * (1 - $this->loyalty_discount_value / 100);
+                    $discounted_jam = $original_jam * (1 - $this->loyalty_discount_value / 100);
+                } elseif ($this->loyalty_discount_type === 'diskon_nominal') {
+                    // Usually nominal is for the whole order, but for display we can show it as a hint or split it
+                    // For now, let's just stick to percent/fix price for unit display
+                } elseif ($this->loyalty_discount_type === 'fix_price') {
+                    $discounted_hari = $this->loyalty_discount_value;
+                    // For fix_price hourly, we might need more logic, but usually it's daily
+                }
+            }
+            
+            $prices[$unit->id] = [
+                'hari' => $discounted_hari,
+                'jam' => $discounted_jam,
+                'original_hari' => $original_hari,
+                'original_jam' => $original_jam,
+                'has_discount' => $discounted_hari < $original_hari
+            ];
+        }
+        
+        return $prices;
     }
 
     public function render()

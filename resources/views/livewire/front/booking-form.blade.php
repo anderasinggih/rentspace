@@ -97,6 +97,56 @@
                 <!-- 2. Pilihan Unit -->
                 <div class="space-y-6">
                     <div class="flex flex-col gap-4">
+                        {{-- SMART MEMBER CHECK --}}
+                        <div class="mb-8 p-4 sm:p-5 rounded-2xl border transition-all duration-500 overflow-hidden relative group {{ $member_checked ? 'bg-emerald-500/[0.03] border-emerald-500/20 shadow-sm' : 'bg-primary/[0.03] border-primary/20 shadow-sm' }}">
+                            {{-- Background Glow --}}
+                            <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full blur-3xl opacity-20 pointer-events-none {{ $member_checked ? 'bg-emerald-500' : 'bg-primary' }}"></div>
+                            
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+                                <div class="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
+                                    <div class="h-12 w-12 rounded-2xl flex items-center justify-center border transition-all duration-500 {{ $member_checked ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-primary/10 border-primary/20 text-primary' }}">
+                                        @if($member_checked)
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                        @else
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                            <p class="text-sm font-black text-foreground uppercase tracking-tight">{{ $member_checked ? 'Member Terverifikasi' : 'Punya Member?' }}</p>
+                                            @if($member_checked && $this->tier)
+                                                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $this->tier->color }} badge-shine shadow-sm shrink-0">
+                                                    {{ $this->tier->label }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <p class="text-[10px] text-muted-foreground mt-0.5 text-center sm:text-left">
+                                            {{ $member_checked ? 'Harga spesial kasta Anda sudah aktif di katalog.' : 'Aktifkan harga spesial kasta Anda dengan cek NIK.' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-2 w-full sm:w-auto">
+                                    @if(!$member_checked)
+                                        <div class="relative flex-1 sm:w-48">
+                                            <input type="text" wire:model.defer="nik" placeholder="Masukkan NIK..." 
+                                                class="w-full pl-3 pr-3 py-2.5 text-xs border border-border rounded-xl bg-background focus:ring-1 focus:ring-primary outline-none transition-all shadow-sm font-bold uppercase tracking-widest placeholder:normal-case placeholder:font-normal placeholder:tracking-normal">
+                                        </div>
+                                        <button type="button" wire:click="checkMember" wire:loading.attr="disabled"
+                                            class="px-6 py-2.5 bg-primary text-primary-foreground text-xs font-black rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2">
+                                            <span wire:loading.remove wire:target="checkMember">CEK SEKARANG</span>
+                                            <div wire:loading wire:target="checkMember" class="w-3 h-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
+                                        </button>
+                                    @else
+                                        <button type="button" wire:click="$set('member_checked', false); $set('nik', ''); $set('nikFoundMessage', null); $set('isNikVerified', false); calculatePrice();"
+                                            class="w-full sm:w-auto px-4 py-2 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors uppercase tracking-widest">
+                                            Ganti Akun
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
                         <h2 class="text-xl font-bold tracking-tight mb-2 text-foreground">2. Pilih Unit Tersedia</h2>
                         
                         @if($waktu_mulai && $waktu_selesai)
@@ -162,9 +212,18 @@
 
                                     <div class="flex items-center gap-4">
                                         <div class="flex flex-col items-end text-right shrink-0">
-                                            <div class="text-xs font-black text-primary">
-                                                Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }}
-                                            </div>
+                                            @if($this->loyaltyDiscountedUnitPrices[$unit->id]['has_discount'])
+                                                <div class="text-[9px] text-muted-foreground line-through decoration-red-500/50 font-bold opacity-60">
+                                                    Rp {{ number_format($this->loyaltyDiscountedUnitPrices[$unit->id]['original_hari'], 0, ',', '.') }}
+                                                </div>
+                                                <div class="text-xs font-black text-primary animate-in fade-in zoom-in-95 duration-500">
+                                                    Rp {{ number_format($this->loyaltyDiscountedUnitPrices[$unit->id]['hari'], 0, ',', '.') }}
+                                                </div>
+                                            @else
+                                                <div class="text-xs font-black text-primary">
+                                                    Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }}
+                                                </div>
+                                            @endif
                                             <span class="text-[9px] font-medium text-muted-foreground leading-none mt-0.5">/ hari</span>
                                         </div>
 
