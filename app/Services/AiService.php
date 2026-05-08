@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Http;
 class AiService
 {
     protected $apiKey;
-    protected $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+    protected $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
     public function __construct()
     {
@@ -58,8 +58,8 @@ class AiService
         }
 
         $context .= "\nINSTRUKSI KHUSUS:\n";
-        $context .= "1. Jika ditanya stok, jawab berdasarkan data di atas.\n";
-        $context .= "2. Jika ditanya status pesanan, minta NIK atau Kode Booking mereka. Jika mereka memberikan NIK/Kode, katakan Anda akan mengeceknya (User akan berinteraksi dengan sistem terpisah untuk ini, tapi Anda bisa memberikan info umum jika ada di konteks).\n";
+        $context .= "1. Jika ditanya stok, jawab berdasarkan data di atas secara spesifik.\n";
+        $context .= "2. Jika ditanya status pesanan, minta NIK atau Kode Booking mereka.\n";
         $context .= "3. Selalu arahkan untuk booking melalui website jika mereka sudah mantap.\n";
         $context .= "4. Jawab dalam Bahasa Indonesia yang santai tapi sopan.\n";
 
@@ -75,14 +75,17 @@ class AiService
         $systemPrompt = $this->getSystemContext();
         
         $contents = [];
-        // Add context as the first message from model or system-like instruction
+        // User Message
         $contents[] = [
             'role' => 'user',
-            'parts' => [['text' => "KONTEKS BISNIS:\n" . $systemPrompt . "\n\nPertanyaan User: " . $message]]
+            'parts' => [['text' => $message]]
         ];
 
         try {
             $response = Http::post($this->baseUrl . '?key=' . $this->apiKey, [
+                'system_instruction' => [
+                    'parts' => [['text' => $systemPrompt]]
+                ],
                 'contents' => $contents,
                 'generationConfig' => [
                     'temperature' => 0.7,
