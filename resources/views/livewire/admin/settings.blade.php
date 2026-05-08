@@ -1094,30 +1094,36 @@
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 hidden md:table-cell">
-                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[200px]">{{ $log->subject }}</div>
-                                                        <div class="text-[9px] text-muted-foreground">{{ $log->type }}</div>
+                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[140px]">{{ $log->subject }}</div>
+                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[140px]">{{ $log->type }}</div>
                                                     </td>
                                                     <td class="px-4 py-3">
                                                         @if($log->status === 'sent')
                                                             <div class="flex items-center gap-1">
-                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 tracking-tighter">SUCCESS</span>
                                                                 @if($log->resend_count > 0)
-                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 tracking-tighter">Resent {{ $log->resend_count }}x</span>
+                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black bg-blue-500/10 text-blue-600 border border-blue-500/20 tracking-tighter">{{ $log->resend_count }}X RESENT</span>
                                                                 @endif
                                                             </div>
                                                         @else
                                                             <div class="flex items-center gap-1">
-                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black bg-red-500/10 text-red-600 border border-red-500/20 tracking-tighter" title="{{ $log->error }}">FAILED</span>
                                                                 @if($log->resend_count > 0)
-                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 tracking-tighter">Retried {{ $log->resend_count }}x</span>
+                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black bg-blue-500/10 text-blue-600 border border-blue-500/20 tracking-tighter">RETRY {{ $log->resend_count }}X</span>
                                                                 @endif
                                                             </div>
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 text-right">
                                                         <button wire:click="resendMail({{ $log->id }})" wire:loading.attr="disabled"
-                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-bold hover:bg-primary hover:text-white transition-all active:scale-95 ml-auto">
-                                                            Resend
+                                                            wire:target="resendMail({{ $log->id }})"
+                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-black hover:bg-primary hover:text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-auto group">
+                                                            <svg wire:loading wire:target="resendMail({{ $log->id }})" class="animate-spin h-3 w-3 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg>
+                                                            <span wire:loading.remove wire:target="resendMail({{ $log->id }})">Resend</span>
+                                                            <span wire:loading wire:target="resendMail({{ $log->id }})">Sending...</span>
                                                         </button>
                                                     </td>
                                                 </tr>
@@ -1194,30 +1200,36 @@
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 hidden md:table-cell">
-                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[200px]">{{ $log->subject }}</div>
-                                                        <div class="text-[9px] text-muted-foreground">{{ $log->type }}</div>
+                                                        <div class="text-[11px] font-semibold text-foreground truncate max-w-[140px]">{{ $log->subject }}</div>
+                                                        <div class="text-[9px] text-muted-foreground truncate max-w-[140px]">{{ $log->type }}</div>
                                                     </td>
                                                     <td class="px-4 py-3">
                                                         @if($log->status === 'sent')
                                                             <div class="flex items-center gap-1">
-                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 tracking-tighter">SUCCESS</span>
                                                                 @if($log->resend_count > 0)
-                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 tracking-tighter">Resent {{ $log->resend_count }}x</span>
+                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black bg-blue-500/10 text-blue-600 border border-blue-500/20 tracking-tighter">{{ $log->resend_count }}X RESENT</span>
                                                                 @endif
                                                             </div>
                                                         @else
                                                             <div class="flex items-center gap-1">
-                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black bg-red-500/10 text-red-600 border border-red-500/20 tracking-tighter" title="{{ $log->error }}">FAILED</span>
                                                                 @if($log->resend_count > 0)
-                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 tracking-tighter">Retried {{ $log->resend_count }}x</span>
+                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black bg-blue-500/10 text-blue-600 border border-blue-500/20 tracking-tighter">RETRY {{ $log->resend_count }}X</span>
                                                                 @endif
                                                             </div>
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 text-right">
                                                         <button wire:click="resendMail({{ $log->id }})" wire:loading.attr="disabled"
-                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-bold hover:bg-primary hover:text-white transition-all active:scale-95 ml-auto">
-                                                            Resend
+                                                            wire:target="resendMail({{ $log->id }})"
+                                                            class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg border border-primary/20 bg-primary/5 text-primary text-[10px] font-black hover:bg-primary hover:text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-auto group">
+                                                            <svg wire:loading wire:target="resendMail({{ $log->id }})" class="animate-spin h-3 w-3 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg>
+                                                            <span wire:loading.remove wire:target="resendMail({{ $log->id }})">Resend</span>
+                                                            <span wire:loading wire:target="resendMail({{ $log->id }})">Sending...</span>
                                                         </button>
                                                     </td>
                                                 </tr>
