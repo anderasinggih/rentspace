@@ -405,86 +405,68 @@
                                     @endif
                                 </div>
 
-                                <div class="relative flex items-center gap-0 overflow-x-auto pb-10 pt-12 hide-scrollbar snap-x scroll-smooth">
-                                    @php
-                                        $tiers = \App\Helpers\CustomerHelper::tiers();
-                                        $totalTiers = count($tiers);
+                                @php
+                                    $tiers = \App\Helpers\CustomerHelper::tiers();
+                                    $totalTiers = count($tiers);
+                                    
+                                    // Calculate overall roadmap progress percentage
+                                    $totalProgress = 0;
+                                    $achievedTiers = 0;
+                                    foreach($tiers as $index => $t) {
+                                        if($ltv >= $t['threshold']) {
+                                            $achievedTiers = $index;
+                                        }
+                                    }
+                                    
+                                    if ($achievedTiers < $totalTiers - 1) {
+                                        $currentTierData = $tiers[$achievedTiers];
+                                        $nextTierData = $tiers[$achievedTiers + 1];
+                                        $range = $nextTierData['threshold'] - $currentTierData['threshold'];
+                                        $progressInTier = $ltv - $currentTierData['threshold'];
+                                        $tierProgressPercent = ($progressInTier / $range) * 100;
                                         
-                                        // Ultra-Vibrant Neon Colors for Roadmap
-                                        $pathColors = [
-                                            'BRONZE' => 'bg-slate-400',
-                                            'SILVER' => 'bg-slate-200',
-                                            'GOLD' => 'bg-yellow-400',
-                                            'PLATINUM' => 'bg-fuchsia-500',
-                                            'DIAMOND' => 'bg-cyan-400',
-                                            'LEGEND' => 'bg-red-500',
-                                        ];
-                                    @endphp
+                                        // Total progress = (number of completed segments + progress in current segment) / total segments
+                                        $totalProgress = (($achievedTiers + ($tierProgressPercent / 100)) / ($totalTiers - 1)) * 100;
+                                    } else {
+                                        $totalProgress = 100;
+                                    }
+                                @endphp
+
+                                <div class="relative flex items-center gap-0 overflow-x-auto pb-10 pt-16 hide-scrollbar snap-x scroll-smooth">
+                                    <!-- Unified Sleek Roadmap Line -->
+                                    <div class="absolute top-[4.625rem] left-16 right-16 h-1 bg-muted/40 z-0 rounded-full">
+                                        <div class="h-full bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.6)] rounded-full transition-all duration-1000 ease-out" 
+                                             style="width: {{ $totalProgress }}%">
+                                            <!-- Shimmering Light -->
+                                            <div class="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.4)_50%,transparent_100%)] bg-[length:100px_100%] animate-[progress_2s_linear_infinite]"></div>
+                                        </div>
+                                    </div>
 
                                     @foreach($tiers as $index => $t)
                                         @php 
                                             $isAchieved = $ltv >= $t['threshold'];
                                             $isCurrent = $tier->label === $t['label'];
-                                            $nextT = ($index + 1 < $totalTiers) ? $tiers[$index + 1] : null;
-                                            
-                                            // Calculate progress to next dot for the line segment
-                                            $segmentProgress = 0;
-                                            if ($isAchieved && $nextT) {
-                                                if ($ltv >= $nextT['threshold']) {
-                                                    $segmentProgress = 100;
-                                                } else {
-                                                    $currentRange = $nextT['threshold'] - $t['threshold'];
-                                                    $currentProgress = $ltv - $t['threshold'];
-                                                    $segmentProgress = ($currentProgress / $currentRange) * 100;
-                                                }
-                                            }
-
-                                            $vibrantColor = $pathColors[$t['label']] ?? 'bg-primary';
-                                            $nextVibrantColor = $nextT ? ($pathColors[$nextT['label']] ?? 'bg-primary') : 'bg-primary';
                                         @endphp
                                         <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
-                                            <!-- Neon Line Segments -->
-                                            <div class="absolute top-[0.5rem] left-0 w-full h-4 flex z-0 overflow-hidden">
-                                                <!-- Left side of dot -->
-                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : $vibrantColor }} {{ $isAchieved ? 'opacity-100 shadow-[0_0_20px_rgba(255,255,255,0.4)]' : 'opacity-30' }} transition-all duration-700 relative">
-                                                    @if($isAchieved)
-                                                        <div class="absolute inset-y-[30%] inset-x-0 bg-white/40 blur-[1px]"></div>
-                                                    @endif
-                                                </div>
-                                                
-                                                <!-- Right side of dot (The path ahead) -->
-                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : $nextVibrantColor }} {{ $isNextAchieved ?? false ? 'opacity-100' : 'opacity-15' }} transition-all duration-700">
-                                                    @if($segmentProgress > 0)
-                                                        <!-- Glowing Active Path -->
-                                                        <div class="absolute inset-y-0 left-0 {{ $nextVibrantColor }} opacity-100 shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-all duration-1000 overflow-hidden badge-shine" style="width: {{ $segmentProgress }}%">
-                                                            <div class="absolute inset-y-[30%] inset-x-0 bg-white/50 blur-[1px]"></div>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            </div>
-
-                                            <!-- Massive Milestone Dot -->
-                                            <div class="relative flex items-center justify-center h-10 w-10 z-20">
+                                            <!-- Milestone Dot -->
+                                            <div class="relative flex items-center justify-center h-5 w-5">
                                                 @if($isCurrent)
-                                                    <div class="absolute h-16 w-16 {{ $vibrantColor }} opacity-60 rounded-full animate-pulse blur-3xl"></div>
+                                                    <div class="absolute h-10 w-10 bg-primary/20 rounded-full animate-pulse blur-xl"></div>
                                                 @endif
-                                                <div class="h-8 w-8 rounded-full border-[5px] transition-all duration-700 shadow-2xl {{ $vibrantColor }} {{ $isAchieved ? 'border-background scale-110 shadow-white/20' : 'opacity-50 border-background grayscale-[0.1]' }}">
-                                                    @if($isAchieved)
-                                                        <div class="absolute inset-1 bg-white/30 rounded-full blur-[2px]"></div>
-                                                    @endif
+                                                <div class="h-4 w-4 rounded-full border-[3px] transition-all duration-700 {{ $isAchieved ? 'bg-primary border-background shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'bg-muted border-background' }}">
                                                 </div>
                                             </div>
 
-                                            <!-- Badge -->
-                                            <div class="mt-5 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 scale-100' : 'opacity-60 scale-90' }}">
-                                                <span class="inline-flex items-center rounded-full border px-3 py-1 text-[8px] font-black {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-md' : 'border-dashed opacity-40' }}">
+                                            <!-- Badge (Floating Below) -->
+                                            <div class="mt-4 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 scale-100' : 'opacity-40 scale-90' }}">
+                                                <span class="inline-flex items-center rounded-full border px-3 py-0.5 text-[8px] font-black {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-sm' : 'border-dashed opacity-50 grayscale' }}">
                                                     {{ $t['label'] }}
                                                 </span>
                                             </div>
 
-                                            <!-- Threshold Info -->
+                                            <!-- Threshold -->
                                             <div class="mt-2 text-center">
-                                                <p class="text-[9px] font-bold {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/30' }} tracking-tight">
+                                                <p class="text-[9px] font-bold {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/40' }} tracking-tight">
                                                     {{ $index === 0 ? 'Mulai' : 'Rp ' . number_format($t['threshold'] / 1000, 0, ',', '.') . 'k' }}
                                                 </p>
                                             </div>
