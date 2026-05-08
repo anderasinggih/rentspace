@@ -891,7 +891,7 @@
                                 {{-- Baris 1: Notifikasi Admin --}}
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
                                     <div class="max-w-md">
-                                        <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Email Notifikasi Tim Admin</h4>
+                                        <h4 class="text-xs font-bold text-foreground tracking-tight">Email Notifikasi Tim Admin</h4>
                                         <p class="text-[10px] text-muted-foreground mt-1">Admin akan dikirimi rincian setiap ada pesanan masuk.</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer shrink-0">
@@ -902,7 +902,7 @@
 
                                 {{-- Baris 1.1: Daftar Email (Sub-item) --}}
                                 <div class="ml-4 pl-4 border-l-2 border-border/50 space-y-2 {{ !$is_email_active ? 'opacity-30 pointer-events-none' : '' }}">
-                                    <label class="text-[10px] font-bold text-muted-foreground uppercase leading-none">Daftar Penerima (Pisahkan dengan koma)</label>
+                                    <label class="text-[10px] font-bold text-muted-foreground leading-none">Daftar Penerima (Pisahkan dengan koma)</label>
                                     <textarea wire:model="admin_email_recipients" rows="2"
                                         class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus:ring-1 focus:ring-primary outline-none transition-all"
                                         placeholder="admin@email.com, owner@email.com"></textarea>
@@ -911,7 +911,7 @@
                                 {{-- Baris 2: Notifikasi Pelanggan --}}
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
                                     <div class="max-w-md">
-                                        <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Email Salinan Invoice Pelanggan</h4>
+                                        <h4 class="text-xs font-bold text-foreground tracking-tight">Email Salinan Invoice Pelanggan</h4>
                                         <p class="text-[10px] text-muted-foreground mt-1">Pelanggan akan otomatis dikirimi struk belanja digital setelah booking.</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer shrink-0">
@@ -923,13 +923,13 @@
                                 {{-- Baris 3: Reminder Balik --}}
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
                                     <div class="max-w-md">
-                                        <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Pengingat Waktu Pengembalian</h4>
+                                        <h4 class="text-xs font-bold text-foreground tracking-tight">Pengingat Waktu Pengembalian</h4>
                                         <p class="text-[10px] text-muted-foreground mt-1">Email otomatis kepada penyewa sebelum masa sewa berakhir.</p>
                                     </div>
                                     <div class="flex items-center gap-4">
                                         <div class="flex items-center gap-2 {{ !$is_reminder_active ? 'opacity-30' : '' }}">
                                             <input type="number" wire:model="reminder_hours_before" class="w-16 h-9 rounded border border-input bg-background px-2 text-xs font-bold text-center outline-none focus:ring-1 focus:ring-primary transition-all">
-                                            <span class="text-[10px] font-bold text-muted-foreground uppercase">Jam Sebelum</span>
+                                            <span class="text-[10px] font-bold text-muted-foreground">Jam Sebelum</span>
                                         </div>
                                         <label class="relative inline-flex items-center cursor-pointer shrink-0">
                                             <input type="checkbox" wire:model="is_reminder_active" class="sr-only peer">
@@ -941,13 +941,13 @@
                                 {{-- Baris 4: Notifikasi Telat --}}
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/10 transition-colors hover:bg-muted/20">
                                     <div class="max-w-md">
-                                        <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">Peringatan Keterlambatan</h4>
+                                        <h4 class="text-xs font-bold text-foreground tracking-tight">Peringatan Keterlambatan</h4>
                                         <p class="text-[10px] text-muted-foreground mt-1">Email teguran otomatis jika unit belum dikembalikan lewat dari jadwal.</p>
                                     </div>
                                     <div class="flex items-center gap-4">
                                         <div class="flex items-center gap-2 {{ !$is_overdue_active ? 'opacity-30' : '' }}">
                                             <input type="number" wire:model="overdue_minutes_after" class="w-16 h-9 rounded border border-input bg-background px-2 text-xs font-bold text-center outline-none focus:ring-1 focus:ring-primary transition-all">
-                                            <span class="text-[10px] font-bold text-muted-foreground uppercase">Menit Telat</span>
+                                            <span class="text-[10px] font-bold text-muted-foreground">Menit Telat</span>
                                         </div>
                                         <label class="relative inline-flex items-center cursor-pointer shrink-0">
                                             <input type="checkbox" wire:model="is_overdue_active" class="sr-only peer">
@@ -982,7 +982,7 @@
                                         </div>
                                         <div>
                                             <p class="text-xs font-bold text-foreground">Invoice Baru</p>
-                                            <p class="text-[9px] text-muted-foreground uppercase tracking-tighter">Status: UNPAID</p>
+                                            <p class="text-[9px] text-muted-foreground tracking-tighter">Status: UNPAID</p>
                                         </div>
                                     </div>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:text-emerald-600 transition-colors"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -997,7 +997,7 @@
                                         </div>
                                         <div>
                                             <p class="text-xs font-bold text-foreground">Invoice Lunas</p>
-                                            <p class="text-[9px] text-muted-foreground uppercase tracking-tighter">Status: PAID</p>
+                                            <p class="text-[9px] text-muted-foreground tracking-tighter">Status: PAID</p>
                                         </div>
                                     </div>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:text-blue-600 transition-colors"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -1012,7 +1012,7 @@
                                         </div>
                                         <div>
                                             <p class="text-xs font-bold text-foreground">Reminder Kembali</p>
-                                            <p class="text-[9px] text-muted-foreground uppercase tracking-tighter">Status: H-2 JAM</p>
+                                            <p class="text-[9px] text-muted-foreground tracking-tighter">Status: H-2 JAM</p>
                                         </div>
                                     </div>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-hover:text-amber-600 transition-colors"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -1054,7 +1054,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="M20 16v6"/><path d="M17 19h6"/></svg>
                             </div>
                             <div>
-                                <h3 class="text-sm font-black text-foreground uppercase tracking-widest">Log Riwayat Email Terkirim</h3>
+                                <h3 class="text-sm font-black text-foreground tracking-wide">Log Riwayat Email Terkirim</h3>
                                 <p class="text-[10px] text-muted-foreground">Lacak semua email otomatis yang dikirimkan sistem kepada admin & pelanggan.</p>
                             </div>
                         </div>
@@ -1073,7 +1073,7 @@
                         <div class="border rounded-xl overflow-hidden bg-background shadow-sm">
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse">
-                                    <thead class="bg-muted/50 text-[10px] font-black text-muted-foreground uppercase tracking-wider border-b border-border">
+                                    <thead class="bg-muted/50 text-[10px] font-bold text-muted-foreground border-b border-border">
                                         <tr>
                                             <th class="px-4 py-3">Waktu</th>
                                             <th class="px-4 py-3">Penerima</th>
@@ -1103,9 +1103,9 @@
                                                 </td>
                                                 <td class="px-4 py-3">
                                                     @if($log->status === 'sent')
-                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase tracking-tighter">SUCCESS</span>
+                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 tracking-tighter">Success</span>
                                                     @else
-                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 uppercase tracking-tighter" title="{{ $log->error }}">FAILED</span>
+                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 tracking-tighter" title="{{ $log->error }}">Failed</span>
                                                     @endif
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
@@ -1125,7 +1125,7 @@
                                                 <td colspan="5" class="px-4 py-12 text-center">
                                                     <div class="flex flex-col items-center gap-2 opacity-40">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                                                        <p class="text-xs font-bold uppercase tracking-widest">Belum ada riwayat email</p>
+                                                        <p class="text-xs font-bold tracking-tight">Belum ada riwayat email</p>
                                                     </div>
                                                 </td>
                                             </tr>
