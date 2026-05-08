@@ -409,6 +409,16 @@
                                     @php
                                         $tiers = \App\Helpers\CustomerHelper::tiers();
                                         $totalTiers = count($tiers);
+                                        
+                                        // High-Vibrancy Colors for Roadmap Path
+                                        $pathColors = [
+                                            'BRONZE' => 'bg-slate-400',
+                                            'SILVER' => 'bg-slate-200',
+                                            'GOLD' => 'bg-amber-400',
+                                            'PLATINUM' => 'bg-indigo-500',
+                                            'DIAMOND' => 'bg-emerald-400',
+                                            'LEGEND' => 'bg-red-500',
+                                        ];
                                     @endphp
 
                                     @foreach($tiers as $index => $t)
@@ -428,29 +438,32 @@
                                                     $segmentProgress = ($currentProgress / $currentRange) * 100;
                                                 }
                                             }
+
+                                            $vibrantColor = $pathColors[$t['label']] ?? 'bg-primary';
+                                            $nextVibrantColor = $nextT ? ($pathColors[$nextT['label']] ?? 'bg-primary') : 'bg-primary';
                                         @endphp
                                         <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
                                             <!-- Line Segments (Fused with Dots) -->
-                                            <div class="absolute top-[0.625rem] left-0 w-full h-2 flex z-0">
+                                            <div class="absolute top-[0.625rem] left-0 w-full h-3 flex z-0">
                                                 <!-- Left side of dot (Coming from previous) -->
-                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : $t['color'] }} {{ $isAchieved ? 'opacity-100 shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'opacity-25' }} border-none transition-all duration-700"></div>
+                                                <div class="h-full w-1/2 {{ $index === 0 ? 'bg-transparent' : $vibrantColor }} {{ $isAchieved ? 'opacity-100 shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'opacity-40' }} border-none transition-all duration-700"></div>
                                                 
                                                 <!-- Right side of dot (Going to next) -->
-                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : ($nextT ? $nextT['color'] : 'bg-muted') }} {{ $isNextAchieved ?? false ? 'opacity-100 shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'opacity-15' }} transition-all duration-700">
+                                                <div class="h-full w-1/2 relative {{ $index === $totalTiers - 1 ? 'bg-transparent' : $nextVibrantColor }} {{ $isNextAchieved ?? false ? 'opacity-100' : 'opacity-20' }} transition-all duration-700">
                                                     @if($segmentProgress > 0)
                                                         <!-- Actual Active Progress on this segment -->
-                                                        <div class="absolute inset-y-0 left-0 {{ $nextT ? $nextT['color'] : 'bg-primary' }} opacity-100 shadow-[0_0_20px_rgba(var(--primary-rgb),0.5)] transition-all duration-1000 overflow-hidden badge-shine" style="width: {{ $segmentProgress }}%">
+                                                        <div class="absolute inset-y-0 left-0 {{ $nextVibrantColor }} opacity-100 shadow-[0_0_25px_rgba(255,255,255,0.3)] transition-all duration-1000 overflow-hidden badge-shine" style="width: {{ $segmentProgress }}%">
                                                         </div>
                                                     @endif
                                                 </div>
                                             </div>
 
                                             <!-- Milestone Dot -->
-                                            <div class="relative flex items-center justify-center h-7 w-7 z-20">
+                                            <div class="relative flex items-center justify-center h-8 w-8 z-20">
                                                 @if($isCurrent)
-                                                    <div class="absolute h-12 w-12 {{ $t['color'] }} opacity-40 rounded-full animate-pulse blur-xl"></div>
+                                                    <div class="absolute h-14 w-14 {{ $vibrantColor }} opacity-50 rounded-full animate-pulse blur-2xl"></div>
                                                 @endif
-                                                <div class="h-6 w-6 rounded-full border-[4px] transition-all duration-700 shadow-[0_0_20px_rgba(0,0,0,0.3)] {{ $t['color'] }} {{ $isAchieved ? 'border-background ring-4 ring-foreground/5' : 'opacity-40 border-background grayscale-[0.3]' }}">
+                                                <div class="h-6 w-6 rounded-full border-[5px] transition-all duration-700 shadow-2xl {{ $vibrantColor }} {{ $isAchieved ? 'border-background scale-110 shadow-white/10' : 'opacity-60 border-background grayscale-[0.2]' }}">
                                                 </div>
                                             </div>
 
