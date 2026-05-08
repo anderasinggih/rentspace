@@ -7,6 +7,8 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
 
+use Livewire\Attributes\Url;
+
 class Settings extends Component
 {
     use WithFileUploads, WithPagination;
@@ -27,6 +29,8 @@ class Settings extends Component
     public $is_also_affiliate = false;
     public $sortField = 'created_at';
     public $sortDirection = 'desc';
+
+    #[Url(as: 'tab')]
     public $activeTab = 'akun';
     public $search = '';
 
