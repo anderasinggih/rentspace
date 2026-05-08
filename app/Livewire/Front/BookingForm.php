@@ -422,9 +422,17 @@ class BookingForm extends Component
 
     public function checkMember()
     {
+        $this->resetErrorBag('nik');
         if (!$this->nik) return;
         
         $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        
+        if ($ltv <= 0) {
+            $this->addError('nik', 'NIK belum terdaftar sebagai member.');
+            $this->member_checked = false;
+            return;
+        }
+
         $tier = \App\Helpers\CustomerHelper::getTier($ltv);
         
         // Find if name exists for friendly greeting
