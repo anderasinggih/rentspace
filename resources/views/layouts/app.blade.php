@@ -89,6 +89,7 @@
         {{ $slot }}
     </main>
 
+    <livewire:front.chat-ai />
     @livewireScripts
 </body>
 
