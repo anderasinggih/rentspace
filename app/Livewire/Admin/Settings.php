@@ -345,9 +345,28 @@ class Settings extends Component
 
         // Save Chatbot Settings
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
-        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
+        // Physically update .env file
+        try {
+            $envPath = base_path('.env');
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                $key = 'GEMINI_API_KEY';
+                $newValue = $this->chatbot_api_key;
 
-        session()->flash('general_message', 'Pengaturan Umum berhasil disimpan.');
+                if (str_contains($envContent, "{$key}=")) {
+                    // Replace existing
+                    $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$newValue}", $envContent);
+                } else {
+                    // Append new
+                    $envContent .= "\n{$key}={$newValue}\n";
+                }
+                file_put_contents($envPath, $envContent);
+            }
+        } catch (\Exception $e) {
+            // Log or ignore if permission denied
+        }
+
+        session()->flash('general_message', 'Pengaturan Umum berhasil disimpan & .env diperbarui.');
     }
 
     public function updatedIsMaintenance($value)
