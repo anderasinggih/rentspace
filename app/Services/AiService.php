@@ -23,15 +23,15 @@ class AiService
     public function getSystemContext()
     {
         $units = Unit::with('category')->get();
-        $context = "Anda adalah Customer Service cerdas dari 'RENT SPACE', tempat penyewaan gadget premium.\n";
-        $context .= "Gaya bicara Anda: Sangat ramah, santai, manusiawi, dan 'enjoy' layaknya teman tapi tetap profesional. Panggil user dengan sebutan 'Kak'.\n\n";
+        $context = "Anda adalah CS RENT SPACE. Gaya: Ramah, Enjoy, tapi TO-THE-POINT (Singkat & Padat). Panggil user 'Kak'.\n";
+        $context .= "Jangan bertele-tele. Langsung berikan informasi inti yang diminta.\n\n";
         
-        $context .= "DAFTAR UNIT KAMI:\n";
+        $context .= "UNIT & HARGA:\n";
         foreach ($units as $u) {
-            $context .= "- {$u->name} ({$u->category->name}): Rp" . number_format($u->harga_per_hari, 0, ',', '.') . "/hari.\n";
+            $context .= "- {$u->name}: Rp" . number_format($u->harga_per_hari, 0, ',', '.') . "/hari.\n";
         }
         
-        $context .= "\nSTATUS STOK (7 Hari ke Depan):\n";
+        $context .= "\nSTOK (7 Hari ke Depan):\n";
         $start = Carbon::today();
         $end = Carbon::today()->addDays(7);
         
@@ -47,21 +47,20 @@ class AiService
             $busyDates = [];
             foreach ($rentals as $r) {
                 if ($r->units->contains($u->id)) {
-                    $busyDates[] = Carbon::parse($r->waktu_mulai)->format('d M') . " s/d " . Carbon::parse($r->waktu_selesai)->format('d M');
+                    $busyDates[] = Carbon::parse($r->waktu_mulai)->format('d M') . "-" . Carbon::parse($r->waktu_selesai)->format('d M');
                 }
             }
             if (empty($busyDates)) {
-                $context .= "- {$u->name}: READY TERUS KAK.\n";
+                $context .= "- {$u->name}: READY.\n";
             } else {
-                $context .= "- {$u->name}: Ada yang sewa tanggal " . implode(', ', $busyDates) . ". Selain itu aman banget.\n";
+                $context .= "- {$u->name}: BOOKED " . implode(', ', $busyDates) . ". Selaian itu READY.\n";
             }
         }
 
-        $context .= "\nINSTRUKSI KHUSUS:\n";
-        $context .= "1. Gunakan format Markdown seperti **tebal** untuk poin penting agar enak dibaca.\n";
-        $context .= "2. Jika ditanya stok, jawab dengan gaya yang 'enjoy' dan informatif.\n";
-        $context .= "3. Jika ditanya status pesanan, minta NIK atau Kode Booking dengan sopan.\n";
-        $context .= "4. Jawab dalam Bahasa Indonesia yang gaul tapi sopan (hindari kata kaku seperti 'mohon').\n";
+        $context .= "\nATURAN:\n";
+        $context .= "1. Jawab SINGKAT & PADAT. Gunakan **bold** untuk poin inti.\n";
+        $context .= "2. Jika ditanya stok, langsung jawab statusnya.\n";
+        $context .= "3. Jangan gunakan kalimat basa-basi yang terlalu panjang.\n";
 
         return $context;
     }
