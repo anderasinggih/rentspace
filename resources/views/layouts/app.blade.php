@@ -105,11 +105,20 @@
         @if($appId = \App\Models\Setting::getVal('onesignal_app_id'))
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {
-            console.log("OneSignal Initializing...");
+            console.log("OneSignal Initializing with ID: {{ $appId }}");
             await OneSignal.init({
                 appId: "{{ $appId }}",
                 safari_web_id: "{{ \App\Models\Setting::getVal('onesignal_safari_web_id') }}",
                 allowLocalhostAsSecureContext: true,
+                autoResubscribe: true,
+                promptOptions: {
+                    slidedown: {
+                        enabled: true,
+                        autoPrompt: true,
+                        timeDelay: 5,
+                        pageViews: 1
+                    }
+                },
                 notifyButton: {
                     enable: true,
                     size: 'medium',
