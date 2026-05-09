@@ -139,6 +139,11 @@
                     },
                 },
             });
+
+            // Force show prompt if not subscribed
+            if (!OneSignal.Notifications.permission) {
+                await OneSignal.Slidedown.promptForPushNotifications();
+            }
         });
     </script>
     @endif
