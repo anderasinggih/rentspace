@@ -101,7 +101,7 @@ class Transactions extends Component
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
-        if ($rental->status === 'pending') {
+        if (in_array($rental->status, ['pending', 'pending_confirmation'])) {
             $before = ['status' => $rental->status];
             $rental->update(['status' => 'paid', 'paid_at' => now()]);
             $after = ['status' => 'paid'];
@@ -142,7 +142,7 @@ class Transactions extends Component
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
-        if (in_array($rental->status, ['pending', 'paid'])) {
+        if (in_array($rental->status, ['pending', 'paid', 'pending_confirmation'])) {
             $before = ['status' => $rental->status];
             $rental->update(['status' => 'cancelled']);
             $after = ['status' => 'cancelled'];
