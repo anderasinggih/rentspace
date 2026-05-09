@@ -100,49 +100,48 @@
                 toggle() { this.isOpen = !this.isOpen }
             })
         })
-
-        @php 
-            $osAppId = \App\Models\Setting::getVal('onesignal_app_id');
-            $osSafariId = \App\Models\Setting::getVal('onesignal_safari_web_id');
-        @endphp
-
-        @if($osAppId)
-        <!-- DEBUG: OneSignal Detected with ID: {{ $osAppId }} -->
-        <!-- OneSignal Deep Integration -->
-        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-        <script>
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            OneSignalDeferred.push(async function(OneSignal) {
-                console.log("🚀 RENT SPACE PUSH IS READY");
-                await OneSignal.init({
-                    appId: "{{ $osAppId }}",
-                    @if($osSafariId) safari_web_id: "{{ $osSafariId }}", @endif
-                    allowLocalhostAsSecureContext: true,
-                    autoResubscribe: true,
-                    promptOptions: {
-                        slidedown: {
-                            enabled: true,
-                            autoPrompt: true,
-                            timeDelay: 3,
-                            pageViews: 1
-                        }
-                    },
-                    notifyButton: {
-                        enable: true,
-                        position: 'bottom-left',
-                        size: 'medium',
-                        theme: 'default',
-                        colors: {
-                            'circle.background': '#10b981',
-                            'circle.foreground': 'white',
-                            'pulse.color': '#10b981',
-                        },
-                    },
-                });
-            });
-        </script>
-        @endif
     </script>
+
+    @php 
+        $osAppId = \App\Models\Setting::getVal('onesignal_app_id');
+        $osSafariId = \App\Models\Setting::getVal('onesignal_safari_web_id');
+    @endphp
+
+    @if($osAppId)
+    <!-- OneSignal Integration -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            console.log("🚀 RENT SPACE PUSH IS READY");
+            await OneSignal.init({
+                appId: "{{ $osAppId }}",
+                @if($osSafariId) safari_web_id: "{{ $osSafariId }}", @endif
+                allowLocalhostAsSecureContext: true,
+                autoResubscribe: true,
+                promptOptions: {
+                    slidedown: {
+                        enabled: true,
+                        autoPrompt: true,
+                        timeDelay: 3,
+                        pageViews: 1
+                    }
+                },
+                notifyButton: {
+                    enable: true,
+                    position: 'bottom-left',
+                    size: 'medium',
+                    theme: 'default',
+                    colors: {
+                        'circle.background': '#10b981',
+                        'circle.foreground': 'white',
+                        'pulse.color': '#10b981',
+                    },
+                },
+            });
+        });
+    </script>
+    @endif
     @livewireScripts
 </body>
 
