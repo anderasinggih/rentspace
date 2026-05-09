@@ -13,6 +13,15 @@
                 </div>
                 <h1 class="text-xl font-bold tracking-tight text-foreground">Pesanan Dibatalkan</h1>
                 <p class="text-[10px] text-rose-500/70 mt-1 font-medium italic">Status: Sesi Pembayaran Berakhir (Unit Dilepas)</p>
+            @elseif($rental->status === 'pending_confirmation')
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500/10 text-amber-500 mb-4 animate-in zoom-in duration-500">
+                    <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-foreground text-amber-600">Menunggu Verifikasi</h1>
+                <p class="text-[10px] text-amber-600/70 font-medium mt-1">Status: Bukti Sedang Dicek Admin</p>
             @elseif($rental->status === 'paid')
                 <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 mb-4 animate-in zoom-in duration-700">
                     <svg viewBox="0 0 24 24" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3">
@@ -182,6 +191,13 @@
             <!-- Conditional Actions Based on Ownership and Status -->
             @if($isOwner)
                 <div class="space-y-3 pt-4 no-pdf">
+                    @if($rental->status === 'pending_confirmation')
+                        <div class="p-4 bg-amber-500/5 border border-dashed border-amber-500/20 rounded-2xl text-center">
+                             <p class="text-xs font-bold text-amber-700 mb-1">Pesanan Anda Telah Diamankan!</p>
+                             <p class="text-[10px] text-amber-600/80 leading-relaxed">Admin akan segera melakukan verifikasi pembayaran Anda. Mohon tunggu notifikasi selanjutnya.</p>
+                        </div>
+                    @endif
+
                     @if($rental->status === 'pending')
                         {{-- Jika Online, kasih tombol Bayar Sekarang --}}
                         @if($rental->metode_pembayaran !== 'cash')
@@ -266,7 +282,7 @@
                     @endif
 
                     <div class="grid grid-cols-1 gap-2">
-                        @if($rental->status === 'pending')
+                        @if($rental->status === 'pending' || $rental->status === 'pending_confirmation')
                             <div class="grid grid-cols-2 gap-2">
                                 <button wire:click="validateOrder" wire:confirm="Validasi pembayarn manual?"
                                     class="flex items-center justify-center h-10 rounded-xl bg-zinc-900 text-white text-[11px] font-bold hover:bg-black transition-all">

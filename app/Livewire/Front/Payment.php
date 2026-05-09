@@ -407,6 +407,32 @@ class Payment extends Component
         $this->snapToken = null;
     }
 
+    public function confirmManualPayment()
+    {
+        if ($this->rental->status !== 'pending') return;
+
+        $this->rental->update([
+            'status' => 'pending_confirmation',
+            'updated_at' => now(), // Memaksa update timestamp
+        ]);
+
+        // --- PUSH NOTIFICATION KE ADMIN ---
+        try {
+            $adminIds = \App\Models\User::where('role', 'admin')->pluck('id');
+            if ($adminIds->isNotEmpty()) {
+                \App\Services\OneSignalService::sendToAll(
+                    "💵 Pembayaran QRIS Manual baru dari {$this->rental->nama} (Rp " . number_format($this->rental->grand_total, 0, ',', '.') . "). Segera cek dan konfirmasi!",
+                    "📢 KONFIRMASI PEMBAYARAN",
+                    route('admin.monitoring') // Arahkan admin ke halaman monitoring
+                );
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Push Notification Error: ' . $e->getMessage());
+        }
+
+        return redirect()->route('public.success', $this->rental->booking_code);
+    }
+
     public function finish($method = null)
     {
         return redirect()->route('public.success', $this->rental->booking_code);

@@ -216,9 +216,15 @@
                             @endphp
 
                             <a href="{{ $waUrl }}" target="_blank"
-                               class="w-full h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center gap-2 font-bold hover:bg-emerald-700 transition-all text-xs">
+                               class="w-full h-11 rounded-xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center gap-2 font-bold hover:bg-emerald-600 hover:text-white transition-all text-xs mb-2">
                                 Kirim Bukti ke WhatsApp
                             </a>
+
+                            <button wire:click="confirmManualPayment" wire:loading.attr="disabled"
+                                class="w-full h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center gap-2 font-bold hover:bg-emerald-700 transition-all text-sm shadow-lg shadow-emerald-600/20 active:scale-95">
+                                <span wire:loading.remove wire:target="confirmManualPayment">SAYA SUDAH BAYAR</span>
+                                <span wire:loading wire:target="confirmManualPayment">Sedang Mengirim...</span>
+                            </button>
                         @else
                             <div class="space-y-4">
                                 @if(data_get($paymentInfo, 'payment_type') === 'cash')

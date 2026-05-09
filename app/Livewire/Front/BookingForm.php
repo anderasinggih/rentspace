@@ -170,7 +170,7 @@ class BookingForm extends Component
         // 1. Calculate Availability Status for ALL units
         $units = Unit::query()->where('is_active', true)
             ->with(['category', 'rentals' => function($q) use ($start, $end) {
-                $q->whereIn('status', ['pending', 'paid', 'renting'])
+                $q->whereIn('status', ['pending', 'paid', 'renting', 'pending_confirmation'])
                   ->where(function($qq) use ($start, $end) {
                       $qq->whereBetween('waktu_mulai', [$start, $end])
                          ->orWhereBetween('waktu_selesai', [$start, $end])
