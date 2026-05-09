@@ -357,9 +357,9 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
 
         // Save OneSignal Settings
-        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_app_id'], ['value' => $this->onesignal_app_id]);
-        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_rest_api_key'], ['value' => $this->onesignal_rest_api_key]);
-        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_safari_web_id'], ['value' => $this->onesignal_safari_web_id]);
+        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_app_id'], ['value' => trim($this->onesignal_app_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_rest_api_key'], ['value' => trim($this->onesignal_rest_api_key)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_safari_web_id'], ['value' => trim($this->onesignal_safari_web_id)]);
 
 
         // Physically update .env file
