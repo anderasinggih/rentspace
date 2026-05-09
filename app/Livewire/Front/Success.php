@@ -198,8 +198,26 @@ class Success extends Component
                         'status' => 'paid',
                         'paid_at' => now(),
                     ]);
+
+                    // --- PUSH NOTIFICATION (LUNAS OTOMATIS) ---
+                    try {
+                        \App\Services\OneSignalService::sendToAll(
+                            "✅ Pembayaran LUNAS (Midtrans) dari {$this->rental->nama} untuk booking {$this->rental->booking_code}.",
+                            "💰 PEMBAYARAN MASUK",
+                            route('admin.monitoring')
+                        );
+                    } catch (\Exception $e) { }
                 } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
                     $this->rental->update(['status' => 'cancelled']);
+
+                    // --- PUSH NOTIFICATION (BATAL OTOMATIS) ---
+                    try {
+                        \App\Services\OneSignalService::sendToAll(
+                            "❌ Pesanan {$this->rental->booking_code} ({$this->rental->nama}) telah DIBATALKAN/EXPIRED.",
+                            "⚠️ PESANAN BATAL",
+                            route('admin.monitoring')
+                        );
+                    } catch (\Exception $e) { }
                 }
             } else {
                 $this->debugError = "Data ada tapi 'order_id' tidak ditemukan. Isi: " . json_encode($details);
@@ -221,6 +239,16 @@ class Success extends Component
             'status' => 'paid',
             'paid_at' => now(),
         ]);
+
+        // --- PUSH NOTIFICATION (LUNAS MANUAL) ---
+        try {
+            \App\Services\OneSignalService::sendToAll(
+                "✅ Pembayaran Dikonfirmasi LUNAS oleh Admin untuk {$this->rental->nama}.",
+                "💰 PEMBAYARAN DIKONFIRMASI",
+                route('admin.monitoring')
+            );
+        } catch (\Exception $e) { }
+
         $this->rental = $this->rental->fresh();
     }
 
@@ -228,6 +256,16 @@ class Success extends Component
     {
         if (!auth()->check() || auth()->user()->role !== 'admin') return;
         $this->rental->update(['status' => 'cancelled']);
+
+        // --- PUSH NOTIFICATION (BATAL MANUAL) ---
+        try {
+            \App\Services\OneSignalService::sendToAll(
+                "❌ Pesanan {$this->rental->booking_code} telah DIBATALKAN oleh Admin.",
+                "🚫 PESANAN DIBATALKAN",
+                route('admin.monitoring')
+            );
+        } catch (\Exception $e) { }
+
         $this->rental = $this->rental->fresh();
     }
 
