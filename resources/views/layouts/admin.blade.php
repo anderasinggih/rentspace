@@ -139,5 +139,13 @@
             printWindow.document.close();
         };
     </script>
+    <script>
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('[wire\\:click]')) {
+                console.log('👆 Click detected on Livewire element:', e.target.closest('[wire\\:click]'));
+            }
+        });
+    </script>
+    @livewireScripts
 </body>
 </html>
