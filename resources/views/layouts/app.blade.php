@@ -64,6 +64,15 @@
                 font-size: 16px !important;
             }
         }
+
+        /* Hide scrollbar but keep scroll functionality */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        html, body {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
     </style>
     <script>
         // Force disable zooming

@@ -81,6 +81,16 @@
             .group:active .group-hover\:scale-110,
             .group:active .group-hover\:scale-150 { transform: scale(1.1) !important; }
         }
+
+        /* Hide scrollbar but keep scroll functionality */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        html, body {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
         @keyframes shine {
             from { left: -100%; }
             to { left: 200%; }

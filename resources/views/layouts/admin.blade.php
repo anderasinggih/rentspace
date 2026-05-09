@@ -59,6 +59,15 @@
             user-select: text !important;
             -webkit-user-select: text !important;
         }
+
+        /* Hide scrollbar but keep scroll functionality */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        html, body {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
     </style>
     <script>
         document.documentElement.classList.add('no-transitions');
