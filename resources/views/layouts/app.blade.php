@@ -120,35 +120,19 @@
                 appId: "{{ $osAppId }}",
                 @if($osSafariId) safari_web_id: "{{ $osSafariId }}", @endif
                 allowLocalhostAsSecureContext: true,
-                autoResubscribe: true,
-                promptOptions: {
-                    slidedown: {
-                        enabled: true,
-                        autoPrompt: true,
-                        timeDelay: 1, // Dipercepat jadi 1 detik
-                        pageViews: 1
-                    }
-                },
-                notifyButton: {
-                    enable: true,
-                    position: 'bottom-left',
-                    size: 'medium',
-                    theme: 'default',
-                    colors: {
-                        'circle.background': '#10b981',
-                        'circle.foreground': 'white',
-                        'pulse.color': '#10b981',
-                    },
-                },
+                serviceWorkerParam: { scope: "/" },
+                serviceWorkerPath: "OneSignalSDKWorker.js",
             });
 
-            // Force show prompt if not subscribed
-            if (OneSignal.Notifications.permission === 'default') {
-                console.log("📢 Attempting to show Slidedown Prompt...");
-                await OneSignal.showSlidedownPrompt();
-            } else {
-                console.log("✅ User already has permission state:", OneSignal.Notifications.permission);
-            }
+            // Beri jeda 2 detik setelah init agar benar-benar siap
+            setTimeout(async () => {
+                if (OneSignal.Notifications.permission === 'default') {
+                    console.log("📢 Attempting to show Slidedown Prompt...");
+                    await OneSignal.showSlidedownPrompt();
+                } else {
+                    console.log("✅ Current permission:", OneSignal.Notifications.permission);
+                }
+            }, 2000);
         });
     </script>
     @else
