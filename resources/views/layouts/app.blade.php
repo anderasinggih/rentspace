@@ -114,6 +114,8 @@
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {
             console.log("🚀 RENT SPACE PUSH IS READY");
+            console.log("🔔 Current Permission:", OneSignal.Notifications.permission);
+            
             await OneSignal.init({
                 appId: "{{ $osAppId }}",
                 @if($osSafariId) safari_web_id: "{{ $osSafariId }}", @endif
@@ -123,7 +125,7 @@
                     slidedown: {
                         enabled: true,
                         autoPrompt: true,
-                        timeDelay: 3,
+                        timeDelay: 1, // Dipercepat jadi 1 detik
                         pageViews: 1
                     }
                 },
@@ -141,11 +143,16 @@
             });
 
             // Force show prompt if not subscribed
-            if (!OneSignal.Notifications.permission) {
-                await OneSignal.Slidedown.promptForPushNotifications();
+            if (OneSignal.Notifications.permission === 'default') {
+                console.log("📢 Attempting to show Slidedown Prompt...");
+                await OneSignal.showSlidedownPrompt();
+            } else {
+                console.log("✅ User already has permission state:", OneSignal.Notifications.permission);
             }
         });
     </script>
+    @else
+    <script>console.warn("⚠️ OneSignal App ID is MISSING in Database Settings!");</script>
     @endif
     @livewireScripts
 </body>
