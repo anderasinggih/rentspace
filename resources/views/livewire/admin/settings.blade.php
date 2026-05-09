@@ -1,4 +1,4 @@
-<div>
+<div class="overflow-x-hidden">
     <div class="mb-6 flex flex-col gap-4">
         <div class="flex items-center justify-between">
             <div>
