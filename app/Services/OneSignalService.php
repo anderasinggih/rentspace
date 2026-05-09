@@ -21,6 +21,10 @@ class OneSignalService
         $apiKey = Setting::getVal('onesignal_rest_api_key');
 
         if (!$appId || !$apiKey) {
+            \Illuminate\Support\Facades\Log::warning('OneSignal Push Aborted: Missing Configuration.', [
+                'app_id' => $appId ? 'PRESENT' : 'MISSING',
+                'api_key' => $apiKey ? 'PRESENT' : 'MISSING'
+            ]);
             return [
                 'success' => false,
                 'message' => 'OneSignal configuration is missing.'
