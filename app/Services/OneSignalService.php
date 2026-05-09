@@ -36,7 +36,7 @@ class OneSignalService
             'Content-Type' => 'application/json',
         ])->post('https://onesignal.com/api/v1/notifications', [
             'app_id' => $appId,
-            'included_segments' => ['All'],
+            'included_segments' => ['Total Subscriptions'], // Menggunakan Total Subscriptions lebih akurat di beberapa kasus
             'target_channel' => 'push',
             'contents' => [
                 'en' => $message,
@@ -48,6 +48,9 @@ class OneSignalService
             ],
             'isAnyWeb' => true,
             'url' => $url ?: config('app.url'),
+            'priority' => 10, // High Priority
+            'web_push_priority' => 'high',
+            'ttl' => 3600, // 1 jam masa tunggu jika HP offline
         ]);
 
         if ($response->successful()) {
