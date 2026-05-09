@@ -107,6 +107,7 @@
         @endphp
 
         @if($osAppId)
+        <!-- DEBUG: OneSignal Detected with ID: {{ $osAppId }} -->
         <!-- OneSignal Deep Integration -->
         <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
         <script>
