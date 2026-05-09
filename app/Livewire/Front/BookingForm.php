@@ -628,6 +628,28 @@ class BookingForm extends Component
             $finalWaktuSelesai = Carbon::parse($finalWaktuSelesai)->addHours($this->jam_bonus)->format('Y-m-d\TH:i');
         }
 
+        $rental = Rental::create([
+            'unit_id' => $this->selected_unit_ids[0] ?? null, // Backward compatibility
+            'nik' => $this->nik,
+            'nama' => strtoupper($this->nama),
+            'email' => strtolower($this->email),
+            'alamat' => strtoupper($this->alamat),
+            'sosial_media' => $this->sosial_media,
+            'no_wa' => $this->no_wa,
+            'waktu_mulai' => $this->waktu_mulai,
+            'waktu_selesai' => $finalWaktuSelesai,
+            'subtotal_harga' => $this->subtotal,
+            'potongan_diskon' => $this->potongan_diskon,
+            'applied_promo_name' => $this->applied_promo_label ?: null,
+            'applied_promo_id' => !empty($this->selected_promo_ids) ? reset($this->selected_promo_ids) : null, // Store primary promo ID
+            'hari_bonus' => $this->hari_bonus,
+            'jam_bonus' => $this->jam_bonus,
+            'kode_unik_pembayaran' => $this->kode_unik,
+            'grand_total' => $this->grand_total,
+            'status' => 'pending',
+            'metode_pembayaran' => 'online', // Paksa online biar gak kena default qris dari DB
+            'affiliate_code' => $this->referral_code ?: null,
+            'affiliator_id' => $this->referral_code ? (\App\Models\AffiliatorProfile::where('referral_code', strtoupper($this->referral_code))->first()->user_id ?? null) : null,
         ]);
 
         // --- PUSH NOTIFICATION KE ADMIN (PESANAN BARU) ---
