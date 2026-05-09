@@ -82,9 +82,16 @@ class AnnouncementManager extends Component
 
     public function pushNow($id)
     {
-        dd('TES KONEKSI KE SERVER BERHASIL! ID: ' . $id);
-        \Illuminate\Support\Facades\Log::info('AnnouncementManager: pushNow triggered for ID ' . $id);
         $ann = Announcement::findOrFail($id);
+        
+        $appId = \App\Models\Setting::getVal('onesignal_app_id');
+        $apiKey = \App\Models\Setting::getVal('onesignal_rest_api_key');
+
+        \Illuminate\Support\Facades\Log::info('AnnouncementManager: Attempting Push', [
+            'id' => $id,
+            'app_id_found' => $appId ? 'YES ('.substr($appId, 0, 8).'...)' : 'NO',
+            'api_key_found' => $apiKey ? 'YES ('.substr($apiKey, 0, 8).'...)' : 'NO',
+        ]);
         
         $result = \App\Services\OneSignalService::sendToAll(
             $ann->message,
