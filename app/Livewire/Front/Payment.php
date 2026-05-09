@@ -105,8 +105,9 @@ class Payment extends Component
         $this->rental = $this->rental->fresh();
         
         // 1. CEK MIDTRANS DULU (Prioritas Nomor Wahid)
+        // Jangan cek Midtrans jika metode adalah manual_qris
         $orderId = data_get($this->rental->payment_details, 'order_id');
-        if ($orderId && $this->rental->status === 'pending') {
+        if ($orderId && $this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'manual_qris') {
             try {
                 Config::$serverKey = config('midtrans.server_key');
                 Config::$isProduction = config('midtrans.is_production');
@@ -142,8 +143,8 @@ class Payment extends Component
             } catch (\Exception $e) { }
         }
 
-        // 2. CEK TIMER (Hanya jika di Midtrans memang belum dibayar & BUKAN cash)
-        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
+        // 2. CEK TIMER (Hanya jika di Midtrans memang belum dibayar & BUKAN cash & BUKAN manual_qris)
+        if ($this->rental->status === 'pending' && !in_array($this->rental->metode_pembayaran, ['cash', 'manual_qris']) && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {

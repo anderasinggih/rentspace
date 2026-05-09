@@ -51,14 +51,14 @@ class Success extends Component
         }
 
         // 1. CEK MIDTRANS DULU (Prioritas Utama)
-        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && $this->rental->metode_pembayaran !== 'online') {
+        if ($this->rental->status === 'pending' && !in_array($this->rental->metode_pembayaran, ['cash', 'online', 'manual_qris'])) {
             $this->checkMidtransStatus(); // Update DB kalau emang sebenernya sudah bayar
             $this->rental->refresh();
         }
 
-        // 2. GARIS POLISI: Baru cek apakah sudah basi (Hanya jika masih pending & BUKAN cash)
+        // 2. GARIS POLISI: Baru cek apakah sudah basi (Hanya jika masih pending & BUKAN cash & BUKAN manual_qris)
         $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
-        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && $isExpired) {
+        if ($this->rental->status === 'pending' && !in_array($this->rental->metode_pembayaran, ['cash', 'manual_qris']) && $isExpired) {
             // --- JURUS SAPU JAGAT: CANCEL SEMUA KEMUNGKINAN BANK ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -142,8 +142,8 @@ class Success extends Component
             $this->rental->refresh();
         }
 
-        // 2. CEK TIMER (Hanya jika di Midtrans belum dibayar & BUKAN cash)
-        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
+        // 2. CEK TIMER (Hanya jika di Midtrans belum dibayar & BUKAN cash & BUKAN manual_qris)
+        if ($this->rental->status === 'pending' && !in_array($this->rental->metode_pembayaran, ['cash', 'manual_qris']) && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -164,8 +164,8 @@ class Success extends Component
         try {
             $details = $this->rental->payment_details;
             
-            // Jika Cash, abaikan pengecekan Midtrans
-            if ($this->rental->metode_pembayaran === 'cash') {
+            // Jika Cash atau Manual QRIS, abaikan pengecekan Midtrans
+            if (in_array($this->rental->metode_pembayaran, ['cash', 'manual_qris'])) {
                 return;
             }
 
