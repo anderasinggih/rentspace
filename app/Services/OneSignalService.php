@@ -39,11 +39,17 @@ class OneSignalService
         ]);
 
         if ($response->successful()) {
+            \Illuminate\Support\Facades\Log::info('OneSignal Push Success:', $response->json());
             return [
                 'success' => true,
                 'data' => $response->json()
             ];
         }
+
+        \Illuminate\Support\Facades\Log::error('OneSignal Push Failed:', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
 
         return [
             'success' => false,
