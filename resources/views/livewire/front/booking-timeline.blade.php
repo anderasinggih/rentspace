@@ -154,17 +154,17 @@
                                             $startIndex = $startDate->diffInDays($displayStart);
                                             $duration = $displayStart->diffInDays($displayEnd) ?: 1;
 
-                                            $isPending = $rental->status == 'pending';
-                                            $isPaid = $rental->status == 'paid';
+                                            $isWaiting = in_array($rental->status, ['pending', 'pending_confirmation']);
+                                            $isActive = in_array($rental->status, ['paid', 'renting']);
 
-                                            if ($isPending) {
+                                            if ($isWaiting) {
                                                 $bgColor = 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30';
                                                 $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>';
-                                                $label = 'Dibooking';
-                                            } elseif ($isPaid) {
+                                                $label = $rental->status === 'pending_confirmation' ? 'Verifikasi' : 'Dibooking';
+                                            } elseif ($isActive) {
                                                 $bgColor = 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30';
                                                 $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" /></svg>';
-                                                $label = 'Disewa';
+                                                $label = $rental->status === 'renting' ? 'Sedang Sewa' : 'Lunas';
                                             } else {
                                                 $bgColor = 'bg-slate-500/20 text-slate-700 dark:text-slate-400 border border-slate-500/30';
                                                 $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" x2="4" y1="22" y2="15" /></svg>';
