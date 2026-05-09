@@ -1,4 +1,4 @@
-<div class="overflow-x-hidden">
+<div class="max-w-full overflow-x-hidden relative">
     <div class="mb-6 flex flex-col gap-4">
         <div class="flex items-center justify-between">
             <div>
@@ -281,7 +281,7 @@
         @if($activeTab === 'akun')
                                 <!-- Kelola Akun -->
                                 <div
-                                    class="bg-background rounded-xl border border-border overflow-hidden shadow-sm flex flex-col">
+                                    class="bg-background rounded-xl border border-border overflow-hidden shadow-sm flex flex-col max-w-full">
                                     <div class="p-4 border-b border-border bg-muted/30">
                                         <h2 class="text-lg font-semibold">{{ $isEditMode ? 'Edit Akun: ' . $name : 'Kelola Akun' }}</h2>
                                         <p class="text-xs text-muted-foreground">
@@ -467,8 +467,8 @@
                                             </div>
                                         </div>
 
-                                        <div class="border rounded-lg overflow-hidden bg-background shadow-sm">
-                                            <div class="overflow-x-auto">
+                                        <div class="border rounded-lg overflow-hidden bg-background shadow-sm max-w-full">
+                                            <div class="overflow-x-auto max-w-full">
                                                 <table class="w-full text-sm text-left shadow-sm">
                                                     <thead
                                                         class="bg-muted/50 text-xs text-muted-foreground border-b border-border transition-colors">
