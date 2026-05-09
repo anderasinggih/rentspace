@@ -111,6 +111,32 @@
                 safari_web_id: "{{ \App\Models\Setting::getVal('onesignal_safari_web_id') }}",
                 notifyButton: {
                     enable: true,
+                    size: 'medium',
+                    theme: 'default',
+                    position: 'bottom-left',
+                    offset: {
+                        bottom: '80px',
+                        left: '20px'
+                    },
+                    colors: {
+                        'circle.background': '#10b981', // Emerald 500
+                        'circle.foreground': 'white',
+                        'badge.background': '#ef4444',
+                        'badge.foreground': 'white',
+                        'badge.bordercolor': 'white',
+                        'pulse.color': '#10b981',
+                        'dialog.button.background.hovering': '#059669',
+                        'dialog.button.background.active': '#059669',
+                        'dialog.button.background': '#10b981',
+                        'dialog.button.foreground': 'white',
+                        'dialog.error.foreground': 'white',
+                        'dialog.error.iconcolor': 'white',
+                    },
+                    displayPredicate: function() {
+                        return OneSignal.isPushNotificationsEnabled().then(function(isEnabled) {
+                            return !isEnabled;
+                        });
+                    }
                 },
                 allowLocalhostAsSecureContext: true,
             });
