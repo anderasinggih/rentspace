@@ -332,7 +332,7 @@
                                             <div
                                                 class="flex items-center gap-2.5 overflow-hidden transition-all">
                                                 <div
-                                                    class="h-1.5 w-1.5 rounded-full {{ $dotColor }} {{ $rental->status == 'pending' ? 'animate-pulse' : '' }} shrink-0">
+                                                    class="h-1.5 w-1.5 rounded-full {{ $dotColor }} {{ in_array($rental->status, ['pending', 'pending_confirmation']) ? 'animate-pulse' : '' }} shrink-0">
                                                 </div>
                                                 <div class="min-w-0">
                                                     <span class="text-[10px] font-black truncate leading-none block">
@@ -552,7 +552,7 @@
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
                                                         Validasi Ambil
                                                     </button>
-                                                @elseif ($rental->status === 'pending')
+                                                @elseif (in_array($rental->status, ['pending', 'pending_confirmation']))
                                                     <button wire:click="markAsPaid({{ $rental->id }})"
                                                         wire:loading.attr="disabled"
                                                         class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-sm">

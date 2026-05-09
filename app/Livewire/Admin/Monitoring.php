@@ -75,7 +75,7 @@ class Monitoring extends Component
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
-        if ($rental->status === 'pending') {
+        if (in_array($rental->status, ['pending', 'pending_confirmation'])) {
             $rental->update([
                 'status' => 'paid',
                 'paid_at' => now(),
@@ -91,7 +91,7 @@ class Monitoring extends Component
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
         $rental = Rental::findOrFail($id);
-        if (in_array($rental->status, ['pending', 'paid'])) {
+        if (in_array($rental->status, ['pending', 'paid', 'pending_confirmation'])) {
             $rental->update(['status' => 'cancelled']);
             $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id} via Monitoring");
         }
@@ -228,7 +228,7 @@ class Monitoring extends Component
 
         // 1. Fetch Timeline Units & Rentals
         $unitsQuery = Unit::query()->with(['category', 'rentals' => function ($q) use ($startDate, $endDate) {
-            $q->whereIn('status', ['paid', 'pending', 'completed', 'renting'])
+            $q->whereIn('status', ['paid', 'pending', 'completed', 'renting', 'pending_confirmation'])
               ->where('waktu_mulai', '<=', $endDate)
               ->where('waktu_selesai', '>=', $startDate)
               ->when($this->search, function($q) {
@@ -275,7 +275,7 @@ class Monitoring extends Component
 
         // 4. Fetch Upcoming & Ready to Collect (Status is 'paid' or 'pending')
         $upcomingRentalsQuery = Rental::with(['units.category'])
-            ->whereIn('status', ['paid', 'pending']);
+            ->whereIn('status', ['paid', 'pending', 'pending_confirmation']);
             // Note: we don't strictly filter by waktu_mulai > now anymore, 
             // since a PAID rental that is supposed to start might be waiting for pickup
 
@@ -313,7 +313,7 @@ class Monitoring extends Component
             ->where('waktu_selesai', '<=', now()->addHours(6))
             ->count();
             
-        $pendingCount = $upcomingRentals->where('status', 'pending')->count();
+        $pendingCount = $upcomingRentals->whereIn('status', ['pending', 'pending_confirmation'])->count();
 
         return view('livewire.admin.monitoring', [
             'units' => $units,
