@@ -122,30 +122,27 @@
                 allowLocalhostAsSecureContext: true,
             });
 
-            // Beri jeda 2 detik setelah init agar benar-benar siap
-            setTimeout(async () => {
-                const permission = OneSignal.Notifications.permission;
-                console.log("🔔 Current Permission Status:", permission);
-                
-                if (permission === 'default') {
-                    console.log("📢 Attempting to show Slidedown Prompt...");
-                    await OneSignal.showSlidedownPrompt();
-                }
+            const permission = OneSignal.Notifications.permission;
+            console.log("🔔 Current Permission Status:", permission);
+            
+            if (permission === 'default') {
+                console.log("📢 Attempting to show Slidedown Prompt...");
+                await OneSignal.showSlidedownPrompt();
+            }
 
-                @auth
-                    // Identifikasi User & Set Tag Role
-                    console.log("🆔 Identifying User: {{ auth()->id() }}");
-                    await OneSignal.login("{{ auth()->id() }}");
-                    await OneSignal.User.addTag("role", "{{ auth()->user()->role }}");
-                    console.log("🏷️ Tag Role Set: {{ auth()->user()->role }}");
-                @else
-                    // Logout dari OneSignal jika tidak terautentikasi
-                    if (OneSignal.User.externalId) {
-                        console.log("🔓 Logging out from OneSignal...");
-                        await OneSignal.logout();
-                    }
-                @endauth
-            }, 2000);
+            @auth
+                // Identifikasi User & Set Tag Role
+                console.log("🆔 Identifying User: {{ auth()->id() }}");
+                await OneSignal.login("{{ auth()->id() }}");
+                await OneSignal.User.addTag("role", "{{ auth()->user()->role }}");
+                console.log("🏷️ Tag Role Set: {{ auth()->user()->role }}");
+            @else
+                // Logout dari OneSignal jika tidak terautentikasi
+                if (OneSignal.User.externalId) {
+                    console.log("🔓 Logging out from OneSignal...");
+                    await OneSignal.logout();
+                }
+            @endauth
         });
     </script>
     @else
