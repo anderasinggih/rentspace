@@ -82,6 +82,7 @@ class AnnouncementManager extends Component
 
     public function pushNow($id)
     {
+        dd('TES KONEKSI KE SERVER BERHASIL! ID: ' . $id);
         \Illuminate\Support\Facades\Log::info('AnnouncementManager: pushNow triggered for ID ' . $id);
         $ann = Announcement::findOrFail($id);
         
