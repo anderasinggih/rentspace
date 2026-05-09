@@ -13,7 +13,7 @@
 
     @livewireStyles
     @if($appId = \App\Models\Setting::getVal('onesignal_app_id'))
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.plugin.js" async=""></script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     @endif
     <script>
         function applyTheme() {
@@ -104,9 +104,9 @@
 
         // OneSignal Initialization
         @if($appId = \App\Models\Setting::getVal('onesignal_app_id'))
-        window.OneSignal = window.OneSignal || [];
-        OneSignal.push(function() {
-            OneSignal.init({
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
                 appId: "{{ $appId }}",
                 safari_web_id: "{{ \App\Models\Setting::getVal('onesignal_safari_web_id') }}",
                 notifyButton: {
@@ -132,11 +132,6 @@
                         'dialog.error.foreground': 'white',
                         'dialog.error.iconcolor': 'white',
                     },
-                    displayPredicate: function() {
-                        return OneSignal.isPushNotificationsEnabled().then(function(isEnabled) {
-                            return !isEnabled;
-                        });
-                    }
                 },
                 allowLocalhostAsSecureContext: true,
             });
