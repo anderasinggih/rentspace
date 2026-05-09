@@ -100,7 +100,8 @@ class AnnouncementManager extends Component
         );
 
         if ($result['success']) {
-            session()->flash('message', 'Push notification sent to all users!');
+            $osId = $result['data']['id'] ?? 'N/A';
+            session()->flash('message', "Push sent successfully! OneSignal ID: {$osId}");
         } else {
             session()->flash('error', 'Push failed: ' . $result['message']);
         }
