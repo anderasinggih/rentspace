@@ -82,6 +82,7 @@ class AnnouncementManager extends Component
 
     public function pushNow($id)
     {
+        \Illuminate\Support\Facades\Log::info('AnnouncementManager: pushNow triggered for ID ' . $id);
         $ann = Announcement::findOrFail($id);
         
         $result = \App\Services\OneSignalService::sendToAll(
