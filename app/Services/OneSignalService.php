@@ -71,4 +71,40 @@ class OneSignalService
             'message' => $response->body()
         ];
     }
+    /**
+     * Send a push notification specifically to Admins.
+     */
+    public static function sendToAdmins($message, $title = null, $url = null)
+    {
+        $appId = Setting::getVal('onesignal_app_id');
+        $apiKey = Setting::getVal('onesignal_rest_api_key');
+
+        if (!$appId || !$apiKey) return ['success' => false];
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Basic ' . $apiKey,
+            'Content-Type' => 'application/json',
+        ])->post('https://onesignal.com/api/v1/notifications', [
+            'app_id' => $appId,
+            'filters' => [
+                ['field' => 'tag', 'key' => 'role', 'relation' => '=', 'value' => 'admin'],
+                // OR (Staff juga bisa dapet kalau mau)
+                // ['operator' => 'OR'],
+                // ['field' => 'tag', 'key' => 'role', 'relation' => '=', 'value' => 'staff'],
+            ],
+            'contents' => [
+                'en' => $message,
+                'id' => $message,
+            ],
+            'headings' => [
+                'en' => $title ?: 'RENT SPACE',
+                'id' => $title ?: 'RENT SPACE',
+            ],
+            'url' => $url ?: route('admin.monitoring'),
+            'priority' => 10,
+            'web_push_priority' => 'high',
+        ]);
+
+        return ['success' => $response->successful()];
+    }
 }

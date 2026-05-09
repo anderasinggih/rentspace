@@ -654,7 +654,7 @@ class BookingForm extends Component
 
         // --- PUSH NOTIFICATION KE ADMIN (PESANAN BARU) ---
         try {
-            \App\Services\OneSignalService::sendToAll(
+            \App\Services\OneSignalService::sendToAdmins(
                 "🆕 Pesanan Baru: " . strtoupper($this->nama) . " membooking unit (Rp " . number_format($this->grand_total, 0, ',', '.') . ")",
                 "🔔 PESANAN MASUK",
                 route('admin.monitoring')

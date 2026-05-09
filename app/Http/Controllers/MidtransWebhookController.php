@@ -67,7 +67,7 @@ class MidtransWebhookController extends Controller
 
                     // --- PUSH NOTIFICATION KE ADMIN ---
                     try {
-                        \App\Services\OneSignalService::sendToAll(
+                        \App\Services\OneSignalService::sendToAdmins(
                             "✅ Pembayaran Lunas: " . strtoupper($rental->nama) . " (Rp " . number_format($rental->grand_total, 0, ',', '.') . ")",
                             "💰 PEMBAYARAN MASUK",
                             route('admin.monitoring')
@@ -83,7 +83,7 @@ class MidtransWebhookController extends Controller
 
                 // --- PUSH NOTIFICATION KE ADMIN ---
                 try {
-                    \App\Services\OneSignalService::sendToAll(
+                    \App\Services\OneSignalService::sendToAdmins(
                         "❌ Pesanan Dibatalkan: " . strtoupper($rental->nama) . " (" . strtoupper($status) . ")",
                         "⚠️ PESANAN BATAL",
                         route('admin.monitoring')

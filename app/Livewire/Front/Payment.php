@@ -419,14 +419,11 @@ class Payment extends Component
 
         // --- PUSH NOTIFICATION KE ADMIN ---
         try {
-            $adminIds = \App\Models\User::where('role', 'admin')->pluck('id');
-            if ($adminIds->isNotEmpty()) {
-                \App\Services\OneSignalService::sendToAll(
-                    "💵 Pembayaran QRIS Manual baru dari {$this->rental->nama} (Rp " . number_format($this->rental->grand_total, 0, ',', '.') . "). Segera cek dan konfirmasi!",
-                    "📢 KONFIRMASI PEMBAYARAN",
-                    route('admin.monitoring') // Arahkan admin ke halaman monitoring
-                );
-            }
+            \App\Services\OneSignalService::sendToAdmins(
+                "💵 Pembayaran QRIS Manual baru dari {$this->rental->nama} (Rp " . number_format($this->rental->grand_total, 0, ',', '.') . "). Segera cek dan konfirmasi!",
+                "📢 KONFIRMASI PEMBAYARAN",
+                route('admin.monitoring') // Arahkan admin ke halaman monitoring
+            );
 
             // --- EMAIL NOTIFICATION KE ADMIN ---
             $isAdminEmailEnabled = \App\Models\Setting::getVal('is_email_active', '1') == '1';
@@ -468,7 +465,7 @@ class Payment extends Component
         
         // --- PUSH NOTIFICATION KE ADMIN ---
         try {
-            \App\Services\OneSignalService::sendToAll(
+            \App\Services\OneSignalService::sendToAdmins(
                 "⚠️ Pesanan Dibatalkan User: " . strtoupper($this->rental->nama),
                 "🚫 PESANAN BATAL",
                 route('admin.monitoring')

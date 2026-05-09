@@ -115,7 +115,7 @@ class Transactions extends Component
 
             // --- PUSH NOTIFICATION KE ADMIN ---
             try {
-                \App\Services\OneSignalService::sendToAll(
+                \App\Services\OneSignalService::sendToAdmins(
                     "✅ Pembayaran Divalidasi Manual: " . strtoupper($rental->nama) . " (Rp " . number_format($rental->grand_total, 0, ',', '.') . ") oleh " . auth()->user()->name,
                     "💰 PEMBAYARAN TERVALIDASI",
                     route('admin.monitoring')
@@ -153,7 +153,7 @@ class Transactions extends Component
 
             // --- PUSH NOTIFICATION KE ADMIN ---
             try {
-                \App\Services\OneSignalService::sendToAll(
+                \App\Services\OneSignalService::sendToAdmins(
                     "❌ Pesanan Dibatalkan Admin: " . strtoupper($rental->nama) . " oleh " . auth()->user()->name,
                     "⚠️ PESANAN BATAL",
                     route('admin.monitoring')
