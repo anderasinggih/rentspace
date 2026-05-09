@@ -8,6 +8,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>{{ config('app.name', 'RENT SPACE') }} PURWOKERTO</title>
     
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RENT SPACE">
+    <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RENT SPACE">
+    <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
+    
     <script>
         (function() {
             const darkMode = localStorage.getItem('darkMode');
@@ -1226,6 +1242,20 @@
             })
         })
     </script>
+    <script>
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('📦 PWA Service Worker Registered!', reg.scope);
+                }).catch(err => {
+                    console.log('❌ PWA Service Worker Registration Failed:', err);
+                });
+            });
+        }
+    </script>
+
+    <x-pwa-install-prompt />
 </body>
 
 </html>
