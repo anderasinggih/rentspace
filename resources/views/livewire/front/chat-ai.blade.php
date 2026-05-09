@@ -1,4 +1,20 @@
-<div class="fixed bottom-6 right-6 z-[100] font-sans" x-data>
+<div class="fixed bottom-6 right-6 z-[100] font-sans" 
+    x-data="{ 
+        secondsLeft: 0,
+        init() {
+            setInterval(() => {
+                if (this.secondsLeft > 0) this.secondsLeft--;
+            }, 1000);
+            // Sync with Livewire when spamUntil changes
+            this.$watch('$wire.spamUntil', value => {
+                const diff = Math.ceil((value - Date.now()) / 1000);
+                this.secondsLeft = diff > 0 ? diff : 0;
+            });
+            // Initial check
+            const initialDiff = Math.ceil(($wire.spamUntil - Date.now()) / 1000);
+            this.secondsLeft = initialDiff > 0 ? initialDiff : 0;
+        }
+    }">
     {{-- Floating Toggle Button --}}
     <div class="relative">
         <button @click="$store.chat.toggle()"
@@ -105,10 +121,15 @@
             {{-- Input Footer --}}
             <div class="p-4 bg-white/5 border-t border-white/10">
                 <form wire:submit.prevent="sendMessage" class="flex items-center gap-2">
-                    <input type="text" wire:model="message" placeholder="Tanya apa saja, Kak..."
-                        class="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-[12px] focus:ring-1 focus:ring-primary/40 outline-none transition-all placeholder:text-muted-foreground/40 text-foreground">
+                    <input type="text" wire:model="message" 
+                        x-bind:placeholder="secondsLeft > 0 ? 'Tunggu ' + secondsLeft + ' detik lagi...' : 'Tanya apa saja, Kak...'"
+                        x-bind:disabled="secondsLeft > 0"
+                        class="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-[12px] focus:ring-1 focus:ring-primary/40 outline-none transition-all placeholder:text-muted-foreground/40 text-foreground"
+                        x-bind:class="secondsLeft > 0 ? 'opacity-50 cursor-not-allowed' : ''">
                     <button type="submit"
-                        class="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0">
+                        x-bind:disabled="secondsLeft > 0"
+                        class="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0"
+                        x-bind:class="secondsLeft > 0 ? 'opacity-50 cursor-not-allowed' : ''">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                             <path d="m22 2-7 20-4-9-9-4Z" />
@@ -119,4 +140,57 @@
             </div>
         </div>
     </div>
+
+    <script>
+        let audioCtx = null;
+
+        const playChatSound = (type) => {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                if (type === 'sent') {
+                    // iMessage-like 'Swoosh/Pop' (Upward sweep)
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                    
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.1);
+                } else if (type === 'received') {
+                    // iMessage-like 'Note' (Two-tone chime)
+                    [1046.50, 1567.98].forEach((freq, i) => {
+                        const osc = audioCtx.getAudioContext ? audioCtx.getAudioContext().createOscillator() : audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (i * 0.08));
+                        g.gain.setValueAtTime(0.03, audioCtx.currentTime + (i * 0.08));
+                        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (i * 0.08) + 0.2);
+                        
+                        osc.connect(g);
+                        g.connect(audioCtx.destination);
+                        osc.start(audioCtx.currentTime + (i * 0.08));
+                        osc.stop(audioCtx.currentTime + (i * 0.08) + 0.2);
+                    });
+                }
+            } catch (e) {
+                console.warn('Audio feedback failed:', e);
+            }
+        };
+
+        window.addEventListener('chat-sent', () => playChatSound('sent'));
+        window.addEventListener('chat-received', () => playChatSound('received'));
+    </script>
 </div>

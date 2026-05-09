@@ -85,6 +85,10 @@ class Settings extends Component
     public $is_chatbot_active = true;
     public $chatbot_api_key = '';
 
+    public $onesignal_app_id = '';
+    public $onesignal_rest_api_key = '';
+    public $onesignal_safari_web_id = '';
+
     public $importFile;
 
     public function mount()
@@ -145,6 +149,11 @@ class Settings extends Component
         // Load Chatbot Settings
         $this->is_chatbot_active = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
+
+        // Load OneSignal Settings
+        $this->onesignal_app_id = \App\Models\Setting::getVal('onesignal_app_id', '');
+        $this->onesignal_rest_api_key = \App\Models\Setting::getVal('onesignal_rest_api_key', '');
+        $this->onesignal_safari_web_id = \App\Models\Setting::getVal('onesignal_safari_web_id', '');
     }
 
     // Removed loadUsers() to use paginate in render()
@@ -346,6 +355,13 @@ class Settings extends Component
         // Save Chatbot Settings
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
+
+        // Save OneSignal Settings
+        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_app_id'], ['value' => $this->onesignal_app_id]);
+        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_rest_api_key'], ['value' => $this->onesignal_rest_api_key]);
+        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_safari_web_id'], ['value' => $this->onesignal_safari_web_id]);
+
+
         // Physically update .env file
         try {
             $envPath = base_path('.env');
@@ -361,6 +377,22 @@ class Settings extends Component
                     // Append new
                     $envContent .= "\n{$key}={$newValue}\n";
                 }
+
+                // Update OneSignal Keys in .env
+                $keys = [
+                    'ONESIGNAL_APP_ID' => $this->onesignal_app_id,
+                    'ONESIGNAL_REST_API_KEY' => $this->onesignal_rest_api_key,
+                    'ONESIGNAL_SAFARI_WEB_ID' => $this->onesignal_safari_web_id
+                ];
+
+                foreach ($keys as $k => $v) {
+                    if (str_contains($envContent, "{$k}=")) {
+                        $envContent = preg_replace("/^{$k}=.*/m", "{$k}={$v}", $envContent);
+                    } else {
+                        $envContent .= "\n{$k}={$v}\n";
+                    }
+                }
+
                 file_put_contents($envPath, $envContent);
             }
         } catch (\Exception $e) {

@@ -79,4 +79,21 @@ class AnnouncementManager extends Component
         Announcement::findOrFail($id)->delete();
         session()->flash('message', 'Campaign deleted.');
     }
+
+    public function pushNow($id)
+    {
+        $ann = Announcement::findOrFail($id);
+        
+        $result = \App\Services\OneSignalService::sendToAll(
+            $ann->message,
+            $ann->style === 'promo' ? 'PROMO SPESIAL! 🎁' : 'INFO PENTING! 📢',
+            $ann->link_url
+        );
+
+        if ($result['success']) {
+            session()->flash('message', 'Push notification sent to all users!');
+        } else {
+            session()->flash('error', 'Push failed: ' . $result['message']);
+        }
+    }
 }

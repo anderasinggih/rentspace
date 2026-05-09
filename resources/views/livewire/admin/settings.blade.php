@@ -858,6 +858,49 @@
                             </div>
                         </div>
 
+                        <!-- OneSignal Push Notification Integration -->
+                        <div class="p-4 border border-blue-500/20 bg-blue-500/5 rounded-xl">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-blue-500/10 text-blue-600 rounded-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-foreground">OneSignal Push Notification</h3>
+                                        <p class="text-[10px] text-muted-foreground/80 lowercase">Kirim notifikasi promo langsung ke HP/Browser user.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold {{ $onesignal_app_id && $onesignal_rest_api_key ? 'text-emerald-500' : 'text-amber-500' }}">
+                                        {{ $onesignal_app_id && $onesignal_rest_api_key ? 'Terhubung' : 'Belum Konfigurasi' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider">OneSignal App ID</label>
+                                    <input type="text" wire:model="onesignal_app_id" 
+                                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider">REST API Key</label>
+                                    <input type="password" wire:model="onesignal_rest_api_key" 
+                                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono"
+                                        placeholder="••••••••••••••••">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider">Safari Web ID <span class="text-[8px] opacity-70">(Optional)</span></label>
+                                    <input type="text" wire:model="onesignal_safari_web_id" 
+                                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        placeholder="web.onesignal.auto.xxx">
+                                </div>
+                            </div>
+                            <p class="mt-3 text-[9px] text-muted-foreground italic italic">Dapatkan kunci ini di Dashboard OneSignal > Settings > Keys & IDs.</p>
+                        </div>
+
+
                         <div>
                             <label class="block text-sm font-medium mb-1">Syarat & Ketentuan Penyewaan <span class="text-xs text-muted-foreground">(Satu baris = satu poin)</span></label>
                             <textarea wire:model="terms_conditions" rows="8" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono" placeholder="1. Penyewa wajib..."></textarea>

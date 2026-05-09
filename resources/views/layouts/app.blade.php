@@ -12,6 +12,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @livewireStyles
+    @if($appId = \App\Models\Setting::getVal('onesignal_app_id'))
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.plugin.js" async=""></script>
+    @endif
     <script>
         function applyTheme() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -98,6 +101,21 @@
                 toggle() { this.isOpen = !this.isOpen }
             })
         })
+
+        // OneSignal Initialization
+        @if($appId = \App\Models\Setting::getVal('onesignal_app_id'))
+        window.OneSignal = window.OneSignal || [];
+        OneSignal.push(function() {
+            OneSignal.init({
+                appId: "{{ $appId }}",
+                safari_web_id: "{{ \App\Models\Setting::getVal('onesignal_safari_web_id') }}",
+                notifyButton: {
+                    enable: true,
+                },
+                allowLocalhostAsSecureContext: true,
+            });
+        });
+        @endif
     </script>
     @livewireScripts
 </body>

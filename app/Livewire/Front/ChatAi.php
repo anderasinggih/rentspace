@@ -13,6 +13,7 @@ class ChatAi extends Component
     public $message = '';
     public $chatHistory = [];
     public $isTyping = false;
+    public $spamUntil = 0;
 
     protected $listeners = ['open-chat' => 'openChat'];
 
@@ -28,6 +29,9 @@ class ChatAi extends Component
         if ($lastChatTime && now()->diffInMinutes($lastChatTime) < 15) {
             $this->chatHistory = Session::get('chat_ai_history', []);
         }
+
+        $spamUntil = Session::get('chat_ai_spam_until');
+        $this->spamUntil = $spamUntil ? $spamUntil->timestamp * 1000 : 0;
 
         // Initialize with a welcome message if history is empty
         if (empty($this->chatHistory)) {
@@ -48,6 +52,39 @@ class ChatAi extends Component
     {
         if (empty(trim($this->message))) return;
 
+        // Check if user is currently under cooldown
+        $spamUntil = Session::get('chat_ai_spam_until');
+        if ($spamUntil && now()->lessThan($spamUntil)) {
+            $secondsLeft = round(now()->diffInSeconds($spamUntil));
+            $this->chatHistory[] = [
+                'role' => 'model', 
+                'content' => "Sabar ya Kak, tunggu **{$secondsLeft} detik** lagi baru bisa kirim pesan. Kalau ada kendala mendesak, silakan [CHAT_WA] ya! 😊"
+            ];
+            $this->message = '';
+            $this->saveToSession();
+            $this->dispatch('scroll-bottom');
+            $this->dispatch('chat-received');
+            return;
+        }
+
+        // Check for Spam and apply cooldown if detected
+        if ($this->isSpam($this->message)) {
+            $cooldownTime = now()->addSeconds(30);
+            Session::put('chat_ai_spam_until', $cooldownTime);
+            $this->spamUntil = $cooldownTime->timestamp * 1000;
+
+            $this->chatHistory[] = ['role' => 'user', 'content' => $this->message];
+            $this->chatHistory[] = [
+                'role' => 'model', 
+                'content' => "Waduh Kak, ngetiknya kecepetan! Fitur chat dikunci selama **30 detik** ya. Silakan [CHAT_WA] atau coba lagi nanti. 😊"
+            ];
+            $this->message = '';
+            $this->saveToSession();
+            $this->dispatch('scroll-bottom');
+            $this->dispatch('chat-received');
+            return;
+        }
+
         $userMsg = $this->message;
         $this->chatHistory[] = ['role' => 'user', 'content' => $userMsg];
         $this->message = '';
@@ -57,6 +94,41 @@ class ChatAi extends Component
         // Dispatch event to process AI response in a separate request to keep UI responsive
         $this->dispatch('process-ai');
         $this->dispatch('scroll-bottom');
+        $this->dispatch('chat-sent');
+    }
+
+    private function isSpam($msg)
+    {
+        $now = now();
+        $timestamps = Session::get('chat_ai_msg_timestamps', []);
+        
+        // 1. Rate Limit Check: Max 3 messages in 5 seconds
+        $timestamps = array_filter($timestamps, fn($t) => $now->diffInSeconds($t) < 5);
+        $timestamps[] = $now;
+        Session::put('chat_ai_msg_timestamps', $timestamps);
+
+        if (count($timestamps) > 3) {
+            return true;
+        }
+
+        // 2. Repetitive Content Check: Same message more than 2 times in a row
+        $lastMsg = Session::get('chat_ai_last_msg');
+        $repeatCount = Session::get('chat_ai_repeat_count', 0);
+
+        if ($lastMsg === $msg) {
+            $repeatCount++;
+        } else {
+            $repeatCount = 1;
+        }
+
+        Session::put('chat_ai_last_msg', $msg);
+        Session::put('chat_ai_repeat_count', $repeatCount);
+
+        if ($repeatCount > 2) {
+            return true;
+        }
+
+        return false;
     }
 
     #[\Livewire\Attributes\On('process-ai')]
@@ -73,6 +145,7 @@ class ChatAi extends Component
         if ($statusInfo) {
             $this->chatHistory[] = ['role' => 'model', 'content' => $statusInfo];
             $this->isTyping = false;
+            $this->dispatch('chat-received');
             return;
         }
 
@@ -84,6 +157,7 @@ class ChatAi extends Component
         $this->isTyping = false;
         $this->saveToSession();
         $this->dispatch('scroll-bottom');
+        $this->dispatch('chat-received');
     }
 
     private function saveToSession()
@@ -137,8 +211,12 @@ class ChatAi extends Component
     public function render()
     {
         $recommendations = \App\Models\Unit::inRandomOrder()->take(2)->get();
+        
+        $isBlocked = $this->spamUntil > (now()->timestamp * 1000);
+
         return view('livewire.front.chat-ai', [
-            'recommendations' => $recommendations
+            'recommendations' => $recommendations,
+            'isBlocked' => $isBlocked
         ]);
     }
 }

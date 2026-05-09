@@ -77,6 +77,13 @@
                         @endif
                     </div>
                     <div class="flex gap-2">
+                        <button wire:click="pushNow({{ $ann->id }})" wire:loading.attr="disabled"
+                            class="p-1 px-2 text-xs font-bold bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white rounded transition-all flex items-center gap-1 group"
+                            title="Kirim Notifikasi Push ke HP User">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:animate-bounce"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                            <span wire:loading.remove wire:target="pushNow({{ $ann->id }})">Push</span>
+                            <span wire:loading wire:target="pushNow({{ $ann->id }})">...</span>
+                        </button>
                         <button wire:click="edit({{ $ann->id }})"
                             class="p-1 px-2 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">Edit</button>
                         <button wire:click="delete({{ $ann->id }})"
