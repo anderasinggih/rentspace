@@ -25,9 +25,16 @@
         </div>
     @endif
 
+    @if (session()->has('error'))
+        <div
+            class="mt-6 bg-red-500/10 border border-red-500/20 text-red-600 px-4 py-2 rounded-md text-sm font-medium">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         @foreach($announcements as $ann)
-            <div
+            <div wire:key="ann-{{ $ann->id }}"
                 class="relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
                 <!-- Style Indicator -->
                 <div class="absolute top-0 right-0 h-1 w-24 
