@@ -378,11 +378,9 @@ class Settings extends Component
                     $envContent .= "\n{$key}={$newValue}\n";
                 }
 
-                // Update OneSignal Keys in .env
+                // Update other Keys in .env if needed (keeping existing ones)
                 $keys = [
-                    'ONESIGNAL_APP_ID' => $this->onesignal_app_id,
-                    'ONESIGNAL_REST_API_KEY' => $this->onesignal_rest_api_key,
-                    'ONESIGNAL_SAFARI_WEB_ID' => $this->onesignal_safari_web_id
+                    // Add other env keys here if necessary
                 ];
 
                 foreach ($keys as $k => $v) {
