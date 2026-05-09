@@ -8,7 +8,7 @@
         </div>
 
         <!-- Tab Navigation (Segmented UI) -->
-        <div class="p-1.5 bg-muted/40 rounded-xl flex items-center w-full gap-1 border border-border/50">
+        <div class="p-1.5 bg-muted/40 rounded-xl flex items-center w-full gap-1 border border-border/50 overflow-x-auto no-scrollbar">
             <button wire:click="$set('activeTab', 'akun')"
                 title="Akun & Affiliate"
                 class="flex-1 inline-flex items-center justify-center rounded-lg py-2 text-sm font-medium transition-all
