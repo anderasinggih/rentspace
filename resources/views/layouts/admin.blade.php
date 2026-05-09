@@ -24,6 +24,15 @@
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>{{ $title ?? 'Dashboard Admin' }} - {{ config('app.name', 'RentSpace') }}</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RENT ADMIN">
+    <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
+    
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -146,6 +155,20 @@
             }
         });
     </script>
+    <script>
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('📦 PWA Admin Service Worker Registered!', reg.scope);
+                }).catch(err => {
+                    console.log('❌ PWA Service Worker Registration Failed:', err);
+                });
+            });
+        }
+    </script>
+
+    <x-pwa-install-prompt />
     @livewireScripts
 </body>
 </html>

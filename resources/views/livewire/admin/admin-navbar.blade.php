@@ -15,7 +15,7 @@
         }
 }" class="sticky top-0 z-[100] w-full">
     <!-- Main Nav with Separated Blur Layer to prevent nesting conflicts -->
-    <nav class="relative border-b border-white/10 shadow-sm z-50 overflow-visible">
+    <nav class="relative border-b border-white/10 shadow-sm z-50 overflow-visible" style="padding-top: env(safe-area-inset-top, 0px);">
         <!-- Separate Blur Layer -->
         <div class="absolute inset-0 bg-background/40 backdrop-blur-md -z-10 pointer-events-none"></div>
 
