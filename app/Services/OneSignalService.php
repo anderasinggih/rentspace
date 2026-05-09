@@ -37,8 +37,16 @@ class OneSignalService
         ])->post('https://onesignal.com/api/v1/notifications', [
             'app_id' => $appId,
             'included_segments' => ['All'],
-            'contents' => ['en' => $message, 'id' => $message],
-            'headings' => ['en' => $title ?: 'RENT SPACE', 'id' => $title ?: 'RENT SPACE'],
+            'target_channel' => 'push',
+            'contents' => [
+                'en' => $message,
+                'id' => $message,
+            ],
+            'headings' => [
+                'en' => $title ?: 'RENT SPACE',
+                'id' => $title ?: 'RENT SPACE',
+            ],
+            'isAnyWeb' => true,
             'url' => $url ?: config('app.url'),
         ]);
 
