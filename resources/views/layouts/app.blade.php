@@ -120,17 +120,16 @@
                 appId: "{{ $osAppId }}",
                 @if($osSafariId) safari_web_id: "{{ $osSafariId }}", @endif
                 allowLocalhostAsSecureContext: true,
-                serviceWorkerParam: { scope: "/" },
-                serviceWorkerPath: "OneSignalSDKWorker.js",
             });
 
             // Beri jeda 2 detik setelah init agar benar-benar siap
             setTimeout(async () => {
-                if (OneSignal.Notifications.permission === 'default') {
+                const permission = OneSignal.Notifications.permission;
+                console.log("🔔 Current Permission Status:", permission);
+                
+                if (permission === 'default') {
                     console.log("📢 Attempting to show Slidedown Prompt...");
                     await OneSignal.showSlidedownPrompt();
-                } else {
-                    console.log("✅ Current permission:", OneSignal.Notifications.permission);
                 }
             }, 2000);
         });
