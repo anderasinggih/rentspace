@@ -8,13 +8,12 @@
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 
     <title>{{ $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}</title>
-
+    @if($appId = \App\Models\Setting::getVal('onesignal_app_id'))
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
+    @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @livewireStyles
-    @if($appId = \App\Models\Setting::getVal('onesignal_app_id'))
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    @endif
     <script>
         function applyTheme() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -106,9 +105,11 @@
         @if($appId = \App\Models\Setting::getVal('onesignal_app_id'))
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {
+            console.log("OneSignal Initializing...");
             await OneSignal.init({
                 appId: "{{ $appId }}",
                 safari_web_id: "{{ \App\Models\Setting::getVal('onesignal_safari_web_id') }}",
+                allowLocalhostAsSecureContext: true,
                 notifyButton: {
                     enable: true,
                     size: 'medium',
@@ -119,21 +120,15 @@
                         left: '20px'
                     },
                     colors: {
-                        'circle.background': '#10b981', // Emerald 500
+                        'circle.background': '#10b981',
                         'circle.foreground': 'white',
                         'badge.background': '#ef4444',
                         'badge.foreground': 'white',
-                        'badge.bordercolor': 'white',
                         'pulse.color': '#10b981',
-                        'dialog.button.background.hovering': '#059669',
-                        'dialog.button.background.active': '#059669',
                         'dialog.button.background': '#10b981',
                         'dialog.button.foreground': 'white',
-                        'dialog.error.foreground': 'white',
-                        'dialog.error.iconcolor': 'white',
                     },
                 },
-                allowLocalhostAsSecureContext: true,
             });
         });
         @endif
