@@ -49,7 +49,7 @@ x-transition:enter-end="opacity-100 translate-y-0"
 x-transition:leave="transition ease-in duration-300"
 x-transition:leave-start="opacity-100 translate-y-0"
 x-transition:leave-end="opacity-0 translate-y-20"
-class="fixed bottom-8 left-4 right-4 z-[100] md:left-auto md:right-6 md:w-96"
+class="fixed bottom-4 left-4 right-4 z-[100] md:left-auto md:right-6 md:w-96"
 style="display: none;">
 
     <div class="relative overflow-hidden rounded-3xl border border-white/30 bg-white/20 dark:bg-black/60 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
