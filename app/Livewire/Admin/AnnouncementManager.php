@@ -7,7 +7,7 @@ use Livewire\Component;
 
 class AnnouncementManager extends Component
 {
-    public $message, $type = 'banner', $link_text, $link_url, $style = 'promo', $starts_at, $ends_at, $is_active = true;
+    public $title, $message, $type = 'banner', $link_text, $link_url, $style = 'promo', $starts_at, $ends_at, $is_active = true;
     public $ann_id, $isEditing = false, $showModal = false;
 
     public function render()
@@ -19,7 +19,7 @@ class AnnouncementManager extends Component
 
     public function create()
     {
-        $this->reset(['ann_id', 'message', 'type', 'link_text', 'link_url', 'style', 'starts_at', 'ends_at', 'is_active', 'isEditing']);
+        $this->reset(['ann_id', 'title', 'message', 'type', 'link_text', 'link_url', 'style', 'starts_at', 'ends_at', 'is_active', 'isEditing']);
         $this->type = 'banner';
         $this->style = 'promo';
         $this->is_active = true;
@@ -30,6 +30,7 @@ class AnnouncementManager extends Component
     {
         $ann = Announcement::findOrFail($id);
         $this->ann_id = $ann->id;
+        $this->title = $ann->title;
         $this->message = $ann->message;
         $this->type = $ann->type;
         $this->link_text = $ann->link_text;
@@ -54,6 +55,7 @@ class AnnouncementManager extends Component
             ['id' => $this->ann_id],
             [
                 'type' => $this->type,
+                'title' => $this->title,
                 'message' => $this->message,
                 'link_text' => $this->link_text,
                 'link_url' => $this->link_url,
@@ -95,7 +97,7 @@ class AnnouncementManager extends Component
         
         $result = \App\Services\OneSignalService::sendToAll(
             $ann->message,
-            $ann->style === 'promo' ? 'PROMO SPESIAL! 🎁' : 'INFO PENTING! 📢',
+            $ann->title ?: ($ann->style === 'promo' ? 'PROMO SPESIAL! 🎁' : 'INFO PENTING! 📢'),
             $ann->link_url
         );
 

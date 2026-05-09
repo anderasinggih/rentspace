@@ -133,7 +133,14 @@
                     </div>
 
                     <div>
-                        <label class="text-xs font-black uppercase text-muted-foreground block mb-1.5">Isi Pesan</label>
+                        <label class="text-xs font-black uppercase text-muted-foreground block mb-1.5">Judul Push Notification (Opsional)</label>
+                        <input type="text" wire:model="title"
+                            class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            placeholder="Kosongkan jika ingin pakai default (Promo Spesial)">
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-black uppercase text-muted-foreground block mb-1.5">Isi Pesan / Body</label>
                         <textarea wire:model="message" rows="3"
                             class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             placeholder="Misal: Diskon Sewa iPhone 15 Pro Max Akhir Tahun!"></textarea>

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Announcement extends Model
 {
     protected $fillable = [
-        'type', 'message', 'link_text', 'link_url', 'style', 'is_active', 'starts_at', 'ends_at'
+        'type', 'title', 'message', 'link_text', 'link_url', 'style', 'is_active', 'starts_at', 'ends_at'
     ];
 
     protected $casts = [
