@@ -276,17 +276,17 @@
                                             ? 'bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/40 shadow-[0_4px_12px_rgba(244,63,94,0.1)]'
                                             : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.08)]',
                                             'paid' => 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20 shadow-[0_4px_12px_rgba(14,165,233,0.08)]',
-                                            'pending' => 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-[0_4px_12px_rgba(245,158,11,0.08)]',
+                                            'pending', 'pending_confirmation' => 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-[0_4px_12px_rgba(245,158,11,0.08)]',
                                             'completed' => 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20 shadow-[0_4px_12px_rgba(100,116,139,0.08)]',
-                                            default => 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20',
+                                            default => 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20',
                                         };
 
                                         $dotColor = match ($rental->status) {
                                             'renting' => $eDate->isPast() ? 'bg-rose-500' : 'bg-emerald-500',
                                             'paid' => 'bg-sky-500',
-                                            'pending' => 'bg-amber-500',
+                                            'pending', 'pending_confirmation' => 'bg-amber-500',
                                             'completed' => 'bg-slate-500',
-                                            default => 'bg-slate-500',
+                                            default => 'bg-rose-500',
                                         };
                                     @endphp
                                     <div wire:click="selectRental({{ $rental->id }})"
@@ -377,7 +377,7 @@
             <div class="flex items-center gap-3">
                 <div class="w-3.5 h-3.5 rounded bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]">
                 </div>
-                <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Booking / Pending</span>
+                <span class="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Booking / Verifikasi</span>
             </div>
             <div class="flex items-center gap-3">
                 <div class="w-3.5 h-3.5 rounded bg-slate-500 shadow-[0_0_12px_rgba(100,116,139,0.3)]"></div>
@@ -828,6 +828,8 @@
                                                 </div>
                                                 @if($rental->status === 'paid')
                                                     <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider shrink-0 mt-0.5">Paid</x-ui.badge>
+                                                @elseif($rental->status === 'pending_confirmation')
+                                                    <x-ui.badge variant="amber" class="text-[9px] uppercase tracking-wider shrink-0 mt-0.5">Verifikasi</x-ui.badge>
                                                 @else
                                                     <x-ui.badge variant="amber" class="text-[9px] uppercase tracking-wider shrink-0 mt-0.5">Pending</x-ui.badge>
                                                 @endif
@@ -897,9 +899,11 @@
                                                 <div class="flex flex-row gap-2">
                                                     <button wire:click="openDendaModal({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-bold hover:bg-blue-500 hover:text-white transition-all active:scale-95">Validasi Pengembalian</button>
                                                 </div>
-                                            @elseif($rental->status === 'pending')
+                                            @elseif($rental->status === 'pending' || $rental->status === 'pending_confirmation')
                                                 <div class="flex flex-row gap-2">
-                                                    <button wire:confirm="Yakin validasi pembayaran?" wire:click="markAsPaid({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all active:scale-95">Validasi Bayar</button>
+                                                    <button wire:confirm="Yakin validasi pembayaran?" wire:click="markAsPaid({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all active:scale-95">
+                                                        {{ $rental->status === 'pending_confirmation' ? 'Validasi Lunas' : 'Validasi Bayar' }}
+                                                    </button>
                                                     <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-bold hover:bg-rose-500 hover:text-white transition-all">Batal</button>
                                                 </div>
                                             @endif
@@ -963,6 +967,8 @@
                             <div class="flex items-center gap-2">
                                 @if($r->status === 'pending')
                                     <x-ui.badge variant="amber" class="text-[9px]">Pending</x-ui.badge>
+                                @elseif($r->status === 'pending_confirmation')
+                                    <x-ui.badge variant="amber" class="text-[9px]">Verifikasi</x-ui.badge>
                                 @elseif($r->status === 'paid')
                                     <x-ui.badge variant="blue" class="text-[9px]">Paid</x-ui.badge>
                                 @elseif($r->status === 'renting')

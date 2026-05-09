@@ -424,6 +424,8 @@ class Dashboard extends Component
             ->limit(5)
             ->get();
 
+        $isEndMonth = now()->day >= (now()->daysInMonth - 7);
+
         return view('livewire.admin.dashboard', compact(
             'totalUnits', 'activeUnits', 'pendingRentals', 'pendingRevenue',
             'periodRentals', 'periodRevenue', 'periodDiscounts', 'todayRevenue', 'todayRentals',
@@ -435,7 +437,7 @@ class Dashboard extends Component
             'prevNetRevenue', 'prevTransactions',
             'paymentLabels', 'paymentCounts',
             'avgOrderValue', 'profitEfficiency', 'avgDuration', 'unrealizedRevenue',
-            'latestRatings'
+            'latestRatings', 'isEndMonth'
         ))->layout('layouts.admin');
     }
 

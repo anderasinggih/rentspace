@@ -64,6 +64,15 @@ class MidtransWebhookController extends Controller
                     
                     // Send Email Notification
                     $this->sendEmailNotification($rental, 'paid');
+
+                    // --- PUSH NOTIFICATION KE ADMIN ---
+                    try {
+                        \App\Services\OneSignalService::sendToAll(
+                            "✅ Pembayaran Lunas: " . strtoupper($rental->nama) . " (Rp " . number_format($rental->grand_total, 0, ',', '.') . ")",
+                            "💰 PEMBAYARAN MASUK",
+                            route('admin.monitoring')
+                        );
+                    } catch (\Exception $e) { }
                 }
             } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
                 $rental->update(['status' => 'cancelled']);
@@ -71,6 +80,15 @@ class MidtransWebhookController extends Controller
                 
                 // Send Email Notification
                 $this->sendEmailNotification($rental, 'cancelled');
+
+                // --- PUSH NOTIFICATION KE ADMIN ---
+                try {
+                    \App\Services\OneSignalService::sendToAll(
+                        "❌ Pesanan Dibatalkan: " . strtoupper($rental->nama) . " (" . strtoupper($status) . ")",
+                        "⚠️ PESANAN BATAL",
+                        route('admin.monitoring')
+                    );
+                } catch (\Exception $e) { }
             }
         }
 

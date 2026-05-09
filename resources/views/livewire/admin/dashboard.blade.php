@@ -61,6 +61,24 @@
         }
     </style>
 
+    <!-- 0. Recap Reminder (End of Month) -->
+    @if($isEndMonth)
+        <div class="mb-6 p-4 rounded-2xl bg-indigo-600/10 border border-indigo-600/20 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-600/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-foreground uppercase tracking-tight">💡 Pengingat Akhir Bulan</h4>
+                    <p class="text-[11px] text-muted-foreground mt-0.5">Waktunya melakukan rekapan transaksi bulan ini. Pastikan semua data sudah divalidasi.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="#report-engine" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold hover:bg-indigo-700 transition-all active:scale-95 shadow-md shadow-indigo-600/10">Buat Rekap</a>
+            </div>
+        </div>
+    @endif
+
     <!-- 1. Snapshot Grid -->
     <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 md:gap-3 mb-6">
         <div
@@ -581,7 +599,7 @@
     </div>
 
     <!-- Report Export Section -->
-        <div class="liquid-glass rounded-2xl overflow-hidden shadow-xl mb-6">
+        <div id="report-engine" class="liquid-glass rounded-2xl overflow-hidden shadow-xl mb-6">
             <div class="px-5 py-3.5 border-b border-border bg-primary/5 flex items-center justify-between uppercase">
                 <span class="text-[11px] font-semibold text-primary">Analytic Performance Reports</span>
             </div>

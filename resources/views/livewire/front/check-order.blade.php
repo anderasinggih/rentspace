@@ -111,16 +111,19 @@
                             @php
                                 $statusConfig = [
                                     'pending' => ['class' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'dot' => 'bg-amber-500', 'label' => 'Pending'],
-                                    'paid' => ['class' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20', 'dot' => 'bg-blue-500', 'label' => 'Paid'],
-                                    'renting' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Rent'],
-                                    'completed' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Done'],
-                                    'cancelled' => ['class' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20', 'dot' => 'bg-rose-500', 'label' => 'Cancel'],
+                                    'pending_confirmation' => ['class' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'dot' => 'bg-amber-500', 'label' => 'Verifikasi'],
+                                    'paid' => ['class' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20', 'dot' => 'bg-blue-500', 'label' => 'Lunas'],
+                                    'renting' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Disewa'],
+                                    'completed' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Selesai'],
+                                    'cancelled' => ['class' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20', 'dot' => 'bg-rose-500', 'label' => 'Batal'],
                                 ];
                                 $sc = $statusConfig[$order->status] ?? $statusConfig['pending'];
                             @endphp
 
                             @php
-                                $isActiveRental = in_array($order->status, ['paid', 'renting']) && $order->waktu_selesai->isFuture();
+                                // Rental is active if it's paid or currently renting. 
+                                // If renting, it's ALWAYS active until marked completed by admin, even if past end time (late).
+                                $isActiveRental = ($order->status === 'renting') || ($order->status === 'paid' && $order->waktu_selesai->isFuture());
                                 $selesaiTimestamp = $order->waktu_selesai->timestamp * 1000;
                             @endphp
                             <div x-data="{
@@ -131,9 +134,12 @@
                                         tick() {
                                             const now = Date.now();
                                             const diff = Math.floor((this.endTime - now) / 1000);
+                                            
                                             if (diff <= 0) { 
-                                                this.countdown = 'Selesai'; 
-                                                this.countdownFull = 'Waktu Sewa Selesai';
+                                                // If status is renting, it means they are LATE.
+                                                // We pass the status from PHP to JS or just check if it was marked as active.
+                                                this.countdown = 'Waktu Habis'; 
+                                                this.countdownFull = 'Waktu Sewa Habis (Telat)';
                                                 return; 
                                             }
                                             const h = Math.floor(diff / 3600);

@@ -63,9 +63,9 @@ class Payment extends Component
             $this->rental->refresh();
         }
 
-        // 4. GARIS POLISI: Baru cek apakah sudah basi (Hanya jika masih pending & BUKAN cash)
+        // 4. GARIS POLISI: Baru cek apakah sudah basi (Hanya jika masih pending & BUKAN cash & BUKAN manual_qris)
         $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
-        if ($this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'cash' && $isExpired) {
+        if ($this->rental->status === 'pending' && !in_array($this->rental->metode_pembayaran, ['cash', 'manual_qris']) && $isExpired) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -427,8 +427,22 @@ class Payment extends Component
                     route('admin.monitoring') // Arahkan admin ke halaman monitoring
                 );
             }
+
+            // --- EMAIL NOTIFICATION KE ADMIN ---
+            $isAdminEmailEnabled = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+            if ($isAdminEmailEnabled) {
+                $adminEmail = \App\Models\Setting::getVal('admin_email_recipients');
+                if (!$adminEmail) {
+                    $adminEmail = config('mail.admin_email') ?: config('mail.from.address');
+                }
+                
+                if ($adminEmail) {
+                    $emails = array_map('trim', explode(',', $adminEmail));
+                    \App\Helpers\MailHelper::logAndQueue($emails, new \App\Mail\ManualPaymentNotification($this->rental), 'Manual Payment Verification');
+                }
+            }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Push Notification Error: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Notification Error (Manual Payment): ' . $e->getMessage());
         }
 
         return redirect()->route('public.success', $this->rental->booking_code);
@@ -451,6 +465,15 @@ class Payment extends Component
             'payment_details' => null,
             'grand_total' => $baseTotal // Kembalikan ke harga dasar
         ]);
+        
+        // --- PUSH NOTIFICATION KE ADMIN ---
+        try {
+            \App\Services\OneSignalService::sendToAll(
+                "⚠️ Pesanan Dibatalkan User: " . strtoupper($this->rental->nama),
+                "🚫 PESANAN BATAL",
+                route('admin.monitoring')
+            );
+        } catch (\Exception $e) { }
         
         return redirect()->route('public.success', $this->rental->booking_code);
     }

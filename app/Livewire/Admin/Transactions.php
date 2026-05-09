@@ -112,6 +112,15 @@ class Transactions extends Component
 
             // Send Email Notification
             $this->sendEmailNotification($rental, 'paid');
+
+            // --- PUSH NOTIFICATION KE ADMIN ---
+            try {
+                \App\Services\OneSignalService::sendToAll(
+                    "✅ Pembayaran Divalidasi Manual: " . strtoupper($rental->nama) . " (Rp " . number_format($rental->grand_total, 0, ',', '.') . ") oleh " . auth()->user()->name,
+                    "💰 PEMBAYARAN TERVALIDASI",
+                    route('admin.monitoring')
+                );
+            } catch (\Exception $e) { }
         }
     }
 
@@ -141,6 +150,15 @@ class Transactions extends Component
 
             // Send Email Notification
             $this->sendEmailNotification($rental, 'cancelled');
+
+            // --- PUSH NOTIFICATION KE ADMIN ---
+            try {
+                \App\Services\OneSignalService::sendToAll(
+                    "❌ Pesanan Dibatalkan Admin: " . strtoupper($rental->nama) . " oleh " . auth()->user()->name,
+                    "⚠️ PESANAN BATAL",
+                    route('admin.monitoring')
+                );
+            } catch (\Exception $e) { }
         }
     }
 
