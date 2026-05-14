@@ -142,55 +142,62 @@
     </div>
 
     <script>
-        let audioCtx = null;
+        (function() {
+            // Prevent multiple initializations during Livewire navigation
+            if (window.chatAudioInitialized) return;
 
-        const playChatSound = (type) => {
-            try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
+            window.chatAudioCtx = null;
 
-                if (type === 'sent') {
-                    // iMessage-like 'Swoosh/Pop' (Upward sweep)
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            window.playChatSound = (type) => {
+                try {
+                    if (!window.chatAudioCtx) {
+                        window.chatAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    }
                     
-                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-                    
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.1);
-                } else if (type === 'received') {
-                    // iMessage-like 'Note' (Two-tone chime)
-                    [1046.50, 1567.98].forEach((freq, i) => {
-                        const osc = audioCtx.getAudioContext ? audioCtx.getAudioContext().createOscillator() : audioCtx.createOscillator();
-                        const g = audioCtx.createGain();
+                    if (window.chatAudioCtx.state === 'suspended') {
+                        window.chatAudioCtx.resume();
+                    }
+
+                    if (type === 'sent') {
+                        // iMessage-like 'Swoosh/Pop' (Upward sweep)
+                        const osc = window.chatAudioCtx.createOscillator();
+                        const gain = window.chatAudioCtx.createGain();
                         osc.type = 'sine';
-                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (i * 0.08));
-                        g.gain.setValueAtTime(0.03, audioCtx.currentTime + (i * 0.08));
-                        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (i * 0.08) + 0.2);
+                        osc.frequency.setValueAtTime(400, window.chatAudioCtx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(1200, window.chatAudioCtx.currentTime + 0.1);
                         
-                        osc.connect(g);
-                        g.connect(audioCtx.destination);
-                        osc.start(audioCtx.currentTime + (i * 0.08));
-                        osc.stop(audioCtx.currentTime + (i * 0.08) + 0.2);
-                    });
+                        gain.gain.setValueAtTime(0.05, window.chatAudioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, window.chatAudioCtx.currentTime + 0.1);
+                        
+                        osc.connect(gain);
+                        gain.connect(window.chatAudioCtx.destination);
+                        osc.start();
+                        osc.stop(window.chatAudioCtx.currentTime + 0.1);
+                    } else if (type === 'received') {
+                        // iMessage-like 'Note' (Two-tone chime)
+                        [1046.50, 1567.98].forEach((freq, i) => {
+                            const osc = window.chatAudioCtx.createOscillator();
+                            const g = window.chatAudioCtx.createGain();
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(freq, window.chatAudioCtx.currentTime + (i * 0.08));
+                            g.gain.setValueAtTime(0.03, window.chatAudioCtx.currentTime + (i * 0.08));
+                            g.gain.exponentialRampToValueAtTime(0.001, window.chatAudioCtx.currentTime + (i * 0.08) + 0.2);
+                            
+                            osc.connect(g);
+                            g.connect(window.chatAudioCtx.destination);
+                            osc.start(window.chatAudioCtx.currentTime + (i * 0.08));
+                            osc.stop(window.chatAudioCtx.currentTime + (i * 0.08) + 0.2);
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Audio feedback failed:', e);
                 }
-            } catch (e) {
-                console.warn('Audio feedback failed:', e);
-            }
-        };
+            };
 
-        window.addEventListener('chat-sent', () => playChatSound('sent'));
-        window.addEventListener('chat-received', () => playChatSound('received'));
+            window.addEventListener('chat-sent', () => window.playChatSound('sent'));
+            window.addEventListener('chat-received', () => window.playChatSound('received'));
+            
+            window.chatAudioInitialized = true;
+        })();
     </script>
 </div>
