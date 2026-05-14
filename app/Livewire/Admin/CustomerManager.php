@@ -55,16 +55,40 @@ class CustomerManager extends Component
         $customers = $customersQuery->paginate($this->perPage);
 
         $customerDetails = null;
+        $customerInsights = [];
         if ($this->selectedNik) {
-            $customerDetails = Rental::with('units')
+            $customerDetails = Rental::with('units.category')
                 ->where('nik', $this->selectedNik)
                 ->orderByDesc('created_at')
                 ->get();
+
+            // Calculate Behavioral Insights
+            $units = [];
+            foreach($customerDetails as $r) {
+                foreach($r->units as $u) {
+                    $units[$u->seri] = ($units[$u->seri] ?? 0) + 1;
+                }
+            }
+            arsort($units);
+            
+            $customerInsights = [
+                'fav_unit' => array_key_first($units) ?? '-',
+                'member_since' => $customerDetails->last()->created_at,
+                'avg_transaction' => $customerDetails->avg('grand_total'),
+                'total_rentals' => $customerDetails->count(),
+                'last_rental' => $customerDetails->first()->created_at,
+                'address' => $customerDetails->first()->alamat ?? '-',
+                'sosmed' => $customerDetails->first()->sosial_media ?? '-',
+                'email' => $customerDetails->first()->email ?? '-',
+                'nik' => $customerDetails->first()->nik ?? '-',
+                'nama' => $customerDetails->first()->nama ?? '-',
+            ];
         }
 
         return view('livewire.admin.customer-manager', [
             'customers' => $customers,
-            'customerDetails' => $customerDetails
+            'customerDetails' => $customerDetails,
+            'customerInsights' => $customerInsights
         ])->layout('layouts.admin');
     }
 }
