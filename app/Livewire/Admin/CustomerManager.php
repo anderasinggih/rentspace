@@ -43,13 +43,13 @@ class CustomerManager extends Component
     public function render()
     {
         // Query to get unique customers based on NIK
-        $customersQuery = Rental::selectRaw('nik, nama, no_wa, COUNT(id) as total_orders, SUM(grand_total) as ltv, MAX(created_at) as last_order')
+        $customersQuery = Rental::selectRaw('nik, MAX(nama) as nama, MAX(no_wa) as no_wa, COUNT(id) as total_orders, SUM(grand_total) as ltv, MAX(created_at) as last_order')
             ->where(function($q) {
                 $q->where('nama', 'like', '%' . $this->search . '%')
                   ->orWhere('nik', 'like', '%' . $this->search . '%')
                   ->orWhere('no_wa', 'like', '%' . $this->search . '%');
             })
-            ->groupBy('nik', 'nama', 'no_wa')
+            ->groupBy('nik')
             ->orderByDesc('ltv');
 
         $customers = $customersQuery->paginate($this->perPage);

@@ -15,7 +15,7 @@ class Login extends Component
     {
         if (Auth::check()) {
             $user = Auth::user();
-            if ($user->role === 'admin') {
+            if (in_array($user->role, ['admin', 'viewer', 'staff'])) {
                 return redirect()->route('admin.dashboard');
             }
             return redirect()->route('affiliate.dashboard');
@@ -33,7 +33,7 @@ class Login extends Component
             session()->regenerate();
             
             $user = Auth::user();
-            if ($user->role === 'admin') {
+            if (in_array($user->role, ['admin', 'viewer', 'staff'])) {
                 return redirect()->route('admin.dashboard');
             }
             

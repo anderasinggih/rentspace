@@ -510,11 +510,18 @@
                                                     <p class="text-sm font-bold text-foreground leading-tight truncate max-w-[180px] sm:max-w-full" title="{{ $rental->nama }}">
                                                         {{ \Illuminate\Support\Str::limit($rental->nama, 30) }}
                                                     </p>
-                                                    @if($rental->sosial_media)
-                                                        <span class="text-[10px] font-bold text-sky-400 transition-colors cursor-default truncate max-w-[180px] sm:max-w-full mt-0.5" title="{{ $rental->sosial_media }}">
-                                                            @ {{ \Illuminate\Support\Str::limit($rental->sosial_media, 20) }}
-                                                        </span>
-                                                    @endif
+                                                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                                                        <a href="https://wa.me/{{ \App\Helpers\CustomerHelper::formatWa($rental->no_wa) }}" target="_blank"
+                                                            class="text-[10px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors flex items-center gap-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                            {{ $rental->no_wa }}
+                                                        </a>
+                                                        @if($rental->sosial_media)
+                                                            <span class="text-[10px] font-bold text-sky-400 transition-colors cursor-default truncate max-w-[180px] sm:max-w-full" title="{{ $rental->sosial_media }}">
+                                                                @ {{ \Illuminate\Support\Str::limit($rental->sosial_media, 20) }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                                 <x-ui.badge variant="{{ $isOverdue ? 'rose' : 'emerald' }}" class="text-[9px] uppercase tracking-wider shrink-0 mt-0.5">{{ $isOverdue ? 'Overdue' : 'Rent' }}</x-ui.badge>
                                             </div>
@@ -544,22 +551,6 @@
                                                     {{ $rental->alamat ?: '-' }}</p>
                                             </div>
 
-                                            <div class="pt-2 flex flex-wrap items-center gap-2">
-                                                @if ($rental->status === 'paid')
-                                                    <button wire:click="handover({{ $rental->id }})"
-                                                        wire:loading.attr="disabled"
-                                                        class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-sky-500 text-white text-[9px] font-black hover:bg-sky-600 transition-all shadow-sm active:scale-95">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
-                                                        Validasi Ambil
-                                                    </button>
-                                                @elseif (in_array($rental->status, ['pending', 'pending_confirmation']))
-                                                    <button wire:click="markAsPaid({{ $rental->id }})"
-                                                        wire:loading.attr="disabled"
-                                                        class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
-                                                        Validasi Bayar
-                                                    </button>
-                                                @endif
-                                            </div>
                                         </div>
 
                                         {{-- Kolom 2: Waktu --}}
@@ -615,24 +606,43 @@
                                             </div>
                                             <!-- Action Button -->
                                             <div class="pt-2 flex gap-2">
-                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $rental->no_wa) }}"
-                                                    target="_blank"
-                                                    class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-500/5 text-emerald-600 border border-emerald-500/10 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all overflow-hidden whitespace-nowrap">
-                                                    WhatsApp
-                                                </a>
-                                                <button wire:click="openDendaModal({{ $rental->id }})"
-                                                    class="flex-[2] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-black hover:bg-blue-500 hover:text-white transition-all shadow-sm active:scale-95 overflow-hidden whitespace-nowrap">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                                    {{ $isOverdue ? 'Validasi & Denda' : 'Validasi Pengembalian' }}
-                                                </button>
+                                                @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                                    @if($rental->status === 'renting')
+                                                        <button wire:click="openDendaModal({{ $rental->id }})"
+                                                            class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-black hover:bg-blue-500 hover:text-white transition-all shadow-sm active:scale-95 overflow-hidden whitespace-nowrap">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                                            {{ $isOverdue ? 'Validasi & Denda' : 'Validasi Pengembalian' }}
+                                                        </button>
+                                                    @elseif($rental->status === 'paid')
+                                                        <button wire:click="handover({{ $rental->id }})"
+                                                            wire:confirm="Validasi ambil unit?"
+                                                            class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-sky-500/10 text-sky-600 border border-sky-500/20 text-[9px] font-black hover:bg-sky-500 hover:text-white transition-all shadow-sm active:scale-95">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+                                                            Validasi Ambil
+                                                        </button>
+                                                    @elseif(in_array($rental->status, ['pending', 'pending_confirmation']))
+                                                        <button wire:click="markAsPaid({{ $rental->id }})"
+                                                            wire:confirm="Yakin validasi pembayaran?"
+                                                            class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-black hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                                            {{ $rental->status === 'pending_confirmation' ? 'Validasi Lunas' : 'Validasi Bayar' }}
+                                                        </button>
+                                                    @endif
+                                                @endif
+                                                @if(in_array(auth()->user()->role, ['admin', 'staff']) && in_array($rental->status, ['paid', 'pending', 'pending_confirmation']))
+                                                    <button wire:confirm="Batalkan pesanan ini?"
+                                                        wire:click="cancel({{ $rental->id }})"
+                                                        class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-bold hover:bg-rose-500 hover:text-white transition-all">
+                                                        Batal
+                                                    </button>
+                                                @endif
                                             </div>
-
-                                            </div>
+                                        </div>
                                         </div>
 
                                     {{-- Log Lokasi: Hanya muncul jika ada iPhone dan ada datanya --}}
                                     @php 
-                                                                        $iphoneUnits = $rental->units->filter(fn($u) => $u->category && str_contains(strtolower($u->category->name), 'iphone'));
+                                                                                                        $iphoneUnits = $rental->units->filter(fn($u) => $u->category && str_contains(strtolower($u->category->name), 'iphone'));
                                         $hasLogs = false;
                                         if ($iphoneUnits->isNotEmpty()) {
                                             foreach ($iphoneUnits as $u) {
@@ -651,7 +661,7 @@
                                                 <div class="space-y-1 max-h-[185px] overflow-y-auto pr-2 scrollbar-hide">
                                                     @foreach($iphoneUnits as $u)
                                                         @php 
-                                                                                                        $logEndTime = $isOverdue ? now() : $rental->waktu_selesai;
+                                                                                                                                                    $logEndTime = $isOverdue ? now() : $rental->waktu_selesai;
                                                             $logs = $u->locations()
                                                                 ->whereBetween('created_at', [$rental->waktu_mulai, $logEndTime])
                                                                 ->latest()
@@ -820,11 +830,18 @@
                                                     <p class="text-sm font-bold text-foreground leading-tight truncate max-w-[180px] sm:max-w-full" title="{{ $rental->nama }}">
                                                         {{ \Illuminate\Support\Str::limit($rental->nama, 30) }}
                                                     </p>
-                                                    @if($rental->sosial_media)
-                                                        <span class="text-[10px] font-medium text-sky-400/60 transition-colors hover:text-sky-400 cursor-default truncate max-w-[180px] sm:max-w-full mt-0.5" title="{{ $rental->sosial_media }}">
-                                                            @ {{ \Illuminate\Support\Str::limit($rental->sosial_media, 20) }}
-                                                        </span>
-                                                    @endif
+                                                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                                                        <a href="https://wa.me/{{ \App\Helpers\CustomerHelper::formatWa($rental->no_wa) }}" target="_blank"
+                                                            class="text-[10px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors flex items-center gap-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                            {{ $rental->no_wa }}
+                                                        </a>
+                                                        @if($rental->sosial_media)
+                                                            <span class="text-[10px] font-medium text-sky-400/60 transition-colors hover:text-sky-400 cursor-default truncate max-w-[180px] sm:max-w-full" title="{{ $rental->sosial_media }}">
+                                                                @ {{ \Illuminate\Support\Str::limit($rental->sosial_media, 20) }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                                 @if($rental->status === 'paid')
                                                     <x-ui.badge variant="blue" class="text-[9px] uppercase tracking-wider shrink-0 mt-0.5">Paid</x-ui.badge>
@@ -857,9 +874,9 @@
                                             <div>
                                                 <p class="text-[9px] font-bold text-muted-foreground uppercase leading-none tracking-wider">Alamat Lengkap</p>
                                                 <p class="text-xs font-medium text-foreground leading-tight mt-1.5">
-                                                    {{ $rental->alamat ?: '-' }}</p>
+                                                {{ $rental->alamat ?: '-' }}</p>
                                             </div>
-                                        </div>
+                                         </div>
 
                                         {{-- Kolom 2: Jadwal --}}
                                         <div class="space-y-4">
@@ -888,25 +905,65 @@
                                             </div>
                                         </div>
 
-                                        {{-- Kolom 3: Aksi --}}
-                                        <div class="space-y-4 text-right flex flex-col h-full justify-end">
-                                             @if($rental->status === 'paid')
-                                                <div class="flex flex-row gap-2">
-                                                    <button wire:click="handover({{ $rental->id }})" wire:confirm="Validasi ambil unit?" class="flex-1 py-1.5 rounded-lg bg-sky-500/10 text-sky-600 border border-sky-500/20 text-[9px] font-bold hover:bg-sky-500 hover:text-white transition-all active:scale-95">Validasi Ambil</button>
-                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-bold hover:bg-rose-500 hover:text-white transition-all">Batal</button>
+                                        {{-- Kolom 3: Biaya --}}
+                                        <div class="space-y-4">
+                                            <div class="bg-background rounded-xl p-3 sm:p-4 border border-border/50">
+                                                <div class="space-y-2">
+                                                    <div class="flex justify-between text-[11px]">
+                                                        <span class="text-muted-foreground">Harga Sewa</span>
+                                                        <span class="font-semibold">Rp
+                                                            {{ number_format($rental->subtotal_harga, 0, ',', '.') }}</span>
+                                                    </div>
+                                                    @if($rental->potongan_diskon > 0)
+                                                        <div class="flex justify-between text-[11px]">
+                                                            <span class="text-rose-500">Total Diskon</span>
+                                                            <span class="font-semibold text-rose-500">- Rp
+                                                                {{ number_format($rental->potongan_diskon, 0, ',', '.') }}</span>
+                                                        </div>
+                                                    @endif
+                                                    @if($rental->kode_unik_pembayaran > 0)
+                                                        <div class="flex justify-between text-[11px]">
+                                                            <span class="text-muted-foreground">Kode Unik</span>
+                                                            <span class="font-semibold text-foreground">+
+                                                                {{ $rental->kode_unik_pembayaran }}</span>
+                                                        </div>
+                                                    @endif
+                                                    <div class="pt-2 mt-2 border-t border-dashed border-border">
+                                                        <div class="flex justify-between items-center pt-1">
+                                                            <span class="text-[9px] font-bold text-foreground">Grand Total</span>
+                                                            <span class="text-sm font-black text-primary">Rp
+                                                                {{ number_format($rental->grand_total, 0, ',', '.') }}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            @elseif($rental->status === 'renting')
-                                                <div class="flex flex-row gap-2">
-                                                    <button wire:click="openDendaModal({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[9px] font-bold hover:bg-blue-500 hover:text-white transition-all active:scale-95">Validasi Pengembalian</button>
-                                                </div>
-                                            @elseif($rental->status === 'pending' || $rental->status === 'pending_confirmation')
-                                                <div class="flex flex-row gap-2">
-                                                    <button wire:confirm="Yakin validasi pembayaran?" wire:click="markAsPaid({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold hover:bg-emerald-500 hover:text-white transition-all active:scale-95">
-                                                        {{ $rental->status === 'pending_confirmation' ? 'Validasi Lunas' : 'Validasi Bayar' }}
+                                            </div>
+                                            <!-- Action Button -->
+                                            <div class="pt-2 flex gap-2">
+                                                @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                                    @if($rental->status === 'paid')
+                                                        <button wire:click="handover({{ $rental->id }})"
+                                                            wire:confirm="Validasi ambil unit?"
+                                                            class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-sky-500/10 text-sky-600 border border-sky-500/20 text-[9px] font-black hover:bg-sky-600 hover:text-white transition-all shadow-sm active:scale-95">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+                                                            Validasi Ambil
+                                                        </button>
+                                                    @elseif(in_array($rental->status, ['pending', 'pending_confirmation']))
+                                                        <button wire:click="markAsPaid({{ $rental->id }})"
+                                                            wire:confirm="Yakin validasi pembayaran?"
+                                                            class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-black hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                                            {{ $rental->status === 'pending_confirmation' ? 'Validasi Lunas' : 'Validasi Bayar' }}
+                                                        </button>
+                                                    @endif
+                                                @endif
+                                                @if(in_array(auth()->user()->role, ['admin', 'staff']) && in_array($rental->status, ['paid', 'pending', 'pending_confirmation']))
+                                                    <button wire:confirm="Batalkan pesanan ini?"
+                                                        wire:click="cancel({{ $rental->id }})"
+                                                        class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-bold hover:bg-rose-500 hover:text-white transition-all">
+                                                        Batal
                                                     </button>
-                                                    <button wire:confirm="Batalkan pesanan ini?" wire:click="cancel({{ $rental->id }})" class="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[9px] font-bold hover:bg-rose-500 hover:text-white transition-all">Batal</button>
-                                                </div>
-                                            @endif
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1002,7 +1059,7 @@
                                 </div>
                                  <div>
                                     <p class="text-[9px] font-bold text-muted-foreground mb-0.5">Kontak WhatsApp</p>
-                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $r->no_wa) }}" target="_blank"
+                                    <a href="https://wa.me/{{ \App\Helpers\CustomerHelper::formatWa($r->no_wa) }}" target="_blank"
                                         class="text-sm font-bold text-primary hover:underline italic">{{ $r->no_wa }}</a>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
@@ -1258,16 +1315,18 @@
                 <x-ui.button wire:click="closeDendaModal" variant="outline" size="sm" class="rounded-full px-6">
                     Batal
                 </x-ui.button>
-                <x-ui.button wire:click="confirmDenda"
-                    wire:loading.attr="disabled"
-                    wire:target="confirmDenda"
-                    variant="success" size="sm" class="w-[180px]">
-                    <span wire:loading.remove wire:target="confirmDenda">Validasi & Selesaikan</span>
-                    <span wire:loading wire:target="confirmDenda" class="flex items-center gap-2">
-                        <span class="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-                        Memproses...
-                    </span>
-                </x-ui.button>
+                @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                    <x-ui.button wire:click="confirmDenda"
+                        wire:loading.attr="disabled"
+                        wire:target="confirmDenda"
+                        variant="success" size="sm" class="w-[180px]">
+                        <span wire:loading.remove wire:target="confirmDenda">Validasi & Selesaikan</span>
+                        <span wire:loading wire:target="confirmDenda" class="flex items-center gap-2">
+                            <span class="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                            Memproses...
+                        </span>
+                    </x-ui.button>
+                @endif
             </div>
         </div>
     </div>

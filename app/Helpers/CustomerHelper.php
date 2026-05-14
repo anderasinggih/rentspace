@@ -44,4 +44,23 @@ class CustomerHelper
     {
         return Rental::where('nik', $nik)->sum('grand_total');
     }
+
+    public static function formatWa($number)
+    {
+        if (!$number) return '';
+        
+        // Remove all non-numeric characters
+        $number = preg_replace('/[^0-9]/', '', $number);
+        
+        // If starts with 0, replace with 62
+        if (str_starts_with($number, '0')) {
+            $number = '62' . substr($number, 1);
+        }
+        // If starts with 8 (common mistake), prepend 62
+        elseif (str_starts_with($number, '8')) {
+            $number = '62' . $number;
+        }
+        
+        return $number;
+    }
 }
