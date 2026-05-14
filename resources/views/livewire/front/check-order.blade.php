@@ -198,7 +198,13 @@
                                             </p>
                                         </div>
 
-                                        @if($order->status === 'pending' && $order->metode_pembayaran !== 'cash')
+                                        @php
+                                            $isCashLike = in_array($order->metode_pembayaran, ['cash', 'manual_qris']);
+                                            $isExpired = (now()->timestamp - $order->created_at->timestamp >= 900);
+                                            $canPay = $order->status === 'pending' && !$isCashLike && !$isExpired;
+                                        @endphp
+
+                                        @if($canPay)
                                             <a href="{{ route('public.payment', $order->booking_code) }}" wire:navigate @click.stop
                                                 class="hidden sm:flex items-center gap-1.5 h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-sm shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
@@ -208,6 +214,12 @@
                                                     <line x1="2" x2="22" y1="10" y2="10" />
                                                 </svg>
                                                 Bayar
+                                            </a>
+                                        @elseif($order->status === 'pending' && $isCashLike)
+                                            <a href="{{ route('public.success', $order->booking_code) }}" wire:navigate @click.stop
+                                                class="hidden sm:flex items-center gap-1.5 h-9 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-sm shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14.5 2 14.5 8 20 8"/></svg>
+                                                Lihat Struk
                                             </a>
                                         @endif
                                     </div>
@@ -277,8 +289,16 @@
 
                                         <!-- Payment Breakdown -->
                                         <div class="space-y-2">
-                                            <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Rincian
-                                                Biaya</p>
+                                            <div class="flex justify-between items-center">
+                                                <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Rincian
+                                                    Biaya</p>
+                                                <div class="flex items-center gap-1.5 bg-muted/40 px-2.5 py-1 rounded-lg border border-border">
+                                                    <span class="text-[10px] font-bold text-muted-foreground uppercase">Metode:</span>
+                                                    <span class="text-[10px] font-black text-foreground uppercase tracking-tight">
+                                                        {{ str_replace('_', ' ', $order->metode_pembayaran ?: 'Belum Dipilih') }}
+                                                    </span>
+                                                </div>
+                                            </div>
                                             <div class="bg-muted/40 rounded-xl px-4 py-3 space-y-2">
                                                 <div class="flex justify-between items-center text-sm">
                                                     <span class="text-muted-foreground">Subtotal</span>
@@ -333,7 +353,7 @@
                                                         </svg>
                                                         Batalkan
                                                     </button>
-                                                    @if($order->metode_pembayaran !== 'cash')
+                                                    @if($canPay)
                                                         <a href="{{ route('public.payment', $order->booking_code) }}" wire:navigate
                                                             class="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold hover:bg-primary/90 transition-all shadow-sm">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -343,6 +363,12 @@
                                                             <line x1="2" x2="22" y1="10" y2="10" />
                                                         </svg>
                                                             Bayar
+                                                        </a>
+                                                    @elseif($order->status === 'pending' && $isCashLike)
+                                                        <a href="{{ route('public.success', $order->booking_code) }}" wire:navigate
+                                                            class="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-emerald-600 text-white text-[10px] sm:text-xs font-bold hover:bg-emerald-700 transition-all shadow-sm">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14.5 2 14.5 8 20 8"/></svg>
+                                                            Lihat Struk
                                                         </a>
                                                     @endif
                                                 </div>

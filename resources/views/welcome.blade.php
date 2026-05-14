@@ -432,7 +432,7 @@
             </div>
         </section>
 
-        <!-- Public Stats Widget -->
+
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20 mb-10">
             <div class="grid grid-cols-3 divide-x divide-white/5 bg-white/[0.005] dark:bg-white/[0.002] backdrop-blur-[4px] border-t border-l border-white/20 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden py-0 relative group/stats">
                 <!-- Specular Reflection Overlay -->
@@ -907,6 +907,56 @@
                     @endif
                 </div>
             @endif
+
+            <!-- Cara Order Section -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 mb-24">
+                <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                    :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'"
+                    class="text-center mb-12 transition-all duration-1000">
+                    <h2 class="text-2xl font-extrabold tracking-tight text-foreground sm:text-4xl">Cara Order di Rent Space</h2>
+                    <p class="mt-4 text-sm sm:text-base text-muted-foreground">Proses mudah dan cepat, hanya butuh beberapa menit.</p>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                    @php
+                        $steps = [
+                            [
+                                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>',
+                                'title' => 'Pilih Unit & Waktu',
+                                'desc' => 'Pilih seri unit yang Anda inginkan dan tentukan durasi sewa yang sesuai kebutuhan.'
+                            ],
+                            [
+                                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>',
+                                'title' => 'Lengkapi Data',
+                                'desc' => 'Isi data diri seperti NIK dan WhatsApp dengan benar untuk proses verifikasi cepat.'
+                            ],
+                            [
+                                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>',
+                                'title' => 'Bayar Pesanan',
+                                'desc' => 'Bayar aman via Transfer, QRIS, atau langsung di lokasi (Cash on Delivery).'
+                            ],
+                            [
+                                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+                                'title' => 'Ambil di Lokasi',
+                                'desc' => 'Datang ke lokasi kami untuk pengambilan unit sesuai jadwal yang telah ditentukan.'
+                            ],
+                        ];
+                    @endphp
+                    @foreach($steps as $i => $step)
+                        <div x-data="{ visible: false }" x-intersect.once="visible = true"
+                            :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
+                            style="transition-delay: {{ $i * 150 }}ms"
+                            class="relative p-4 sm:p-6 rounded-xl sm:rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 group">
+                            <div class="absolute top-2 right-3 sm:top-4 sm:right-4 text-2xl sm:text-4xl font-black text-primary/10 sm:text-primary/10 group-hover:text-primary/20 transition-colors">0{{ $i + 1 }}</div>
+                            <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+                                {!! $step['icon'] !!}
+                            </div>
+                            <h3 class="text-sm sm:text-lg font-bold mb-1.5 sm:mb-2 line-clamp-1 sm:line-clamp-none">{{ $step['title'] }}</h3>
+                            <p class="text-[10px] sm:text-sm text-muted-foreground leading-relaxed line-clamp-3 sm:line-clamp-none">{{ $step['desc'] }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
 
             <!-- Testimonials Marquee -->
             @php
