@@ -88,13 +88,13 @@
                             <div class="flex w-full h-full divide-x divide-border/50 divide-dashed">
                                 @foreach($dates as $date)
                                     <div
-                                        class="day-column shrink-0 p-1 md:p-2 text-center {{ $date->isToday() ? 'bg-primary/5' : '' }}">
+                                        class="day-column shrink-0 p-1 md:p-2 text-center {{ $date->isToday() ? 'bg-primary/10 animate-pulse' : ($date->isWeekend() ? 'bg-rose-500/5' : '') }}">
                                         <div
                                             class="text-[10px] md:text-sm font-bold text-foreground {{ $date->isToday() ? 'text-primary' : '' }}">
                                             {{ $date->format('d/m') }}
                                         </div>
                                         <div class="text-[8px] md:text-[10px] text-muted-foreground uppercase font-medium">
-                                            {{ \Carbon\Carbon::parse($date)->translatedFormat('D') }}
+                                            {{ \Carbon\Carbon::parse($date)->locale('id')->translatedFormat('D') }}
                                         </div>
                                     </div>
                                 @endforeach
@@ -136,7 +136,7 @@
                                         class="absolute inset-0 flex divide-x divide-border/50 divide-dashed pointer-events-none">
                                         @foreach($dates as $index => $date)
                                             <div
-                                                class="day-column shrink-0 h-full {{ $date->isToday() ? 'bg-primary/[0.02]' : '' }}">
+                                                class="day-column shrink-0 h-full {{ $date->isToday() ? 'bg-primary/[0.04] animate-pulse' : ($date->isWeekend() ? 'bg-rose-500/[0.02]' : '') }}">
                                             </div>
                                         @endforeach
                                     </div>
@@ -154,17 +154,17 @@
                                             $startIndex = $startDate->diffInDays($displayStart);
                                             $duration = $displayStart->diffInDays($displayEnd) ?: 1;
 
-                                            $isPending = $rental->status == 'pending';
-                                            $isPaid = $rental->status == 'paid';
+                                            $isWaiting = in_array($rental->status, ['pending', 'pending_confirmation']);
+                                            $isActive = in_array($rental->status, ['paid', 'renting']);
 
-                                            if ($isPending) {
+                                            if ($isWaiting) {
                                                 $bgColor = 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30';
                                                 $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>';
-                                                $label = 'Menunggu';
-                                            } elseif ($isPaid) {
+                                                $label = $rental->status === 'pending_confirmation' ? 'Verifikasi' : 'Dibooking';
+                                            } elseif ($isActive) {
                                                 $bgColor = 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30';
                                                 $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" /></svg>';
-                                                $label = 'Disewa';
+                                                $label = $rental->status === 'renting' ? 'Sedang Sewa' : 'Lunas';
                                             } else {
                                                 $bgColor = 'bg-slate-500/20 text-slate-700 dark:text-slate-400 border border-slate-500/30';
                                                 $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" x2="4" y1="22" y2="15" /></svg>';
@@ -175,11 +175,12 @@
                                             style="left: calc(var(--day-width) * {{ $startIndex }}); width: calc(var(--day-width) * {{ $duration }});">
                                             <div class="w-full h-full rounded-sm md:rounded-md {{ $bgColor }} px-1 md:px-2 py-0.5 overflow-hidden transition-all hover:bg-opacity-80 hover:scale-y-[1.02] cursor-default flex flex-col justify-center"
                                                 title="{{ $rental->nama }} ({{ $rentStart->format('d/m H:i') }} - {{ $rentEnd->format('d/m H:i') }})">
-                                                <div class="flex items-center gap-1 md:gap-1.5 w-full text-foreground/90">
-                                                    <span
-                                                        class="shrink-0 flex items-center justify-center scale-75 md:scale-100">{!! $icon !!}</span>
-                                                    <span
-                                                        class="text-[7px] md:text-[10px] font-semibold truncate leading-tight w-full tracking-tight">{{ $label }}</span>
+                                                <div class="flex items-start gap-1 md:gap-1.5 w-full text-foreground/90">
+                                                    <span class="shrink-0 flex items-center justify-center scale-75 md:scale-100 mt-0.5">{!! $icon !!}</span>
+                                                    <div class="flex flex-col min-w-0">
+                                                        <span class="text-[7px] md:text-[10px] font-bold truncate leading-none uppercase tracking-tighter">{{ $label }}</span>
+                                                        <span class="text-[6px] md:text-[8px] font-bold opacity-60 leading-none mt-1 whitespace-nowrap">{{ $rentStart->format('H:i') }} - {{ $rentEnd->format('H:i') }}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -211,7 +212,7 @@
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                         </svg>
-                    </div> Menunggu Pembayaran
+                    </div> Dibooking
                 </div>
                 <div class="flex items-center gap-2">
                     <div

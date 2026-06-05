@@ -1,4 +1,29 @@
 <div class="py-2 px-4 sm:px-6 lg:px-8 bg-background min-h-[calc(100vh-4rem)]">
+    <style>
+        @keyframes progress {
+            0% { background-position: 0 0; }
+            100% { background-position: 10px 0; }
+        }
+        @keyframes shine {
+            from { left: -100%; }
+            to { left: 200%; }
+        }
+        .badge-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        .badge-shine::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transform: skewX(-20deg);
+            animation: shine 3s infinite;
+        }
+    </style>
     <div class="max-w-3xl mx-auto space-y-8">
 
         <!-- Header -->
@@ -85,16 +110,20 @@
                         @forelse ($orders as $order)
                             @php
                                 $statusConfig = [
-                                    'pending' => ['class' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'dot' => 'bg-amber-500', 'label' => 'Menunggu Bayar'],
-                                    'paid' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Sudah Dibayar'],
-                                    'completed' => ['class' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20', 'dot' => 'bg-blue-500', 'label' => 'Selesai'],
-                                    'cancelled' => ['class' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20', 'dot' => 'bg-rose-500', 'label' => 'Dibatalkan'],
+                                    'pending' => ['class' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'dot' => 'bg-amber-500', 'label' => 'Pending'],
+                                    'pending_confirmation' => ['class' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'dot' => 'bg-amber-500', 'label' => 'Verifikasi'],
+                                    'paid' => ['class' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20', 'dot' => 'bg-blue-500', 'label' => 'Lunas'],
+                                    'renting' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Disewa'],
+                                    'completed' => ['class' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'dot' => 'bg-emerald-500', 'label' => 'Selesai'],
+                                    'cancelled' => ['class' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20', 'dot' => 'bg-rose-500', 'label' => 'Batal'],
                                 ];
                                 $sc = $statusConfig[$order->status] ?? $statusConfig['pending'];
                             @endphp
 
                             @php
-                                $isActiveRental = $order->status === 'paid' && $order->waktu_selesai->isFuture();
+                                // Rental is active if it's paid or currently renting. 
+                                // If renting, it's ALWAYS active until marked completed by admin, even if past end time (late).
+                                $isActiveRental = ($order->status === 'renting') || ($order->status === 'paid' && $order->waktu_selesai->isFuture());
                                 $selesaiTimestamp = $order->waktu_selesai->timestamp * 1000;
                             @endphp
                             <div x-data="{
@@ -105,9 +134,12 @@
                                         tick() {
                                             const now = Date.now();
                                             const diff = Math.floor((this.endTime - now) / 1000);
+                                            
                                             if (diff <= 0) { 
-                                                this.countdown = 'Selesai'; 
-                                                this.countdownFull = 'Waktu Sewa Selesai';
+                                                // If status is renting, it means they are LATE.
+                                                // We pass the status from PHP to JS or just check if it was marked as active.
+                                                this.countdown = 'Waktu Habis'; 
+                                                this.countdownFull = 'Waktu Sewa Habis (Telat)';
                                                 return; 
                                             }
                                             const h = Math.floor(diff / 3600);
@@ -138,7 +170,7 @@
                                                 <span
                                                     class="inline-flex items-center gap-1 px-1.5 py-0 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                                                     <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
-                                                    Berlangsung
+                                                    {{ $sc['label'] }}
                                                 </span>
                                             @else
                                                 <span
@@ -166,7 +198,13 @@
                                             </p>
                                         </div>
 
-                                        @if($order->status === 'pending' && $order->metode_pembayaran !== 'cash')
+                                        @php
+                                            $isCashLike = in_array($order->metode_pembayaran, ['cash', 'manual_qris']);
+                                            $isExpired = (now()->timestamp - $order->created_at->timestamp >= 900);
+                                            $canPay = $order->status === 'pending' && !$isCashLike && !$isExpired;
+                                        @endphp
+
+                                        @if($canPay)
                                             <a href="{{ route('public.payment', $order->booking_code) }}" wire:navigate @click.stop
                                                 class="hidden sm:flex items-center gap-1.5 h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-sm shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
@@ -176,6 +214,12 @@
                                                     <line x1="2" x2="22" y1="10" y2="10" />
                                                 </svg>
                                                 Bayar
+                                            </a>
+                                        @elseif($order->status === 'pending' && $isCashLike)
+                                            <a href="{{ route('public.success', $order->booking_code) }}" wire:navigate @click.stop
+                                                class="hidden sm:flex items-center gap-1.5 h-9 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-sm shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14.5 2 14.5 8 20 8"/></svg>
+                                                Lihat Struk
                                             </a>
                                         @endif
                                     </div>
@@ -202,7 +246,9 @@
                                                     <div class="bg-muted/40 rounded-xl px-4 py-3">
                                                         <div>
                                                             <p class="text-sm font-semibold text-foreground leading-tight">
-                                                                {{ $unit->seri }}</p>
+                                                                {{ $unit->seri }}
+                                                                    <span class="opacity-50 text-[10px] font-mono">[#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}]</span>
+                                                            </p>
                                                             <p class="text-xs text-muted-foreground">{{ $unit->warna }} &bull;
                                                                 {{ $unit->memori }}</p>
                                                         </div>
@@ -243,8 +289,16 @@
 
                                         <!-- Payment Breakdown -->
                                         <div class="space-y-2">
-                                            <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Rincian
-                                                Biaya</p>
+                                            <div class="flex justify-between items-center">
+                                                <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Rincian
+                                                    Biaya</p>
+                                                <div class="flex items-center gap-1.5 bg-muted/40 px-2.5 py-1 rounded-lg border border-border">
+                                                    <span class="text-[10px] font-bold text-muted-foreground uppercase">Metode:</span>
+                                                    <span class="text-[10px] font-black text-foreground uppercase tracking-tight">
+                                                        {{ str_replace('_', ' ', $order->metode_pembayaran ?: 'Belum Dipilih') }}
+                                                    </span>
+                                                </div>
+                                            </div>
                                             <div class="bg-muted/40 rounded-xl px-4 py-3 space-y-2">
                                                 <div class="flex justify-between items-center text-sm">
                                                     <span class="text-muted-foreground">Subtotal</span>
@@ -299,7 +353,7 @@
                                                         </svg>
                                                         Batalkan
                                                     </button>
-                                                    @if($order->metode_pembayaran !== 'cash')
+                                                    @if($canPay)
                                                         <a href="{{ route('public.payment', $order->booking_code) }}" wire:navigate
                                                             class="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold hover:bg-primary/90 transition-all shadow-sm">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -309,6 +363,12 @@
                                                             <line x1="2" x2="22" y1="10" y2="10" />
                                                         </svg>
                                                             Bayar
+                                                        </a>
+                                                    @elseif($order->status === 'pending' && $isCashLike)
+                                                        <a href="{{ route('public.success', $order->booking_code) }}" wire:navigate
+                                                            class="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-emerald-600 text-white text-[10px] sm:text-xs font-bold hover:bg-emerald-700 transition-all shadow-sm">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14.5 2 14.5 8 20 8"/></svg>
+                                                            Lihat Struk
                                                         </a>
                                                     @endif
                                                 </div>
@@ -337,18 +397,133 @@
                 @endif
         @elseif($currentTab === 'profil')
                 <div class="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-                    @php $firstOrder = $orders ? $orders->first() : null; @endphp
+                    @php 
+                        $firstOrder = $orders ? $orders->first() : null;
+                        $ltv = $this->ltv;
+                        $tier = $this->tier;
+                        $nextTier = $this->nextTier;
+                    @endphp
+
+                    {{-- Premium Rank Progress --}}
+                    @if($tier)
+                        <div class="bg-card border border-border rounded-3xl overflow-hidden shadow-sm p-6 space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                            <!-- Header Info -->
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">Pangkat Anda</h4>
+                                    <div class="flex items-center gap-2">
+                                        <div class="relative group">
+                                            <div class="absolute -inset-1 bg-gradient-to-r from-primary/50 to-violet-500/50 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                                            <span class="relative inline-flex items-center rounded-full border px-4 py-1 text-[10px] font-black uppercase tracking-widest {{ $tier->color }} shadow-md badge-shine">
+                                                {{ $tier->label }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <h4 class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-1">Total Belanja</h4>
+                                    <p class="text-xl font-black text-foreground">
+                                        <span class="text-xs font-medium text-muted-foreground mr-0.5">Rp</span>{{ number_format($ltv, 0, ',', '.') }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Integrated Gamified Roadmap & Progress -->
+                            <div class="space-y-12 pt-4">
+                                <div class="flex items-center justify-between px-1">
+                                    <h4 class="text-[10px] font-bold text-muted-foreground tracking-tight">Perjalanan Pangkat</h4>
+                                    @if($nextTier)
+                                        <p class="text-[10px] font-bold text-primary">Sisa Rp {{ number_format($nextTier->threshold - $ltv, 0, ',', '.') }} lagi untuk mencapai {{ $nextTier->label }}</p>
+                                    @endif
+                                </div>
+
+                                @php
+                                    $tiers = \App\Helpers\CustomerHelper::tiers();
+                                    $totalTiers = count($tiers);
+                                    
+                                    // Calculate overall roadmap progress percentage
+                                    $totalProgress = 0;
+                                    $achievedTiers = 0;
+                                    foreach($tiers as $index => $t) {
+                                        if($ltv >= $t['threshold']) {
+                                            $achievedTiers = $index;
+                                        }
+                                    }
+                                    
+                                    if ($achievedTiers < $totalTiers - 1) {
+                                        $currentTierData = $tiers[$achievedTiers];
+                                        $nextTierData = $tiers[$achievedTiers + 1];
+                                        $range = $nextTierData['threshold'] - $currentTierData['threshold'];
+                                        $progressInTier = $ltv - $currentTierData['threshold'];
+                                        $tierProgressPercent = ($progressInTier / $range) * 100;
+                                        
+                                        // Total progress = (number of completed segments + progress in current segment) / total segments
+                                        $totalProgress = (($achievedTiers + ($tierProgressPercent / 100)) / ($totalTiers - 1)) * 100;
+                                    } else {
+                                        $totalProgress = 100;
+                                    }
+                                @endphp
+
+                                <div class="relative flex items-center gap-0 overflow-x-auto pb-10 pt-16 hide-scrollbar snap-x scroll-smooth">
+                                    <!-- Unified Sleek Roadmap Line -->
+                                    <div class="absolute top-[4.625rem] left-16 right-16 h-1 bg-muted/40 z-0 rounded-full">
+                                        <div class="h-full bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.6)] rounded-full transition-all duration-1000 ease-out" 
+                                             style="width: {{ $totalProgress }}%">
+                                            <!-- Shimmering Light -->
+                                            <div class="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.4)_50%,transparent_100%)] bg-[length:100px_100%] animate-[progress_2s_linear_infinite]"></div>
+                                        </div>
+                                    </div>
+
+                                    @foreach($tiers as $index => $t)
+                                        @php 
+                                            $isAchieved = $ltv >= $t['threshold'];
+                                            $isCurrent = $tier->label === $t['label'];
+                                        @endphp
+                                        <div class="snap-center shrink-0 w-32 flex flex-col items-center relative z-10">
+                                            <!-- Milestone Dot -->
+                                            <div class="relative flex items-center justify-center h-5 w-5">
+                                                @if($isCurrent)
+                                                    <div class="absolute h-10 w-10 bg-primary/20 rounded-full animate-pulse blur-xl"></div>
+                                                @endif
+                                                <div class="h-4 w-4 rounded-full border-[3px] transition-all duration-700 {{ $isAchieved ? 'bg-primary border-background shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]' : 'bg-muted border-background' }}">
+                                                </div>
+                                            </div>
+
+                                            <!-- Badge (Floating Below) -->
+                                            <div class="mt-4 transition-all duration-1000 {{ $isAchieved ? 'opacity-100 scale-100' : 'opacity-40 scale-90' }}">
+                                                <span class="inline-flex items-center rounded-full border px-3 py-0.5 text-[8px] font-black {{ $t['color'] }} {{ $isAchieved ? 'badge-shine shadow-sm' : 'border-dashed opacity-50 grayscale' }}">
+                                                    {{ $t['label'] }}
+                                                </span>
+                                            </div>
+
+                                            <!-- Threshold -->
+                                            <div class="mt-2 text-center">
+                                                <p class="text-[9px] font-bold {{ $isAchieved ? 'text-foreground' : 'text-muted-foreground/40' }} tracking-tight">
+                                                    {{ $index === 0 ? 'Mulai' : 'Rp ' . number_format($t['threshold'] / 1000, 0, ',', '.') . 'k' }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
                     {{-- Simple Shadcn-style Profile Card --}}
                     <div class="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
                         <div class="bg-muted/30 px-6 py-5 border-b border-border flex items-center justify-between">
-                            <div>
-                                <h3 class="font-bold text-lg text-foreground">{{ $firstOrder?->nama ?? 'Akun Peminjam' }}
-                                </h3>
-                                <p class="text-xs text-muted-foreground font-medium">Sesi Identitas Aktif Tersimpan</p>
+                            <div class="flex flex-col">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-bold text-lg text-foreground leading-none">{{ $firstOrder?->nama ?? 'Akun Peminjam' }}</h3>
+                                    @if($tier)
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $tier->color }} badge-shine">
+                                            {{ $tier->label }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-muted-foreground font-medium mt-1.5">Sesi Identitas Aktif Tersimpan</p>
                             </div>
-                            <div
-                                class="h-10 w-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                            <div class="h-10 w-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                     stroke-linejoin="round" class="text-emerald-500">

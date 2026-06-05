@@ -25,9 +25,16 @@
         </div>
     @endif
 
+    @if (session()->has('error'))
+        <div
+            class="mt-6 bg-red-500/10 border border-red-500/20 text-red-600 px-4 py-2 rounded-md text-sm font-medium">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         @foreach($announcements as $ann)
-            <div
+            <div wire:key="ann-{{ $ann->id }}"
                 class="relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
                 <!-- Style Indicator -->
                 <div class="absolute top-0 right-0 h-1 w-24 
@@ -77,6 +84,13 @@
                         @endif
                     </div>
                     <div class="flex gap-2">
+                        <button wire:click.stop="pushNow({{ $ann->id }})" wire:loading.attr="disabled"
+                            class="p-1 px-2 text-xs font-bold bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white rounded transition-all flex items-center gap-1 group"
+                            title="Kirim Notifikasi Push ke HP User">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:animate-bounce"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                            <span wire:loading.remove wire:target="pushNow({{ $ann->id }})">Push</span>
+                            <span wire:loading wire:target="pushNow({{ $ann->id }})">...</span>
+                        </button>
                         <button wire:click="edit({{ $ann->id }})"
                             class="p-1 px-2 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">Edit</button>
                         <button wire:click="delete({{ $ann->id }})"
@@ -119,7 +133,14 @@
                     </div>
 
                     <div>
-                        <label class="text-xs font-black uppercase text-muted-foreground block mb-1.5">Isi Pesan</label>
+                        <label class="text-xs font-black uppercase text-muted-foreground block mb-1.5">Judul Push Notification (Opsional)</label>
+                        <input type="text" wire:model="title"
+                            class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            placeholder="Kosongkan jika ingin pakai default (Promo Spesial)">
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-black uppercase text-muted-foreground block mb-1.5">Isi Pesan / Body</label>
                         <textarea wire:model="message" rows="3"
                             class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             placeholder="Misal: Diskon Sewa iPhone 15 Pro Max Akhir Tahun!"></textarea>

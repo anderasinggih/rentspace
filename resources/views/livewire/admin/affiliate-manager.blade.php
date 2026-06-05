@@ -1,8 +1,8 @@
 <div>
     <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold tracking-tight text-foreground">Manajemen Affiliate</h1>
-            <p class="mt-2 text-sm text-muted-foreground">Kelola pendaftaran mitra dan permintaan pencairan komisi.</p>
+            <h1 class="text-2xl font-bold tracking-tight text-foreground">Affiliate Manager</h1>
+            <p class="mt-2 text-sm text-muted-foreground">Manage all affiliate accounts and payout requests.</p>
         </div>
         
         <div class="flex bg-muted p-1 rounded-xl">
@@ -23,6 +23,18 @@
                 History
             </button>
         </div>
+    </div>
+
+    <div class="mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="relative w-full md:w-80 group">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <input wire:model.live.debounce.300ms="search" type="text" 
+                class="block w-full pl-10 pr-3 py-2 border border-border rounded-xl bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" 
+                placeholder="Cari affiliator...">
+        </div>
+
     </div>
 
     @if (session()->has('success'))
@@ -317,7 +329,43 @@
                 </table>
             </div>
             <div class="p-4 border-t border-border">
-                {{ $profiles->links() }}
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
+                    <!-- Left: Rows & Info -->
+                    <div class="flex items-center gap-6 order-2 md:order-1">
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
+                            <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm uppercase">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                        <div class="hidden sm:block">
+                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none opacity-70">
+                                Showing {{ $profiles->firstItem() ?? 0 }}-{{ $profiles->lastItem() ?? 0 }} of {{ $profiles->total() }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Navigation -->
+                    <div class="flex items-center gap-3 order-1 md:order-2">
+                        <button wire:click="previousPage('profilesPage')" @disabled($profiles->onFirstPage())
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        </button>
+                        
+                        <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
+                            <span class="text-xs font-black text-foreground">{{ $profiles->currentPage() }}</span>
+                            <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
+                            <span class="text-xs font-black text-foreground">{{ $profiles->lastPage() }}</span>
+                        </div>
+
+                        <button wire:click="nextPage('profilesPage')" @disabled(!$profiles->hasMorePages())
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         @else
             <!-- Payouts Tab -->
@@ -362,8 +410,8 @@
                                 </td>
                                 <td class="px-6 py-4 font-black text-foreground">Rp {{ number_format($payout->amount, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4">
-                                    <div class="text-xs font-medium">{{ $payout->affiliator->affiliatorProfile->bank_name }}</div>
-                                    <div class="text-[10px] text-muted-foreground">{{ $payout->affiliator->affiliatorProfile->bank_account_number }}</div>
+                                    <div class="text-xs font-medium">{{ $payout->affiliator->affiliateProfile->bank_name ?? '-' }}</div>
+                                    <div class="text-[10px] text-muted-foreground">{{ $payout->affiliator->affiliateProfile->bank_account_number ?? '-' }}</div>
                                 </td>
                                 <td class="px-6 py-4 text-xs text-muted-foreground">{{ $payout->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="px-6 py-4 text-right">
@@ -411,7 +459,43 @@
                 </table>
             </div>
             <div class="p-4 border-t border-border">
-                {{ $payouts->links() }}
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
+                    <!-- Left: Rows & Info -->
+                    <div class="flex items-center gap-6 order-2 md:order-1">
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
+                            <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm uppercase">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                        <div class="hidden sm:block">
+                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none opacity-70">
+                                Showing {{ $payouts->firstItem() ?? 0 }}-{{ $payouts->lastItem() ?? 0 }} of {{ $payouts->total() }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Navigation -->
+                    <div class="flex items-center gap-3 order-1 md:order-2">
+                        <button wire:click="previousPage('payoutsPage')" @disabled($payouts->onFirstPage())
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        </button>
+                        
+                        <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
+                            <span class="text-xs font-black text-foreground">{{ $payouts->currentPage() }}</span>
+                            <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
+                            <span class="text-xs font-black text-foreground">{{ $payouts->lastPage() }}</span>
+                        </div>
+
+                        <button wire:click="nextPage('payoutsPage')" @disabled(!$payouts->hasMorePages())
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         @endif
     </div>
@@ -486,10 +570,10 @@
                                         <div class="pt-4 border-t border-border/50 flex justify-between items-center">
                                             <div>
                                                 <p class="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">Rekening Tujuan</p>
-                                                <p class="text-sm font-bold">{{ $activePayout->affiliator->affiliatorProfile->bank_name }} - {{ $activePayout->affiliator->affiliatorProfile->bank_account_number }}</p>
-                                                <p class="text-[10px] text-muted-foreground">a.n {{ $activePayout->affiliator->affiliatorProfile->bank_account_name }}</p>
+                                                <p class="text-sm font-bold">{{ $activePayout->affiliator->affiliateProfile->bank_name ?? 'N/A' }} - {{ $activePayout->affiliator->affiliateProfile->bank_account_number ?? '-' }}</p>
+                                                <p class="text-[10px] text-muted-foreground">a.n {{ $activePayout->affiliator->affiliateProfile->bank_account_name ?? '-' }}</p>
                                             </div>
-                                            <button onclick="navigator.clipboard.writeText('{{ $activePayout->affiliator->affiliatorProfile->bank_account_number }}'); alert('Nomor rekening disalin!')" 
+                                            <button onclick="navigator.clipboard.writeText('{{ $activePayout->affiliator->affiliateProfile->bank_account_number ?? '' }}'); alert('Nomor rekening disalin!')" 
                                                 class="px-3 py-1.5 bg-background border border-input text-[10px] font-bold rounded-lg hover:bg-muted transition-colors flex items-center gap-1.5 shadow-sm">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                                 Salin Rekening

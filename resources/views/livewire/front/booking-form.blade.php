@@ -1,13 +1,14 @@
 
 
-<div class="py-1 px-4 sm:px-6 lg:px-8 bg-background min-h-[calc(100vh-4rem)]">
+<div class="pt-0 pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
 
-    <div class="max-w-3xl mx-auto">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-8">
             <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Formulir Penyewaan</h1>
         </div>
 
-        <div x-data="bookingForm()" class="bg-background rounded-2xl shadow-sm border border-border p-6 sm:p-8">
+        <div x-data="bookingForm()" 
+            class="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-6">
             <form wire:submit.prevent="submit" class="space-y-8">
 
                 <!-- Progress Bar -->
@@ -25,7 +26,7 @@
                 </div>
 
                 <!-- STEP 1: Jadwal & Unit -->
-                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-16 sm:pb-0">
+                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-8 sm:pb-0 font-sans">
                     <!-- 1. Jadwal Sewa -->
                     <div>
                         <div class="flex items-center justify-between gap-4 mb-4">
@@ -96,6 +97,62 @@
                 <!-- 2. Pilihan Unit -->
                 <div class="space-y-6">
                     <div class="flex flex-col gap-4">
+                        {{-- SMART MEMBER CHECK --}}
+                        <div class="mb-8 p-4 sm:p-5 rounded-2xl border transition-all duration-500 overflow-hidden relative group {{ $member_checked ? 'bg-emerald-500/[0.03] border-emerald-500/20 shadow-sm' : 'bg-primary/[0.03] border-primary/20 shadow-sm' }}">
+                            {{-- Background Glow --}}
+                            <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full blur-3xl opacity-20 pointer-events-none {{ $member_checked ? 'bg-emerald-500' : 'bg-primary' }}"></div>
+                            
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+                                <div class="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
+                                    <div class="hidden sm:flex h-12 w-12 rounded-2xl items-center justify-center border transition-all duration-500 {{ $member_checked ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-primary/10 border-primary/20 text-primary' }}">
+                                        @if($member_checked)
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                        @else
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                            <p class="text-sm font-black text-foreground">{{ $member_checked ? ($nama ?: 'Member Terverifikasi') : 'Punya Member?' }}</p>
+                                            @if($member_checked && $this->tier)
+                                                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $this->tier->color }} badge-shine shadow-sm shrink-0">
+                                                    {{ $this->tier->label }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <p class="text-[10px] text-muted-foreground mt-0.5 text-center sm:text-left">
+                                            {{ $member_checked ? 'Promo spesial member Anda sudah aktif di katalog.' : 'Nikmati promo spesial khusus member dengan cek NIK.' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="w-full sm:w-auto">
+                                    @if(!$member_checked)
+                                        <div class="flex flex-col gap-1">
+                                            <div class="flex items-center gap-2">
+                                                <div class="relative flex-1 sm:w-48">
+                                                    <input type="text" wire:model.defer="nik" placeholder="Masukkan NIK..." maxlength="16"
+                                                        oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                                        class="w-full h-10 px-3 py-2 text-xs border border-border rounded-lg bg-background focus:ring-1 focus:ring-primary outline-none transition-all shadow-sm">
+                                                </div>
+                                                <button type="button" wire:click="checkMember" wire:loading.attr="disabled"
+                                                    class="px-5 h-10 bg-primary text-primary-foreground text-xs font-bold rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 shrink-0">
+                                                    <span wire:loading.remove wire:target="checkMember">Cek</span>
+                                                    <div wire:loading wire:target="checkMember" class="w-3 h-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
+                                                </button>
+                                            </div>
+                                            @error('nik') <p class="text-[10px] text-red-500 font-bold ml-1 animate-in fade-in slide-in-from-top-1 duration-300">{{ $message }}</p> @enderror
+                                        </div>
+                                    @else
+                                        <button type="button" wire:click="$set('member_checked', false); $set('nik', ''); $set('nikFoundMessage', null); $set('isNikVerified', false); calculatePrice();"
+                                            class="w-full sm:w-auto h-10 px-4 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors">
+                                            Ganti Akun
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
                         <h2 class="text-xl font-bold tracking-tight mb-2 text-foreground">2. Pilih Unit Tersedia</h2>
                         
                         @if($waktu_mulai && $waktu_selesai)
@@ -144,26 +201,40 @@
                                 @foreach($available_units as $unit)
                                 <label
                                     x-bind:class="selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}') ? 'border-primary ring-1 ring-primary bg-primary/[0.04]' : 'border-border bg-background hover:border-primary/50'"
-                                    class="group relative flex cursor-pointer rounded-xl border p-3.5 shadow-sm transition-all focus:outline-none items-center justify-between">
+                                    class="group relative flex rounded-xl border p-3.5 shadow-sm transition-all focus:outline-none items-center justify-between {{ $unit->availability_status === 'full' ? 'opacity-50 grayscale cursor-not-allowed pointer-events-none' : 'cursor-pointer' }}">
                                     <input type="checkbox" wire:model.live="selected_unit_ids" value="{{ $unit->id }}"
-                                        class="sr-only">
+                                        class="sr-only" {{ $unit->availability_status === 'full' ? 'disabled' : '' }}>
                                     
-                                    <div class="flex flex-col min-w-0">
-                                        <span class="font-bold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors">
-                                            {{ $unit->seri }}
-                                        </span>
-                                        <div class="flex items-center gap-1.5 mt-0.5">
-                                            <span class="text-[10px] font-medium text-muted-foreground text-left">
-                                                {{ $unit->warna }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="font-bold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors">
+                                                {{ $unit->seri }}
                                             </span>
+                                            <div class="flex flex-col gap-0.5 mt-0.5">
+                                                <span class="text-[10px] font-medium text-muted-foreground text-left">
+                                                    {{ $unit->warna }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}
+                                                </span>
+                                                @if($unit->availability_label)
+                                                    <span class="text-[9px] font-bold uppercase tracking-tight {{ $unit->availability_status === 'ready' ? 'text-emerald-500' : ($unit->availability_status === 'full' ? 'text-red-500' : 'text-amber-500') }}">
+                                                        {{ $unit->availability_label }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
-                                    </div>
 
                                     <div class="flex items-center gap-4">
                                         <div class="flex flex-col items-end text-right shrink-0">
-                                            <div class="text-xs font-black text-primary">
-                                                Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }}
-                                            </div>
+                                            @if($this->loyaltyDiscountedUnitPrices[$unit->id]['has_discount'])
+                                                <div class="text-[9px] text-muted-foreground line-through decoration-red-500/50 font-bold opacity-60">
+                                                    Rp {{ number_format($this->loyaltyDiscountedUnitPrices[$unit->id]['original_hari'], 0, ',', '.') }}
+                                                </div>
+                                                <div class="text-xs font-black text-primary animate-in fade-in zoom-in-95 duration-500">
+                                                    Rp {{ number_format($this->loyaltyDiscountedUnitPrices[$unit->id]['hari'], 0, ',', '.') }}
+                                                </div>
+                                            @else
+                                                <div class="text-xs font-black text-primary">
+                                                    Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }}
+                                                </div>
+                                            @endif
                                             <span class="text-[9px] font-medium text-muted-foreground leading-none mt-0.5">/ hari</span>
                                         </div>
 
@@ -252,7 +323,7 @@
                 </div> <!-- END STEP 1 -->
 
                 <!-- STEP 2: Data Diri & Promo -->
-                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-16 sm:pb-0">
+                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-8 sm:pb-0 font-sans">
 <!-- 5. Data Diri -->
                 <div>
                     <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">{{ (!empty($selected_unit_ids) && $waktu_mulai &&
@@ -264,8 +335,9 @@
                             <div class="mt-2 flex shadow-sm rounded-md h-10 w-full">
                                 <input type="text" wire:model.blur="nik" inputmode="numeric"
                                     oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                    maxlength="16"
                                     class="flex h-10 w-full border border-input bg-transparent rounded-l-md px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
-                                    placeholder="">
+                                    placeholder="16 Digit NIK">
                                 <button type="button" wire:click="checkNik"
                                     class="inline-flex items-center justify-center rounded-r-md border border-l-0 border-input bg-muted px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted/80 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ring transition-colors shrink-0 whitespace-nowrap">
                                     <span wire:loading.remove wire:target="checkNik">Cek NIK</span>
@@ -274,9 +346,16 @@
                             </div>
                             @error('nik') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
                             @if($nikFoundMessage)
-                                <span class="text-xs {{ $nikFoundType === 'success' ? 'text-green-600 font-bold' : 'text-amber-600 font-medium' }} block mt-1">
-                                    {{ $nikFoundMessage }}
-                                </span>
+                                <div class="flex items-center gap-2 mt-2">
+                                    @if($this->tier)
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $this->tier->color }} badge-shine shadow-sm shrink-0">
+                                            {{ $this->tier->label }}
+                                        </span>
+                                    @endif
+                                    <span class="text-[10px] {{ $nikFoundType === 'success' ? 'text-green-600 font-bold' : 'text-amber-600 font-medium' }}">
+                                        {{ $nikFoundMessage }}
+                                    </span>
+                                </div>
                             @endif
                         </div>
                         <div>
@@ -284,24 +363,47 @@
                             <input type="text" wire:model="nama"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
+                                maxlength="50"
                                 class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                placeholder=" ">
+                                placeholder="SESUAI KTP">
                             @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium leading-none">Alamat Email (Untuk Terima Invoice)</label>
+                            <input type="email" wire:model.live.debounce.500ms="email"
+                                maxlength="50"
+                                class="mt-2 flex h-10 w-full rounded-md border {{ $errors->has('email') ? 'border-red-500 bg-rose-500/10' : 'border-input bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                placeholder="nama@email.com">
+                            @error('email') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="text-sm font-medium leading-none">Nomor Telepon / WhatsApp</label>
                             <input type="text" wire:model="no_wa" inputmode="numeric"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                maxlength="15"
+                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                placeholder="08XXXXXXXXXX">
                             @error('no_wa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium leading-none">Sosial Media (IG/TikTok)</label>
+                            <div class="relative mt-2 flex shadow-sm rounded-md h-10 w-full group">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-foreground/70 font-bold text-sm">@</div>
+                                <input type="text" wire:model="sosial_media"
+                                    maxlength="20"
+                                    class="flex h-10 w-full rounded-md border border-input bg-transparent pl-7 pr-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                    placeholder="username">
+                            </div>
+                            @error('sosial_media') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
                         </div>
                         <div class="sm:col-span-2">
                             <label class="text-sm font-medium leading-none">Alamat Domisili lengkap</label>
                             <textarea wire:model="alamat" rows="3"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
+                                maxlength="150"
                                 class="mt-2 flex w-full rounded-md border border-input bg-transparent px-3 py-2 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                placeholder=""></textarea>
+                                placeholder="CONTOH: JL. RAYA NO. 123..."></textarea>
                             @error('alamat') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -515,6 +617,19 @@
                     @error('agree') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                <!-- General Error Message -->
+                @if($errors->any())
+                    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs font-bold text-center animate-in fade-in slide-in-from-top-1 duration-300">
+                        <p>Ups! Ada data yang belum sesuai:</p>
+                        <ul class="mt-2 list-none space-y-1 opacity-80">
+                            @foreach ($errors->all() as $error)
+                                <li>• {{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <p class="mt-3 text-[10px] uppercase tracking-widest opacity-60">Mohon perbaiki data pada langkah sebelumnya.</p>
+                    </div>
+                @endif
+
                 <button type="submit" wire:loading.attr="disabled"
                     class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-8.5 font-bold text-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all">
                     <span wire:loading.remove wire:target="submit">Sewa & Lanjut Pembayaran</span>
@@ -525,130 +640,130 @@
                 </button>
             
                 </div> <!-- END STEP 3 -->
-
-
-
             </form>
 
-            <!-- Sticky Summary & Navigation Bar (Mobile) -->
-            <div x-cloak x-show="step < 3 && selectedIds.length > 0 && subtotal > 0" 
-                wire:key="sticky-booking-summary"
-                class="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
+    <!-- Sticky Summary & Navigation Bar (Mobile) -->
+    <div x-cloak x-show="step < 3 && selectedIds.length > 0 && subtotal > 0 && !keyboardOpen" 
+        wire:key="sticky-booking-summary"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="translate-y-full"
+        x-transition:enter-end="translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-y-0"
+        x-transition:leave-end="translate-y-full"
+        class="fixed bottom-0 left-0 right-0 z-[60] sm:hidden">
+        
+        <!-- Backdrop/Overlay -->
+        <div x-show="summaryExpanded" 
+            @click="summaryExpanded = false"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-black/40 z-[-1]"></div>
+
+        <div class="bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-15px_40px_rgba(0,0,0,0.15)] transition-all duration-500 ease-in-out"
+            x-bind:class="summaryExpanded ? 'rounded-t-[2.5rem]' : ''">
+            <!-- Expandable Content -->
+            <div x-show="summaryExpanded" 
+                x-transition:enter="transition-all ease-out duration-250"
+                x-transition:enter-start="max-h-0 opacity-0 translate-y-4"
+                x-transition:enter-end="max-h-[60vh] opacity-100 translate-y-0"
+                x-transition:leave="transition-all ease-in duration-200"
+                x-transition:leave-start="max-h-[60vh] opacity-100 translate-y-0"
+                x-transition:leave-end="max-h-0 opacity-0 translate-y-4"
+                class="overflow-y-auto px-4 py-6 space-y-6">
                 
-                <!-- Backdrop/Overlay -->
-                <div x-show="summaryExpanded" 
-                    @click="summaryExpanded = false"
-                    x-transition:enter="transition ease-out duration-300"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-200"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    class="fixed inset-0 bg-black/40 z-[-1]"></div>
-
-                <div class="bg-background/10 backdrop-blur-sm border-t border-border shadow-[0_-15px_40px_rgba(0,0,0,0.15)] transition-all duration-500 ease-in-out"
-                    x-bind:class="summaryExpanded ? 'rounded-t-[2.5rem]' : ''">
-                    <!-- Expandable Content -->
-                    <div x-show="summaryExpanded" 
-                        x-transition:enter="transition-all ease-out duration-250"
-                        x-transition:enter-start="max-h-0 opacity-0 translate-y-4"
-                        x-transition:enter-end="max-h-[60vh] opacity-100 translate-y-0"
-                        x-transition:leave="transition-all ease-in duration-200"
-                        x-transition:leave-start="max-h-[60vh] opacity-100 translate-y-0"
-                        x-transition:leave-end="max-h-0 opacity-0 translate-y-4"
-                        class="overflow-y-auto px-4 py-6 space-y-6">
-                        
-                        <!-- Unit Details -->
-                        <div>
-                            <div class="space-y-1 max-h-[185px] overflow-y-auto pr-1 scrollbar-hide">
-                                @php 
-                                    $allUnits = collect($available_units);
-                                @endphp
-                                <template x-for="id in selectedIds" :key="id">
-                                    <div class="flex items-start justify-between py-2 border-b border-border/40 last:border-0">
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-[11px] font-bold text-foreground leading-tight truncate" x-text="unitPrices[id]?.seri || 'Unit #' + id"></p>
-                                            <div class="flex items-center gap-1.5 text-[9px] text-muted-foreground mt-0.5">
-                                                <span x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(unitPrices[id]?.day || 0) + '/hari'"></span>
-                                                <span x-show="duration.days > 0" x-text="'x ' + duration.days + ' h'"></span>
-                                                <span x-show="duration.hours > 0" x-text="'+ ' + duration.hours + ' j'"></span>
-                                            </div>
-                                        </div>
-                                        <div class="text-right ml-4">
-                                            <p class="text-[10px] font-black text-primary">
-                                                Rp <span x-text="new Intl.NumberFormat('id-ID').format((duration.days * (unitPrices[id]?.day || 0)) + (duration.hours * (unitPrices[id]?.hour || 0)))"></span>
-                                            </p>
-                                            <p class="text-[8px] text-muted-foreground leading-none mt-1" x-show="unitPrices[id]?.warna || unitPrices[id]?.memori">
-                                                <span x-text="unitPrices[id]?.warna || ''"></span>
-                                                <span x-show="unitPrices[id]?.warna && unitPrices[id]?.memori"> • </span>
-                                                <span x-text="unitPrices[id]?.memori || ''"></span>
-                                            </p>
-                                        </div>
+                <!-- Unit Details -->
+                <div>
+                    <div class="space-y-1 max-h-[185px] overflow-y-auto pr-1 scrollbar-hide">
+                        <template x-for="id in selectedIds" :key="id">
+                            <div class="flex items-start justify-between py-2 border-b border-border/40 last:border-0">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[11px] font-bold text-foreground leading-tight truncate" x-text="unitPrices[id]?.seri || 'Unit #' + id"></p>
+                                    <div class="flex items-center gap-1.5 text-[9px] text-muted-foreground mt-0.5">
+                                        <span x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(unitPrices[id]?.day || 0) + '/hari'"></span>
+                                        <span x-show="duration.days > 0" x-text="'x ' + duration.days + ' h'"></span>
+                                        <span x-show="duration.hours > 0" x-text="'+ ' + duration.hours + ' j'"></span>
                                     </div>
-                                </template>
+                                </div>
+                                <div class="text-right ml-4">
+                                    <p class="text-[10px] font-black text-primary">
+                                        Rp <span x-text="new Intl.NumberFormat('id-ID').format((duration.days * (unitPrices[id]?.day || 0)) + (duration.hours * (unitPrices[id]?.hour || 0)))"></span>
+                                    </p>
+                                    <p class="text-[8px] text-muted-foreground leading-none mt-1" x-show="unitPrices[id]?.warna || unitPrices[id]?.memori">
+                                        <span x-text="unitPrices[id]?.warna || ''"></span>
+                                        <span x-show="unitPrices[id]?.warna && unitPrices[id]?.memori"> • </span>
+                                        <span x-text="unitPrices[id]?.memori || ''"></span>
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-
-                        <!-- Price Breakdown -->
-                        <div class="bg-muted/30 rounded-xl p-4 space-y-2 border border-border">
-                            <div class="flex justify-between text-[11px]">
-                                <span class="text-muted-foreground">Harga Sewa Dasar</span>
-                                <span class="font-bold" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal)"></span>
-                            </div>
-                            <div x-show="$wire.potongan_diskon > 0" class="flex justify-between text-[11px] text-green-600">
-                                <span>Potongan Diskon</span>
-                                <span class="font-bold">- Rp <span x-text="new Intl.NumberFormat('id-ID').format($wire.potongan_diskon)"></span></span>
-                            </div>
-                            <div x-show="$wire.hari_bonus > 0" class="flex justify-between text-[11px] text-blue-600">
-                                <span>Bonus Hari Gratis</span>
-                                <span class="font-bold">+<span x-text="$wire.hari_bonus"></span> Hari</span>
-                            </div>
-                            <div x-show="$wire.jam_bonus > 0" class="flex justify-between text-[11px] text-purple-600">
-                                <span>Bonus Jam Gratis</span>
-                                <span class="font-bold">+<span x-text="$wire.jam_bonus"></span> Jam</span>
-                            </div>
-                            <div class="pt-2 border-t border-border flex justify-between items-center">
-                                <span class="text-xs font-bold text-foreground">Total Estimasi</span>
-                                <span class="text-base font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
-                            </div>
-                        </div>
+                        </template>
                     </div>
+                </div>
 
-                    <!-- Bottom Bar (Always Visible) -->
-                    <div class="px-4 py-4 flex items-center justify-between relative z-10">
-                        <div class="flex-1 flex flex-col gap-0.5 cursor-pointer select-none" @click="summaryExpanded = !summaryExpanded">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest" x-text="selectedIds.length + ' Unit Terpilih'"></span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" 
-                                    class="text-muted-foreground transition-transform duration-500"
-                                    x-bind:class="summaryExpanded ? 'rotate-180' : ''">
-                                    <path d="m18 15-6-6-6 6"/>
-                                </svg>
-                            </div>
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="text-sm font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
-                                
-                                <span x-show="$wire.potongan_diskon > 0" 
-                                    class="inline-flex items-center rounded-full border border-transparent bg-green-500/10 px-1.5 py-0.5 text-[9px] font-bold text-green-600 dark:text-green-400">
-                                    -Rp<span x-text="new Intl.NumberFormat('id-ID').format($wire.potongan_diskon)"></span>
-                                </span>
-                                <span x-show="$wire.hari_bonus > 0" 
-                                    class="inline-flex items-center rounded-full border border-transparent bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 dark:text-blue-400">
-                                    +<span x-text="$wire.hari_bonus"></span> Hari
-                                </span>
-                                <span x-show="$wire.jam_bonus > 0" 
-                                    class="inline-flex items-center rounded-full border border-transparent bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-bold text-purple-600 dark:text-purple-400">
-                                    +<span x-text="$wire.jam_bonus"></span> Jam
-                                </span>
-                            </div>
-                        </div>
-                        <button type="button" @click.prevent="nextStep()" class="bg-primary text-primary-foreground font-bold px-6 py-2.5 rounded-xl shadow-lg active:scale-95 transition-all text-sm">Lanjut</button>
+                <!-- Price Breakdown -->
+                <div class="bg-muted/30 rounded-xl p-4 space-y-2 border border-border">
+                    <div class="flex justify-between text-[11px]">
+                        <span class="text-muted-foreground">Harga Sewa Dasar</span>
+                        <span class="font-bold" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal)"></span>
                     </div>
-
-                    <!-- Safe Area spacer -->
-                    <div class="h-[env(safe-area-inset-bottom)] w-full"></div>
+                    <div x-show="$wire.potongan_diskon > 0" class="flex justify-between text-[11px] text-green-600">
+                        <span>Potongan Diskon</span>
+                        <span class="font-bold">- Rp <span x-text="new Intl.NumberFormat('id-ID').format($wire.potongan_diskon)"></span></span>
+                    </div>
+                    <div x-show="$wire.hari_bonus > 0" class="flex justify-between text-[11px] text-blue-600">
+                        <span>Bonus Hari Gratis</span>
+                        <span class="font-bold">+<span x-text="$wire.hari_bonus"></span> Hari</span>
+                    </div>
+                    <div x-show="$wire.jam_bonus > 0" class="flex justify-between text-[11px] text-purple-600">
+                        <span>Bonus Jam Gratis</span>
+                        <span class="font-bold">+<span x-text="$wire.jam_bonus"></span> Jam</span>
+                    </div>
+                    <div class="pt-2 border-t border-border flex justify-between items-center">
+                        <span class="text-xs font-bold text-foreground">Total Estimasi</span>
+                        <span class="text-base font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Bottom Bar (Always Visible) -->
+            <div class="px-4 py-4 flex items-center justify-between relative z-10">
+                <div class="flex-1 flex flex-col gap-0.5 cursor-pointer select-none" @click="summaryExpanded = !summaryExpanded">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest" x-text="selectedIds.length + ' Unit Terpilih'"></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" 
+                            class="text-muted-foreground transition-transform duration-500"
+                            x-bind:class="summaryExpanded ? 'rotate-180' : ''">
+                            <path d="m18 15-6-6-6 6"/>
+                        </svg>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-sm font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
+                        
+                        <span x-show="$wire.potongan_diskon > 0" 
+                            class="inline-flex items-center rounded-full border border-transparent bg-green-500/10 px-1.5 py-0.5 text-[9px] font-bold text-green-600 dark:text-green-400">
+                            -Rp<span x-text="new Intl.NumberFormat('id-ID').format($wire.potongan_diskon)"></span>
+                        </span>
+                        <span x-show="$wire.hari_bonus > 0" 
+                            class="inline-flex items-center rounded-full border border-transparent bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 dark:text-blue-400">
+                            +<span x-text="$wire.hari_bonus"></span> Hari
+                        </span>
+                        <span x-show="$wire.jam_bonus > 0" 
+                            class="inline-flex items-center rounded-full border border-transparent bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-bold text-purple-600 dark:text-purple-400">
+                            +<span x-text="$wire.jam_bonus"></span> Jam
+                        </span>
+                    </div>
+                </div>
+                <button type="button" @click.prevent="nextStep()" class="bg-primary text-primary-foreground font-bold px-6 py-2.5 rounded-xl shadow-lg active:scale-95 transition-all text-sm">Lanjut</button>
+            </div>
+
+            <!-- Safe Area spacer -->
+            <div class="h-[env(safe-area-inset-bottom)] w-full"></div>
+        </div>
+    </div>
 
             <!-- Desktop Navigation Buttons -->
             <div x-cloak x-show="step < 3" class="hidden sm:flex justify-end mt-6 gap-3 border-t border-border pt-6">
@@ -669,6 +784,7 @@
     Alpine.data('bookingForm', () => ({
         step: 1,
         summaryExpanded: false,
+        keyboardOpen: false,
         selectedIds: @entangle('selected_unit_ids'),
         selectedPromoIds: @entangle('selected_promo_ids'),
         unitPrices: {!! $unitPricesJson !!},
@@ -685,8 +801,17 @@
                 const nk = $wire.get('nik');
                 const nm = $wire.get('nama');
                 const wa = $wire.get('no_wa');
-                if(!nk || !nm || !wa) {
-                    alert('Harap lengkapi Data Diri (NIK, Nama, No. WhatsApp) terlebih dahulu.');
+                const sm = $wire.get('sosial_media');
+                const em = $wire.get('email');
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                
+                if(!nk || !nm || !wa || !sm || !em) {
+                    alert('Harap lengkapi Data Diri (NIK, Nama, Email, No. WhatsApp, Sosial Media) terlebih dahulu.');
+                    return;
+                }
+                
+                if(!emailRegex.test(em)) {
+                    alert('Format alamat email tidak valid.');
                     return;
                 }
                 this.step = 3;
@@ -722,6 +847,39 @@
                 }
             });
             return total;
+        },
+
+        init() {
+            // Keyboard Visibility Detection
+            const handleFocus = (e) => {
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+                    this.keyboardOpen = true;
+                }
+            };
+            const handleBlur = () => {
+                // Delay blur to prevent flickering
+                setTimeout(() => {
+                    const activeTag = document.activeElement.tagName;
+                    if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) {
+                        this.keyboardOpen = false;
+                    }
+                }, 100);
+            };
+
+            document.addEventListener('focusin', handleFocus);
+            document.addEventListener('focusout', handleBlur);
+
+            // Robust VisualViewport handling for modern iOS/Android with simple debounce
+            if (window.visualViewport) {
+                let resizeTimer;
+                window.visualViewport.addEventListener('resize', () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        const isKeyboard = window.visualViewport.height < (window.innerHeight * 0.9);
+                        this.keyboardOpen = isKeyboard;
+                    }, 50);
+                });
+            }
         }
     }));
 
@@ -754,7 +912,7 @@
         // Also save on any input change to be safe
         function saveToStorage() {
             const fields = [
-                'nik', 'nama', 'alamat', 'no_wa', 
+                'nik', 'nama', 'alamat', 'no_wa', 'sosial_media',
                 'waktu_mulai', 'waktu_selesai', 
                 'selected_unit_ids', 'selected_category_id'
             ];

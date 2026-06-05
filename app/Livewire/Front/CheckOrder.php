@@ -12,6 +12,8 @@ class CheckOrder extends Component
     public $nik = '';
     public $no_wa = '';
     public $orders = null;
+    
+    #[\Livewire\Attributes\Url]
     public $currentTab = 'pesanan';
 
     public function mount()
@@ -63,7 +65,22 @@ class CheckOrder extends Component
     {
         if (!$this->orders)
             return 0;
-        return $this->orders->whereIn('status', ['pending', 'paid', 'completed'])->sum('grand_total');
+        return $this->orders->whereIn('status', ['pending', 'paid', 'completed', 'renting'])->sum('grand_total');
+    }
+
+    public function getTierProperty()
+    {
+        return \App\Helpers\CustomerHelper::getTier($this->ltv);
+    }
+
+    public function getNextTierProperty()
+    {
+        return \App\Helpers\CustomerHelper::getNextTier($this->ltv);
+    }
+
+    public function getLtvProperty()
+    {
+        return \App\Helpers\CustomerHelper::getLtv($this->nik);
     }
 
     public function getActiveRentalsCountProperty()

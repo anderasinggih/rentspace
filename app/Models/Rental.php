@@ -14,6 +14,8 @@ class Rental extends Model
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
         'completed_at' => 'datetime',
+        'handed_over_at' => 'datetime',
+        'paid_at' => 'datetime',
         'payment_details' => 'array',
     ];
 
@@ -52,11 +54,19 @@ class Rental extends Model
     }
 
     /**
-     * Get the promo applied to this rental.
+     * Get the promo applied to this rental (Primary).
      */
     public function appliedPromo(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(PricingRule::class, 'applied_promo_id');
+    }
+
+    /**
+     * Get all promos applied to this rental (including stacked ones).
+     */
+    public function appliedPromos(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(PricingRule::class, 'rental_pricing_rule');
     }
 
     /**

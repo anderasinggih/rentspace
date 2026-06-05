@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rental;
+use App\Mail\PaymentConfirmedNotification;
+use App\Mail\OrderCancelledNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class MidtransWebhookController extends Controller
 {
@@ -53,14 +56,80 @@ class MidtransWebhookController extends Controller
                 if ($fraud == 'challenge') {
                     $rental->update(['status' => 'pending']);
                 } else {
-                    $rental->update(['status' => 'paid']);
+                    $rental->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
                     Log::info("MIDTRANS WEBHOOK: Pembayaran Berhasil untuk Booking Code: " . $booking_code);
+                    
+                    // Send Email Notification
+                    $this->sendEmailNotification($rental, 'paid');
+
+                    // --- PUSH NOTIFICATION KE ADMIN ---
+                    try {
+                        \App\Services\OneSignalService::sendToAdmins(
+                            "✅ Pembayaran Lunas: " . strtoupper($rental->nama) . " (Rp " . number_format($rental->grand_total, 0, ',', '.') . ")",
+                            "💰 PEMBAYARAN MASUK",
+                            route('admin.monitoring')
+                        );
+                    } catch (\Exception $e) { }
                 }
             } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
                 $rental->update(['status' => 'cancelled']);
+                Log::info("MIDTRANS WEBHOOK: Pembayaran Gagal/Cancel untuk Booking Code: " . $booking_code);
+                
+                // Send Email Notification
+                $this->sendEmailNotification($rental, 'cancelled');
+
+                // --- PUSH NOTIFICATION KE ADMIN ---
+                try {
+                    \App\Services\OneSignalService::sendToAdmins(
+                        "❌ Pesanan Dibatalkan: " . strtoupper($rental->nama) . " (" . strtoupper($status) . ")",
+                        "⚠️ PESANAN BATAL",
+                        route('admin.monitoring')
+                    );
+                } catch (\Exception $e) { }
             }
         }
 
         return response()->json(['message' => 'OK']);
+    }
+
+    private function sendEmailNotification($rental, $type)
+    {
+        $isAdminEmailEnabled = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+        $isUserEmailEnabled = \App\Models\Setting::getVal('is_user_email_active', '1') == '1';
+        
+        if (!$isAdminEmailEnabled && !$isUserEmailEnabled) return;
+
+        try {
+            // 1. Prepare recipients
+            $emails = [];
+            
+            if ($isAdminEmailEnabled) {
+                $adminEmail = \App\Models\Setting::getVal('admin_email_recipients');
+                if (!$adminEmail) {
+                    $adminEmail = config('mail.admin_email') ?: config('mail.from.address');
+                }
+                if ($adminEmail) {
+                    $emails = array_merge($emails, array_map('trim', explode(',', $adminEmail)));
+                }
+            }
+            
+            if ($isUserEmailEnabled && $rental->email) {
+                $emails[] = $rental->email;
+            }
+
+            // 2. Send the right notification
+            if (!empty($emails)) {
+                if ($type === 'paid') {
+                    \App\Helpers\MailHelper::logAndQueue($emails, new \App\Mail\PaymentConfirmedNotification($rental), 'Payment Confirmation (Auto)');
+                } elseif ($type === 'cancelled') {
+                    \App\Helpers\MailHelper::logAndQueue($emails, new \App\Mail\OrderCancelledNotification($rental), 'Order Cancellation (Auto)');
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("MIDTRANS WEBHOOK EMAIL FAILED: " . $e->getMessage());
+        }
     }
 }

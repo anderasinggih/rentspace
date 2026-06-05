@@ -43,6 +43,31 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/settings', Settings::class)->name('admin.settings');
         Route::get('/admin/affiliate', AffiliateManager::class)->name('admin.affiliate');
         Route::get('/admin/stafflogs', \App\Livewire\Admin\StaffLogs::class)->name('admin.staff-logs');
+        Route::get('/admin/ratings', \App\Livewire\Admin\RatingManager::class)->name('admin.ratings');
+        Route::get('/admin/scan', \App\Livewire\Admin\QuickScan::class)->name('admin.scan');
+        Route::get('/admin/radar', \App\Livewire\Admin\RadarDevices::class)->name('admin.radar');
+
+        // Printable Report Routes
+        Route::get('/admin/report/monthly', [\App\Http\Controllers\Admin\ReportController::class, 'monthly'])->name('admin.report.monthly');
+        Route::get('/admin/report/yearly', [\App\Http\Controllers\Admin\ReportController::class, 'yearly'])->name('admin.report.yearly');
+
+        // Email Preview Routes
+        Route::get('/admin/email-preview/{type}', function($type) {
+            $rental = \App\Models\Rental::latest()->first();
+            if (!$rental) return "Belum ada data rental di database untuk dijadikan contoh preview.";
+            
+            try {
+                return match($type) {
+                    'invoice' => new \App\Mail\NewOrderNotification($rental),
+                    'confirmed' => new \App\Mail\PaymentConfirmedNotification($rental),
+                    'reminder' => new \App\Mail\ReturnReminderNotification($rental),
+                    'overdue' => new \App\Mail\OverdueNotification($rental),
+                    default => abort(404),
+                };
+            } catch (\Exception $e) {
+                return "Gagal me-render email: " . $e->getMessage();
+            }
+        })->name('admin.email-preview');
     });
     
     // Affiliate Dashboard

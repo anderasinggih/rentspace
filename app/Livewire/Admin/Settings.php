@@ -4,25 +4,45 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
+
+use Livewire\Attributes\Url;
 
 class Settings extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     public $qris_photo;
     public $hero_photo;
+    public $hero2_photo;
+    public $hero3_photo;
     public $qris;
     public $hero;
+    public $hero2;
+    public $hero3;
+    public $perPage = 10;
 
-    public $users = [];
     public $editingUserId = null;
     public $isEditMode = false;
     public $name = '', $email = '', $password = '', $role = 'admin';
     public $is_also_affiliate = false;
     public $sortField = 'created_at';
     public $sortDirection = 'desc';
+
+    #[Url(as: 'tab')]
     public $activeTab = 'akun';
+    public $search = '';
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedActiveTab()
+    {
+        $this->resetPage();
+    }
 
     // Affiliator Profile Fields
     public $affiliate_no_hp = '', $affiliate_nik = '', $affiliate_alamat = '';
@@ -33,6 +53,7 @@ class Settings extends Component
     public $admin_wa = '', $admin_address = '', $terms_conditions = '';
     public $payment_methods = [
         'qris' => true, 
+        'manual_qris' => false,
         'cash' => true, 
         'bca' => true, 
         'mandiri' => true, 
@@ -45,8 +66,28 @@ class Settings extends Component
     public $about_faq_items = [];
     public $social_ig_url = '', $social_ig_name = '', $social_tiktok_url = '', $social_tiktok_name = '';
     public $min_payout = 50000;
-    public $is_maintenance = false;
+     public $is_maintenance = false;
     public $maintenance_message = 'Kami akan segera kembali!';
+    public $is_email_active = true;
+    public $is_user_email_active = true;
+    public $admin_email_recipients = '';
+
+    // Reminder & Overdue Email Settings
+    public $is_reminder_active = true;
+    public $reminder_hours_before = 2;
+    public $is_overdue_active = true;
+    public $overdue_minutes_after = 15;
+
+    // Greetings Properties
+    public $greeting_morning = '', $greeting_day = '', $greeting_afternoon = '', $greeting_evening = '', $greeting_night = '';
+    public $is_greeting_active = true;
+
+    public $is_chatbot_active = true;
+    public $chatbot_api_key = '';
+
+    public $onesignal_app_id = '';
+    public $onesignal_rest_api_key = '';
+    public $onesignal_safari_web_id = '';
 
     public $importFile;
 
@@ -55,8 +96,6 @@ class Settings extends Component
         if (!in_array(auth()->user()->role, ['admin', 'viewer'])) {
             abort(403, 'Akses ditolak.');
         }
-
-        $this->loadUsers();
         $this->home_title = \App\Models\Setting::getVal('home_title', 'Sewa iPhone Mudah, Cepat, dan Aman');
         $this->home_description = \App\Models\Setting::getVal('home_description', 'Pilih tipe iPhone sesuai kebutuhan Anda. Bebas atur jadwal sewa, harga bersahabat, tanpa syarat ribet!');
         $this->late_tolerance_minutes = \App\Models\Setting::getVal('late_tolerance_minutes', 60);
@@ -65,7 +104,7 @@ class Settings extends Component
         $defaultTerms = "1. Penyewa wajib menjaga iPhone yang disewa dan bertanggung jawab atas kerusakan atau kehilangan selama masa sewa.\n2. Pembayaran dilakukan di awal sebelum unit diserahkan, sesuai total tagihan yang tertera.\n3. Keterlambatan pengembalian melewati batas toleransi waktu akan dikenakan denda yang ditentukan oleh pengelola.\n4. Pengelola berhak menolak penyewaan apabila dokumen identitas (NIK/KTP) tidak valid atau tidak sesuai.\n5. Pemesanan yang sudah terkonfirmasi tidak dapat dibatalkan secara sepihak oleh penyewa.";
         $this->terms_conditions = \App\Models\Setting::getVal('terms_conditions', $defaultTerms);
         $defaultPayments = json_encode([
-            'qris' => true, 'cash' => true, 'bca' => true, 'mandiri' => true, 
+            'qris' => true, 'manual_qris' => false, 'cash' => true, 'bca' => true, 'mandiri' => true, 
             'bni' => true, 'bri' => true, 'permata' => true, 'bsi' => true, 'cimb' => true
         ]);
         $savedPayment = \App\Models\Setting::getVal('payment_methods', $defaultPayments);
@@ -76,6 +115,8 @@ class Settings extends Component
 
         $this->qris = \App\Models\Setting::getVal('qris', 'default.jpg');
         $this->hero = \App\Models\Setting::getVal('hero', 'default.jpg');
+        $this->hero2 = \App\Models\Setting::getVal('hero2', 'default2.jpg');
+        $this->hero3 = \App\Models\Setting::getVal('hero3', 'default3.jpg');
         $this->min_payout = \App\Models\Setting::getVal('min_payout', 50000);
 
         $this->social_ig_url = \App\Models\Setting::getVal('social_ig_url', '');
@@ -85,12 +126,37 @@ class Settings extends Component
 
         $this->is_maintenance = \App\Models\Setting::getVal('is_maintenance', '0') == '1';
         $this->maintenance_message = \App\Models\Setting::getVal('maintenance_message', 'Kami akan segera kembali! Saat ini sistem sedang dalam pemeliharaan rutin untuk meningkatkan layanan kami.');
+
+        // Load Greetings
+        $this->greeting_morning = \App\Models\Setting::getVal('greeting_morning', 'Pagi Bos! ⚡️ Semangat harinya, jangan lupa bawa iPhone RentSpace buat momen spesialmu.');
+        $this->greeting_day = \App\Models\Setting::getVal('greeting_day', 'Siang Bos! ☀️ Panas ya? Tetep tampil kece & profesional bareng iPhone dari RentSpace.');
+        $this->greeting_afternoon = \App\Models\Setting::getVal('greeting_afternoon', 'Sore Bos! ☁️ Purwokerto mulai sejuk nih, asik banget buat bikin konten cinematic.');
+        $this->greeting_evening = \App\Models\Setting::getVal('greeting_evening', 'Malam Bos! ✨ Butuh iPhone buat dinner atau event keren malam ini? Kami ready!');
+        $this->greeting_night = \App\Models\Setting::getVal('greeting_night', 'Masih bangun Bos? 🌙 Lagi nyari unit buat dipake besok ya? Langsung sikat!');
+        // Load Email Settings
+        $this->is_email_active = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+        $this->is_user_email_active = \App\Models\Setting::getVal('is_user_email_active', '1') == '1';
+        $this->admin_email_recipients = \App\Models\Setting::getVal('admin_email_recipients', config('mail.admin_email') ?: '');
+        
+        // Reminder Settings
+        $this->is_reminder_active = \App\Models\Setting::getVal('is_reminder_active', '1') == '1';
+        $this->reminder_hours_before = \App\Models\Setting::getVal('reminder_hours_before', '2');
+        $this->is_overdue_active = \App\Models\Setting::getVal('is_overdue_active', '1') == '1';
+        $this->overdue_minutes_after = \App\Models\Setting::getVal('overdue_minutes_after', '15');
+        
+        $this->is_greeting_active = \App\Models\Setting::getVal('is_greeting_active', '1') == '1';
+        
+        // Load Chatbot Settings
+        $this->is_chatbot_active = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
+        $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
+
+        // Load OneSignal Settings
+        $this->onesignal_app_id = \App\Models\Setting::getVal('onesignal_app_id', '');
+        $this->onesignal_rest_api_key = \App\Models\Setting::getVal('onesignal_rest_api_key', '');
+        $this->onesignal_safari_web_id = \App\Models\Setting::getVal('onesignal_safari_web_id', '');
     }
 
-    public function loadUsers()
-    {
-        $this->users = \App\Models\User::orderBy($this->sortField, $this->sortDirection)->get();
-    }
+    // Removed loadUsers() to use paginate in render()
 
     public function sortBy($field)
     {
@@ -100,7 +166,7 @@ class Settings extends Component
             $this->sortField = $field;
             $this->sortDirection = 'asc';
         }
-        $this->loadUsers();
+        $this->resetPage();
     }
 
     public function createUser()
@@ -133,7 +199,6 @@ class Settings extends Component
         }
 
         $this->reset(['name', 'email', 'password', 'role']);
-        $this->loadUsers();
         session()->flash('user_message', 'Akun berhasil ditambahkan');
     }
 
@@ -230,7 +295,6 @@ class Settings extends Component
         }
 
         $this->cancelEdit();
-        $this->loadUsers();
         session()->flash('user_message', 'Akun berhasil diperbarui.');
     }
 
@@ -241,7 +305,7 @@ class Settings extends Component
         $this->role = 'admin';
         $this->resetValidation();
     }
-
+ 
     public function deleteUser($id)
     {
         if (auth()->user()->role !== 'admin')
@@ -249,7 +313,6 @@ class Settings extends Component
 
         if (\App\Models\User::count() > 1 && auth()->id() != $id) {
             \App\Models\User::findOrFail($id)->delete();
-            $this->loadUsers();
             session()->flash('user_message', 'Akun berhasil dihapus.');
         } else {
             session()->flash('user_error', 'Tidak bisa menghapus akun sendiri atau admin terakhir.');
@@ -279,8 +342,62 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'social_ig_name'], ['value' => $this->social_ig_name]);
         \App\Models\Setting::updateOrCreate(['key' => 'social_tiktok_url'], ['value' => $this->social_tiktok_url]);
         \App\Models\Setting::updateOrCreate(['key' => 'social_tiktok_name'], ['value' => $this->social_tiktok_name]);
+        \App\Models\Setting::updateOrCreate(['key' => 'is_email_active'], ['value' => $this->is_email_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'is_user_email_active'], ['value' => $this->is_user_email_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_email_recipients'], ['value' => $this->admin_email_recipients]);
 
-        session()->flash('general_message', 'Pengaturan Umum berhasil disimpan.');
+        // Save Reminder & Overdue Settings
+        \App\Models\Setting::updateOrCreate(['key' => 'is_reminder_active'], ['value' => $this->is_reminder_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'reminder_hours_before'], ['value' => $this->reminder_hours_before]);
+        \App\Models\Setting::updateOrCreate(['key' => 'is_overdue_active'], ['value' => $this->is_overdue_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'overdue_minutes_after'], ['value' => $this->overdue_minutes_after]);
+
+        // Save Chatbot Settings
+        \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
+
+        // Save OneSignal Settings
+        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_app_id'], ['value' => trim($this->onesignal_app_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_rest_api_key'], ['value' => trim($this->onesignal_rest_api_key)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'onesignal_safari_web_id'], ['value' => trim($this->onesignal_safari_web_id)]);
+
+
+        // Physically update .env file
+        try {
+            $envPath = base_path('.env');
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                $key = 'GEMINI_API_KEY';
+                $newValue = $this->chatbot_api_key;
+
+                if (str_contains($envContent, "{$key}=")) {
+                    // Replace existing
+                    $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$newValue}", $envContent);
+                } else {
+                    // Append new
+                    $envContent .= "\n{$key}={$newValue}\n";
+                }
+
+                // Update other Keys in .env if needed (keeping existing ones)
+                $keys = [
+                    // Add other env keys here if necessary
+                ];
+
+                foreach ($keys as $k => $v) {
+                    if (str_contains($envContent, "{$k}=")) {
+                        $envContent = preg_replace("/^{$k}=.*/m", "{$k}={$v}", $envContent);
+                    } else {
+                        $envContent .= "\n{$k}={$v}\n";
+                    }
+                }
+
+                file_put_contents($envPath, $envContent);
+            }
+        } catch (\Exception $e) {
+            // Log or ignore if permission denied
+        }
+
+        session()->flash('general_message', 'Pengaturan Umum berhasil disimpan & .env diperbarui.');
     }
 
     public function updatedIsMaintenance($value)
@@ -294,6 +411,20 @@ class Settings extends Component
     {
         if (auth()->user()->role !== 'admin') return;
         \App\Models\Setting::updateOrCreate(['key' => 'maintenance_message'], ['value' => $value]);
+    }
+
+    public function saveGreetings()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_morning'], ['value' => $this->greeting_morning]);
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_day'], ['value' => $this->greeting_day]);
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_afternoon'], ['value' => $this->greeting_afternoon]);
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_evening'], ['value' => $this->greeting_evening]);
+        \App\Models\Setting::updateOrCreate(['key' => 'greeting_night'], ['value' => $this->greeting_night]);
+        \App\Models\Setting::updateOrCreate(['key' => 'is_greeting_active'], ['value' => $this->is_greeting_active ? '1' : '0']);
+
+        session()->flash('greeting_message', 'Sapaan Beranda berhasil diperbarui!');
     }
 
     public function addFaq()
@@ -322,37 +453,39 @@ class Settings extends Component
         session()->flash('faq_message', 'Konten Halaman Tentang (FAQ) berhasil disimpan.');
     }
 
-    public function saveHero()
+    public function saveHero($slot = 1)
     {
         if (auth()->user()->role !== 'admin')
             return;
 
+        $photoProp = $slot == 1 ? 'hero_photo' : ($slot == 2 ? 'hero2_photo' : 'hero3_photo');
+        $keyName = $slot == 1 ? 'hero' : ($slot == 2 ? 'hero2' : 'hero3');
+
         $this->validate([
-            'hero_photo' => 'required|image|max:3072|mimes:jpg,jpeg,png,webp',
+            $photoProp => 'required|image|max:6144|mimes:jpg,jpeg,png,webp',
         ]);
 
-        $filename = 'hero_' . time() . '.' . $this->hero_photo->getClientOriginalExtension();
+        $filename = 'hero' . $slot . '_' . time() . '.' . $this->$photoProp->getClientOriginalExtension();
 
         // Menggunakan DOCUMENT_ROOT untuk langsung mengarah ke 'htdocs' di InfinityFree
         $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/uploads';
 
-        // Buat folder jika belum ada (0755 lebih disarankan untuk keamanan hosting)
         if (!file_exists($uploadPath)) {
             mkdir($uploadPath, 0755, true);
         }
 
-        // Pindahkan file foto dari direktori temporary Livewire ke htdocs/uploads
         $destination = $uploadPath . '/' . $filename;
-        file_put_contents($destination, file_get_contents($this->hero_photo->getRealPath()));
+        file_put_contents($destination, file_get_contents($this->$photoProp->getRealPath()));
 
         \App\Models\Setting::updateOrCreate(
-            ['key' => 'hero'],
+            ['key' => $keyName],
             ['value' => $filename]
         );
 
-        $this->hero = $filename;
+        $this->$keyName = $filename;
+        $this->reset($photoProp);
 
-        session()->flash('hero_message', '1:1 Foto Beranda berhasil diperbarui!');
+        session()->flash('hero_message', "Hero foto slot $slot berhasil diperbarui!");
     }
 
     public function saveQris()
@@ -480,8 +613,71 @@ class Settings extends Component
     }
 
 
+    public function resendMail($logId)
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        $log = \App\Models\MailLog::findOrFail($logId);
+        $rental = $log->rental;
+        
+        if (!$rental) {
+            session()->flash('email_error', 'Data rental tidak ditemukan untuk kirim ulang.');
+            return;
+        }
+
+        try {
+            $mailable = null;
+            $type = $log->type;
+
+            // Map type to mailable class if it's just a label
+            if (str_contains($type, 'Admin Notification') || str_contains($type, 'Customer Receipt') || str_contains($type, 'NewOrderNotification')) {
+                $mailable = new \App\Mail\NewOrderNotification($rental);
+            } elseif (str_contains($type, 'Payment Confirmation') || str_contains($type, 'PaymentConfirmedNotification')) {
+                $mailable = new \App\Mail\PaymentConfirmedNotification($rental);
+            } elseif (str_contains($type, 'Order Cancellation') || str_contains($type, 'OrderCancelledNotification')) {
+                $mailable = new \App\Mail\OrderCancelledNotification($rental);
+            } else {
+                // If it's a class name
+                if (class_exists($type)) {
+                    $mailable = new $type($rental);
+                }
+            }
+
+            if ($mailable) {
+                $recipients = array_map('trim', explode(',', $log->recipient));
+                \App\Helpers\MailHelper::logAndQueue($recipients, $mailable, $log->type, $log->id);
+                session()->flash('email_message', 'Email berhasil dikirim ulang ke ' . $log->recipient);
+            } else {
+                session()->flash('email_error', 'Format email tidak dikenali.');
+            }
+        } catch (\Exception $e) {
+            session()->flash('email_error', 'Gagal kirim ulang: ' . $e->getMessage());
+        }
+    }
+
     public function render()
     {
-        return view('livewire.admin.settings')->layout('layouts.admin');
+        $usersQuery = \App\Models\User::query()
+            ->when($this->search, function ($query) {
+                $query->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('email', 'like', '%' . $this->search . '%');
+            })
+            ->orderBy($this->sortField, $this->sortDirection);
+        
+        $adminMailLogs = \App\Models\MailLog::with('rental')
+            ->where('type', 'like', '%Admin%')
+            ->orderBy('sent_at', 'desc')
+            ->paginate(10, ['*'], 'adminMailPage');
+
+        $customerMailLogs = \App\Models\MailLog::with('rental')
+            ->where('type', 'not like', '%Admin%')
+            ->orderBy('sent_at', 'desc')
+            ->paginate(10, ['*'], 'customerMailPage');
+
+        return view('livewire.admin.settings', [
+            'users' => $usersQuery->paginate($this->perPage, ['*'], 'userPage'),
+            'adminMailLogs' => $adminMailLogs,
+            'customerMailLogs' => $customerMailLogs
+        ])->layout('layouts.admin');
     }
 }

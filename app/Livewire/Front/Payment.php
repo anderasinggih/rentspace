@@ -34,8 +34,8 @@ class Payment extends Component
             ->where('booking_code', $booking_code)
             ->firstOrFail();
 
-        // 1. Proteksi: Jika sudah 'LUNAS' atau 'DIBATALKAN', paksa ke halaman success
-        if (in_array($this->rental->status, ['paid', 'cancelled'])) {
+        // 1. Proteksi: Jika sudah 'LUNAS', 'RENT', 'SELESAI' atau 'DIBATALKAN', paksa ke halaman success
+        if (in_array($this->rental->status, ['paid', 'renting', 'completed', 'cancelled'])) {
             return redirect()->route('public.success', $this->rental->booking_code);
         }
 
@@ -63,9 +63,9 @@ class Payment extends Component
             $this->rental->refresh();
         }
 
-        // 4. GARI POLISI: Baru cek apakah sudah basi (Hanya jika masih pending)
+        // 4. GARIS POLISI: Baru cek apakah sudah basi (Hanya jika masih pending & BUKAN cash & BUKAN manual_qris)
         $isExpired = (now()->timestamp - $this->rental->created_at->timestamp >= 900);
-        if ($this->rental->status === 'pending' && $isExpired) {
+        if ($this->rental->status === 'pending' && !in_array($this->rental->metode_pembayaran, ['cash', 'manual_qris']) && $isExpired) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -105,8 +105,9 @@ class Payment extends Component
         $this->rental = $this->rental->fresh();
         
         // 1. CEK MIDTRANS DULU (Prioritas Nomor Wahid)
+        // Jangan cek Midtrans jika metode adalah manual_qris
         $orderId = data_get($this->rental->payment_details, 'order_id');
-        if ($orderId && $this->rental->status === 'pending') {
+        if ($orderId && $this->rental->status === 'pending' && $this->rental->metode_pembayaran !== 'manual_qris') {
             try {
                 Config::$serverKey = config('midtrans.server_key');
                 Config::$isProduction = config('midtrans.is_production');
@@ -128,7 +129,10 @@ class Payment extends Component
                 $this->paymentInfo = $this->rental->payment_details;
 
                 if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
-                    $this->rental->update(['status' => 'paid']);
+                    $this->rental->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
                     return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
 
@@ -139,8 +143,8 @@ class Payment extends Component
             } catch (\Exception $e) { }
         }
 
-        // 2. CEK TIMER (Hanya jika di Midtrans memang belum dibayar)
-        if ($this->rental->status === 'pending' && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
+        // 2. CEK TIMER (Hanya jika di Midtrans memang belum dibayar & BUKAN cash & BUKAN manual_qris)
+        if ($this->rental->status === 'pending' && !in_array($this->rental->metode_pembayaran, ['cash', 'manual_qris']) && (now()->timestamp - $this->rental->created_at->timestamp >= 900)) {
             // --- JURUS SAPU JAGAT ---
             $banks = ['BCA', 'BRI', 'BNI', 'MANDIRI', 'PERMATA', 'BSI', 'CIMB', 'QRIS'];
             foreach ($banks as $bank) {
@@ -233,8 +237,6 @@ class Payment extends Component
 
         // LOGIKA BAYAR TUNAI (CASH)
         if ($channel === 'cash') {
-            sleep(1); // Delay 1 detik biar gercep
-            
             // Bayar di tempat tidak perlu kode unik
             $newGrandTotal = $this->rental->subtotal_harga - $this->rental->potongan_diskon;
             
@@ -251,7 +253,36 @@ class Payment extends Component
                 'payment_details' => $paymentInfo
             ]);
 
+            // Refresh data model agar state terbaru tersimpan di instance ini
+            $this->rental->refresh();
+
+            // Beri jeda singkat agar user bisa melihat proses loading
+            usleep(1000000);
+
+            // Redirect TANPA 'navigate: true' untuk memastikan transisi halaman bersih
             return redirect()->route('public.success', $this->rental->booking_code);
+        }
+
+        // LOGIKA BAYAR QRIS STATIS (MANUAL)
+        if ($channel === 'manual_qris') {
+            sleep(1);
+            
+            $paymentInfo = [
+                'payment_type' => 'manual_qris',
+                'status_message' => 'Silakan scan QRIS di bawah ini dan konfirmasi ke Admin.',
+                'qris_image' => \App\Models\Setting::getVal('qris', 'default.jpg')
+            ];
+
+            $this->rental->update([
+                'metode_pembayaran' => 'manual_qris',
+                'kode_unik_pembayaran' => 0,
+                'grand_total' => $baseTotal,
+                'payment_details' => $paymentInfo
+            ]);
+
+            $this->paymentInfo = $paymentInfo;
+            $this->selectedChannel = $channel;
+            return;
         }
 
         // --- JURUS ANTI-DUPLICATE ---
@@ -377,6 +408,43 @@ class Payment extends Component
         $this->snapToken = null;
     }
 
+    public function confirmManualPayment()
+    {
+        if ($this->rental->status !== 'pending') return;
+
+        $this->rental->update([
+            'status' => 'pending_confirmation',
+            'updated_at' => now(), // Memaksa update timestamp
+        ]);
+
+        // --- PUSH NOTIFICATION KE ADMIN ---
+        try {
+            \App\Services\OneSignalService::sendToAdmins(
+                "💵 Pembayaran QRIS Manual baru dari {$this->rental->nama} (Rp " . number_format($this->rental->grand_total, 0, ',', '.') . "). Segera cek dan konfirmasi!",
+                "📢 KONFIRMASI PEMBAYARAN",
+                route('admin.monitoring') // Arahkan admin ke halaman monitoring
+            );
+
+            // --- EMAIL NOTIFICATION KE ADMIN ---
+            $isAdminEmailEnabled = \App\Models\Setting::getVal('is_email_active', '1') == '1';
+            if ($isAdminEmailEnabled) {
+                $adminEmail = \App\Models\Setting::getVal('admin_email_recipients');
+                if (!$adminEmail) {
+                    $adminEmail = config('mail.admin_email') ?: config('mail.from.address');
+                }
+                
+                if ($adminEmail) {
+                    $emails = array_map('trim', explode(',', $adminEmail));
+                    \App\Helpers\MailHelper::logAndQueue($emails, new \App\Mail\ManualPaymentNotification($this->rental), 'Manual Payment Verification');
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Notification Error (Manual Payment): ' . $e->getMessage());
+        }
+
+        return redirect()->route('public.success', $this->rental->booking_code);
+    }
+
     public function finish($method = null)
     {
         return redirect()->route('public.success', $this->rental->booking_code);
@@ -394,6 +462,15 @@ class Payment extends Component
             'payment_details' => null,
             'grand_total' => $baseTotal // Kembalikan ke harga dasar
         ]);
+        
+        // --- PUSH NOTIFICATION KE ADMIN ---
+        try {
+            \App\Services\OneSignalService::sendToAdmins(
+                "⚠️ Pesanan Dibatalkan User: " . strtoupper($this->rental->nama),
+                "🚫 PESANAN BATAL",
+                route('admin.monitoring')
+            );
+        } catch (\Exception $e) { }
         
         return redirect()->route('public.success', $this->rental->booking_code);
     }

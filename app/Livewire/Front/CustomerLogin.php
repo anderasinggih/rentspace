@@ -9,20 +9,16 @@ use Livewire\Attributes\Title;
 #[Title('Masuk - RENT SPACE')]
 class CustomerLogin extends Component
 {
-    public string $nik = '';
-    public string $no_wa = '';
+    public string $identifier = '';
     public bool $remember = false;
 
     protected $rules = [
-        'nik'   => 'required|string|min:10',
-        'no_wa' => 'required|string|min:10',
+        'identifier' => 'required|string|min:8',
     ];
 
     protected $messages = [
-        'nik.required'   => 'NIK wajib diisi.',
-        'nik.min'        => 'NIK minimal 10 karakter.',
-        'no_wa.required' => 'Nomor WhatsApp wajib diisi.',
-        'no_wa.min'      => 'Nomor WhatsApp minimal 10 karakter.',
+        'identifier.required' => 'NIK atau Nomor WhatsApp wajib diisi.',
+        'identifier.min'      => 'Input minimal 8 karakter.',
     ];
 
     public function mount()
@@ -37,13 +33,13 @@ class CustomerLogin extends Component
     {
         $this->validate();
 
-        // Check if any rental exists with this NIK + No. WA combination
-        $exists = Rental::where('nik', $this->nik)
-            ->where('no_wa', $this->no_wa)
-            ->exists();
+        // Check if any rental exists with this identifier matching either NIK or No. WA
+        $customer = Rental::where('nik', $this->identifier)
+            ->orWhere('no_wa', $this->identifier)
+            ->first();
 
-        if (!$exists) {
-            $this->addError('nik', 'NIK dan Nomor WA tidak ditemukan. Pastikan data sesuai dengan yang dimasukkan saat booking.');
+        if (!$customer) {
+            $this->addError('identifier', 'Data tidak ditemukan. Pastikan NIK atau Nomor WA sesuai dengan yang didaftarkan saat booking.');
             return;
         }
 
@@ -51,8 +47,9 @@ class CustomerLogin extends Component
         $duration = $this->remember ? 24 : 6;
         
         session()->put('customer_session', [
-            'nik'        => $this->nik,
-            'no_wa'      => $this->no_wa,
+            'nik'        => $customer->nik,
+            'no_wa'      => $customer->no_wa,
+            'nama'       => $customer->nama,
             'logged_in_at' => now()->toISOString(),
             'expires_at' => now()->addHours($duration)->timestamp,
         ]);

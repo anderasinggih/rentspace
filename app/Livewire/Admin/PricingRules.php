@@ -3,12 +3,13 @@
 namespace App\Livewire\Admin;
 
 use App\Models\PricingRule;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 
 class PricingRules extends Component
 {
-    public $rule_id, $nama_promo, $kode_promo, $affiliate_code, $tipe = 'diskon_persen', $value, $syarat_minimal_durasi, $syarat_tipe_durasi = 'jam', $usage_limit;
+    public $rule_id, $nama_promo, $kode_promo, $target_loyalty_tier, $affiliate_code, $tipe = 'diskon_persen', $value, $syarat_minimal_durasi, $syarat_tipe_durasi = 'jam', $usage_limit;
     public $start_date, $end_date;
     public $is_active = true, $is_hidden = false, $can_stack = false;
     public $is_affiliate_only = false, $requires_referral = false;
@@ -18,7 +19,7 @@ class PricingRules extends Component
     public function create()
     {
         if (auth()->user()->role !== 'admin') return;
-        $this->reset(['rule_id', 'nama_promo', 'kode_promo', 'affiliate_code', 'value', 'syarat_minimal_durasi', 'usage_limit', 'start_date', 'end_date', 'isEditing', 'is_hidden', 'can_stack', 'is_affiliate_only', 'requires_referral']);
+        $this->reset(['rule_id', 'nama_promo', 'kode_promo', 'target_loyalty_tier', 'affiliate_code', 'value', 'syarat_minimal_durasi', 'usage_limit', 'start_date', 'end_date', 'isEditing', 'is_hidden', 'can_stack', 'is_affiliate_only', 'requires_referral']);
         $this->tipe = 'diskon_persen';
         $this->syarat_tipe_durasi = 'jam';
         $this->is_active = true;
@@ -32,6 +33,7 @@ class PricingRules extends Component
         $this->rule_id = $rule->id;
         $this->nama_promo = $rule->nama_promo;
         $this->kode_promo = $rule->kode_promo;
+        $this->target_loyalty_tier = $rule->target_loyalty_tier;
         $this->affiliate_code = $rule->affiliate_code;
         $this->tipe = $rule->tipe;
         $this->value = $rule->value;
@@ -56,6 +58,7 @@ class PricingRules extends Component
         $this->reset(['rule_id', 'isEditing']);
         $this->nama_promo = $rule->nama_promo . ' (Copy)';
         $this->kode_promo = $rule->kode_promo ? $rule->kode_promo . '-COPY' : null;
+        $this->target_loyalty_tier = $rule->target_loyalty_tier;
         $this->affiliate_code = $rule->affiliate_code;
         $this->tipe = $rule->tipe;
         $this->value = $rule->value;
@@ -78,6 +81,7 @@ class PricingRules extends Component
         $this->validate([
             'nama_promo' => 'required|string',
             'kode_promo' => 'nullable|string|unique:pricing_rules,kode_promo,'.$this->rule_id,
+            'target_loyalty_tier' => 'nullable|string',
             'tipe' => 'required|string|in:diskon_persen,hari_gratis,fix_price,diskon_nominal,jam_gratis,cashback',
             'value' => 'required|numeric',
             'syarat_minimal_durasi' => 'nullable|numeric',
@@ -92,9 +96,10 @@ class PricingRules extends Component
             [
                 'nama_promo' => $this->nama_promo,
                 'kode_promo' => $this->kode_promo ?: null,
+                'target_loyalty_tier' => $this->target_loyalty_tier ?: null,
                 'tipe' => $this->tipe,
                 'value' => $this->value,
-                'syarat_minimal_durasi' => $this->syarat_minimal_durasi,
+                'syarat_minimal_durasi' => ($this->syarat_minimal_durasi === '' || $this->syarat_minimal_durasi === null) ? null : $this->syarat_minimal_durasi,
                 'syarat_tipe_durasi' => $this->syarat_tipe_durasi,
                 'usage_limit' => $this->usage_limit ?: null,
                 'start_date' => $this->start_date ?: null,
@@ -108,6 +113,7 @@ class PricingRules extends Component
             ]
         );
 
+        $this->clearCache();
         $this->showModal = false;
     }
 
@@ -115,6 +121,7 @@ class PricingRules extends Component
     {
         if (auth()->user()->role !== 'admin') return;
         PricingRule::withTrashed()->findOrFail($id)->restore();
+        $this->clearCache();
     }
 
     public function delete($id)
@@ -126,6 +133,12 @@ class PricingRules extends Component
         } else {
             $rule->delete();
         }
+        $this->clearCache();
+    }
+
+    private function clearCache()
+    {
+        \Illuminate\Support\Facades\Cache::forget('active_pricing_rules_global');
     }
 
     public function render()

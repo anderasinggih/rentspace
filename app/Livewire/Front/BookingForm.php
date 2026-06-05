@@ -5,12 +5,14 @@ namespace App\Livewire\Front;
 use App\Models\Unit;
 use App\Models\Rental;
 use App\Models\PricingRule;
+use App\Mail\NewOrderNotification;
+use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Livewire\Component;
 
 class BookingForm extends Component
 {
-    public $nik, $nama, $alamat, $no_wa;
+    public $nik, $nama, $email, $alamat, $no_wa, $sosial_media;
     public $waktu_mulai, $waktu_selesai;
     public $unit_id; // Keeping for backward compat/initial select
     public $selected_unit_ids = [];
@@ -35,6 +37,10 @@ class BookingForm extends Component
     public $selected_category_id = null;
     public $schedule_available_unit_ids = [];
     public $categories_list = [];
+    public $member_checked = false;
+    public $loyalty_rule_id = null;
+    public $loyalty_discount_value = 0;
+    public $loyalty_discount_type = null;
 
     // Internal cache for the request lifecycle
     protected $all_pricing_rules = null;
@@ -62,7 +68,9 @@ class BookingForm extends Component
 
             if ($lastRental) {
                 $this->nama = $lastRental->nama;
+                $this->email = $lastRental->email;
                 $this->alamat = $lastRental->alamat;
+                $this->sosial_media = $lastRental->sosial_media;
 
                 $firstName = explode(' ', $this->nama)[0];
                 $this->nikFoundMessage = "Halo {$firstName}, data otomatis terisi dari sesi Anda.";
@@ -73,6 +81,8 @@ class BookingForm extends Component
             }
 
             $this->isNikVerified = true;
+            $this->member_checked = true;
+            $this->checkLoyaltyBenefits();
         }
 
         // 3. Handle auto-apply of referral from Cookie or Session
@@ -94,6 +104,10 @@ class BookingForm extends Component
             $this->nikFoundMessage = null;
             $this->nikFoundType = null;
             $this->isNikVerified = false;
+            $this->member_checked = false;
+            $this->loyalty_rule_id = null;
+            $this->loyalty_discount_value = 0;
+            $this->loyalty_discount_type = null;
             $this->loadAvailablePromos();
             $this->calculatePrice();
         }
@@ -104,6 +118,7 @@ class BookingForm extends Component
         }
 
         if ($propertyName === 'selected_unit_ids') {
+            $this->checkAvailability();
             $this->loadAvailablePromos();
             $this->calculatePrice();
         }
@@ -116,6 +131,7 @@ class BookingForm extends Component
             $this->calculatePrice();
         }
         if ($propertyName === 'promo_code_input') {
+            $this->resetErrorBag('promo_code_input');
             $this->loadAvailablePromos();
         }
         if (in_array($propertyName, ['waktu_mulai', 'waktu_selesai'])) {
@@ -128,10 +144,17 @@ class BookingForm extends Component
         if (in_array($propertyName, ['selected_category_id', 'unit_search'])) {
             $this->checkAvailability();
         }
+
+        if ($propertyName === 'email') {
+            $this->validateOnly('email', [
+                'email' => 'required|email'
+            ]);
+        }
     }
 
     public function checkAvailability()
     {
+        $this->resetErrorBag('waktu_selesai');
         if (!$this->waktu_mulai || !$this->waktu_selesai)
             return;
 
@@ -140,62 +163,24 @@ class BookingForm extends Component
 
         if ($end->lte($start)) {
             $this->addError('waktu_selesai', 'Harus setelah waktu mulai');
-            $this->available_units = [];
+            $this->available_units = collect();
             return;
         }
 
-        // 1. BASE Availability (Used for the main catalog list)
-        // We check only the range the user is actually picking [start, end]
-        $this->schedule_available_unit_ids = Unit::query()->where('is_active', true)
-            ->whereDoesntHave('rentals', function ($query) use ($start, $end) {
-                $query->whereIn('status', ['pending', 'paid'])
-                    ->where(function ($q) use ($start, $end) {
-                        $q->whereBetween('waktu_mulai', [$start, $end])
-                            ->orWhereBetween('waktu_selesai', [$start, $end])
-                            ->orWhere(function ($q2) use ($start, $end) {
-                                $q2->where('waktu_mulai', '<=', $start)
-                                    ->where('waktu_selesai', '>=', $end);
-                            });
-                    });
-            })->pluck('id')->toArray();
-
-        // 2. EFFECTIVE Availability (Check bonus time for already selected units)
-        $hBonus = 0;
-        $jBonus = 0;
-        if (!empty($this->selected_promo_ids)) {
-            $appliedRules = PricingRule::whereIn('id', $this->selected_promo_ids)->get();
-            foreach ($appliedRules as $rule) {
-                if ($rule->tipe === 'hari_gratis') $hBonus += (int)$rule->value;
-                if ($rule->tipe === 'jam_gratis') $jBonus += (int)$rule->value;
-            }
-        }
-
-        if (($hBonus > 0 || $jBonus > 0) && !empty($this->selected_unit_ids)) {
-            $effectiveEnd = $end->copy()->addDays($hBonus)->addHours($jBonus);
-            
-            // Check if any selected unit has a conflict in the BONUS period [end, effectiveEnd]
-            $clashingUnitIds = Unit::whereIn('id', $this->selected_unit_ids)
-                ->whereHas('rentals', function ($query) use ($end, $effectiveEnd) {
-                    $query->whereIn('status', ['pending', 'paid'])
-                        ->where(function ($q) use ($end, $effectiveEnd) {
-                            $q->whereBetween('waktu_mulai', [$end, $effectiveEnd])
-                                ->orWhereBetween('waktu_selesai', [$end, $effectiveEnd])
-                                ->orWhere(function ($q2) use ($end, $effectiveEnd) {
-                                    $q2->where('waktu_mulai', '<=', $end)
-                                        ->where('waktu_selesai', '>=', $effectiveEnd);
-                                });
-                        });
-                })->pluck('id')->toArray();
-
-            if (!empty($clashingUnitIds)) {
-                $names = Unit::whereIn('id', $clashingUnitIds)->pluck('seri')->implode(', ');
-                $this->addError('selected_promo_ids', "Promo bonus tidak bisa digunakan untuk unit ($names) karena bentrok dengan jadwal lain.");
-            }
-        }
-
-        // 3. Update Available Units Display (Based on BASE range)
-        $this->available_units = Unit::query()->with('category')
-            ->whereIn('id', $this->schedule_available_unit_ids)
+        // 1. Calculate Availability Status for ALL units
+        $units = Unit::query()->where('is_active', true)
+            ->with(['category', 'rentals' => function($q) use ($start, $end) {
+                $q->whereIn('status', ['pending', 'paid', 'renting', 'pending_confirmation'])
+                  ->where(function($qq) use ($start, $end) {
+                      $qq->whereBetween('waktu_mulai', [$start, $end])
+                         ->orWhereBetween('waktu_selesai', [$start, $end])
+                         ->orWhere(function($qq2) use ($start, $end) {
+                             $qq2->where('waktu_mulai', '<=', $start)
+                                ->where('waktu_selesai', '>=', $end);
+                         });
+                  })
+                  ->orderBy('waktu_mulai', 'asc');
+            }])
             ->when($this->selected_category_id, function ($q) {
                 $q->where('category_id', $this->selected_category_id);
             })
@@ -207,6 +192,47 @@ class BookingForm extends Component
                 });
             })
             ->get();
+
+        $this->schedule_available_unit_ids = [];
+        foreach ($units as $unit) {
+            $conflicts = $unit->rentals;
+            
+            if ($conflicts->isEmpty()) {
+                $unit->availability_status = 'ready';
+                $unit->availability_label = 'Ready Sekarang';
+                $this->schedule_available_unit_ids[] = $unit->id;
+            } else {
+                // Check if start time is occupied
+                $startOccupied = $conflicts->contains(function($r) use ($start) {
+                    return $start->gte($r->waktu_mulai) && $start->lt($r->waktu_selesai);
+                });
+
+                if (!$startOccupied) {
+                    // Ready from start, but conflict starts later
+                    $firstConflict = $conflicts->where('waktu_mulai', '>', $start)->first();
+                    $unit->availability_status = 'partial_until';
+                    $unit->availability_label = 'Ready s/d ' . Carbon::parse($firstConflict->waktu_mulai)->translatedFormat('d M, H:i');
+                } else {
+                    // Start is occupied, check if it becomes free before end
+                    $lastConflictInPeriod = $conflicts->where('waktu_selesai', '<', $end)->sortByDesc('waktu_selesai')->first();
+                    
+                    if ($lastConflictInPeriod) {
+                        $unit->availability_status = 'partial_from';
+                        $unit->availability_label = 'Ready mulai ' . Carbon::parse($lastConflictInPeriod->waktu_selesai)->translatedFormat('d M, H:i');
+                    } else {
+                        $unit->availability_status = 'full';
+                        $unit->availability_label = 'Full Booked';
+                    }
+                }
+            }
+        }
+
+        $this->available_units = $units->sortBy(function($unit) {
+            $status = $unit->availability_status ?? 'full';
+            if ($status === 'ready') return 1;
+            if ($status === 'partial_until' || $status === 'partial_from') return 2;
+            return 3;
+        });
 
         // 4. Remove selected units ONLY if they are not available in the BASE range
         $this->selected_unit_ids = array_values(array_intersect($this->selected_unit_ids, $this->schedule_available_unit_ids));
@@ -228,16 +254,10 @@ class BookingForm extends Component
 
         $now = Carbon::now();
 
-        // 1. Fetch rules (Cached for 10 minutes)
+        // 1. Fetch rules (Global active rules cached for 10 minutes)
         if ($this->all_pricing_rules === null) {
-            $this->all_pricing_rules = \Illuminate\Support\Facades\Cache::remember('active_pricing_rules_v2', 600, function () use ($now) {
+            $this->all_pricing_rules = \Illuminate\Support\Facades\Cache::remember('active_pricing_rules_global', 600, function () {
                 return PricingRule::where('is_active', true)
-                    ->where(function ($q) use ($now) {
-                        $q->whereNull('start_date')->orWhere('start_date', '<=', $now->format('Y-m-d'));
-                    })
-                    ->where(function ($q) use ($now) {
-                        $q->whereNull('end_date')->orWhere('end_date', '>=', $now->format('Y-m-d'));
-                    })
                     ->withCount(['rentals' => function($q) {
                         $q->where('status', '!=', 'cancelled');
                     }])
@@ -260,7 +280,12 @@ class BookingForm extends Component
         $rules = $this->all_pricing_rules;
 
         // 3. Filter and Map
-        $this->available_promos = $rules->filter(function ($rule) use ($isEligibleForAffiliatePromos) {
+        $this->available_promos = $rules->filter(function ($rule) use ($isEligibleForAffiliatePromos, $start) {
+            // Filter by Date (Check against Rental Start Date, not current time)
+            $startDateMatch = $rule->start_date === null || $rule->start_date <= $start->format('Y-m-d');
+            $endDateMatch = $rule->end_date === null || $rule->end_date >= $start->format('Y-m-d');
+            if (!$startDateMatch || !$endDateMatch) return false;
+
             if ($rule->is_affiliate_only && !$isEligibleForAffiliatePromos) return false;
             if ($rule->requires_referral && empty($this->referral_code)) return false;
 
@@ -276,7 +301,8 @@ class BookingForm extends Component
             return true;
         })->map(function ($rule) use ($days, $diffInHours, $start, $end) {
             $durasiTerkonversi = $rule->syarat_tipe_durasi === 'hari' ? $days : $diffInHours;
-            $is_eligible = !$rule->syarat_minimal_durasi || $durasiTerkonversi >= $rule->syarat_minimal_durasi;
+            $minDurasi = $rule->syarat_minimal_durasi;
+            $is_eligible = ($minDurasi === null || $minDurasi === '') || $durasiTerkonversi >= (float)$minDurasi;
             $ineligible_reason = null;
 
             // Check for Bonus Time Clash if units are already selected
@@ -357,7 +383,6 @@ class BookingForm extends Component
     public function checkCode()
     {
         if (empty($this->promo_code_input)) {
-            $this->addError('promo_code_input', 'Silakan masukkan kode terlebih dahulu.');
             return;
         }
 
@@ -399,6 +424,75 @@ class BookingForm extends Component
         }
     }
 
+    public function checkMember()
+    {
+        $this->resetErrorBag('nik');
+        if (!$this->nik) return;
+
+        // Force 16 digits
+        if (strlen($this->nik) !== 16) {
+            $this->addError('nik', 'NIK harus terdiri dari 16 digit.');
+            return;
+        }
+        
+        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        
+        if ($ltv <= 0) {
+            $this->addError('nik', 'NIK belum terdaftar sebagai member.');
+            $this->member_checked = false;
+            return;
+        }
+
+        $tier = \App\Helpers\CustomerHelper::getTier($ltv);
+        
+        // Find if name exists for friendly greeting
+        $lastRental = Rental::where('nik', $this->nik)->latest()->first();
+        $this->nama = $lastRental->nama ?? '';
+        
+        $this->member_checked = true;
+        $this->checkLoyaltyBenefits();
+        
+        if ($lastRental) {
+            $firstName = explode(' ', $this->nama)[0];
+            $this->nikFoundMessage = "Halo {$firstName}, promo spesial member {$tier->label} Anda sudah aktif!";
+        } else {
+            $this->nikFoundMessage = "Promo spesial member {$tier->label} Anda sudah aktif!";
+        }
+        $this->nikFoundType = 'success';
+        
+        $this->calculatePrice();
+    }
+
+    public function checkLoyaltyBenefits()
+    {
+        if (!$this->nik) return;
+        
+        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        $tier = \App\Helpers\CustomerHelper::getTier($ltv);
+        
+        // Find applicable loyalty rule for this tier
+        $rule = PricingRule::where('target_loyalty_tier', $tier->label)
+            ->where('is_active', true)
+            ->where(function($q) {
+                $q->whereNull('start_date')->orWhere('start_date', '<=', now());
+            })
+            ->where(function($q) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', now());
+            })
+            ->latest()
+            ->first();
+            
+        if ($rule) {
+            $this->loyalty_rule_id = $rule->id;
+            $this->loyalty_discount_value = $rule->value;
+            $this->loyalty_discount_type = $rule->tipe;
+        } else {
+            $this->loyalty_rule_id = null;
+            $this->loyalty_discount_value = 0;
+            $this->loyalty_discount_type = null;
+        }
+    }
+
     public function calculatePrice()
     {
         if (empty($this->selected_unit_ids) || !$this->waktu_mulai || !$this->waktu_selesai) {
@@ -431,6 +525,20 @@ class BookingForm extends Component
         $this->jam_bonus = 0;
         $this->applied_promo_label = '';
 
+        // 1. Apply Loyalty Discount (Auto-apply)
+        if ($this->loyalty_rule_id && $this->loyalty_discount_value > 0) {
+            if ($this->loyalty_discount_type === 'diskon_persen') {
+                $this->potongan_diskon += $this->subtotal * ($this->loyalty_discount_value / 100);
+            } elseif ($this->loyalty_discount_type === 'diskon_nominal') {
+                $this->potongan_diskon += $this->loyalty_discount_value;
+            } elseif ($this->loyalty_discount_type === 'fix_price') {
+                $unitCount = count($this->selected_unit_ids);
+                $targetTotal = $this->loyalty_discount_value * $unitCount;
+                $this->potongan_diskon += max(0, $this->subtotal - $targetTotal);
+            }
+        }
+
+        // 2. Apply Voucher/Promo Codes
         if (!empty($this->selected_promo_ids)) {
             if ($this->all_pricing_rules === null) {
                 $this->loadAvailablePromos();
@@ -450,9 +558,10 @@ class BookingForm extends Component
                 } elseif ($rule->tipe === 'diskon_nominal') {
                     $this->potongan_diskon += $rule->value;
                 } elseif ($rule->tipe === 'fix_price') {
-                    // Fix price is tricky with multiple. We'll take the lowest fix price or cap the discount.
-                    // Usually fix_price shouldn't be stackable, but if it is, we treat it as a discount off subtotal.
-                    $discountFromFix = max(0, $this->subtotal - $rule->value);
+                    // Fix price is applied per unit to prevent massive losses on multi-unit rentals
+                    $unitCount = count($this->selected_unit_ids);
+                    $targetTotal = $rule->value * $unitCount;
+                    $discountFromFix = max(0, $this->subtotal - $targetTotal);
                     $this->potongan_diskon += $discountFromFix;
                 } elseif ($rule->tipe === 'cashback') {
                     // Cashback doesn't affect grand_total right now, maybe just label? 
@@ -479,7 +588,9 @@ class BookingForm extends Component
         $this->validate([
             'nik' => 'required|numeric',
             'nama' => 'required',
+            'email' => 'required|email',
             'no_wa' => 'required|numeric',
+            'sosial_media' => 'required',
             'alamat' => 'required',
             'waktu_mulai' => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
@@ -492,6 +603,8 @@ class BookingForm extends Component
         ]);
 
         $this->checkAvailability();
+        if ($this->getErrorBag()->any()) return;
+
         foreach ($this->selected_unit_ids as $sid) {
             if (!$this->available_units->contains('id', $sid)) {
                 $this->addError('selected_unit_ids', 'Beberapa unit tidak tersedia di slot waktu yang Anda pilih.');
@@ -519,7 +632,9 @@ class BookingForm extends Component
             'unit_id' => $this->selected_unit_ids[0] ?? null, // Backward compatibility
             'nik' => $this->nik,
             'nama' => strtoupper($this->nama),
+            'email' => strtolower($this->email),
             'alamat' => strtoupper($this->alamat),
+            'sosial_media' => $this->sosial_media,
             'no_wa' => $this->no_wa,
             'waktu_mulai' => $this->waktu_mulai,
             'waktu_selesai' => $finalWaktuSelesai,
@@ -536,6 +651,20 @@ class BookingForm extends Component
             'affiliate_code' => $this->referral_code ?: null,
             'affiliator_id' => $this->referral_code ? (\App\Models\AffiliatorProfile::where('referral_code', strtoupper($this->referral_code))->first()->user_id ?? null) : null,
         ]);
+
+        // --- PUSH NOTIFICATION KE ADMIN (PESANAN BARU) ---
+        try {
+            \App\Services\OneSignalService::sendToAdmins(
+                "🆕 Pesanan Baru: " . strtoupper($this->nama) . " membooking unit (Rp " . number_format($this->grand_total, 0, ',', '.') . ")",
+                "🔔 PESANAN MASUK",
+                route('admin.monitoring')
+            );
+        } catch (\Exception $e) { }
+        
+        // Attach all selected promos for accurate usage tracking (including stacked ones)
+        if (!empty($this->selected_promo_ids)) {
+            $rental->appliedPromos()->attach($this->selected_promo_ids);
+        }
 
         // Create customer session for auto-login/auto-persistence
         session(['customer_session' => [
@@ -562,6 +691,8 @@ class BookingForm extends Component
 
         $this->dispatch('booking-submitted');
 
+
+
         return redirect()->route('public.payment', $rental->booking_code);
     }
 
@@ -580,8 +711,10 @@ class BookingForm extends Component
 
         if ($lastRental) {
             $this->nama = $lastRental->nama;
+            $this->email = $lastRental->email;
             $this->no_wa = $lastRental->no_wa;
             $this->alamat = $lastRental->alamat;
+            $this->sosial_media = $lastRental->sosial_media;
             $firstName = explode(' ', $this->nama)[0];
             $this->nikFoundMessage = "Halo {$firstName}, data Anda berhasil ditemukan!";
             $this->nikFoundType = 'success';
@@ -591,6 +724,52 @@ class BookingForm extends Component
             $this->nikFoundType = 'warning';
             $this->isNikVerified = false;
         }
+    }
+
+    public function getTierProperty()
+    {
+        if (!$this->nik) return null;
+        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        if ($ltv <= 0) return null;
+        return \App\Helpers\CustomerHelper::getTier($ltv);
+    }
+
+    public function getLoyaltyDiscountedUnitPricesProperty()
+    {
+        $prices = [];
+        // We use all units that are visible in the form
+        $units = Unit::all();
+        
+        foreach ($units as $unit) {
+            $original_hari = $unit->harga_per_hari;
+            $original_jam = $unit->harga_per_jam;
+            
+            $discounted_hari = $original_hari;
+            $discounted_jam = $original_jam;
+            
+            if ($this->loyalty_rule_id && $this->loyalty_discount_value > 0) {
+                if ($this->loyalty_discount_type === 'diskon_persen') {
+                    $discounted_hari = $original_hari * (1 - $this->loyalty_discount_value / 100);
+                    $discounted_jam = $original_jam * (1 - $this->loyalty_discount_value / 100);
+                } elseif ($this->loyalty_discount_type === 'diskon_nominal') {
+                    // Usually nominal is for the whole order, but for display we can show it as a hint or split it
+                    // For now, let's just stick to percent/fix price for unit display
+                } elseif ($this->loyalty_discount_type === 'fix_price') {
+                    $discounted_hari = $this->loyalty_discount_value;
+                    // For fix_price hourly, we might need more logic, but usually it's daily
+                }
+            }
+            
+            $prices[$unit->id] = [
+                'hari' => $discounted_hari,
+                'jam' => $discounted_jam,
+                'original_hari' => $original_hari,
+                'original_jam' => $original_jam,
+                'has_discount' => $discounted_hari < $original_hari
+            ];
+        }
+        
+        return $prices;
     }
 
     public function render()
