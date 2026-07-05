@@ -111,7 +111,7 @@ Route::get('/booking/success/{booking_code}/og-image', function($booking_code) {
     imagefilledrectangle($image, 350, 60, 850, 510, $cardBg);
     imagerectangle($image, 350, 60, 850, 510, $border);
 
-    $font = storage_path('app/font.ttf');
+    $font = resource_path('fonts/font.ttf');
 
     // Draw Header
     imagettftext($image, 26, 0, 600 - 95, 110, $green, $font, "RENT SPACE");
