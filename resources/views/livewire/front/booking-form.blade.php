@@ -1,4 +1,4 @@
-<div class="pt-0 pb-96 sm:pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
+<div class="pt-8 pb-96 sm:pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
 <style>
     /* Fix iOS Safari Date Input Height Bug */
     input[type="date"]::-webkit-date-and-time-value {
