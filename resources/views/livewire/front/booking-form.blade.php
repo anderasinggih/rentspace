@@ -806,7 +806,7 @@
         step: 1,
         summaryExpanded: false,
         keyboardOpen: false,
-        selectedIds: @entangle('selected_unit_ids'),
+        selectedIds: @entangle('selected_unit_ids').live,
         selectedPromoIds: @entangle('selected_promo_ids'),
         waktuMulai: @entangle('waktu_mulai'),
         waktuSelesai: @entangle('waktu_selesai'),
