@@ -82,55 +82,6 @@ Route::get('/cek-pesanan', CheckOrder::class)->name('public.check-order');
 Route::get('/booking', BookingForm::class)->name('public.booking');
 Route::get('/payment/{booking_code}', Payment::class)->name('public.payment');
 Route::get('/booking/success/{booking_code}', \App\Livewire\Front\Success::class)->name('public.success');
-Route::get('/booking/success/{booking_code}/og-image', function() {
-    $width = 1200;
-    $height = 630;
-    $image = imagecreatetruecolor($width, $height);
-
-    // Colors
-    $bg = imagecolorallocate($image, 9, 9, 11); // zinc-950 #09090b
-    $cardBg = imagecolorallocate($image, 24, 24, 27); // zinc-900 #18181b
-    $border = imagecolorallocate($image, 39, 39, 42); // zinc-800 #27272a
-    $white = imagecolorallocate($image, 255, 255, 255);
-    $green = imagecolorallocate($image, 16, 185, 129); // emerald-500 #10b981
-    $gray = imagecolorallocate($image, 113, 113, 122); // zinc-500
-
-    imagefill($image, 0, 0, $bg);
-
-    // Draw receipt box background (centered, 800x400)
-    imagefilledrectangle($image, 200, 115, 1000, 515, $cardBg);
-    imagerectangle($image, 200, 115, 1000, 515, $border);
-
-    $font = resource_path('fonts/font.ttf');
-    $drawText = function($image, $size, $x, $y, $color, $text) use ($font) {
-        if (file_exists($font) && is_readable($font)) {
-            try {
-                imagettftext($image, $size, 0, $x, $y, $color, $font, $text);
-                return;
-            } catch (\Throwable $e) {
-                // fallback
-            }
-        }
-        imagestring($image, 5, $x, $y - 10, $text, $color);
-    };
-
-    // Draw Large Bold Header (Centered)
-    // "INVOICE"
-    $drawText($image, 56, 600 - 150, 270, $white, "INVOICE");
-    
-    // "RENT SPACE"
-    $drawText($image, 44, 600 - 170, 360, $green, "RENT SPACE");
-
-    // Subtitle
-    $drawText($image, 18, 600 - 165, 430, $gray, "Penyewaan iPhone Purwokerto");
-
-    ob_start();
-    imagepng($image);
-    $imageData = ob_get_clean();
-    imagedestroy($image);
-
-    return response($imageData)->header('Content-Type', 'image/png');
-})->name('public.success.og-image');
 
 // Customer Session Routes
 Route::get('/masuk', CustomerLogin::class)->name('customer.login');

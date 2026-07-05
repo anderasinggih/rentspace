@@ -333,7 +333,7 @@ class Success extends Component
             ->layout('layouts.app', [
                 'metaTitle' => $metaTitle,
                 'metaDescription' => $metaDescription,
-                'metaImage' => route('public.success.og-image', $this->rental->booking_code),
+                'metaImage' => asset('invoice-og.svg'),
             ]);
     }
 }
