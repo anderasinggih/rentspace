@@ -14,6 +14,7 @@ class BookingForm extends Component
 {
     public $nik, $nama, $email, $alamat, $no_wa, $sosial_media;
     public $waktu_mulai, $waktu_selesai;
+    public $tanggal_mulai, $jam_mulai, $tanggal_selesai;
     public $unit_id; // Keeping for backward compat/initial select
     public $selected_unit_ids = [];
     public $available_units = [];
@@ -48,21 +49,26 @@ class BookingForm extends Component
 
     public function mount($unit_id = null)
     {
+        $this->tanggal_mulai = now()->format('Y-m-d');
+        $this->jam_mulai = '12:00';
+        $this->tanggal_selesai = now()->addDay()->format('Y-m-d');
+        $this->waktu_mulai = $this->tanggal_mulai . 'T' . $this->jam_mulai;
+        $this->waktu_selesai = $this->tanggal_selesai . 'T' . $this->jam_mulai;
+
         // 1. Handle auto-selection of unit from URL (if still using specific links)
         if ($unit_id) {
             $this->selected_unit_ids = [(int) $unit_id];
-            $this->checkAvailability();
         }
+
+        $this->checkAvailability();
 
         // 2. Handle persistent customer session auto-fill
         $customerSession = session('customer_session');
         if ($customerSession && isset($customerSession['expires_at']) && now()->timestamp < $customerSession['expires_at']) {
-            $this->nik = $customerSession['nik'];
             $this->no_wa = $customerSession['no_wa'];
 
             // Fetch name and address from latest rental
-            $lastRental = Rental::where('nik', $this->nik)
-                ->where('no_wa', $this->no_wa)
+            $lastRental = Rental::where('no_wa', $this->no_wa)
                 ->latest()
                 ->first();
 
@@ -76,7 +82,7 @@ class BookingForm extends Component
                 $this->nikFoundMessage = "Halo {$firstName}, data otomatis terisi dari sesi Anda.";
                 $this->nikFoundType = 'success';
             } else {
-                $this->nikFoundMessage = "Halo, NIK Anda terdeteksi. Silakan lengkapi sisa data.";
+                $this->nikFoundMessage = "Halo, data Anda terdeteksi. Silakan lengkapi sisa data.";
                 $this->nikFoundType = 'success';
             }
 
@@ -100,7 +106,7 @@ class BookingForm extends Component
 
     public function updated($propertyName)
     {
-        if ($propertyName === 'nik') {
+        if ($propertyName === 'no_wa') {
             $this->nikFoundMessage = null;
             $this->nikFoundType = null;
             $this->isNikVerified = false;
@@ -112,7 +118,23 @@ class BookingForm extends Component
             $this->calculatePrice();
         }
 
+        if (in_array($propertyName, ['tanggal_mulai', 'jam_mulai', 'tanggal_selesai'])) {
+            if ($this->tanggal_mulai && $this->jam_mulai) {
+                $this->waktu_mulai = $this->tanggal_mulai . 'T' . $this->jam_mulai;
+            }
+            if ($this->tanggal_selesai && $this->jam_mulai) {
+                $this->waktu_selesai = $this->tanggal_selesai . 'T' . $this->jam_mulai;
+            }
+            $this->checkAvailability();
+            $this->loadAvailablePromos();
+        }
+
         if (in_array($propertyName, ['waktu_mulai', 'waktu_selesai'])) {
+            if ($this->$propertyName) {
+                try {
+                    $this->$propertyName = \Carbon\Carbon::parse($this->$propertyName)->minute(0)->second(0)->format('Y-m-d\TH:i');
+                } catch (\Exception $e) {}
+            }
             $this->checkAvailability();
             $this->loadAvailablePromos();
         }
@@ -267,15 +289,19 @@ class BookingForm extends Component
 
         // 2. Pre-calculate values used inside filter to avoid per-item DB queries
         $isAffiliateAuth = auth()->check() && auth()->user()->role === 'affiliator';
-        $isAffiliateNik = false;
-        if (!empty($this->nik)) {
+        $isAffiliateWa = false;
+        if (!empty($this->no_wa)) {
+            $formattedWa = \App\Helpers\CustomerHelper::formatWa($this->no_wa);
             // Cache this check for the current request
-            $isAffiliateNik = \App\Models\AffiliatorProfile::where('nik', $this->nik)
-                ->where('status', 'approved')
-                ->exists();
+            $isAffiliateWa = \App\Models\AffiliatorProfile::where(function($q) use ($formattedWa) {
+                $q->where('no_hp', $this->no_wa)
+                  ->orWhere('no_hp', $formattedWa);
+            })
+            ->where('status', 'approved')
+            ->exists();
         }
 
-        $isEligibleForAffiliatePromos = $isAffiliateAuth || $isAffiliateNik;
+        $isEligibleForAffiliatePromos = $isAffiliateAuth || $isAffiliateWa;
 
         $rules = $this->all_pricing_rules;
 
@@ -426,19 +452,14 @@ class BookingForm extends Component
 
     public function checkMember()
     {
-        $this->resetErrorBag('nik');
-        if (!$this->nik) return;
+        $this->resetErrorBag('no_wa');
+        if (!$this->no_wa) return;
 
-        // Force 16 digits
-        if (strlen($this->nik) !== 16) {
-            $this->addError('nik', 'NIK harus terdiri dari 16 digit.');
-            return;
-        }
-        
-        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        $formattedWa = \App\Helpers\CustomerHelper::formatWa($this->no_wa);
+        $ltv = \App\Helpers\CustomerHelper::getLtv($formattedWa);
         
         if ($ltv <= 0) {
-            $this->addError('nik', 'NIK belum terdaftar sebagai member.');
+            $this->addError('no_wa', 'Nomor WhatsApp belum terdaftar sebagai member.');
             $this->member_checked = false;
             return;
         }
@@ -446,7 +467,11 @@ class BookingForm extends Component
         $tier = \App\Helpers\CustomerHelper::getTier($ltv);
         
         // Find if name exists for friendly greeting
-        $lastRental = Rental::where('nik', $this->nik)->latest()->first();
+        $lastRental = Rental::where('no_wa', $this->no_wa)
+            ->orWhere('no_wa', $formattedWa)
+            ->latest()
+            ->first();
+            
         $this->nama = $lastRental->nama ?? '';
         
         $this->member_checked = true;
@@ -465,9 +490,10 @@ class BookingForm extends Component
 
     public function checkLoyaltyBenefits()
     {
-        if (!$this->nik) return;
+        if (!$this->no_wa) return;
         
-        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        $formattedWa = \App\Helpers\CustomerHelper::formatWa($this->no_wa);
+        $ltv = \App\Helpers\CustomerHelper::getLtv($formattedWa);
         $tier = \App\Helpers\CustomerHelper::getTier($ltv);
         
         // Find applicable loyalty rule for this tier
@@ -586,18 +612,15 @@ class BookingForm extends Component
     public function submit()
     {
         $this->validate([
-            'nik' => 'required|numeric',
             'nama' => 'required',
             'email' => 'required|email',
             'no_wa' => 'required|numeric',
-            'sosial_media' => 'required',
             'alamat' => 'required',
             'waktu_mulai' => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
             'selected_unit_ids' => 'required|array|min:1',
             'agree' => 'accepted',
         ], [
-            'nik.numeric' => 'NIK harus berupa angka.',
             'no_wa.numeric' => 'Nomor WhatsApp harus berupa angka.',
             'agree.accepted' => 'Anda wajib menyetujui syarat & ketentuan penyewaan sebelum melanjutkan.',
         ]);
@@ -630,7 +653,6 @@ class BookingForm extends Component
 
         $rental = Rental::create([
             'unit_id' => $this->selected_unit_ids[0] ?? null, // Backward compatibility
-            'nik' => $this->nik,
             'nama' => strtoupper($this->nama),
             'email' => strtolower($this->email),
             'alamat' => strtoupper($this->alamat),
@@ -668,8 +690,8 @@ class BookingForm extends Component
 
         // Create customer session for auto-login/auto-persistence
         session(['customer_session' => [
-            'nik' => $this->nik,
             'no_wa' => $this->no_wa,
+            'nama' => $this->nama,
             'expires_at' => now()->addDays(7)->timestamp,
         ]]);
 
@@ -696,40 +718,47 @@ class BookingForm extends Component
         return redirect()->route('public.payment', $rental->booking_code);
     }
 
-    public function checkNik()
+    public function checkWa()
     {
         $this->validate([
-            'nik' => 'required|numeric'
+            'no_wa' => 'required|numeric'
         ], [
-            'nik.required' => 'Masukkan NIK terlebih dahulu untuk mengecek data.',
-            'nik.numeric' => 'NIK harus berupa angka.'
+            'no_wa.required' => 'Masukkan Nomor WhatsApp terlebih dahulu untuk mengecek data.',
+            'no_wa.numeric' => 'Nomor WhatsApp harus berupa angka.'
         ]);
 
-        $lastRental = Rental::where('nik', $this->nik)
+        $formattedWa = \App\Helpers\CustomerHelper::formatWa($this->no_wa);
+
+        $lastRental = Rental::where('no_wa', $this->no_wa)
+            ->orWhere('no_wa', $formattedWa)
             ->orderBy('created_at', 'desc')
             ->first();
 
         if ($lastRental) {
             $this->nama = $lastRental->nama;
             $this->email = $lastRental->email;
-            $this->no_wa = $lastRental->no_wa;
             $this->alamat = $lastRental->alamat;
             $this->sosial_media = $lastRental->sosial_media;
             $firstName = explode(' ', $this->nama)[0];
             $this->nikFoundMessage = "Halo {$firstName}, data Anda berhasil ditemukan!";
             $this->nikFoundType = 'success';
             $this->isNikVerified = true;
+            $this->member_checked = true;
+            $this->checkLoyaltyBenefits();
         } else {
-            $this->nikFoundMessage = 'NIK belum pernah digunakan, silakan isi data baru.';
+            $this->nikFoundMessage = 'Nomor WhatsApp belum pernah digunakan, silakan isi data baru.';
             $this->nikFoundType = 'warning';
             $this->isNikVerified = false;
+            $this->member_checked = false;
         }
+        $this->calculatePrice();
     }
 
     public function getTierProperty()
     {
-        if (!$this->nik) return null;
-        $ltv = \App\Helpers\CustomerHelper::getLtv($this->nik);
+        if (!$this->no_wa) return null;
+        $formattedWa = \App\Helpers\CustomerHelper::formatWa($this->no_wa);
+        $ltv = \App\Helpers\CustomerHelper::getLtv($formattedWa);
         if ($ltv <= 0) return null;
         return \App\Helpers\CustomerHelper::getTier($ltv);
     }

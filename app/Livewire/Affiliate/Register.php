@@ -14,7 +14,6 @@ class Register extends Component
     public $email;
     public $password;
     public $password_confirmation;
-    public $nik;
     public $no_hp;
     public $alamat;
     public $bank_name;
@@ -35,7 +34,6 @@ class Register extends Component
         'name' => 'required|string|max:255',
         'email' => 'required|string|email|max:255|unique:users',
         'password' => 'required|string|min:8|confirmed',
-        'nik' => 'required|string|unique:affiliator_profiles,nik',
         'no_hp' => 'required|string',
         'alamat' => 'required|string',
         'bank_name' => 'required|string',
@@ -56,7 +54,6 @@ class Register extends Component
 
         AffiliatorProfile::create([
             'user_id' => $user->id,
-            'nik' => $this->nik,
             'no_hp' => $this->no_hp,
             'alamat' => $this->alamat,
             'bank_name' => $this->bank_name,

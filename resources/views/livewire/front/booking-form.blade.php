@@ -43,55 +43,44 @@
                                 Jadwal
                             </a>
                         </div>
-                        <div class="flex flex-row justify-between items-start w-full gap-3 sm:gap-6">
-                            <!-- Waktu Mulai Button -->
-                            <div class="w-[48%] sm:w-48 shrink-0">
-                                <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Waktu Mulai</label>
-                                <div class="relative h-11 cursor-pointer"
-                                    x-on:click="$refs.mulaiInput.showPicker ? $refs.mulaiInput.showPicker() : $refs.mulaiInput.click()">
-                                    {{-- Tombol visual --}}
-                                    @if($waktu_mulai)
-                                    <div class="flex items-center justify-center w-full h-11 rounded-xl border border-border bg-card/40 text-[11px] font-semibold px-2 text-center pointer-events-none select-none">
-                                        <span class="text-foreground truncate">{{ \Carbon\Carbon::parse($waktu_mulai)->translatedFormat('d M Y, H:i') }}</span>
-                                    </div>
-                                    @else
-                                    <div class="inline-flex items-center justify-center w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm pointer-events-none select-none px-3 transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5 shrink-0"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                                        <span>Mulai</span>
-                                    </div>
-                                    @endif
-                                    {{-- Input transparan: tap langsung (iOS) --}}
-                                    <input type="datetime-local" wire:model.live="waktu_mulai" x-ref="mulaiInput"
-                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                        style="-webkit-appearance: none;">
-                                </div>
-                                @error('waktu_mulai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 text-center font-medium">{{ $message }}</span> @enderror
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                            <!-- Tanggal Pengambilan -->
+                            <div>
+                                <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengambilan</label>
+                                <input type="date" wire:model.live="tanggal_mulai"
+                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground">
+                                @error('waktu_mulai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
                             </div>
 
-                            <!-- Waktu Selesai Button -->
-                            <div class="w-[48%] sm:w-48 shrink-0">
-                                <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Waktu Selesai</label>
-                                <div class="relative h-11 cursor-pointer"
-                                    x-on:click="$refs.selesaiInput.showPicker ? $refs.selesaiInput.showPicker() : $refs.selesaiInput.click()">
-                                    {{-- Tombol visual --}}
-                                    @if($waktu_selesai)
-                                    <div class="flex items-center justify-center w-full h-11 rounded-xl border border-border bg-card/40 text-[11px] font-semibold px-2 text-center pointer-events-none select-none">
-                                        <span class="text-foreground truncate">{{ \Carbon\Carbon::parse($waktu_selesai)->translatedFormat('d M Y, H:i') }}</span>
-                                    </div>
-                                    @else
-                                    <div class="inline-flex items-center justify-center w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm pointer-events-none select-none px-3 transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5 shrink-0"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                                        <span>Selesai</span>
-                                    </div>
-                                    @endif
-                                    {{-- Input transparan: tap langsung (iOS) --}}
-                                    <input type="datetime-local" wire:model.live="waktu_selesai" x-ref="selesaiInput"
-                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                        style="-webkit-appearance: none;">
-                                </div>
-                                @error('waktu_selesai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 text-center font-medium">{{ $message }}</span> @enderror
+                            <!-- Tanggal Pengembalian -->
+                            <div>
+                                <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengembalian</label>
+                                <input type="date" wire:model.live="tanggal_selesai"
+                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground">
+                                @error('waktu_selesai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
+                            </div>
+
+                            <!-- Jam Pengambilan dan Pengembalian -->
+                            <div>
+                                <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Jam Pengambilan dan Pengembalian</label>
+                                <select wire:model.live="jam_mulai"
+                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 outline-none text-foreground">
+                                    @for($h = 0; $h < 24; $h++)
+                                        @php $formattedHour = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00'; @endphp
+                                        <option value="{{ $formattedHour }}">{{ $formattedHour }}</option>
+                                    @endfor
+                                </select>
                             </div>
                         </div>
+
+                        @if($tanggal_mulai && $tanggal_selesai && $jam_mulai)
+                            <div class="mt-4 p-3 rounded-xl bg-primary/[0.04] border border-primary/10 text-xs text-muted-foreground flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                <span>
+                                    Unit diambil pada <strong>{{ \Carbon\Carbon::parse($tanggal_mulai)->translatedFormat('d M Y') }}</strong> jam <strong>{{ $jam_mulai }}</strong>, dan dikembalikan pada <strong>{{ \Carbon\Carbon::parse($tanggal_selesai)->translatedFormat('d M Y') }}</strong> jam <strong>{{ $jam_mulai }}</strong>.
+                                </span>
+                            </div>
+                        @endif
                     </div>
 
                 <!-- 2. Pilihan Unit -->
@@ -121,7 +110,7 @@
                                             @endif
                                         </div>
                                         <p class="text-[10px] text-muted-foreground mt-0.5 text-center sm:text-left">
-                                            {{ $member_checked ? 'Promo spesial member Anda sudah aktif di katalog.' : 'Nikmati promo spesial khusus member dengan cek NIK.' }}
+                                            {{ $member_checked ? 'Promo spesial member Anda sudah aktif di katalog.' : 'Nikmati promo spesial khusus member dengan cek Nomor WhatsApp.' }}
                                         </p>
                                     </div>
                                 </div>
@@ -131,7 +120,7 @@
                                         <div class="flex flex-col gap-1">
                                             <div class="flex items-center gap-2">
                                                 <div class="relative flex-1 sm:w-48">
-                                                    <input type="text" wire:model.defer="nik" placeholder="Masukkan NIK..." maxlength="16"
+                                                    <input type="text" wire:model.defer="no_wa" placeholder="Masukkan WhatsApp..." maxlength="15"
                                                         oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                                                         class="w-full h-10 px-3 py-2 text-xs border border-border rounded-lg bg-background focus:ring-1 focus:ring-primary outline-none transition-all shadow-sm">
                                                 </div>
@@ -141,10 +130,10 @@
                                                     <div wire:loading wire:target="checkMember" class="w-3 h-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
                                                 </button>
                                             </div>
-                                            @error('nik') <p class="text-[10px] text-red-500 font-bold ml-1 animate-in fade-in slide-in-from-top-1 duration-300">{{ $message }}</p> @enderror
+                                            @error('no_wa') <p class="text-[10px] text-red-500 font-bold ml-1 animate-in fade-in slide-in-from-top-1 duration-300">{{ $message }}</p> @enderror
                                         </div>
                                     @else
-                                        <button type="button" wire:click="$set('member_checked', false); $set('nik', ''); $set('nikFoundMessage', null); $set('isNikVerified', false); calculatePrice();"
+                                        <button type="button" wire:click="$set('member_checked', false); $set('no_wa', ''); $set('nikFoundMessage', null); $set('isNikVerified', false); calculatePrice();"
                                             class="w-full sm:w-auto h-10 px-4 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors">
                                             Ganti Akun
                                         </button>
@@ -214,9 +203,17 @@
                                                     {{ $unit->warna }}@if($unit->warna && $unit->memori) • @endif{{ $unit->memori }}
                                                 </span>
                                                 @if($unit->availability_label)
-                                                    <span class="text-[9px] font-bold uppercase tracking-tight {{ $unit->availability_status === 'ready' ? 'text-emerald-500' : ($unit->availability_status === 'full' ? 'text-red-500' : 'text-amber-500') }}">
-                                                        {{ $unit->availability_label }}
-                                                    </span>
+                                                    <div class="mt-1 flex">
+                                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-wider {{ 
+                                                            $unit->availability_status === 'ready' 
+                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 animate-pulse' 
+                                                                : ($unit->availability_status === 'full' 
+                                                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20' 
+                                                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20') 
+                                                        }}">
+                                                            {{ $unit->availability_label }}
+                                                        </span>
+                                                    </div>
                                                 @endif
                                             </div>
                                         </div>
@@ -331,20 +328,20 @@
                         }}. Data Diri Penyewa</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="text-sm font-medium leading-none">NIK (Nomor Induk Kependudukan)</label>
+                            <label class="text-sm font-medium leading-none">Nomor WhatsApp / Telepon</label>
                             <div class="mt-2 flex shadow-sm rounded-md h-10 w-full">
-                                <input type="text" wire:model.blur="nik" inputmode="numeric"
+                                <input type="text" wire:model.blur="no_wa" inputmode="numeric"
                                     oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                    maxlength="16"
+                                    maxlength="15"
                                     class="flex h-10 w-full border border-input bg-transparent rounded-l-md px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
-                                    placeholder="16 Digit NIK">
-                                <button type="button" wire:click="checkNik"
+                                    placeholder="08XXXXXXXXXX">
+                                <button type="button" wire:click="checkWa"
                                     class="inline-flex items-center justify-center rounded-r-md border border-l-0 border-input bg-muted px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted/80 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ring transition-colors shrink-0 whitespace-nowrap">
-                                    <span wire:loading.remove wire:target="checkNik">Cek NIK</span>
-                                    <span wire:loading wire:target="checkNik">Mengecek...</span>
+                                    <span wire:loading.remove wire:target="checkWa">Cek Nomor</span>
+                                    <span wire:loading wire:target="checkWa">Mengecek...</span>
                                 </button>
                             </div>
-                            @error('nik') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
+                            @error('no_wa') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
                             @if($nikFoundMessage)
                                 <div class="flex items-center gap-2 mt-2">
                                     @if($this->tier)
@@ -376,26 +373,7 @@
                                 placeholder="nama@email.com">
                             @error('email') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                         </div>
-                        <div>
-                            <label class="text-sm font-medium leading-none">Nomor Telepon / WhatsApp</label>
-                            <input type="text" wire:model="no_wa" inputmode="numeric"
-                                oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                maxlength="15"
-                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                placeholder="08XXXXXXXXXX">
-                            @error('no_wa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium leading-none">Sosial Media (IG/TikTok)</label>
-                            <div class="relative mt-2 flex shadow-sm rounded-md h-10 w-full group">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-foreground/70 font-bold text-sm">@</div>
-                                <input type="text" wire:model="sosial_media"
-                                    maxlength="20"
-                                    class="flex h-10 w-full rounded-md border border-input bg-transparent pl-7 pr-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
-                                    placeholder="username">
-                            </div>
-                            @error('sosial_media') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
-                        </div>
+
                         <div class="sm:col-span-2">
                             <label class="text-sm font-medium leading-none">Alamat Domisili lengkap</label>
                             <textarea wire:model="alamat" rows="3"
@@ -798,15 +776,13 @@
                 this.step = 2;
                 window.scrollTo({top: 0, behavior: 'smooth'});
             } else if (this.step === 2) {
-                const nk = $wire.get('nik');
                 const nm = $wire.get('nama');
                 const wa = $wire.get('no_wa');
-                const sm = $wire.get('sosial_media');
                 const em = $wire.get('email');
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 
-                if(!nk || !nm || !wa || !sm || !em) {
-                    alert('Harap lengkapi Data Diri (NIK, Nama, Email, No. WhatsApp, Sosial Media) terlebih dahulu.');
+                if(!nm || !wa || !em) {
+                    alert('Harap lengkapi Data Diri (Nama, Email, No. WhatsApp) terlebih dahulu.');
                     return;
                 }
                 
@@ -912,7 +888,7 @@
         // Also save on any input change to be safe
         function saveToStorage() {
             const fields = [
-                'nik', 'nama', 'alamat', 'no_wa', 'sosial_media',
+                'nama', 'alamat', 'no_wa',
                 'waktu_mulai', 'waktu_selesai', 
                 'selected_unit_ids', 'selected_category_id'
             ];
@@ -933,7 +909,7 @@
             if (isSubmitting) return;
 
             const hasUnits = $wire.get('selected_unit_ids').length > 0;
-            const hasData = $wire.get('nik') || $wire.get('nama');
+            const hasData = $wire.get('no_wa') || $wire.get('nama');
 
             if (hasUnits || hasData) {
                 saveToStorage();

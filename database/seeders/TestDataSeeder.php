@@ -36,7 +36,6 @@ class TestDataSeeder extends Seeder
                 ['user_id' => $user->id],
                 [
                     'no_hp' => '62812345678' . $index,
-                    'nik' => '320101' . rand(100000, 999999) . rand(1000, 9999),
                     'alamat' => 'Alamat Test No. ' . ($index + 1),
                     'referral_code' => 'TEST' . Str::random(4) . ($index + 1), // Avoid duplicates if re-run
                     'commission_rate' => 10,

@@ -74,7 +74,6 @@ class DashboardDataSeeder extends Seeder
 
             $rental = Rental::create([
                 'booking_code' => $code,
-                'nik' => (string)rand(3510000000000000, 3520000000000000),
                 'nama' => $names[array_rand($names)] . ' ' . Str::random(3),
                 'no_wa' => '0812' . rand(1000000, 9999999),
                 'email' => strtolower($names[array_rand($names)]) . rand(1,99) . '@gmail.com',

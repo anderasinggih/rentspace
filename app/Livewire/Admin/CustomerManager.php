@@ -15,7 +15,7 @@ class CustomerManager extends Component
 
     public $search = '';
     public $perPage = 15;
-    public $selectedNik = null;
+    public $selectedNoWa = null;
     public $vipThreshold = 5; // 5+ orders = VIP
 
     protected $queryString = ['search'];
@@ -25,14 +25,14 @@ class CustomerManager extends Component
         $this->resetPage();
     }
 
-    public function selectCustomer($nik)
+    public function selectCustomer($no_wa)
     {
-        $this->selectedNik = $nik;
+        $this->selectedNoWa = $no_wa;
     }
 
     public function closeDetail()
     {
-        $this->selectedNik = null;
+        $this->selectedNoWa = null;
     }
 
     public function getTier($ltv)
@@ -42,23 +42,22 @@ class CustomerManager extends Component
 
     public function render()
     {
-        // Query to get unique customers based on NIK
-        $customersQuery = Rental::selectRaw('nik, MAX(nama) as nama, MAX(no_wa) as no_wa, COUNT(id) as total_orders, SUM(grand_total) as ltv, MAX(created_at) as last_order')
+        // Query to get unique customers based on No. WA
+        $customersQuery = Rental::selectRaw('no_wa, MAX(nama) as nama, COUNT(id) as total_orders, SUM(grand_total) as ltv, MAX(created_at) as last_order')
             ->where(function($q) {
                 $q->where('nama', 'like', '%' . $this->search . '%')
-                  ->orWhere('nik', 'like', '%' . $this->search . '%')
                   ->orWhere('no_wa', 'like', '%' . $this->search . '%');
             })
-            ->groupBy('nik')
+            ->groupBy('no_wa')
             ->orderByDesc('ltv');
 
         $customers = $customersQuery->paginate($this->perPage);
 
         $customerDetails = null;
         $customerInsights = [];
-        if ($this->selectedNik) {
+        if ($this->selectedNoWa) {
             $customerDetails = Rental::with('units.category')
-                ->where('nik', $this->selectedNik)
+                ->where('no_wa', $this->selectedNoWa)
                 ->orderByDesc('created_at')
                 ->get();
 
@@ -80,7 +79,7 @@ class CustomerManager extends Component
                 'address' => $customerDetails->first()->alamat ?? '-',
                 'sosmed' => $customerDetails->first()->sosial_media ?? '-',
                 'email' => $customerDetails->first()->email ?? '-',
-                'nik' => $customerDetails->first()->nik ?? '-',
+                'no_wa' => $customerDetails->first()->no_wa ?? '-',
                 'nama' => $customerDetails->first()->nama ?? '-',
             ];
         }

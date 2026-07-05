@@ -11,7 +11,6 @@ class AffiliatorProfile extends Model
     protected $fillable = [
         'user_id',
         'referral_code',
-        'nik',
         'no_hp',
         'alamat',
         'bank_name',

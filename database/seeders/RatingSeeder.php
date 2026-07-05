@@ -31,7 +31,6 @@ class RatingSeeder extends Seeder
             Rental::create([
                 'booking_code' => strtoupper(Str::random(12)),
                 'nama' => $item['name'],
-                'nik' => rand(1111111111111111, 9999999999999999),
                 'alamat' => 'Alamat Dummy ' . rand(1, 100),
                 'no_wa' => '08' . rand(111111111, 999999999),
                 'subtotal_harga' => $price,
