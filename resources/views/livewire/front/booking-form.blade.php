@@ -6,6 +6,10 @@
         margin: 0 !important;
         padding: 0 !important;
     }
+    /* Make calendar icon white in dark mode */
+    .dark input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
 </style>
 
     <div class="max-w-4xl mx-auto">
