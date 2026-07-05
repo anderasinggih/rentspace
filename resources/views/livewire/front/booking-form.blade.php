@@ -558,6 +558,8 @@
 
 
 
+                <!-- Spacer to force mobile scrolling past the fixed bottom calculation bar -->
+                <div class="h-96 sm:hidden"></div>
                 
                 </div> <!-- END STEP 2 -->
 
