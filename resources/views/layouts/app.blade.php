@@ -9,6 +9,20 @@
 
     <title>{{ $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}</title>
     
+    <!-- Open Graph / Link Preview Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="{{ $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}">
+    <meta property="og:description" content="Penyewaan iPhone Terpercaya di Purwokerto. Proses cepat, unit berkualitas.">
+    <meta property="og:image" content="{{ asset('logo.png') }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ url()->current() }}">
+    <meta property="twitter:title" content="{{ $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}">
+    <meta property="twitter:description" content="Penyewaan iPhone Terpercaya di Purwokerto. Proses cepat, unit berkualitas.">
+    <meta property="twitter:image" content="{{ asset('logo.png') }}">
+    
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#09090b">
