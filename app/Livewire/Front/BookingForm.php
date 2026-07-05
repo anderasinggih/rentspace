@@ -108,6 +108,10 @@ class BookingForm extends Component
 
     public function updated($propertyName)
     {
+        if ($propertyName === 'admin_customer_search') {
+            $this->updatedAdminCustomerSearch();
+        }
+
         if ($propertyName === 'no_wa') {
             $this->nikFoundMessage = null;
             $this->nikFoundType = null;
