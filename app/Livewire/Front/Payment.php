@@ -220,6 +220,11 @@ class Payment extends Component
                 'order_id' => $uniqueOrderId,
                 'gross_amount' => (int) $newGrandTotal,
             ],
+            'callbacks' => [
+                'finish' => route('public.success', $this->rental->booking_code),
+                'unfinish' => route('public.payment', $this->rental->booking_code),
+                'error' => route('public.payment', $this->rental->booking_code),
+            ],
             'customer_details' => [
                 'first_name' => $this->rental->nama,
                 'email' => $this->rental->nik . '@rentspace.com', // Dummy email as Core API often requires it
