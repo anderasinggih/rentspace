@@ -33,7 +33,7 @@
                 </div>
 
                 <!-- STEP 1: Jadwal & Unit -->
-                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-8 sm:pb-0 font-sans">
+                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-32 sm:pb-8 font-sans">
                     <!-- 1. Jadwal Sewa -->
                     <div>
                         <div class="flex items-center justify-between gap-4 mb-4">
@@ -329,7 +329,7 @@
                 </div> <!-- END STEP 1 -->
 
                 <!-- STEP 2: Data Diri & Promo -->
-                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-8 sm:pb-0 font-sans">
+                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-32 sm:pb-8 font-sans">
 <!-- 5. Data Diri -->
                 <div>
                     <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">{{ (!empty($selected_unit_ids) && $waktu_mulai &&
@@ -557,7 +557,7 @@
                 </div> <!-- END STEP 2 -->
 
                 <!-- STEP 3: Tagihan & TNC -->
-                <div x-show="step === 3" x-transition.opacity.duration.300ms x-cloak class="space-y-8">
+                <div x-show="step === 3" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-32 sm:pb-8">
 @if(!empty($selected_unit_ids) && $waktu_mulai && $waktu_selesai)
                 <div class="bg-primary/5 rounded-xl p-6 border border-primary/20 relative overflow-hidden">
                     <!-- Price Loader Overlay -->
