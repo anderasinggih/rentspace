@@ -861,9 +861,12 @@
             const endStr = $wire.waktu_selesai;
             if (!startStr || !endStr) return { days: 0, hours: 0 };
             
-            const start = new Date(startStr);
-            const end = new Date(endStr);
-            if (isNaN(start) || isNaN(end) || end <= start) return { days: 0, hours: 0 };
+            const safeStartStr = String(startStr).replace(/-/g, '/').replace('T', ' ');
+            const safeEndStr = String(endStr).replace(/-/g, '/').replace('T', ' ');
+            
+            const start = new Date(safeStartStr);
+            const end = new Date(safeEndStr);
+            if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return { days: 0, hours: 0 };
             
             const diffInMs = end - start;
             const diffInHours = Math.max(1, Math.floor(diffInMs / (1000 * 60 * 60)));
