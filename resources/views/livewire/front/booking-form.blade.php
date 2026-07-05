@@ -338,6 +338,7 @@
                             <label class="block text-xs font-bold uppercase text-primary mb-2">Pencarian Data Pelanggan (Fitur Admin/Staff)</label>
                             <div class="relative">
                                 <input type="text" wire:model.live.debounce.300ms="admin_customer_search"
+                                    x-on:keydown.enter.prevent=""
                                     placeholder="Cari berdasarkan Nama, WhatsApp, atau Email..."
                                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-foreground">
                                 
