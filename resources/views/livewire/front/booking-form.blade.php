@@ -370,6 +370,7 @@
                         <div>
                             <label class="text-sm font-medium leading-none">Nomor WhatsApp / Telepon</label>
                             <input type="text" wire:model.live.debounce.500ms="no_wa" inputmode="numeric"
+                                id="no_wa_input"
                                 x-ref="waInput"
                                 x-on:keydown.enter.prevent="$refs.emailInput.focus()"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '');"
@@ -395,6 +396,7 @@
                         <div>
                             <label class="text-sm font-medium leading-none">Alamat Email (Untuk Terima Invoice)</label>
                             <input type="email" wire:model.live.debounce.500ms="email"
+                                id="email_input"
                                 x-ref="emailInput"
                                 x-on:keydown.enter.prevent="$refs.namaInput.focus()"
                                 maxlength="50"
@@ -407,6 +409,7 @@
                         <div>
                             <label class="text-sm font-medium leading-none">Nama Lengkap Sesuai KTP</label>
                             <input type="text" wire:model="nama"
+                                id="nama_input"
                                 x-ref="namaInput"
                                 x-on:keydown.enter.prevent="$refs.alamatInput.focus()"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
@@ -846,9 +849,9 @@
                 this.step = 2;
                 window.scrollTo({top: 0, behavior: 'smooth'});
             } else if (this.step === 2) {
-                const nm = this.nama;
-                const wa = this.noWa;
-                const em = this.email;
+                const nm = (document.getElementById('nama_input')?.value || '').trim();
+                const wa = (document.getElementById('no_wa_input')?.value || '').trim();
+                const em = (document.getElementById('email_input')?.value || '').trim();
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 
                 if(!nm || !wa || !em) {
@@ -860,6 +863,12 @@
                     alert('Format alamat email tidak valid.');
                     return;
                 }
+                
+                // Force sync values back to Alpine and Livewire
+                this.nama = nm;
+                this.noWa = wa;
+                this.email = em;
+                
                 this.step = 3;
                 window.scrollTo({top: 0, behavior: 'smooth'});
             }
