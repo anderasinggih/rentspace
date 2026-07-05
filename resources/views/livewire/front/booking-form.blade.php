@@ -903,18 +903,6 @@
 
             document.addEventListener('focusin', handleFocus);
             document.addEventListener('focusout', handleBlur);
-
-            // Robust VisualViewport handling for modern iOS/Android with simple debounce
-            if (window.visualViewport) {
-                let resizeTimer;
-                window.visualViewport.addEventListener('resize', () => {
-                    clearTimeout(resizeTimer);
-                    resizeTimer = setTimeout(() => {
-                        const isKeyboard = window.visualViewport.height < (window.innerHeight * 0.9);
-                        this.keyboardOpen = isKeyboard;
-                    }, 50);
-                });
-            }
         }
     }));
 
