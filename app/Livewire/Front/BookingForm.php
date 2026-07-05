@@ -112,14 +112,17 @@ class BookingForm extends Component
             $this->updatedAdminCustomerSearch();
         }
 
-        if ($propertyName === 'no_wa') {
-            $this->nikFoundMessage = null;
-            $this->nikFoundType = null;
-            $this->isNikVerified = false;
-            $this->member_checked = false;
-            $this->loyalty_rule_id = null;
-            $this->loyalty_discount_value = 0;
-            $this->loyalty_discount_type = null;
+        if ($propertyName === 'no_wa' || $propertyName === 'email') {
+            if ($propertyName === 'no_wa') {
+                $this->nikFoundMessage = null;
+                $this->nikFoundType = null;
+                $this->isNikVerified = false;
+                $this->member_checked = false;
+                $this->loyalty_rule_id = null;
+                $this->loyalty_discount_value = 0;
+                $this->loyalty_discount_type = null;
+            }
+            $this->checkAutomaticCustomerFill();
             $this->loadAvailablePromos();
             $this->calculatePrice();
         }
@@ -830,6 +833,8 @@ class BookingForm extends Component
             ->limit(5)
             ->get()
             ->toArray();
+
+        \Illuminate\Support\Facades\Log::info('Admin Customer Search: query executed for term: ' . $search . '. Found count: ' . count($this->admin_search_results));
     }
 
     public function selectAdminCustomer($index)
@@ -849,6 +854,36 @@ class BookingForm extends Component
             $this->isNikVerified = true;
             $this->checkLoyaltyBenefits();
             $this->calculatePrice();
+        }
+    }
+
+    public function checkAutomaticCustomerFill()
+    {
+        if (empty($this->no_wa) || empty($this->email)) {
+            return;
+        }
+
+        $formattedWa = \App\Helpers\CustomerHelper::formatWa($this->no_wa);
+
+        $lastRental = Rental::where(function($q) use ($formattedWa) {
+                $q->where('no_wa', $this->no_wa)
+                  ->orWhere('no_wa', $formattedWa);
+            })
+            ->where('email', strtolower(trim($this->email)))
+            ->latest()
+            ->first();
+
+        if ($lastRental) {
+            $this->nama = $lastRental->nama;
+            $this->alamat = $lastRental->alamat;
+
+            $firstName = explode(' ', $this->nama)[0];
+            $this->nikFoundMessage = "Halo {$firstName}, data otomatis terisi dari transaksi terakhir Anda.";
+            $this->nikFoundType = 'success';
+            $this->isNikVerified = true;
+            $this->member_checked = true;
+
+            $this->checkLoyaltyBenefits();
         }
     }
 

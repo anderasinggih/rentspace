@@ -354,26 +354,26 @@
                                             @endforeach
                                         </div>
                                     </div>
+                                @elseif(strlen($admin_customer_search) >= 2)
+                                    <div class="absolute z-20 left-0 right-0 mt-1 rounded-md border bg-card text-card-foreground p-3 text-center text-xs text-muted-foreground shadow-md">
+                                        Tidak ada data pelanggan yang cocok.
+                                    </div>
                                 @endif
                             </div>
                         </div>
                     @endif
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- WhatsApp -->
                         <div>
                             <label class="text-sm font-medium leading-none">Nomor WhatsApp / Telepon</label>
-                            <div class="mt-2 flex shadow-sm rounded-md h-10 w-full">
-                                <input type="text" wire:model.blur="no_wa" inputmode="numeric"
-                                    oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                    maxlength="15"
-                                    class="flex h-10 w-full border border-input bg-transparent rounded-l-md px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
-                                    placeholder="08XXXXXXXXXX">
-                                <button type="button" wire:click="checkWa"
-                                    class="inline-flex items-center justify-center rounded-r-md border border-l-0 border-input bg-muted px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted/80 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ring transition-colors shrink-0 whitespace-nowrap">
-                                    <span wire:loading.remove wire:target="checkWa">Cek Nomor</span>
-                                    <span wire:loading wire:target="checkWa">Mengecek...</span>
-                                </button>
-                            </div>
+                            <input type="text" wire:model.live.debounce.500ms="no_wa" inputmode="numeric"
+                                x-ref="waInput"
+                                x-on:keydown.enter.prevent="$refs.emailInput.focus()"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                maxlength="15"
+                                class="mt-2 flex h-10 w-full border border-input bg-transparent rounded-md px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
+                                placeholder="08XXXXXXXXXX">
                             @error('no_wa') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
                             @if($nikFoundMessage)
                                 <div class="flex items-center gap-2 mt-2">
@@ -388,9 +388,25 @@
                                 </div>
                             @endif
                         </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label class="text-sm font-medium leading-none">Alamat Email (Untuk Terima Invoice)</label>
+                            <input type="email" wire:model.live.debounce.500ms="email"
+                                x-ref="emailInput"
+                                x-on:keydown.enter.prevent="$refs.namaInput.focus()"
+                                maxlength="50"
+                                class="mt-2 flex h-10 w-full rounded-md border {{ $errors->has('email') ? 'border-red-500 bg-rose-500/10' : 'border-input bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                placeholder="nama@email.com">
+                            @error('email') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Nama -->
                         <div>
                             <label class="text-sm font-medium leading-none">Nama Lengkap Sesuai KTP</label>
                             <input type="text" wire:model="nama"
+                                x-ref="namaInput"
+                                x-on:keydown.enter.prevent="$refs.alamatInput.focus()"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
                                 maxlength="50"
@@ -398,18 +414,12 @@
                                 placeholder="SESUAI KTP">
                             @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
-                        <div>
-                            <label class="text-sm font-medium leading-none">Alamat Email (Untuk Terima Invoice)</label>
-                            <input type="email" wire:model.live.debounce.500ms="email"
-                                maxlength="50"
-                                class="mt-2 flex h-10 w-full rounded-md border {{ $errors->has('email') ? 'border-red-500 bg-rose-500/10' : 'border-input bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
-                                placeholder="nama@email.com">
-                            @error('email') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
-                        </div>
 
+                        <!-- Alamat -->
                         <div class="sm:col-span-2">
                             <label class="text-sm font-medium leading-none">Alamat Domisili lengkap</label>
                             <textarea wire:model="alamat" rows="3"
+                                x-ref="alamatInput"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
                                 maxlength="150"
