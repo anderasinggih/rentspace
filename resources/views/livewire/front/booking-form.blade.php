@@ -333,6 +333,32 @@
                     <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">{{ (!empty($selected_unit_ids) && $waktu_mulai &&
                         $waktu_selesai) ? '4' : '3'
                         }}. Data Diri Penyewa</h2>
+
+                    @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'staff']))
+                        <div class="mb-6 p-4 rounded-xl border border-dashed border-primary/30 bg-primary/[0.02]">
+                            <label class="block text-xs font-bold uppercase text-primary mb-2">Pencarian Data Pelanggan (Fitur Admin/Staff)</label>
+                            <div class="relative">
+                                <input type="text" wire:model.live.debounce.300ms="admin_customer_search"
+                                    placeholder="Cari berdasarkan Nama, WhatsApp, atau Email..."
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-foreground">
+                                
+                                @if(!empty($admin_search_results))
+                                    <div class="absolute z-20 left-0 right-0 mt-1 rounded-md border bg-card text-card-foreground shadow-md outline-none animate-in fade-in-50 slide-in-from-top-1">
+                                        <div class="p-1">
+                                            @foreach($admin_search_results as $index => $res)
+                                                <button type="button" wire:click="selectAdminCustomer({{ $index }})"
+                                                    class="w-full text-left flex flex-col justify-start rounded-sm px-2 py-1.5 text-xs outline-none hover:bg-accent hover:text-accent-foreground select-none transition-colors">
+                                                    <span class="font-bold uppercase text-[10px] text-foreground">{{ $res['nama'] }}</span>
+                                                    <span class="text-[9px] text-muted-foreground mt-0.5">WA: {{ $res['no_wa'] }} • Email: {{ $res['email'] }}</span>
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium leading-none">Nomor WhatsApp / Telepon</label>

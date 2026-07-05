@@ -15,6 +15,8 @@ class BookingForm extends Component
     public $nik, $nama, $email, $alamat, $no_wa, $sosial_media;
     public $waktu_mulai, $waktu_selesai;
     public $tanggal_mulai, $jam_mulai, $tanggal_selesai;
+    public $admin_customer_search = '';
+    public $admin_search_results = [];
     public $unit_id; // Keeping for backward compat/initial select
     public $selected_unit_ids = [];
     public $available_units = [];
@@ -799,6 +801,51 @@ class BookingForm extends Component
         }
         
         return $prices;
+    }
+
+    public function updatedAdminCustomerSearch()
+    {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) {
+            $this->admin_search_results = [];
+            return;
+        }
+
+        $search = trim($this->admin_customer_search);
+        if (strlen($search) < 2) {
+            $this->admin_search_results = [];
+            return;
+        }
+
+        $this->admin_search_results = Rental::selectRaw('nama, email, no_wa, alamat')
+            ->where(function($q) use ($search) {
+                $q->where('nama', 'like', '%' . $search . '%')
+                  ->orWhere('no_wa', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%');
+            })
+            ->groupBy('nama', 'email', 'no_wa', 'alamat')
+            ->limit(5)
+            ->get()
+            ->toArray();
+    }
+
+    public function selectAdminCustomer($index)
+    {
+        if (isset($this->admin_search_results[$index])) {
+            $c = $this->admin_search_results[$index];
+            $this->nama = $c['nama'];
+            $this->email = $c['email'];
+            $this->no_wa = $c['no_wa'];
+            $this->alamat = $c['alamat'];
+            
+            $this->admin_customer_search = '';
+            $this->admin_search_results = [];
+
+            // Automatically check member loyalty benefits
+            $this->member_checked = true;
+            $this->isNikVerified = true;
+            $this->checkLoyaltyBenefits();
+            $this->calculatePrice();
+        }
     }
 
     public function render()
