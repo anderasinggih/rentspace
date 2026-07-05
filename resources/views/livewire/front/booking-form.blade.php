@@ -1,5 +1,13 @@
 <div class="pt-8 pb-96 sm:pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
 <style>
+    /* Fix iOS Safari Scroll Lock and Height Constraints */
+    html, body {
+        height: auto !important;
+        min-height: 100% !important;
+        overflow-y: auto !important;
+        overscroll-behavior-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
     /* Fix iOS Safari Date Input Height Bug */
     input[type="date"]::-webkit-date-and-time-value {
         min-height: 1.25rem !important;
@@ -808,6 +816,9 @@
             </div>
         </div>
     </div>
+    
+    <!-- Giant empty spacer container to force body height and scrolling on mobile -->
+    <div x-show="step < 3" class="h-[450px] w-full block sm:hidden"></div>
 </div>
 
 @script
