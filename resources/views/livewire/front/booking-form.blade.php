@@ -824,8 +824,14 @@
         
         nextStep() {
             if (this.step === 1) {
+                const tglMulai = $wire.get('tanggal_mulai');
+                const tglSelesai = $wire.get('tanggal_selesai');
+                if (!tglMulai || !tglSelesai) {
+                    alert('Harap tentukan Tanggal Pengambilan dan Pengembalian terlebih dahulu.');
+                    return;
+                }
                 if (!this.selectedIds || this.selectedIds.length === 0) {
-                    alert('Harap pilih jadwal dan unit terlebih dahulu.');
+                    alert('Harap pilih unit terlebih dahulu.');
                     return;
                 }
                 this.step = 2;
