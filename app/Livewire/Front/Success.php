@@ -318,10 +318,21 @@ class Success extends Component
 
     public function render()
     {
+        $unitNames = $this->rental->units->pluck('nama_unit')->join(', ');
+        $startDate = $this->rental->waktu_mulai ? $this->rental->waktu_mulai->translatedFormat('j M') : '';
+        $endDate = $this->rental->waktu_selesai ? $this->rental->waktu_selesai->translatedFormat('j M Y') : '';
+        $statusText = $this->rental->status === 'paid' ? 'LUNAS' : ($this->rental->status === 'pending' ? 'PENDING' : ($this->rental->status === 'cancelled' ? 'BATAL' : 'PENDING'));
+
+        $metaTitle = strtoupper($this->rental->nama) . ' INVOICE';
+        $metaDescription = "{$unitNames}\n" .
+                           "Status: {$statusText}\n" .
+                           "Total: Rp " . number_format($this->rental->grand_total, 0, ',', '.') . "\n" .
+                           "Sewa: {$startDate} - {$endDate}";
+
         return view('livewire.front.success')
             ->layout('layouts.app', [
-                'metaTitle' => 'INVOICE #' . $this->rental->booking_code . ' - ' . strtoupper($this->rental->nama),
-                'metaDescription' => 'Penyewaan ' . $this->rental->units->pluck('nama_unit')->join(', ') . ' • Status: ' . strtoupper($this->rental->status) . ' • Total: Rp ' . number_format($this->rental->grand_total, 0, ',', '.') . ' • RENT SPACE PURWOKERTO',
+                'metaTitle' => $metaTitle,
+                'metaDescription' => $metaDescription,
                 'metaImage' => route('public.success.og-image', $this->rental->booking_code),
             ]);
     }
