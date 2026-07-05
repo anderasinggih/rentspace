@@ -55,6 +55,7 @@
                             <div>
                                 <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengambilan</label>
                                 <input type="date" wire:model.live="tanggal_mulai"
+                                    x-on:change="$wire.set('tanggal_mulai', $event.target.value)"
                                     class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
                                 @error('waktu_mulai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
                             </div>
@@ -63,6 +64,7 @@
                             <div>
                                 <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengembalian</label>
                                 <input type="date" wire:model.live="tanggal_selesai"
+                                    x-on:change="$wire.set('tanggal_selesai', $event.target.value)"
                                     class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
                                 @error('waktu_selesai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
                             </div>
@@ -71,6 +73,7 @@
                             <div>
                                 <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Jam Pengambilan dan Pengembalian</label>
                                 <select wire:model.live="jam_mulai"
+                                    x-on:change="$wire.set('jam_mulai', $event.target.value)"
                                     class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 outline-none text-foreground">
                                     @for($h = 0; $h < 24; $h++)
                                         @php $formattedHour = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00'; @endphp
