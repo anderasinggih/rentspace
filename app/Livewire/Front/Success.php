@@ -333,7 +333,7 @@ class Success extends Component
             ->layout('layouts.app', [
                 'metaTitle' => $metaTitle,
                 'metaDescription' => $metaDescription,
-                'metaImage' => asset('invoice-og.svg'),
+                'metaImage' => asset('invoice-og.png'),
             ]);
     }
 }
