@@ -877,16 +877,7 @@
         },
 
         get subtotal() {
-            let total = 0;
-            const dur = this.duration;
-            const selected = this.selectedIds || [];
-            selected.forEach(id => {
-                const price = this.unitPrices[id];
-                if (price) {
-                    total += (dur.days * price.day) + (dur.hours * price.hour);
-                }
-            });
-            return total;
+            return Number($wire.subtotal) || 0;
         },
 
         init() {
