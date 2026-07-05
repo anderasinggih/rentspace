@@ -814,6 +814,9 @@
         waktuSelesai: @entangle('waktu_selesai'),
         subtotalBackend: @entangle('subtotal'),
         potonganDiskon: @entangle('potongan_diskon'),
+        nama: @entangle('nama'),
+        email: @entangle('email'),
+        noWa: @entangle('no_wa'),
         unitPrices: {!! $unitPricesJson !!},
         
         toggleUnit(id) {
@@ -843,9 +846,9 @@
                 this.step = 2;
                 window.scrollTo({top: 0, behavior: 'smooth'});
             } else if (this.step === 2) {
-                const nm = $wire.get('nama');
-                const wa = $wire.get('no_wa');
-                const em = $wire.get('email');
+                const nm = this.nama;
+                const wa = this.noWa;
+                const em = this.email;
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 
                 if(!nm || !wa || !em) {
