@@ -19,7 +19,7 @@
 
         <div x-data="bookingForm()" 
             class="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-6">
-            <form wire:submit.prevent="submit" class="space-y-8">
+            <form wire:submit.prevent="submit" class="space-y-8 pb-[450px] sm:pb-0">
 
                 <!-- Progress Bar -->
                 <div class="mb-8 border-b border-border pb-4">
