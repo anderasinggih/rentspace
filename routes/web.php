@@ -112,40 +112,63 @@ Route::get('/booking/success/{booking_code}/og-image', function($booking_code) {
     imagerectangle($image, 350, 60, 850, 510, $border);
 
     $font = resource_path('fonts/font.ttf');
+    $drawText = function($image, $size, $x, $y, $color, $text, $alignRight = false) use ($font) {
+        if (file_exists($font) && is_readable($font)) {
+            try {
+                if ($alignRight) {
+                    $estWidth = strlen($text) * ($size * 0.65);
+                    $x = $x - $estWidth;
+                }
+                imagettftext($image, $size, 0, $x, $y, $color, $font, $text);
+                return;
+            } catch (\Throwable $e) {
+                // fallback
+            }
+        }
+        $gdFont = 5;
+        if ($size < 12) {
+            $gdFont = 3;
+        }
+        if ($alignRight) {
+            $estWidth = strlen($text) * ($gdFont === 5 ? 9 : 7);
+            $x = $x - $estWidth;
+        }
+        imagestring($image, $gdFont, $x, $y - 10, $text, $color);
+    };
 
     // Draw Header
-    imagettftext($image, 26, 0, 600 - 95, 110, $green, $font, "RENT SPACE");
-    imagettftext($image, 12, 0, 600 - 60, 140, $gray, $font, "INVOICE RENTAL");
+    $drawText($image, 26, 600 - 95, 110, $green, "RENT SPACE");
+    $drawText($image, 12, 600 - 60, 140, $gray, "INVOICE RENTAL");
     
     // Draw booking code
     $code = "#" . $rental->booking_code;
-    imagettftext($image, 18, 0, 600 - (strlen($code) * 7), 180, $white, $font, $code);
+    $drawText($image, 18, 600 - (strlen($code) * 7), 180, $white, $code);
 
     // Divider line
     imageline($image, 390, 205, 810, 205, $border);
 
     // Customer details
-    imagettftext($image, 11, 0, 390, 235, $gray, $font, "NAMA PENYEWA");
+    $drawText($image, 11, 390, 235, $gray, "NAMA PENYEWA");
     
     $nama = strtoupper($rental->nama);
     if (strlen($nama) > 25) {
         $nama = substr($nama, 0, 22) . '...';
     }
-    imagettftext($image, 15, 0, 390, 265, $white, $font, $nama);
+    $drawText($image, 15, 390, 265, $white, $nama);
 
-    imagettftext($image, 11, 0, 390, 310, $gray, $font, "UNIT SEWA");
-    imagettftext($image, 14, 0, 390, 340, $white, $font, $unit);
+    $drawText($image, 11, 390, 310, $gray, "UNIT SEWA");
+    $drawText($image, 14, 390, 340, $white, $unit);
 
-    imagettftext($image, 11, 0, 390, 385, $gray, $font, "TANGGAL SEWA");
-    imagettftext($image, 13, 0, 390, 410, $white, $font, $tanggal);
+    $drawText($image, 11, 390, 385, $gray, "TANGGAL SEWA");
+    $drawText($image, 13, 390, 410, $white, $tanggal);
 
     // Divider 2
     imageline($image, 390, 435, 810, 435, $border);
 
     // Total
-    imagettftext($image, 12, 0, 390, 475, $green, $font, "TOTAL BAYAR");
+    $drawText($image, 12, 390, 475, $green, "TOTAL BAYAR");
     $totalStr = "Rp " . number_format($rental->grand_total, 0, ',', '.');
-    imagettftext($image, 18, 0, 810 - (strlen($totalStr) * 12), 475, $green, $font, $totalStr);
+    $drawText($image, 18, 810, 475, $green, $totalStr, true);
 
     // Status Badge
     $statusStr = strtoupper($rental->status);
@@ -158,10 +181,10 @@ Route::get('/booking/success/{booking_code}/og-image', function($booking_code) {
         $statusBg = imagecolorallocate($image, 153, 27, 27); // dark red
     }
     imagefilledrectangle($image, 530, 525, 670, 555, $statusBg);
-    imagettftext($image, 10, 0, 600 - (strlen($statusStr) * 4.5), 544, $white, $font, $statusStr);
+    $drawText($image, 10, 600 - (strlen($statusStr) * 4.5), 544, $white, $statusStr);
 
     // Footer Text
-    imagettftext($image, 12, 0, 600 - 80, 595, $gray, $font, "rentspacepurwokerto.my.id");
+    $drawText($image, 12, 600 - 80, 595, $gray, "rentspacepurwokerto.my.id");
 
     ob_start();
     imagepng($image);
