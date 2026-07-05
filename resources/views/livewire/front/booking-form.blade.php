@@ -745,7 +745,7 @@
                     </div>
                     <div class="pt-2 border-t border-border flex justify-between items-center">
                         <span class="text-xs font-bold text-foreground">Total Estimasi</span>
-                        <span class="text-base font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
+                        <span class="text-base font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - (potonganDiskon || 0)))"></span>
                     </div>
                 </div>
             </div>
@@ -762,11 +762,11 @@
                         </svg>
                     </div>
                     <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="text-sm font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - ($wire.potongan_diskon || 0)))"></span>
+                        <span class="text-sm font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - (potonganDiskon || 0)))"></span>
                         
-                        <span x-show="$wire.potongan_diskon > 0" 
+                        <span x-show="potonganDiskon > 0" 
                             class="inline-flex items-center rounded-full border border-transparent bg-green-500/10 px-1.5 py-0.5 text-[9px] font-bold text-green-600 dark:text-green-400">
-                            -Rp<span x-text="new Intl.NumberFormat('id-ID').format($wire.potongan_diskon)"></span>
+                            -Rp<span x-text="new Intl.NumberFormat('id-ID').format(potonganDiskon)"></span>
                         </span>
                         <span x-show="$wire.hari_bonus > 0" 
                             class="inline-flex items-center rounded-full border border-transparent bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 dark:text-blue-400">
@@ -808,6 +808,10 @@
         keyboardOpen: false,
         selectedIds: @entangle('selected_unit_ids'),
         selectedPromoIds: @entangle('selected_promo_ids'),
+        waktuMulai: @entangle('waktu_mulai'),
+        waktuSelesai: @entangle('waktu_selesai'),
+        subtotalBackend: @entangle('subtotal'),
+        potonganDiskon: @entangle('potongan_diskon'),
         unitPrices: {!! $unitPricesJson !!},
         
         toggleUnit(id) {
@@ -857,8 +861,8 @@
         },
         
         get duration() {
-            const startStr = $wire.waktu_mulai;
-            const endStr = $wire.waktu_selesai;
+            const startStr = this.waktuMulai;
+            const endStr = this.waktuSelesai;
             if (!startStr || !endStr) return { days: 0, hours: 0 };
             
             const safeStartStr = String(startStr).replace(/-/g, '/').replace('T', ' ');
@@ -877,7 +881,7 @@
         },
 
         get subtotal() {
-            return Number($wire.subtotal) || 0;
+            return Number(this.subtotalBackend) || 0;
         },
 
         init() {
