@@ -82,17 +82,7 @@ Route::get('/cek-pesanan', CheckOrder::class)->name('public.check-order');
 Route::get('/booking', BookingForm::class)->name('public.booking');
 Route::get('/payment/{booking_code}', Payment::class)->name('public.payment');
 Route::get('/booking/success/{booking_code}', \App\Livewire\Front\Success::class)->name('public.success');
-Route::get('/booking/success/{booking_code}/og-image', function($booking_code) {
-    $rental = \App\Models\Rental::with('units')
-        ->where('booking_code', $booking_code)
-        ->firstOrFail();
-
-    $unit = $rental->units->pluck('seri')->join(', ');
-    if (strlen($unit) > 30) {
-        $unit = substr($unit, 0, 27) . '...';
-    }
-    $tanggal = $rental->waktu_mulai->format('d M Y') . ' - ' . $rental->waktu_selesai->format('d M Y');
-
+Route::get('/booking/success/{booking_code}/og-image', function() {
     $width = 1200;
     $height = 630;
     $image = imagecreatetruecolor($width, $height);
@@ -107,86 +97,32 @@ Route::get('/booking/success/{booking_code}/og-image', function($booking_code) {
 
     imagefill($image, 0, 0, $bg);
 
-    // Draw receipt box background (enlarged: 740x510)
-    // x1=230, y1=30, x2=970, y2=540
-    imagefilledrectangle($image, 230, 30, 970, 540, $cardBg);
-    imagerectangle($image, 230, 30, 970, 540, $border);
+    // Draw receipt box background (centered, 800x400)
+    imagefilledrectangle($image, 200, 115, 1000, 515, $cardBg);
+    imagerectangle($image, 200, 115, 1000, 515, $border);
 
     $font = resource_path('fonts/font.ttf');
-    $drawText = function($image, $size, $x, $y, $color, $text, $alignRight = false) use ($font) {
+    $drawText = function($image, $size, $x, $y, $color, $text) use ($font) {
         if (file_exists($font) && is_readable($font)) {
             try {
-                if ($alignRight) {
-                    $estWidth = strlen($text) * ($size * 0.65);
-                    $x = $x - $estWidth;
-                }
                 imagettftext($image, $size, 0, $x, $y, $color, $font, $text);
                 return;
             } catch (\Throwable $e) {
                 // fallback
             }
         }
-        $gdFont = 5;
-        if ($size < 12) {
-            $gdFont = 3;
-        }
-        if ($alignRight) {
-            $estWidth = strlen($text) * ($gdFont === 5 ? 9 : 7);
-            $x = $x - $estWidth;
-        }
-        imagestring($image, $gdFont, $x, $y - 10, $text, $color);
+        imagestring($image, 5, $x, $y - 10, $text, $color);
     };
 
-    // Draw Header
-    $drawText($image, 34, 600 - 110, 85, $green, "RENT SPACE");
-    $drawText($image, 14, 600 - 68, 120, $gray, "INVOICE RENTAL");
+    // Draw Large Bold Header (Centered)
+    // "INVOICE"
+    $drawText($image, 56, 600 - 150, 270, $white, "INVOICE");
     
-    // Draw booking code
-    $code = "#" . $rental->booking_code;
-    $drawText($image, 20, 600 - (strlen($code) * 7.5), 160, $white, $code);
+    // "RENT SPACE"
+    $drawText($image, 44, 600 - 170, 360, $green, "RENT SPACE");
 
-    // Divider line (wider)
-    imageline($image, 270, 185, 930, 185, $border);
-
-    // Customer details (Larger, shifted left/right)
-    $drawText($image, 13, 270, 220, $gray, "NAMA PENYEWA");
-    
-    $nama = strtoupper($rental->nama);
-    if (strlen($nama) > 25) {
-        $nama = substr($nama, 0, 22) . '...';
-    }
-    $drawText($image, 20, 270, 255, $white, $nama);
-
-    $drawText($image, 13, 270, 305, $gray, "UNIT SEWA");
-    $drawText($image, 18, 270, 335, $white, $unit);
-
-    $drawText($image, 13, 270, 385, $gray, "TANGGAL SEWA");
-    $drawText($image, 16, 270, 415, $white, $tanggal);
-
-    // Divider 2
-    imageline($image, 270, 440, 930, 440, $border);
-
-    // Total (Highly prominent)
-    $drawText($image, 15, 270, 485, $green, "TOTAL BAYAR");
-    $totalStr = "Rp " . number_format($rental->grand_total, 0, ',', '.');
-    $drawText($image, 24, 930, 485, $green, $totalStr, true);
-
-    // Status Badge (centered inside box, slightly shifted down)
-    $statusStr = strtoupper($rental->status);
-    $statusBg = imagecolorallocate($image, 82, 82, 91); // zinc-600 default
-    if ($rental->status === 'paid' || $rental->status === 'completed') {
-        $statusBg = imagecolorallocate($image, 6, 95, 70); // dark green
-    } elseif ($rental->status === 'pending') {
-        $statusBg = imagecolorallocate($image, 146, 64, 14); // dark amber
-    } elseif ($rental->status === 'cancelled') {
-        $statusBg = imagecolorallocate($image, 153, 27, 27); // dark red
-    }
-    // Wider and taller badge
-    imagefilledrectangle($image, 510, 495, 690, 528, $statusBg);
-    $drawText($image, 12, 600 - (strlen($statusStr) * 4.8), 517, $white, $statusStr);
-
-    // Footer Text
-    $drawText($image, 13, 600 - 88, 595, $gray, "rentspacepurwokerto.my.id");
+    // Subtitle
+    $drawText($image, 18, 600 - 165, 430, $gray, "Penyewaan iPhone Purwokerto");
 
     ob_start();
     imagepng($image);
