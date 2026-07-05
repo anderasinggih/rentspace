@@ -1,4 +1,11 @@
-
+<style>
+    /* Fix iOS Safari Date Input Height Bug */
+    input[type="date"]::-webkit-date-and-time-value {
+        min-height: 1.25rem !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+</style>
 
 <div class="pt-0 pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
 
@@ -48,7 +55,7 @@
                             <div>
                                 <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengambilan</label>
                                 <input type="date" wire:model.live="tanggal_mulai"
-                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground">
+                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
                                 @error('waktu_mulai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
                             </div>
 
@@ -56,7 +63,7 @@
                             <div>
                                 <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengembalian</label>
                                 <input type="date" wire:model.live="tanggal_selesai"
-                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground">
+                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
                                 @error('waktu_selesai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
                             </div>
 
