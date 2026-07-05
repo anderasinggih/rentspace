@@ -45,7 +45,7 @@
                     $navIsLoggedIn = $navCustomer && isset($navCustomer['expires_at']) && now()->timestamp < $navCustomer['expires_at'];
                     $navTier = null;
                     if ($navIsLoggedIn) {
-                        $navLtv = \App\Helpers\CustomerHelper::getLtv($navCustomer['nik']);
+                        $navLtv = \App\Helpers\CustomerHelper::getLtv($navCustomer['no_wa'] ?? $navCustomer['nik'] ?? '');
                         $navTier = \App\Helpers\CustomerHelper::getTier($navLtv);
                     }
                 @endphp
