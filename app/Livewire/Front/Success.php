@@ -318,7 +318,7 @@ class Success extends Component
 
     public function render()
     {
-        $unitNames = $this->rental->units->pluck('nama_unit')->join(', ');
+        $unitNames = $this->rental->units->pluck('seri')->join(', ');
         $startDate = $this->rental->waktu_mulai ? $this->rental->waktu_mulai->translatedFormat('j M') : '';
         $endDate = $this->rental->waktu_selesai ? $this->rental->waktu_selesai->translatedFormat('j M Y') : '';
         $statusText = $this->rental->status === 'paid' ? 'LUNAS' : ($this->rental->status === 'pending' ? 'PENDING' : ($this->rental->status === 'cancelled' ? 'BATAL' : 'PENDING'));

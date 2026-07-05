@@ -87,7 +87,7 @@ Route::get('/booking/success/{booking_code}/og-image', function($booking_code) {
         ->where('booking_code', $booking_code)
         ->firstOrFail();
 
-    $unit = $rental->units->pluck('nama_unit')->join(', ');
+    $unit = $rental->units->pluck('seri')->join(', ');
     if (strlen($unit) > 30) {
         $unit = substr($unit, 0, 27) . '...';
     }
