@@ -195,11 +195,10 @@
                             @if(count($available_units) > 0)
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 @foreach($available_units as $unit)
-                                <label
+                                <div
+                                    @click="toggleUnit({{ $unit->id }})"
                                     x-bind:class="selectedIds.includes({{ $unit->id }}) || selectedIds.includes('{{ $unit->id }}') ? 'border-primary ring-1 ring-primary bg-primary/[0.04]' : 'border-border bg-background hover:border-primary/50'"
                                     class="group relative flex rounded-xl border p-3.5 shadow-sm transition-all focus:outline-none items-center justify-between {{ $unit->availability_status === 'full' ? 'opacity-50 grayscale cursor-not-allowed pointer-events-none' : 'cursor-pointer' }}">
-                                    <input type="checkbox" wire:model.live="selected_unit_ids" value="{{ $unit->id }}"
-                                        class="sr-only" {{ $unit->availability_status === 'full' ? 'disabled' : '' }}>
                                     
                                         <div class="flex flex-col min-w-0">
                                             <span class="font-bold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors">
@@ -256,7 +255,7 @@
                                             </template>
                                         </div>
                                     </div>
-                                </label>
+                                </div>
                                 @endforeach
                             </div>
                             @else
@@ -799,6 +798,18 @@
         selectedIds: @entangle('selected_unit_ids'),
         selectedPromoIds: @entangle('selected_promo_ids'),
         unitPrices: {!! $unitPricesJson !!},
+        
+        toggleUnit(id) {
+            let index = this.selectedIds.indexOf(id);
+            if (index === -1) {
+                index = this.selectedIds.indexOf(String(id));
+            }
+            if (index !== -1) {
+                this.selectedIds.splice(index, 1);
+            } else {
+                this.selectedIds.push(id);
+            }
+        },
         
         nextStep() {
             if (this.step === 1) {
