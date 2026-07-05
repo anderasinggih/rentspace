@@ -318,6 +318,11 @@ class Success extends Component
 
     public function render()
     {
-        return view('livewire.front.success')->layout('layouts.app');
+        return view('livewire.front.success')
+            ->layout('layouts.app', [
+                'metaTitle' => 'INVOICE #' . $this->rental->booking_code . ' - ' . strtoupper($this->rental->nama),
+                'metaDescription' => 'Penyewaan ' . $this->rental->units->pluck('nama_unit')->join(', ') . ' • Status: ' . strtoupper($this->rental->status) . ' • Total: Rp ' . number_format($this->rental->grand_total, 0, ',', '.') . ' • RENT SPACE PURWOKERTO',
+                'metaImage' => route('public.success.og-image', $this->rental->booking_code),
+            ]);
     }
 }

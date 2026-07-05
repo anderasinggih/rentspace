@@ -1,16 +1,4 @@
-@section('meta')
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="INVOICE #{{ $rental->booking_code }} - {{ strtoupper($rental->nama) }}">
-    <meta property="og:description" content="Penyewaan {{ $rental->units->pluck('nama_unit')->join(', ') }} • Status: {{ strtoupper($rental->status) }} • Total: Rp {{ number_format($rental->grand_total, 0, ',', '.') }} • RENT SPACE PURWOKERTO">
-    <meta property="og:image" content="{{ route('public.success.og-image', $rental->booking_code) }}">
 
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="{{ url()->current() }}">
-    <meta property="twitter:title" content="INVOICE #{{ $rental->booking_code }} - {{ strtoupper($rental->nama) }}">
-    <meta property="twitter:description" content="Penyewaan {{ $rental->units->pluck('nama_unit')->join(', ') }} • Status: {{ strtoupper($rental->status) }} • Total: Rp {{ number_format($rental->grand_total, 0, ',', '.') }}">
-    <meta property="twitter:image" content="{{ route('public.success.og-image', $rental->booking_code) }}">
-@endsection
 
 <div class="min-h-screen bg-background pt-0 px-4 flex flex-col items-center justify-start" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
     <div id="invoice-content" class="w-full max-w-md mx-auto bg-card border border-border rounded-2xl shadow-sm overflow-hidden">

@@ -12,16 +12,16 @@
     <!-- Open Graph / Link Preview Meta Tags -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="{{ $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}">
-    <meta property="og:description" content="Penyewaan iPhone Terpercaya di Purwokerto. Proses cepat, unit berkualitas.">
-    <meta property="og:image" content="{{ asset('logo.png') }}">
+    <meta property="og:title" content="{{ $metaTitle ?? $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}">
+    <meta property="og:description" content="{{ $metaDescription ?? 'Penyewaan iPhone Terpercaya di Purwokerto. Proses cepat, unit berkualitas.' }}">
+    <meta property="og:image" content="{{ $metaImage ?? asset('logo.png') }}">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ url()->current() }}">
-    <meta property="twitter:title" content="{{ $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}">
-    <meta property="twitter:description" content="Penyewaan iPhone Terpercaya di Purwokerto. Proses cepat, unit berkualitas.">
-    <meta property="twitter:image" content="{{ asset('logo.png') }}">
+    <meta property="twitter:title" content="{{ $metaTitle ?? $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}">
+    <meta property="twitter:description" content="{{ $metaDescription ?? 'Penyewaan iPhone Terpercaya di Purwokerto. Proses cepat, unit berkualitas.' }}">
+    <meta property="twitter:image" content="{{ $metaImage ?? asset('logo.png') }}">
     
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="/manifest.json">
