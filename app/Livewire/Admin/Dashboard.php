@@ -331,10 +331,10 @@ class Dashboard extends Component
         $gainPendingRentals = $prevPendingRentals > 0 ? round((($pendingRentals - $prevPendingRentals) / $prevPendingRentals) * 100, 1) : null;
 
         // Leaderboards scoped by date to reflect trends
-        $topTenants = Rental::selectRaw('nik, nama, no_wa, COUNT(id) as total_rentals, SUM(grand_total) as total_spent')
+        $topTenants = Rental::selectRaw('nama, no_wa, COUNT(id) as total_rentals, SUM(grand_total) as total_spent')
             ->whereIn('status', ['paid', 'renting', 'completed'])
             ->whereBetween('paid_at', [$start, $end])
-            ->groupBy('nik', 'nama', 'no_wa')
+            ->groupBy('nama', 'no_wa')
             ->orderByDesc('total_spent')
             ->limit(5)
             ->get();

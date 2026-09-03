@@ -318,6 +318,22 @@ class Success extends Component
 
     public function render()
     {
-        return view('livewire.front.success')->layout('layouts.app');
+        $unitNames = $this->rental->units->pluck('seri')->join(', ');
+        $startDate = $this->rental->waktu_mulai ? $this->rental->waktu_mulai->translatedFormat('j M') : '';
+        $endDate = $this->rental->waktu_selesai ? $this->rental->waktu_selesai->translatedFormat('j M Y') : '';
+        $statusText = $this->rental->status === 'paid' ? 'LUNAS' : ($this->rental->status === 'pending' ? 'PENDING' : ($this->rental->status === 'cancelled' ? 'BATAL' : 'PENDING'));
+
+        $metaTitle = strtoupper($this->rental->nama) . ' INVOICE';
+        $metaDescription = "{$unitNames}\n" .
+                           "Status: {$statusText}\n" .
+                           "Total: Rp " . number_format($this->rental->grand_total, 0, ',', '.') . "\n" .
+                           "Sewa: {$startDate} - {$endDate}";
+
+        return view('livewire.front.success')
+            ->layout('layouts.app', [
+                'metaTitle' => $metaTitle,
+                'metaDescription' => $metaDescription,
+                'metaImage' => asset('invoice-og.png') . '?v=2',
+            ]);
     }
 }

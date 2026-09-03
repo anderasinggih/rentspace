@@ -13,7 +13,7 @@ class Dashboard extends Component
     public $tab = 'overview'; // overview, payouts, promos, profile
     
     // Profile Fields
-    public $bank_name, $bank_account_number, $bank_account_name, $no_hp, $alamat, $nik;
+    public $bank_name, $bank_account_number, $bank_account_name, $no_hp, $alamat;
     public $name, $email;
 
     // Password Fields
@@ -62,7 +62,6 @@ class Dashboard extends Component
             $this->bank_account_name = $profile->bank_account_name;
             $this->no_hp = $profile->no_hp;
             $this->alamat = $profile->alamat;
-            $this->nik = $profile->nik;
             
             // Calculate Stats
             $this->totalCommissionEarned = $user->commissions()->sum('amount');
@@ -70,7 +69,7 @@ class Dashboard extends Component
             $this->completedRentalsCount = $user->affiliateRentals()->where('status', 'completed')->count();
             
             // Calculate Profile Completeness
-            $fields = ['bank_name', 'bank_account_number', 'bank_account_name', 'no_hp', 'alamat', 'nik'];
+            $fields = ['bank_name', 'bank_account_number', 'bank_account_name', 'no_hp', 'alamat'];
             $filled = 0;
             foreach ($fields as $f) { if ($this->$f) $filled++; }
             $this->profileCompleteness = round(($filled / count($fields)) * 100);

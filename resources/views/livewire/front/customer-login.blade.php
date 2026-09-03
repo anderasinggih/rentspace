@@ -10,42 +10,57 @@
 
         {{-- Card --}}
         <div class="bg-card border border-border rounded-2xl shadow-lg p-8">
-            <div class="mb-6 text-center">
-                <h1 class="text-xl font-bold text-foreground">Masuk Pelanggan</h1>
-                <p class="text-sm text-muted-foreground mt-1.5">Gunakan NIK atau No. WhatsApp Anda.</p>
-            </div>
-
-            {{-- Error --}}
-            @if ($errors->has('identifier'))
-                <div class="mb-4 flex items-start gap-3 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="text-red-400 shrink-0 mt-0.5">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" x2="12" y1="8" y2="12" />
-                        <line x1="12" x2="12.01" y1="16" y2="16" />
-                    </svg>
-                    <p class="text-xs text-red-400 font-medium">{{ $errors->first('identifier') }}</p>
+                <div class="mb-6 text-center">
+                    <h1 class="text-xl font-bold text-foreground">Masuk Pelanggan</h1>
+                    <p class="text-sm text-muted-foreground mt-1.5">Gunakan No. WhatsApp & Email Anda.</p>
                 </div>
-            @endif
 
-            <form wire:submit.prevent="login" class="space-y-4">
-                {{-- Identifier --}}
-                <div>
-                    <label for="identifier" class="block text-xs font-semibold text-muted-foreground mb-1.5 ml-1">NIK atau Nomor WhatsApp</label>
-                    <div class="relative group">
-                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                {{-- Errors --}}
+                @if ($errors->any())
+                    <div class="mb-4 flex items-start gap-3 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="text-red-400 shrink-0 mt-0.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" x2="12" y1="8" y2="12" />
+                            <line x1="12" x2="12.01" y1="16" y2="16" />
+                        </svg>
+                        <div class="text-xs text-red-400 font-medium space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <p>{{ $error }}</p>
+                            @endforeach
                         </div>
-                        <input id="identifier" type="text" wire:model="identifier"
-                            placeholder="Ketik NIK atau Nomor HP..."
-                            class="block w-full h-12 rounded-xl border border-input bg-background pl-11 pr-4 text-sm font-medium placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                            autocomplete="off">
                     </div>
-                    <p class="mt-2 text-[10px] text-muted-foreground leading-relaxed px-1">
-                        *Gunakan salah satu data yang Anda daftarkan saat melakukan booking unit.
-                    </p>
-                </div>
+                @endif
+
+                <form wire:submit.prevent="login" class="space-y-4">
+                    {{-- WhatsApp --}}
+                    <div>
+                        <label for="no_wa" class="block text-xs font-semibold text-muted-foreground mb-1.5 ml-1">Nomor WhatsApp</label>
+                        <div class="relative group">
+                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            </div>
+                            <input id="no_wa" type="text" wire:model="no_wa"
+                                placeholder="Ketik Nomor HP/WhatsApp..."
+                                class="block w-full h-12 rounded-xl border border-input bg-background pl-11 pr-4 text-sm font-medium placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                autocomplete="off">
+                        </div>
+                    </div>
+
+                    {{-- Email --}}
+                    <div>
+                        <label for="email" class="block text-xs font-semibold text-muted-foreground mb-1.5 ml-1">Email</label>
+                        <div class="relative group">
+                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                            </div>
+                            <input id="email" type="email" wire:model="email"
+                                placeholder="nama@email.com"
+                                class="block w-full h-12 rounded-xl border border-input bg-background pl-11 pr-4 text-sm font-medium placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                autocomplete="off">
+                        </div>
+                    </div>
 
                 {{-- Remember Me --}}
                 <div class="flex items-center space-x-2 pt-1">

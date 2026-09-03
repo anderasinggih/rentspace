@@ -210,7 +210,6 @@
 
             if ($isCustomerLoggedIn) {
                 $pendingOrders = \App\Models\Rental::with('units')
-                    ->where('nik', $customerSession['nik'])
                     ->where('no_wa', $customerSession['no_wa'])
                     ->where('status', 'pending')
                     ->latest()
@@ -219,8 +218,7 @@
                 $onlinePendingTotal = $pendingOrders->where('metode_pembayaran', '!=', 'cash')->count();
                 $cashPendingTotal = $pendingOrders->where('metode_pembayaran', 'cash')->count();
 
-                $closestActiveRental = \App\Models\Rental::where('nik', $customerSession['nik'])
-                    ->where('no_wa', $customerSession['no_wa'])
+                $closestActiveRental = \App\Models\Rental::where('no_wa', $customerSession['no_wa'])
                     ->whereIn('status', ['paid', 'renting'])
                     ->where('waktu_selesai', '>', now())
                     ->orderBy('waktu_selesai', 'asc')
@@ -228,7 +226,7 @@
             }
 
             $statsTotalRentals = \App\Models\Rental::count();
-            $statsTotalUsers = \App\Models\Rental::distinct('nik')->count('nik');
+            $statsTotalUsers = \App\Models\Rental::distinct('no_wa')->count('no_wa');
             $statsTotalHours = round(\App\Models\Rental::whereNotNull('waktu_mulai')->whereNotNull('waktu_selesai')->get()->sum(function ($r) {
                 return \Carbon\Carbon::parse($r->waktu_mulai)->diffInHours(\Carbon\Carbon::parse($r->waktu_selesai));
             }));
@@ -240,7 +238,7 @@
             $customerLtv = 0;
             $customerTier = null;
             if ($isCustomerLoggedIn) {
-                $customerLtv = \App\Helpers\CustomerHelper::getLtv($customerSession['nik']);
+                $customerLtv = \App\Helpers\CustomerHelper::getLtv($customerSession['no_wa']);
                 $customerTier = \App\Helpers\CustomerHelper::getTier($customerLtv);
             }
 
@@ -928,7 +926,7 @@
                             [
                                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>',
                                 'title' => 'Lengkapi Data',
-                                'desc' => 'Isi data diri seperti NIK dan WhatsApp dengan benar untuk proses verifikasi cepat.'
+                                'desc' => 'Isi data diri seperti Nama dan WhatsApp dengan benar untuk proses verifikasi cepat.'
                             ],
                             [
                                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>',

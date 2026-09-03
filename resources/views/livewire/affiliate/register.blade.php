@@ -47,13 +47,6 @@
                             <h3 class="text-lg font-bold border-b border-border pb-2">Informasi Pribadi</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="space-y-2">
-                                    <label class="text-sm font-medium leading-none">NIK (Nomor Induk
-                                        Kependudukan)</label>
-                                    <input type="text" wire:model="nik" placeholder="16 digit angka"
-                                        class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                    @error('nik') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
-                                </div>
-                                <div class="space-y-2">
                                     <label class="text-sm font-medium leading-none">Nomor WhatsApp</label>
                                     <input type="text" wire:model="no_hp" placeholder="08xxxxxxxxxx"
                                         class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
