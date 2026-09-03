@@ -240,12 +240,23 @@ class BookingForm extends Component
 
                 if (!$startOccupied) {
                     // Ready from start, but conflict starts later
-                    $firstConflict = $conflicts->where('waktu_mulai', '>', $start)->first();
-                    $unit->availability_status = 'partial_until';
-                    $unit->availability_label = 'Ready s/d ' . Carbon::parse($firstConflict->waktu_mulai)->translatedFormat('d M, H:i');
+                    $firstConflict = $conflicts->first(function ($r) use ($start) {
+                        return $r->waktu_mulai && $r->waktu_mulai->gt($start);
+                    });
+                    
+                    if ($firstConflict) {
+                        $unit->availability_status = 'partial_until';
+                        $unit->availability_label = 'Ready s/d ' . Carbon::parse($firstConflict->waktu_mulai)->translatedFormat('d M, H:i');
+                    } else {
+                        $unit->availability_status = 'ready';
+                        $unit->availability_label = 'Ready Sekarang';
+                        $this->schedule_available_unit_ids[] = $unit->id;
+                    }
                 } else {
                     // Start is occupied, check if it becomes free before end
-                    $lastConflictInPeriod = $conflicts->where('waktu_selesai', '<', $end)->sortByDesc('waktu_selesai')->first();
+                    $lastConflictInPeriod = $conflicts->filter(function ($r) use ($end) {
+                        return $r->waktu_selesai && $r->waktu_selesai->lt($end);
+                    })->sortByDesc('waktu_selesai')->first();
                     
                     if ($lastConflictInPeriod) {
                         $unit->availability_status = 'partial_from';
