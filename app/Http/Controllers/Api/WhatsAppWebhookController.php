@@ -46,6 +46,12 @@ class WhatsAppWebhookController extends Controller
                 return response()->json(['status' => true, 'reply' => null]);
             }
 
+            // Perintah memori:/tag langsung (tanpa perlu mention bot)
+            $memoriReply = $this->handleMemoryCommand($text, $name, $reportGroupId);
+            if ($memoriReply !== null) {
+                return response()->json(['status' => true, 'reply' => $memoriReply]);
+            }
+
             $aiReply = \App\Services\GeminiAIService::replyInternal($text, $name);
             return response()->json(['status' => true, 'reply' => $aiReply ?: null]);
         }
@@ -575,6 +581,59 @@ class WhatsAppWebhookController extends Controller
         }
 
         return "⚠️ Perintah tidak dikenali. Ketik `/broadcast help` untuk petunjuk lengkap.";
+    }
+
+    /**
+     * Perintah memori AI di grup report.
+     *
+     * Fungsinya Supaya tim bisa melihat & mengatur apa yang diingat AI:
+     * - /memori            → tampilkan ringkasan yang diingat AI
+     * - /memori clear      → hapus histori & fakta (catatan tetap disimpan)
+     * - /ingat [catatan]   → simpan catatan permanen yang selalu diingat AI
+     *
+     * @return string|null null bila teks bukan perintah memori
+     */
+    private function handleMemoryCommand(string $text, string $actorName, string $groupId): ?string
+    {
+        $raw = trim($text);
+        $lower = mb_strtolower($raw);
+
+        if (!str_starts_with($lower, '/memori') && !str_starts_with($lower, '/ingat') && !str_starts_with($lower, '/lupa')) {
+            return null;
+        }
+
+        $conv = \App\Services\AiMemoryService::session('wa_group_report', $groupId, $actorName);
+
+        if (str_starts_with($lower, '/ingat')) {
+            $note = trim(mb_substr($raw, strlen('/ingat')));
+            if ($note === '') {
+                return "📌 *Cara pakai:* `/ingat [catatan yang harus diingat AI]`\n\nContoh: `/ingat Unit iPhone 15 Prohit jenis rusak, cek Condition Report dulu sebelum serah terima.`";
+            }
+            \App\Services\AiMemoryService::pinNote($conv, $note);
+
+            return "✅ *Catatan tersimpan & akan selalu diingat AI*\n\n• {$note}\n\n_Catatan ini ikut di prompt setiap kali AI menjawab di grup ini._";
+        }
+
+        if (str_starts_with($lower, '/lupa') || preg_match('/^memori\s+(clear|hapus|reset)$/i', $lower)) {
+            \App\Services\AiMemoryService::clearMemory($conv, keepNotes: true);
+
+            return "🧹 *Memori percakapan grup sudah dikosongkan.*\nHistori obrolan & fakta transaksi dihapus, catatan permanen tetap disimpan.";
+        }
+
+        if ($lower === '/memori' || $lower === '/memori help' || $lower === '/memori list') {
+            $help = "🧠 *MEMORI AI GRUP REPORT*\n";
+            $help .= "------------------------------------\n";
+            $help .= \App\Services\AiMemoryService::snapshot($conv);
+            $help .= "\n\n📋 *Perintah:*\n";
+            $help .= "• `/ingat [catatan]` — simpan catatan permanen.\n";
+            $help .= "• `/memori` — lihat yang diingat AI.\n";
+            $help .= "• `/lupa` — hapus histori & fakta.\n";
+            $help .= "\n_Tanya bot seperti biasa dengan @mention, AI akan memakai memori di atas untuk menjawab pertanyaan lanjutan._";
+
+            return $help;
+        }
+
+        return "⚠️ Perintah tidak dikenali. Ketik `/memori` untuk melihat perintah yang tersedia.";
     }
 
     /**
