@@ -300,18 +300,20 @@ class WhatsAppWebhookController extends Controller
         }
 
         $timeStr = now()->translatedFormat('d M Y H:i');
-        $phoneStr = $customerPhone ?: '-';
-        $waLink = $customerPhone ? "https://wa.me/" . preg_replace('/^0/', '62', $customerPhone) : '-';
+        $phoneInfo = !empty($customerPhone) && !str_starts_with($customerPhone, '375') && strlen($customerPhone) <= 15 
+            ? "• *Nomor WA*: {$customerPhone}\n" 
+            : "";
 
         $noticeMsg = "🚨 *NOTIFIKASI PERMINTAAN BANTUAN CUSTOMER* 🚨\n" .
             "------------------------------------\n" .
-            "Halo Admin, ada customer di WhatsApp Bot yang membutuhkan bantuan admin langsung:\n\n" .
+            "Halo Admin, ada customer di WhatsApp Bot yang minta dihubungkan dengan Admin:\n\n" .
             "• *Nama*: {$customerName}\n" .
-            "• *Nomor WA*: {$phoneStr}\n" .
+            $phoneInfo .
             "• *Waktu*: {$timeStr} WIB\n" .
-            "• *Pesan Terakhir*: \"{$message}\"\n\n" .
-            "👉 Chat langsung customer:\n{$waLink}\n\n" .
-            "_Pesan ini diteruskan otomatis oleh WhatsApp Bot Rent Space._";
+            "• *Pesan*: \"{$message}\"\n\n" .
+            "📱 *MOHON SEGERA BUKA HP TOKO / HP RENT SPACE*\n" .
+            "Silakan buka WhatsApp di HP toko untuk segera membalas chat customer ini ya! 🙏\n\n" .
+            "_Pesan otomatis dari Bot Rent Space Purwokerto_";
 
         try {
             app(\App\Services\WhatsAppService::class)->sendMessage($cleanSecondary, $noticeMsg);

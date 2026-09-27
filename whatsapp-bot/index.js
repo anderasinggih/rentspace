@@ -114,20 +114,31 @@ async function connectToWhatsApp() {
                          msg.message.imageMessage?.caption ||
                          '';
 
-            const senderNumber = sender.replace('@s.whatsapp.net', '').replace('@lid', '');
+            let actualPhone = '';
+            // Jika remoteJid adalah normal WhatsApp user (@s.whatsapp.net)
+            if (sender.endsWith('@s.whatsapp.net')) {
+                actualPhone = sender.replace('@s.whatsapp.net', '');
+            } else if (msg.key.participant && msg.key.participant.endsWith('@s.whatsapp.net')) {
+                actualPhone = msg.key.participant.replace('@s.whatsapp.net', '');
+            } else {
+                // Jika dari LID, coba cek sender pn jika ada
+                actualPhone = (msg.key.senderPn || '').replace('@s.whatsapp.net', '') || '';
+            }
+
+            const senderNumber = actualPhone || sender.replace('@s.whatsapp.net', '').replace('@lid', '');
             const pushName = msg.pushName || 'Kak';
 
             if (!text.trim()) continue;
 
-            console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (${senderNumber}): "${text}"`);
+            console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (Phone: ${actualPhone || 'LID: ' + senderNumber}): "${text}"`);
 
-            await handleIncomingCustomerMessage(sender, senderNumber, pushName, text.trim());
+            await handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text.trim());
         }
     });
 }
 
 // Logic Chatbot Auto-Reply
-async function handleIncomingCustomerMessage(sender, senderNumber, pushName, text) {
+async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text) {
     const lower = text.toLowerCase();
 
     // 1. Menu Bantuan / Halo
@@ -164,7 +175,7 @@ async function handleIncomingCustomerMessage(sender, senderNumber, pushName, tex
             await axios.post(LARAVEL_WEBHOOK_URL, {
                 action: 'forward_admin',
                 sender_jid: sender,
-                phone: senderNumber,
+                phone: actualPhone || '',
                 name: pushName,
                 text: text
             }, {
