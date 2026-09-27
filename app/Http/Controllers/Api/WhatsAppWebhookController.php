@@ -88,7 +88,8 @@ class WhatsAppWebhookController extends Controller
         // Default: Jika ada pertanyaan umum dari customer, gunakan AI (Gemini Flash) jika diaktifkan
         $isAiActive = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         if ($isAiActive && !empty($text)) {
-            $aiReply = \App\Services\GeminiAIService::reply($text, $name);
+            $senderJid = $request->input('sender_jid', $phone);
+            $aiReply = \App\Services\GeminiAIService::reply($text, $name, $senderJid, $phone);
             if (!empty($aiReply)) {
                 return response()->json(['status' => true, 'reply' => $aiReply]);
             }

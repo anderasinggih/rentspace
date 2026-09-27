@@ -90,6 +90,19 @@ class Settings extends Component
     public $chatbot_custom_knowledge = [];
     public $new_knowledge_key = '';
     public $new_knowledge_value = '';
+
+    // WhatsApp Broadcast Properties
+    public $broadcast_groups = [];
+    public $broadcast_shortcuts = [];
+    public $new_group_name = '';
+    public $new_group_numbers = '';
+    public $new_shortcut_code = '';
+    public $new_shortcut_title = '';
+    public $new_shortcut_message = '';
+    public $active_broadcast_group = '';
+    public $active_broadcast_message = '';
+    public $is_sending_broadcast = false;
+
     public $onesignal_app_id = '';
     public $onesignal_rest_api_key = '';
     public $onesignal_safari_web_id = '';
@@ -158,6 +171,23 @@ class Settings extends Component
         $this->admin_wa_secondary = \App\Models\Setting::getVal('admin_wa_secondary', '');
         $rawKnowledge = \App\Models\Setting::getVal('chatbot_custom_knowledge', '[]');
         $this->chatbot_custom_knowledge = json_decode($rawKnowledge, true) ?: [];
+
+        // Load Broadcast Settings
+        $rawGroups = \App\Models\Setting::getVal('wa_broadcast_groups', '[]');
+        $this->broadcast_groups = json_decode($rawGroups, true) ?: [];
+        $rawShortcuts = \App\Models\Setting::getVal('wa_broadcast_shortcuts', '[]');
+        $this->broadcast_shortcuts = json_decode($rawShortcuts, true) ?: [
+            [
+                'code' => 'promo_weekend',
+                'title' => 'Promo Weekend',
+                'message' => "Halo Kak! 🎉\nWeekend ini ada promo spesial sewa iPhone di Rent Space Purwokerto.\nBooking sekarang sebelum unit habis: https://rentspacepurwokerto.my.id/booking"
+            ],
+            [
+                'code' => 'info_unit_baru',
+                'title' => 'Ready Unit Baru',
+                'message' => "Halo Kak! ✨\nKabar gembira, unit baru sudah ready di Rent Space Purwokerto.\nCek katalog & reservasi langsung di: https://rentspacepurwokerto.my.id/booking"
+            ]
+        ];
 
         // Load OneSignal Settings
         $this->onesignal_app_id = \App\Models\Setting::getVal('onesignal_app_id', '');
@@ -477,6 +507,181 @@ class Settings extends Component
         );
 
         session()->flash('general_message', 'Memori pengetahuan AI berhasil dihapus.');
+    }
+
+    // WhatsApp Broadcast Group & Shortcut Methods
+    public function addBroadcastGroup()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->validate([
+            'new_group_name' => 'required',
+            'new_group_numbers' => 'required',
+        ], [
+            'new_group_name.required' => 'Nama group pelanggan wajib diisi.',
+            'new_group_numbers.required' => 'Nomor WhatsApp wajib diisi (pisahkan koma atau baris baru).',
+        ]);
+
+        // Parse numbers
+        $rawLines = preg_split('/[\r\n,]+/', $this->new_group_numbers);
+        $cleanNumbers = [];
+        foreach ($rawLines as $num) {
+            $c = preg_replace('/[^0-9]/', '', trim($num));
+            if (!empty($c)) {
+                $cleanNumbers[] = $c;
+            }
+        }
+        $cleanNumbers = array_values(array_unique($cleanNumbers));
+
+        $this->broadcast_groups[] = [
+            'id' => uniqid('grp_'),
+            'name' => trim($this->new_group_name),
+            'numbers' => $cleanNumbers,
+            'count' => count($cleanNumbers),
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_groups'],
+            ['value' => json_encode(array_values($this->broadcast_groups))]
+        );
+
+        $this->reset(['new_group_name', 'new_group_numbers']);
+        session()->flash('general_message', 'Grup broadcast WhatsApp berhasil dibuat.');
+    }
+
+    public function importCustomersToGroup()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        // Ambil semua nomor wa unik dari tabel rentals
+        $numbers = \App\Models\Rental::whereNotNull('no_wa')
+            ->where('no_wa', '!=', '')
+            ->pluck('no_wa')
+            ->map(fn($n) => preg_replace('/[^0-9]/', '', $n))
+            ->filter(fn($n) => strlen($n) >= 9)
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $this->broadcast_groups[] = [
+            'id' => uniqid('grp_'),
+            'name' => 'Semua Pelanggan Rental (' . count($numbers) . ' kontak)',
+            'numbers' => $numbers,
+            'count' => count($numbers),
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_groups'],
+            ['value' => json_encode(array_values($this->broadcast_groups))]
+        );
+
+        session()->flash('general_message', 'Berhasil mengimpor ' . count($numbers) . ' kontak pelanggan ke grup broadcast.');
+    }
+
+    public function removeBroadcastGroup($index)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        unset($this->broadcast_groups[$index]);
+        $this->broadcast_groups = array_values($this->broadcast_groups);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_groups'],
+            ['value' => json_encode($this->broadcast_groups)]
+        );
+
+        session()->flash('general_message', 'Grup broadcast berhasil dihapus.');
+    }
+
+    public function addBroadcastShortcut()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->validate([
+            'new_shortcut_code' => 'required|alpha_dash',
+            'new_shortcut_title' => 'required',
+            'new_shortcut_message' => 'required',
+        ]);
+
+        $this->broadcast_shortcuts[] = [
+            'code' => trim($this->new_shortcut_code),
+            'title' => trim($this->new_shortcut_title),
+            'message' => trim($this->new_shortcut_message),
+        ];
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_shortcuts'],
+            ['value' => json_encode(array_values($this->broadcast_shortcuts))]
+        );
+
+        $this->reset(['new_shortcut_code', 'new_shortcut_title', 'new_shortcut_message']);
+        session()->flash('general_message', 'Shortcut pesan broadcast berhasil ditambahkan.');
+    }
+
+    public function removeBroadcastShortcut($index)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        unset($this->broadcast_shortcuts[$index]);
+        $this->broadcast_shortcuts = array_values($this->broadcast_shortcuts);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_shortcuts'],
+            ['value' => json_encode($this->broadcast_shortcuts)]
+        );
+
+        session()->flash('general_message', 'Shortcut pesan broadcast dihapus.');
+    }
+
+    public function applyShortcutToMessage($code)
+    {
+        foreach ($this->broadcast_shortcuts as $sc) {
+            if ($sc['code'] === $code) {
+                $this->active_broadcast_message = $sc['message'];
+                break;
+            }
+        }
+    }
+
+    public function sendBroadcast()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->validate([
+            'active_broadcast_group' => 'required',
+            'active_broadcast_message' => 'required',
+        ], [
+            'active_broadcast_group.required' => 'Pilih grup tujuan broadcast.',
+            'active_broadcast_message.required' => 'Isi pesan broadcast tidak boleh kosong.',
+        ]);
+
+        // Temukan nomor-nomor di group
+        $selectedNumbers = [];
+        foreach ($this->broadcast_groups as $grp) {
+            if ($grp['id'] === $this->active_broadcast_group) {
+                $selectedNumbers = $grp['numbers'] ?? [];
+                break;
+            }
+        }
+
+        if (empty($selectedNumbers)) {
+            session()->flash('broadcast_error', 'Grup yang dipilih tidak memiliki kontak nomor WhatsApp.');
+            return;
+        }
+
+        $waService = app(\App\Services\WhatsAppService::class);
+        $successCount = 0;
+        $failCount = 0;
+
+        foreach ($selectedNumbers as $phone) {
+            $res = $waService->sendMessage($phone, $this->active_broadcast_message);
+            if ($res) {
+                $successCount++;
+            } else {
+                $failCount++;
+            }
+            // Sedikit jeda aman untuk mencegah flood
+            usleep(250000); // 0.25 detik
+        }
+
+        session()->flash('general_message', "Broadcast selesai dikirim: {$successCount} sukses, {$failCount} gagal.");
+        $this->reset(['active_broadcast_message', 'active_broadcast_group']);
     }
 
     public function addFaq()
