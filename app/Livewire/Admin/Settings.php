@@ -84,6 +84,7 @@ class Settings extends Component
 
     public $is_chatbot_active = true;
     public $chatbot_api_key = '';
+    public $chatbot_model = 'gemini-2.0-flash-lite';
 
     public $onesignal_app_id = '';
     public $onesignal_rest_api_key = '';
@@ -149,6 +150,7 @@ class Settings extends Component
         // Load Chatbot Settings
         $this->is_chatbot_active = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
+        $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', 'gemini-2.0-flash-lite');
 
         // Load OneSignal Settings
         $this->onesignal_app_id = \App\Models\Setting::getVal('onesignal_app_id', '');
@@ -355,6 +357,7 @@ class Settings extends Component
         // Save Chatbot Settings
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: 'gemini-2.0-flash-lite']);
 
         // Save OneSignal Settings
         \App\Models\Setting::updateOrCreate(['key' => 'onesignal_app_id'], ['value' => trim($this->onesignal_app_id)]);

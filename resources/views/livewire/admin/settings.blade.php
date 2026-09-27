@@ -1565,26 +1565,40 @@
                         </label>
                     </div>
 
-                    <div class="space-y-3 pt-2 border-t border-purple-500/20">
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1.5">Gemini API Key</label>
-                            <div class="relative">
-                                <input type="password" wire:model.live="chatbot_api_key" 
-                                    class="w-full rounded-md border border-input bg-background pl-3 pr-24 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
-                                    placeholder="AIzaSy...">
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                    <span class="text-[10px] font-bold text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-                                        {{ $chatbot_api_key ? 'Tersimpan (...' . substr($chatbot_api_key, -4) . ')' : 'Belum Ada Key' }}
-                                    </span>
-                                </div>
+                    <div class="space-y-4 pt-2 border-t border-purple-500/20">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1.5">Model AI</label>
+                                <select wire:model="chatbot_model"
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-medium">
+                                    <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite (Paling Cepat & Hemat - 15 RPM)</option>
+                                    <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash 8B (Super Ringan & Hemat)</option>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Standar Seimbang)</option>
+                                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Kemampuan Lebih Tinggi)</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Paling Pintar / Penalaran Kompleks)</option>
+                                </select>
+                                <p class="text-[10px] text-muted-foreground mt-1">Disarankan <strong>Gemini 2.0 Flash Lite</strong> atau <strong>1.5 Flash 8B</strong> untuk auto-reply WhatsApp.</p>
                             </div>
-                            <p class="text-[11px] text-muted-foreground mt-1.5">Dapatkan API Key gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-purple-500 underline font-medium">Google AI Studio</a>.</p>
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1.5">Gemini API Key</label>
+                                <div class="relative">
+                                    <input type="password" wire:model.live="chatbot_api_key" 
+                                        class="w-full rounded-md border border-input bg-background pl-3 pr-24 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                        placeholder="AIzaSy...">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span class="text-[10px] font-bold text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+                                            {{ $chatbot_api_key ? 'Tersimpan (...' . substr($chatbot_api_key, -4) . ')' : 'Belum Ada Key' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-muted-foreground mt-1">Dapatkan API Key di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-purple-500 underline font-medium">Google AI Studio</a>.</p>
+                            </div>
                         </div>
 
                         @if(auth()->user()->role === 'admin')
                             <button type="button" wire:click="saveGeneralSettings"
                                 class="inline-flex items-center justify-center rounded-md bg-purple-600 text-white shadow hover:bg-purple-700 h-8 px-4 text-xs font-bold transition-colors">
-                                Simpan Kunci AI
+                                Simpan Pengaturan AI
                             </button>
                         @endif
                     </div>

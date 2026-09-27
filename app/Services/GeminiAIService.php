@@ -51,37 +51,25 @@ PANDUAN MENJAWAB:
 5. Jawaban harus padat dan to the point, jangan terlalu panjang.";
 
         try {
-            // Prioritaskan Gemini Flash-Lite (hemat, responsif, 15 RPM free tier)
-            $candidateModels = [
-                'gemini-2.0-flash-lite',
-                'gemini-1.5-flash-8b',
-                'gemini-1.5-flash',
-            ];
+            // Gunakan model yang dipilih oleh admin di pengaturan (tanpa fallback)
+            $model = Setting::getVal('chatbot_model', 'gemini-2.0-flash-lite');
 
-            $response = null;
-            foreach ($candidateModels as $model) {
-                $res = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
-                    'contents' => [
-                        [
-                            'role' => 'user',
-                            'parts' => [
-                                ['text' => $systemPrompt . "\n\nPesan Customer: \"" . $userMessage . "\"\n\nJawaban CS:"]
-                            ]
+            $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [
+                            ['text' => $systemPrompt . "\n\nPesan Customer: \"" . $userMessage . "\"\n\nJawaban CS:"]
                         ]
-                    ],
-                    'generationConfig' => [
-                        'temperature' => 0.7,
-                        'maxOutputTokens' => 250,
                     ]
-                ]);
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.7,
+                    'maxOutputTokens' => 250,
+                ]
+            ]);
 
-                if ($res->successful()) {
-                    $response = $res;
-                    break;
-                }
-            }
-
-            if ($response->successful()) {
+            if ($response && $response->successful()) {
                 $candidates = $response->json('candidates');
                 if (!empty($candidates[0]['content']['parts'][0]['text'])) {
                     $text = trim($candidates[0]['content']['parts'][0]['text']);
