@@ -197,43 +197,100 @@ app.get('/status', (req, res) => {
     });
 });
 
-app.get('/qr', (req, res) => {
-    if (!qrCodeRaw) {
-        return res.status(404).json({
-            status: false,
-            message: connectionStatus === 'open' ? 'Already connected!' : 'QR Code not ready yet.'
-        });
+app.get('/qr', async (req, res) => {
+    if (connectionStatus === 'open') {
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>RentSpace WA Bot - Connected</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: white; margin: 0; }
+                .card { background: #1e293b; padding: 2.5rem; border-radius: 1.25rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 400px; width: 90%; }
+                .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 8px 16px; border-radius: 9999px; font-weight: 600; font-size: 0.95rem; margin-bottom: 1.5rem; border: 1px solid rgba(16, 185, 129, 0.4); }
+                .btn { display: inline-block; margin-top: 1.5rem; padding: 10px 20px; background: #0284c7; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="badge">
+                    <span style="width: 10px; height: 10px; background: #10b981; border-radius: 50%;"></span>
+                    WhatsApp Bot Terhubung!
+                </div>
+                <h2>Bot Sedang Aktif</h2>
+                <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">Akun WhatsApp resmi Rent Space sudah berhasil terhubung dan siap membalas pesan secara otomatis.</p>
+                <a href="/admin/settings?tab=whatsapp" class="btn">Kembali ke Dashboard</a>
+            </div>
+        </body>
+        </html>
+        `;
+        return res.send(html);
     }
-    // Simple HTML page to view QR in browser if needed
-    const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>RentSpace WA QR Scanner</title>
-        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-        <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: white; margin: 0; }
-            .card { background: #1e293b; padding: 2rem; border-radius: 1rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-            canvas { background: white; padding: 10px; border-radius: 8px; margin: 1.5rem 0; }
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <h2>Scan WhatsApp QR Code</h2>
-            <p>Buka WhatsApp > Perangkat Tertaut > Tautkan Perangkat</p>
-            <canvas id="canvas"></canvas>
-            <p style="font-size: 0.85rem; color: #94a3b8;">Halaman otomatis refresh setiap 15 detik</p>
-        </div>
-        <script>
-            QRCode.toCanvas(document.getElementById('canvas'), ${JSON.stringify(qrCodeRaw)}, { width: 260 }, function (error) {
-                if (error) console.error(error);
-            });
-            setTimeout(() => { location.reload(); }, 15000);
-        </script>
-    </body>
-    </html>
-    `;
-    res.send(html);
+
+    if (!qrCodeRaw) {
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Menyiapkan QR Code...</title>
+            <meta http-equiv="refresh" content="3">
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: white; margin: 0; }
+                .card { background: #1e293b; padding: 2rem; border-radius: 1rem; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h3>Sedang membuat QR Code baru...</h3>
+                <p style="color: #94a3b8;">Halaman akan otomatis refresh dalam 3 detik</p>
+            </div>
+        </body>
+        </html>
+        `;
+        return res.send(html);
+    }
+
+    try {
+        const QRCode = require('qrcode');
+        const qrImage = await QRCode.toDataURL(qrCodeRaw, {
+            width: 320,
+            margin: 2,
+            color: { dark: '#000000', light: '#ffffff' }
+        });
+
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Scan WhatsApp QR Code</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: white; margin: 0; }
+                .card { background: #1e293b; padding: 2.5rem; border-radius: 1.25rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 420px; width: 90%; }
+                .qr-box { background: white; padding: 12px; border-radius: 12px; display: inline-block; margin: 1.5rem 0; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+                .qr-box img { display: block; max-width: 100%; height: auto; }
+            </style>
+            <script>
+                setTimeout(() => { location.reload(); }, 15000);
+            </script>
+        </head>
+        <body>
+            <div class="card">
+                <h2 style="margin: 0 0 8px 0; font-size: 1.35rem;">Scan WhatsApp QR Code</h2>
+                <p style="margin: 0; color: #94a3b8; font-size: 0.9rem;">Buka WhatsApp &gt; Perangkat Tertaut &gt; Tautkan Perangkat</p>
+                <div class="qr-box">
+                    <img src="${qrImage}" alt="Scan WhatsApp QR Code" width="280" height="280">
+                </div>
+                <p style="margin: 0; font-size: 0.8rem; color: #64748b;">Halaman otomatis refresh setiap 15 detik</p>
+            </div>
+        </body>
+        </html>
+        `;
+        res.send(html);
+    } catch (e) {
+        res.status(500).send('Gagal membuat gambar QR: ' + e.message);
+    }
 });
 
 // Endpoint untuk kirim pesan WhatsApp dari Laravel
