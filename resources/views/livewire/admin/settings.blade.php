@@ -1603,6 +1603,13 @@
                                     placeholder="Contoh: 08123456789">
                                 <p class="text-[10px] text-muted-foreground mt-1">Jika customer minta bicara dengan admin, bot akan otomatis mengirimkan notifikasi ke nomor ini.</p>
                             </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1.5">ID Grup WhatsApp Admin (Setting & Broadcast)</label>
+                                <input type="text" wire:model="admin_wa_group_id" 
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                    placeholder="Contoh: 120363xxxxxx@g.us">
+                                <p class="text-[10px] text-muted-foreground mt-1">Ketik <code>!getid</code> di grup WhatsApp admin untuk mengetahui ID grup ini. Hanya grup resmi ini yang diizinkan menjalankan perintah bot broadcast & setting.</p>
+                            </div>
                         </div>
 
                         <!-- Kelola Memori / Pengetahuan Tambahan AI -->

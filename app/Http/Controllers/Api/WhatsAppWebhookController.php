@@ -30,16 +30,37 @@ class WhatsAppWebhookController extends Controller
             return response()->json(['status' => true, 'message' => 'Admin notified']);
         }
 
-        // 0. Cek Perintah Khusus Admin: /rentspacesettings
-        if (str_starts_with(strtolower($text), '/rentspacesettings')) {
-            $adminReply = $this->handleRentSpaceSettingsCommand($text, $phone);
-            return response()->json(['status' => true, 'reply' => $adminReply]);
-        }
+        // 0. Cek Perintah Khusus Admin: /rentspacesettings & /broadcast
+        if (str_starts_with(strtolower($text), '/rentspacesettings') || str_starts_with(strtolower($text), '/broadcast')) {
+            $senderJid = $request->input('sender_jid', '');
+            $authorizedGroupId = \App\Models\Setting::getVal('admin_wa_group_id', '');
 
-        // 0b. Cek Perintah Khusus Admin: /broadcast
-        if (str_starts_with(strtolower($text), '/broadcast')) {
-            $broadcastReply = $this->handleBroadcastAdminCommand($text, $phone);
-            return response()->json(['status' => true, 'reply' => $broadcastReply]);
+            // Jika perintah berasal dari grup WhatsApp (@g.us)
+            if (str_ends_with($senderJid, '@g.us')) {
+                if (empty($authorizedGroupId)) {
+                    return response()->json([
+                        'status' => true,
+                        'reply' => "⚠️ *Akses Ditolak!*\nID Grup WhatsApp Admin belum didaftarkan di System Settings Web Admin.\n\nKetik `!getid` di grup ini, lalu salin ID-nya dan tempelkan pada menu:\n*Web Admin -> Settings -> Tab WhatsApp -> ID Grup WhatsApp Admin*."
+                    ]);
+                }
+
+                if (trim($senderJid) !== trim($authorizedGroupId)) {
+                    return response()->json([
+                        'status' => true,
+                        'reply' => "⛔ *Akses Ditolak!*\nGrup ini tidak terdaftar sebagai grup WhatsApp resmi admin Rent Space.\nPerintah admin dan broadcast diblokir demi keamanan data pelanggan."
+                    ]);
+                }
+            }
+
+            if (str_starts_with(strtolower($text), '/rentspacesettings')) {
+                $adminReply = $this->handleRentSpaceSettingsCommand($text, $phone);
+                return response()->json(['status' => true, 'reply' => $adminReply]);
+            }
+
+            if (str_starts_with(strtolower($text), '/broadcast')) {
+                $broadcastReply = $this->handleBroadcastAdminCommand($text, $phone);
+                return response()->json(['status' => true, 'reply' => $broadcastReply]);
+            }
         }
 
         // 1. Cek perintah KATALOG / LIST / DAFTAR HARGA
@@ -306,14 +327,82 @@ class WhatsAppWebhookController extends Controller
             $msg .= "------------------------------------\n";
             $msg .= "Kelola dan kirim broadcast langsung dari chat/grup admin.\n\n";
             $msg .= "📋 *Pilihan Perintah:*\n";
-            $msg .= "1️⃣ `/broadcast groups`\n   Lihat daftar grup penerima broadcast.\n";
-            $msg .= "2️⃣ `/broadcast sync`\n   Tarik/sinkronisasi semua nomor customer dari database ke grup 'Semua Pelanggan'.\n";
-            $msg .= "3️⃣ `/broadcast shortcuts`\n   Lihat daftar template pesan broadcast.\n";
-            $msg .= "4️⃣ `/broadcast send [Nomor_Grup] [Pesan]`\n   Kirim pesan broadcast teks ke grup.\n   _Contoh:_ `/broadcast send 1 Halo Kak, unit iPhone ready nih! https://rentspacepurwokerto.my.id/booking`\n";
-            $msg .= "5️⃣ `/broadcast send [Nomor_Grup] /[Kode_Shortcut]`\n   Kirim broadcast menggunakan template shortcut.\n   _Contoh:_ `/broadcast send 1 /promo_weekend`\n";
-            $msg .= "6️⃣ *Balas Foto + Ketik:* `/broadcast send [Nomor_Grup] from reply`\n   Kirim broadcast *foto berserta caption* dari pesan yang di-reply ke grup penerima.\n\n";
+            $msg .= "1️⃣ `/broadcast groups`\n   Lihat daftar user grup penerima broadcast.\n";
+            $msg .= "2️⃣ `/broadcast addgroup [Nama Grup] = [No1, No2, ...]`\n   Tambah grup penerima baru langsung dari WA.\n   _Contoh:_ `/broadcast addgroup Pelanggan VIP = 0812345678, 0898765432`\n";
+            $msg .= "3️⃣ `/broadcast delgroup [Nomor_Grup]`\n   Hapus grup penerima sesuai nomor urut.\n   _Contoh:_ `/broadcast delgroup 2`\n";
+            $msg .= "4️⃣ `/broadcast sync`\n   Tarik/sinkronisasi semua nomor customer dari database ke grup 'Semua Pelanggan'.\n";
+            $msg .= "5️⃣ `/broadcast shortcuts`\n   Lihat daftar template pesan broadcast.\n";
+            $msg .= "6️⃣ `/broadcast send [Nomor_Grup] [Pesan]`\n   Kirim pesan broadcast teks ke grup.\n   _Contoh:_ `/broadcast send 1 Halo Kak, unit iPhone ready nih! https://rentspacepurwokerto.my.id/booking`\n";
+            $msg .= "7️⃣ `/broadcast send [Nomor_Grup] /[Kode_Shortcut]`\n   Kirim broadcast menggunakan template shortcut.\n   _Contoh:_ `/broadcast send 1 /promo_weekend`\n";
+            $msg .= "8️⃣ *Balas Foto + Ketik:* `/broadcast send [Nomor_Grup] from reply`\n   Kirim broadcast *foto berserta caption* dari pesan yang di-reply ke grup penerima.\n\n";
             $msg .= "🛡️ _Sistem dilengkapi proteksi anti-banned: jeda dinamis acak (2-4 detik per pesan) + rotasi salam._";
             return $msg;
+        }
+
+        // 1b. Tambah User Group Baru: /broadcast addgroup [Nama] = [No1, No2, ...]
+        if (preg_match('/^addgroup\s+(.+)$/i', $raw, $matches)) {
+            $content = trim($matches[1]);
+            $groupName = 'Grup Baru';
+            $numString = $content;
+
+            if (str_contains($content, '=')) {
+                $parts = explode('=', $content, 2);
+                $groupName = trim($parts[0]);
+                $numString = trim($parts[1]);
+            }
+
+            // Parse nomor kontak (pisahkan dengan koma, spasi, enter)
+            $parsedNumbers = preg_split('/[\s,\n]+/', $numString);
+            $cleanNumbers = [];
+            foreach ($parsedNumbers as $pn) {
+                $clean = preg_replace('/[^0-9]/', '', $pn);
+                if (strlen($clean) >= 9) {
+                    $cleanNumbers[] = $clean;
+                }
+            }
+            $cleanNumbers = array_values(array_unique($cleanNumbers));
+
+            if (empty($cleanNumbers)) {
+                return "⚠️ Gagal menambahkan grup. Nomor kontak tidak valid atau kosong.\n\n*Format:* `/broadcast addgroup Nama Grup = 0812345678, 0898765432`";
+            }
+
+            $groups[] = [
+                'id' => uniqid('grp_'),
+                'name' => $groupName,
+                'numbers' => $cleanNumbers,
+                'count' => count($cleanNumbers),
+                'created_at' => now()->toDateTimeString(),
+            ];
+
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'wa_broadcast_groups'],
+                ['value' => json_encode(array_values($groups))]
+            );
+
+            return "✅ *Grup Baru Berhasil Ditambahkan!*\n" .
+                   "------------------------------------\n" .
+                   "• *Nama Grup*: {$groupName}\n" .
+                   "• *Jumlah Kontak*: " . count($cleanNumbers) . " nomor\n" .
+                   "• *Nomor Urut Grup*: " . count($groups) . "\n\n" .
+                   "💡 _Untuk mengirim pesan ke grup ini, gunakan:_ `/broadcast send " . count($groups) . " [Pesan]`";
+        }
+
+        // 1c. Hapus User Group: /broadcast delgroup [Nomor_Grup]
+        if (preg_match('/^delgroup\s+(\d+)$/i', $raw, $matches)) {
+            $groupIndex = (int) $matches[1] - 1;
+            if (!isset($groups[$groupIndex])) {
+                return "⚠️ Grup nomor *{$matches[1]}* tidak ditemukan.\nKetik `/broadcast groups` untuk melihat daftar grup yang tersedia.";
+            }
+
+            $deletedName = $groups[$groupIndex]['name'] ?? "Grup {$matches[1]}";
+            array_splice($groups, $groupIndex, 1);
+
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'wa_broadcast_groups'],
+                ['value' => json_encode(array_values($groups))]
+            );
+
+            return "🗑️ *Grup Berhasil Dihapus!*\nGrup *{$deletedName}* telah dihapus dari daftar user grup broadcast.";
         }
 
         // 2. Daftar Grup: /broadcast groups atau /broadcast list
@@ -515,6 +604,18 @@ class WhatsAppWebhookController extends Controller
 
         if ($apiKey !== $expectedKey) {
             return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $senderJid = $request->query('sender_jid', '');
+        $authorizedGroupId = \App\Models\Setting::getVal('admin_wa_group_id', '');
+
+        if (str_ends_with($senderJid, '@g.us')) {
+            if (empty($authorizedGroupId) || trim($senderJid) !== trim($authorizedGroupId)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Akses ditolak: Grup ini tidak terdaftar sebagai grup admin resmi.'
+                ], 403);
+            }
         }
 
         $groupNumber = (int) $request->query('group', 1);

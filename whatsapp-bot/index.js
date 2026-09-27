@@ -115,6 +115,15 @@ async function connectToWhatsApp() {
             const trimmedText = text.trim();
             const lowerText = trimmedText.toLowerCase();
 
+            // 0. Perintah universal !getid / /getid (Untuk cek ID User atau ID Grup WA)
+            if (lowerText === '!getid' || lowerText === '/getid') {
+                const chatType = sender.endsWith('@g.us') ? 'Grup WhatsApp' : 'Akun Pribadi';
+                await sock.sendMessage(sender, {
+                    text: `🆔 *ID ${chatType}:*\n\`${sender}\`\n\n_Salin ID di atas untuk didaftarkan pada Pengaturan Bot di Web Admin Rent Space._`
+                });
+                continue;
+            }
+
             // Jika dari Grup WhatsApp (@g.us), hanya proses perintah admin khusus
             const isGroup = sender.endsWith('@g.us');
             if (isGroup && !lowerText.startsWith('/rentspacesettings') && !lowerText.startsWith('/broadcast')) {
@@ -137,7 +146,7 @@ async function connectToWhatsApp() {
 
             if (!text.trim()) continue;
 
-            console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (Phone: ${actualPhone || 'LID: ' + senderNumber}): "${text}"`);
+            console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (${isGroup ? 'Group: ' + sender : 'Phone: ' + (actualPhone || 'LID: ' + senderNumber)}): "${text}"`);
 
             await handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text.trim(), msg);
         }
@@ -191,7 +200,7 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
                 });
 
                 // Ambil daftar target nomor dari Laravel
-                const targetUrl = LARAVEL_WEBHOOK_URL.replace('/wa/webhook', '/wa/broadcast-targets') + `?group=${groupNum}`;
+                const targetUrl = LARAVEL_WEBHOOK_URL.replace('/wa/webhook', '/wa/broadcast-targets') + `?group=${groupNum}&sender_jid=${encodeURIComponent(sender)}`;
                 const targetsRes = await axios.get(targetUrl, {
                     headers: { 'X-API-KEY': API_KEY },
                     timeout: 10000
