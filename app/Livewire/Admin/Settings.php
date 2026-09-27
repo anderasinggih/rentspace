@@ -88,6 +88,7 @@ class Settings extends Component
 
     public $admin_wa_secondary = '';
     public $admin_wa_group_id = '';
+    public $admin_report_group_id = '';
     public $chatbot_custom_knowledge = [];
     public $new_knowledge_key = '';
     public $new_knowledge_value = '';
@@ -179,6 +180,7 @@ class Settings extends Component
         $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
         $this->admin_wa_secondary = \App\Models\Setting::getVal('admin_wa_secondary', '');
         $this->admin_wa_group_id = \App\Models\Setting::getVal('admin_wa_group_id', '');
+        $this->admin_report_group_id = \App\Models\Setting::getVal('admin_report_group_id', '');
         $rawKnowledge = \App\Models\Setting::getVal('chatbot_custom_knowledge', '[]');
         $this->chatbot_custom_knowledge = json_decode($rawKnowledge, true) ?: [];
 
@@ -407,6 +409,7 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: 'gemini-3.5-flash-lite']);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_secondary'], ['value' => trim($this->admin_wa_secondary)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_group_id'], ['value' => trim($this->admin_wa_group_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_report_group_id'], ['value' => trim($this->admin_report_group_id)]);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_custom_knowledge'], ['value' => json_encode(array_values($this->chatbot_custom_knowledge))]);
 
         // Save OneSignal Settings

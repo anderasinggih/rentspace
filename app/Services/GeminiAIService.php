@@ -211,4 +211,167 @@ PANDUAN MENJAWAB (SANGAT PENTING):
 
         return null;
     }
+
+    /**
+     * Generate jawaban AI untuk grup internal tim (akses penuh database)
+     * Dipanggil HANYA ketika bot di-tag (@mention) di grup report terdaftar
+     */
+    public static function replyInternal(string $userMessage, string $askerName = 'Tim'): ?string
+    {
+        $apiKey = Setting::getVal('chatbot_api_key', config('services.gemini.key'));
+        if (!$apiKey) return null;
+
+        $model = Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
+        if (in_array($model, ['gemini-2.0-flash-lite', 'gemini-1.5-flash-8b', 'gemini-1.5-flash', 'gemini-2.0-flash'])) {
+            $model = 'gemini-3.5-flash-lite';
+        }
+
+        $now = \Carbon\Carbon::now();
+        $todayStart = $now->copy()->startOfDay();
+        $todayEnd = $now->copy()->endOfDay();
+
+        // --- DATA RENTAL AKTIF (sedang disewa / sudah booking) ---
+        $activeRentals = \App\Models\Rental::with(['units'])
+            ->whereIn('status', ['renting', 'paid', 'pending_confirmation'])
+            ->where('waktu_selesai', '>=', $now)
+            ->orderBy('waktu_mulai', 'asc')
+            ->get();
+
+        $rentingText = "";
+        $lateText = "";
+        $returnTodayText = "";
+        $pickupTodayText = "";
+
+        foreach ($activeRentals as $r) {
+            $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
+            $startStr = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M H:i') : '-';
+            $endStr   = $r->waktu_selesai ? \Carbon\Carbon::parse($r->waktu_selesai)->translatedFormat('d M H:i') : '-';
+            $total    = 'Rp ' . number_format($r->grand_total ?: $r->total_harga, 0, ',', '.');
+            $phone    = $r->no_wa ?: '-';
+            $alamat   = $r->alamat ?: '-';
+            $nama     = $r->nama ?: 'Pelanggan';
+            $kode     = $r->booking_code ?: '-';
+
+            $line = "• {$uNames} | Penyewa: {$nama} | WA: {$phone} | Alamat: {$alamat} | Kode: {$kode} | Mulai: {$startStr} | Selesai: {$endStr} | Total: {$total}\n";
+
+            if ($r->status === 'renting') {
+                $rentingText .= $line;
+
+                // Cek telat: sudah melewati waktu selesai
+                if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast()) {
+                    $mnt = $now->diffInMinutes(\Carbon\Carbon::parse($r->waktu_selesai));
+                    $lateText .= "• {$uNames} | {$nama} | WA: {$phone} | Terlambat {$mnt} menit (Selesai: {$endStr})\n";
+                }
+
+                // Kembali hari ini
+                if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->betweenIncluded($todayStart, $todayEnd)) {
+                    $returnTodayText .= $line;
+                }
+            }
+
+            // Ambil (pickup) hari ini
+            if ($r->waktu_mulai && \Carbon\Carbon::parse($r->waktu_mulai)->betweenIncluded($todayStart, $todayEnd)) {
+                $pickupTodayText .= $line;
+            }
+        }
+
+        if (empty($rentingText)) $rentingText = "Tidak ada unit yang sedang disewa saat ini.\n";
+        if (empty($lateText)) $lateText = "Tidak ada penyewa yang terlambat.\n";
+        if (empty($returnTodayText)) $returnTodayText = "Tidak ada pengembalian yang dijadwalkan hari ini.\n";
+        if (empty($pickupTodayText)) $pickupTodayText = "Tidak ada pengambilan yang dijadwalkan hari ini.\n";
+
+        // --- PROFIT / PENDAPATAN ---
+        // Hari ini
+        $profitToday = \App\Models\Rental::whereIn('status', ['renting', 'paid', 'completed'])
+            ->whereBetween('waktu_mulai', [$todayStart, $todayEnd])
+            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, total_harga)'));
+
+        // Bulan ini
+        $profitMonth = \App\Models\Rental::whereIn('status', ['renting', 'paid', 'completed'])
+            ->whereYear('waktu_mulai', $now->year)
+            ->whereMonth('waktu_mulai', $now->month)
+            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, total_harga)'));
+
+        // Total semua waktu
+        $profitAllTime = \App\Models\Rental::whereIn('status', ['renting', 'paid', 'completed'])
+            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, total_harga)'));
+
+        $profitText = "- Hari ini: Rp " . number_format($profitToday, 0, ',', '.') . "\n";
+        $profitText .= "- Bulan ini (" . $now->translatedFormat('F Y') . "): Rp " . number_format($profitMonth, 0, ',', '.') . "\n";
+        $profitText .= "- Total keseluruhan: Rp " . number_format($profitAllTime, 0, ',', '.') . "\n";
+
+        // --- SEMUA UNIT ---
+        $units = \App\Models\Unit::where('is_active', true)->with('category')->get();
+        $unitListText = "";
+        foreach ($units as $u) {
+            $cat = $u->category ? $u->category->name : 'Unit';
+            $p24 = $u->harga_per_hari ? 'Rp ' . number_format($u->harga_per_hari, 0, ',', '.') . '/24jam' : '-';
+            $unitListText .= "- [ID:{$u->id}] {$u->nama_lengkap} ({$cat}, {$p24})\n";
+        }
+
+        $currentTimeStr = $now->translatedFormat('l, d F Y H:i') . ' WIB';
+        $address = Setting::getVal('admin_address', 'Purwokerto');
+
+        $systemPrompt = "Kamu adalah asisten internal tim *Rent Space Purwokerto* yang super pintar dan memiliki AKSES PENUH ke semua data bisnis.
+Waktu saat ini: {$currentTimeStr}.
+Penanya dari dalam tim: {$askerName}.
+Lokasi Toko: {$address}.
+
+PANDUAN MENJAWAB:
+- Jawab langsung to the point, seperti laporan internal. Jangan basa-basi berlebihan.
+- Boleh tampilkan data detail (nama, nomor WA, alamat penyewa) karena ini percakapan internal tim.
+- Gunakan format yang rapi dan mudah dibaca. Minimal emoji, maksimal informasi.
+- Jawab singkat tapi lengkap.
+
+DATA UNIT TOKO:
+{$unitListText}
+
+UNIT YANG SEDANG DISEWA / AKTIF SAAT INI:
+{$rentingText}
+
+JADWAL PENGAMBILAN HARI INI:
+{$pickupTodayText}
+
+JADWAL PENGEMBALIAN HARI INI:
+{$returnTodayText}
+
+PENYEWA TERLAMBAT MENGEMBALIKAN:
+{$lateText}
+
+DATA PENDAPATAN / PROFIT:
+{$profitText}
+
+Pertanyaan tim: \"{$userMessage}\"
+Jawab sebagai asisten data internal:";
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(12)->post(
+                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
+                [
+                    'contents' => [
+                        ['role' => 'user', 'parts' => [['text' => $systemPrompt]]]
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.3,
+                        'maxOutputTokens' => 400,
+                    ]
+                ]
+            );
+
+            if ($response && $response->successful()) {
+                $candidates = $response->json('candidates');
+                if (!empty($candidates[0]['content']['parts'][0]['text'])) {
+                    $text = trim($candidates[0]['content']['parts'][0]['text']);
+                    $text = preg_replace('/^#+\s*/m', '', $text);
+                    return $text;
+                }
+            } else {
+                \Illuminate\Support\Facades\Log::warning('GeminiAIService::replyInternal Error: ' . $response->body());
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('GeminiAIService::replyInternal Exception: ' . $e->getMessage());
+        }
+
+        return null;
+    }
 }

@@ -30,6 +30,20 @@ class WhatsAppWebhookController extends Controller
             return response()->json(['status' => true, 'message' => 'Admin notified']);
         }
 
+        // Jika request dari grup report internal (bot di-tag di grup report)
+        if ($action === 'report_group_query') {
+            $senderJid = $request->input('sender_jid', '');
+            $reportGroupId = \App\Models\Setting::getVal('admin_report_group_id', '');
+
+            if (empty($reportGroupId) || trim($senderJid) !== trim($reportGroupId)) {
+                return response()->json(['status' => true, 'reply' => null]);
+            }
+
+            $aiReply = \App\Services\GeminiAIService::replyInternal($text, $name);
+            return response()->json(['status' => true, 'reply' => $aiReply ?: null]);
+        }
+
+
         // 0. Cek Perintah Khusus Admin: /rentspacesettings & /broadcast
         if (str_starts_with(strtolower($text), '/rentspacesettings') || str_starts_with(strtolower($text), '/broadcast')) {
             $senderJid = $request->input('sender_jid', '');
