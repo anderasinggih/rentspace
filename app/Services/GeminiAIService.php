@@ -555,6 +555,23 @@ Jawab sebagai asisten data internal:";
 
         $add('RINGKASAN & OMSET', 'ringkasan', fn () => $snapshot, 1);
 
+        if ($want['kode']) {
+            $add('DETAIL KODE BOOKING YANG DITANYAKAN', 'kode', function () use ($question, $statusIndo) {
+                $codes = self::extractCodeCandidates($question);
+                if (empty($codes)) {
+                    return '';
+                }
+                $rows = \App\Models\Rental::with('units')
+                    ->whereIn('booking_code', $codes)
+                    ->orderByDesc('waktu_mulai')
+                    ->limit(5)->get();
+                if ($rows->isEmpty()) {
+                    return "Kode yang disebut tidak ada di database.\n";
+                }
+                return $rows->map(fn ($r) => self::rentalLine($r, $statusIndo))->implode('');
+            }, 1);
+        }
+
         if ($want['jadwal']) {
             $add('JADWAL PENGAMBILAN HARI INI', 'jadwal', function () use ($todayStart, $todayEnd, $statusIndo) {
                 $rows = \App\Models\Rental::with(['units'])
@@ -774,9 +791,9 @@ Jawab sebagai asisten data internal:";
                 Log::warning('GeminiAIService: jawaban kosong dari model ' . $model);
             } else {
                 $status = $response?->status() ?? 0;
-                $body = mb_substr((string) $response?->body(), 0, 400);
+                $body = (string) $response?->body();
                 self::$lastError = 'HTTP ' . $status . ' dari model ' . $model . ' — ' . self::readApiError($body);
-                Log::warning('GeminiAIService gagal: HTTP ' . $status . ' | model ' . $model . ' | ' . $body);
+                Log::warning('GeminiAIService gagal: HTTP ' . $status . ' | model ' . $model . ' | ' . mb_substr($body, 0, 400));
             }
         } catch (\Throwable $e) {
             self::$lastError = $e->getMessage();
@@ -786,15 +803,23 @@ Jawab sebagai asisten data internal:";
         return null;
     }
 
-    /** Ambil pesan error yang paling berguna dari body respons Google. */
+    /**
+     * Ambil pesan error yang paling berguna dari body respons Google.
+     *
+     * Body harus di-decode utuh; kalau dipotong lebih dulu, JSON-nya jadi tidak
+     * lengkap dan pesan aslinya justru bocor ke WhatsApp.
+     */
     private static function readApiError(string $body): string
     {
-        if ($body === '') {
+        if (trim($body) === '') {
             return '(respons kosong)';
         }
         $json = json_decode($body, true);
-        $msg = $json['error']['message'] ?? null;
-        return is_string($msg) && $msg !== '' ? mb_substr($msg, 0, 200) : mb_substr($body, 0, 200);
+        $msg = is_array($json) ? ($json['error']['message'] ?? null) : null;
+        if (is_string($msg) && $msg !== '') {
+            return mb_substr($msg, 0, 200);
+        }
+        return mb_substr(preg_replace('/\s+/', ' ', $body) ?? $body, 0, 200);
     }
 
     /**
