@@ -88,7 +88,58 @@ class GeminiAIService
             }
         }
 
-        $currentTimeStr = now()->translatedFormat('l, d F Y H:i') . ' WIB';
+        // 5. Promo & Diskon Aktif dari Database
+        $promoText = "";
+        try {
+            $activePromos = \App\Models\PricingRule::where('is_active', true)
+                ->whereNull('deleted_at')
+                ->where(function ($q) use ($now) {
+                    $q->whereNull('start_date')->orWhere('start_date', '<=', $now->toDateString());
+                })
+                ->where(function ($q) use ($now) {
+                    $q->whereNull('end_date')->orWhere('end_date', '>=', $now->toDateString());
+                })
+                ->whereNull('affiliate_code') // promo publik saja, bukan kode affiliasi
+                ->get();
+
+            if ($activePromos->isNotEmpty()) {
+                $promoText = "\nPROMO & DISKON AKTIF SAAT INI (dari database):\n";
+                foreach ($activePromos as $p) {
+                    $tipeLabel = match($p->tipe) {
+                        'diskon_persen' => "Diskon " . (int)$p->value . "%",
+                        'hari_gratis'   => (int)$p->value . " Hari Gratis",
+                        'jam_gratis'    => (int)$p->value . " Jam Gratis",
+                        'fix_price'     => "Harga Spesial Rp " . number_format($p->value, 0, ',', '.'),
+                        default         => $p->tipe . " (" . $p->value . ")",
+                    };
+                    $syarat = $p->syarat_minimal_durasi ? "minimal sewa {$p->syarat_minimal_durasi} {$p->syarat_tipe_durasi}" : "tanpa syarat durasi";
+                    $validStr = ($p->start_date && $p->end_date)
+                        ? " (berlaku " . \Carbon\Carbon::parse($p->start_date)->translatedFormat('d M') . " s/d " . \Carbon\Carbon::parse($p->end_date)->translatedFormat('d M Y') . ")"
+                        : "";
+                    $codeStr = !empty($p->code) ? " | Kode: {$p->code}" : "";
+                    $promoText .= "- {$p->nama_promo}: {$tipeLabel}, {$syarat}{$validStr}{$codeStr}\n";
+                }
+            } else {
+                $promoText = "\nPROMO AKTIF: Tidak ada promo khusus yang berjalan saat ini.\n";
+            }
+        } catch (\Throwable $e) {
+            $promoText = "";
+        }
+
+        // 6. Announcement aktif
+        $announcementText = "";
+        try {
+            $announcements = \App\Models\Announcement::active()->get();
+            if ($announcements->isNotEmpty()) {
+                $announcementText = "\nPENGUMUMAN / INFO TERKINI DARI TOKO:\n";
+                foreach ($announcements as $ann) {
+                    $announcementText .= "- [{$ann->type}] {$ann->title}: {$ann->message}\n";
+                }
+            }
+        } catch (\Throwable $e) {
+            $announcementText = "";
+        }
+
 
         $systemPrompt = "Kamu adalah Customer Service WhatsApp di 'Rent Space Purwokerto' (rental iPhone, gadget, kamera di Purwokerto).
 Waktu saat ini: {$currentTimeStr}.
@@ -99,23 +150,40 @@ INFORMASI RENT SPACE:
 - WhatsApp Admin: {$adminWa}
 - Website Booking Online: https://rentspacepurwokerto.my.id/booking
 
+CARA PESAN / BOOKING (berikan panduan ini jika customer tanya cara order/pesan/beli):
+1. Buka website: https://rentspacepurwokerto.my.id/booking
+2. Pilih tanggal mulai dan selesai sewa
+3. Pilih unit iPhone / gadget yang tersedia
+4. Isi data diri: Nama, NIK, No. WA, Alamat
+5. Pilih metode pembayaran (QRIS, Transfer Bank, atau Cash)
+6. Klik Pesan Sekarang → muncul halaman invoice
+7. Bayar sesuai instruksi → upload bukti transfer jika perlu
+8. Admin konfirmasi → unit siap diambil di toko
+(Kode promo bisa diinput di halaman booking jika ada)
+
 DAFTAR UNIT TOKO:
 {$unitListText}
-STATUS JADWAL UNIT YANG SEDANG DISEWA / SUDAH DIBOOKING (REAL-TIME DARI DATABASE MONITORING):
-{$scheduleText}
-{$memoryText}
+STATUS JADWAL UNIT YANG SEDANG DISEWA / SUDAH DIBOOKING (REAL-TIME):
+{$scheduleText}{$promoText}{$announcementText}{$memoryText}
 PANDUAN MENJAWAB (SANGAT PENTING):
 1. GAYA BAHASA CS MANUSIA ASLI:
    - Jawab santai, ramah, to the point layaknya admin toko WA asli. Panggil 'Kak {$customerName}' atau 'Kak'.
-   - JANGAN LEBAY! Maksimal 1 emoji saja atau tanpa emoji, JANGAN tabur banyak emoticon (hindari 😊✨🙏 sekaligus).
+   - JANGAN LEBAY! Maksimal 1 emoji saja, JANGAN tabur banyak emoticon (hindari 😊✨🙏 sekaligus).
    - JANGAN PERNAH menyertakan kalimat penutup template seperti 'Jika ada yang ditanyakan lagi hubungi admin...' atau 'Ada yang bisa dibantu lagi?'. Cukup jawab pertanyaannya secara solutif.
-2. INGAT PERCAKAPAN SEBELUMNYA (CONVERSATION CONTEXT):
-   - Jika customer bertanya pertanyaan lanjutan seperti 'jam berapa?', 'kapan?', 'warnanya apa?', 'caranya?', LIHAT riwayat percakapan sebelumnya. Pahami unit mana yang sedang dibicarakan!
-   - Contoh: Customer baru tanya 'ip 11 ready?', lalu tanya 'jam berapa?', artinya customer menanyakan jam berapa unit ip 11 tersebut bisa diambil atau jam buka toko/jam sewa unit tersebut! Jawab nyambung sesuai konteks unit tadi.
+2. INGAT PERCAKAPAN SEBELUMNYA:
+   - Jika customer bertanya pertanyaan lanjutan seperti 'jam berapa?', 'kapan?', 'caranya?', LIHAT riwayat percakapan sebelumnya. Pahami konteks yang sedang dibicarakan!
 3. KETEPATAN JADWAL & MONITORING:
-   - Periksa 'STATUS JADWAL UNIT' di atas. Jika ada jadwal sewa pada unit dan jam/tanggal yang ditanyakan, infokan dengan jujur kapan unit itu baru selesai/kembali.
-   - Jika unit kosong di jam/tanggal tersebut, katakan ready dan arahkan booking langsung di web https://rentspacepurwokerto.my.id/booking.
-4. Jawab singkat (2-3 kalimat saja).";
+   - Periksa STATUS JADWAL UNIT. Jika ada booking di tanggal/jam yang ditanyakan, infokan jujur kapan unit baru bebas.
+   - Jika kosong, katakan ready dan arahkan ke https://rentspacepurwokerto.my.id/booking.
+4. PROMO & DISKON:
+   - Jika ada promo aktif (lihat data promo di atas), sebutkan jika customer tanya soal harga, promo, atau diskon.
+   - Jika ada kode promo, info cara pakai: masukkan kode promo di halaman booking website.
+5. PANDUAN CARA PESAN:
+   - Jika customer bingung cara order, berikan ringkasan 8 langkah cara booking di atas.
+6. FALLBACK KE ADMIN:
+   - Jika kamu tidak tahu atau tidak yakin dengan jawabannya (negosiasi harga, masalah teknis, pertanyaan yang tidak ada di data), sarankan customer balas 'ADMIN'.
+   - Contoh: 'Untuk ini lebih baik langsung ke admin ya Kak, balas ADMIN biar aku sampaikan.'
+7. Jawab singkat (2-4 kalimat), kecuali panduan cara pesan yang perlu langkah-langkah.";
 
         try {
             // Bangun percakapan multi-turn dengan riwayat sebelumnya
