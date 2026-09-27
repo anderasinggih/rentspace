@@ -124,30 +124,50 @@ async function connectToWhatsApp() {
                 continue;
             }
 
+            // Resolve actual phone number SEBELUM blok grup
+            let actualPhone = '';
+            if (sender.endsWith('@s.whatsapp.net')) {
+                actualPhone = sender.replace('@s.whatsapp.net', '');
+            } else if (msg.key.participant && msg.key.participant.endsWith('@s.whatsapp.net')) {
+                actualPhone = msg.key.participant.replace('@s.whatsapp.net', '');
+            } else {
+                actualPhone = (msg.key.senderPn || '').replace('@s.whatsapp.net', '') || '';
+            }
+
             // Jika dari Grup WhatsApp (@g.us), hanya proses perintah admin khusus
             // ATAU jika dari grup report internal dan bot di-tag (@mention)
             const isGroup = sender.endsWith('@g.us');
             if (isGroup) {
                 const isAdminCommand = lowerText.startsWith('/rentspacesettings') || lowerText.startsWith('/broadcast');
 
-                // Cek apakah bot di-mention (tagged) dalam pesan ini
-                const mentionedJids = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+                // Cek apakah bot di-mention — mentionedJid bisa ada di berbagai tipe pesan
+                const contextInfo = msg.message?.extendedTextMessage?.contextInfo
+                    || msg.message?.imageMessage?.contextInfo
+                    || msg.message?.videoMessage?.contextInfo
+                    || msg.message?.conversation?.contextInfo
+                    || {};
+                const mentionedJids = contextInfo?.mentionedJid || [];
                 const botJid = sock.user?.id || '';
-                // Bot JID bisa berformat: 628xxx@s.whatsapp.net atau 628xxx:0@s.whatsapp.net
                 const botNumber = botJid.split(':')[0].split('@')[0];
                 const isBotMentioned = mentionedJids.some(jid => jid.split(':')[0].split('@')[0] === botNumber);
+
+                console.log(`[RentSpace WA Bot] Grup pesan: isAdminCmd=${isAdminCommand}, isMentioned=${isBotMentioned}, botNum=${botNumber}, mentions=${JSON.stringify(mentionedJids)}`);
 
                 if (!isAdminCommand && !isBotMentioned) {
                     continue; // abaikan pesan di grup yang tidak di-tag dan bukan perintah admin
                 }
 
-                // Jika bot di-mention di grup (bukan perintah admin), cek apakah ini grup report
+                // Jika bot di-mention di grup (bukan perintah admin), kirim ke endpoint report grup
                 if (!isAdminCommand && isBotMentioned) {
-                    // Bersihkan mention text (hapus @tagname dari pesan)
-                    const cleanText = (msg.message?.extendedTextMessage?.text || trimmedText)
-                        .replace(/@\d+/g, '').trim();
+                    // Bersihkan mention text (hapus @nomor dari pesan)
+                    const rawText = msg.message?.extendedTextMessage?.text
+                        || msg.message?.conversation
+                        || trimmedText;
+                    const cleanText = rawText.replace(/@\d+/g, '').trim();
 
                     if (!cleanText) continue;
+
+                    console.log(`[RentSpace WA Bot] Report group query dari ${pushName}: "${cleanText}"`);
 
                     try {
                         const res = await axios.post(LARAVEL_WEBHOOK_URL, {
@@ -159,11 +179,13 @@ async function connectToWhatsApp() {
                             text: cleanText
                         }, {
                             headers: { 'X-API-KEY': API_KEY },
-                            timeout: 20000 // sedikit lebih lama karena query DB banyak
+                            timeout: 20000
                         });
 
                         if (res.data && res.data.reply) {
                             await sock.sendMessage(sender, { text: res.data.reply });
+                        } else {
+                            console.log('[RentSpace WA Bot] Report group: no reply from Laravel');
                         }
                     } catch (err) {
                         console.error('[RentSpace WA Bot] Report Group Query Error:', err.message);
@@ -173,16 +195,6 @@ async function connectToWhatsApp() {
             }
 
 
-            let actualPhone = '';
-            // Jika remoteJid adalah normal WhatsApp user (@s.whatsapp.net)
-            if (sender.endsWith('@s.whatsapp.net')) {
-                actualPhone = sender.replace('@s.whatsapp.net', '');
-            } else if (msg.key.participant && msg.key.participant.endsWith('@s.whatsapp.net')) {
-                actualPhone = msg.key.participant.replace('@s.whatsapp.net', '');
-            } else {
-                // Jika dari LID, coba cek sender pn jika ada
-                actualPhone = (msg.key.senderPn || '').replace('@s.whatsapp.net', '') || '';
-            }
 
             const senderNumber = actualPhone || sender.replace('@s.whatsapp.net', '').replace('@lid', '');
             const pushName = msg.pushName || 'Kak';
