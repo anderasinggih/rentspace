@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Rental;
+use App\Models\Setting;
 use App\Models\Unit;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class WhatsAppWebhookController extends Controller
 {
@@ -33,9 +35,14 @@ class WhatsAppWebhookController extends Controller
         // Jika request dari grup report internal (bot di-tag di grup report)
         if ($action === 'report_group_query') {
             $senderJid = $request->input('sender_jid', '');
-            $reportGroupId = \App\Models\Setting::getVal('admin_report_group_id', '');
+            $reportGroupId = Setting::sanitizeJid(Setting::getVal('admin_report_group_id', ''));
+            $senderJid = Setting::sanitizeJid($senderJid);
 
-            if (empty($reportGroupId) || trim($senderJid) !== trim($reportGroupId)) {
+            if ($reportGroupId === '' || $senderJid !== $reportGroupId) {
+                Log::warning('report_group_query ditolak: ID grup tidak cocok', [
+                    'grup_masuk' => $senderJid,
+                    'grup_terdaftar' => $reportGroupId,
+                ]);
                 return response()->json(['status' => true, 'reply' => null]);
             }
 
@@ -46,8 +53,8 @@ class WhatsAppWebhookController extends Controller
 
         // 0. Cek Perintah Khusus Admin: /rentspacesettings & /broadcast
         if (str_starts_with(strtolower($text), '/rentspacesettings') || str_starts_with(strtolower($text), '/broadcast')) {
-            $senderJid = $request->input('sender_jid', '');
-            $authorizedGroupId = \App\Models\Setting::getVal('admin_wa_group_id', '');
+            $senderJid = Setting::sanitizeJid($request->input('sender_jid', ''));
+            $authorizedGroupId = Setting::sanitizeJid(Setting::getVal('admin_wa_group_id', ''));
 
             // Jika perintah berasal dari grup WhatsApp (@g.us)
             if (str_ends_with($senderJid, '@g.us')) {
@@ -58,7 +65,7 @@ class WhatsAppWebhookController extends Controller
                     ]);
                 }
 
-                if (trim($senderJid) !== trim($authorizedGroupId)) {
+                if ($senderJid !== $authorizedGroupId) {
                     return response()->json([
                         'status' => true,
                         'reply' => "⛔ *Akses Ditolak!*\nGrup ini tidak terdaftar sebagai grup WhatsApp resmi admin Rent Space.\nPerintah admin dan broadcast diblokir demi keamanan data pelanggan."

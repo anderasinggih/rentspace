@@ -408,8 +408,8 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: 'gemini-3.5-flash-lite']);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_secondary'], ['value' => trim($this->admin_wa_secondary)]);
-        \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_group_id'], ['value' => trim($this->admin_wa_group_id)]);
-        \App\Models\Setting::updateOrCreate(['key' => 'admin_report_group_id'], ['value' => trim($this->admin_report_group_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_wa_group_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_report_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_report_group_id)]);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_custom_knowledge'], ['value' => json_encode(array_values($this->chatbot_custom_knowledge))]);
 
         // Save OneSignal Settings
