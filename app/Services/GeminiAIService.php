@@ -51,7 +51,9 @@ PANDUAN MENJAWAB:
 5. Jawaban harus padat dan to the point, jangan terlalu panjang.";
 
         try {
-            $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+            // Menggunakan Gemini Flash-8b / Flash-Lite (model paling hemat kuota, super cepat, free tier 15 RPM)
+            $model = 'gemini-1.5-flash-8b';
+            $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
                 'contents' => [
                     [
                         'role' => 'user',
@@ -62,9 +64,28 @@ PANDUAN MENJAWAB:
                 ],
                 'generationConfig' => [
                     'temperature' => 0.7,
-                    'maxOutputTokens' => 300,
+                    'maxOutputTokens' => 250,
                 ]
             ]);
+
+            // Jika flash-8b tidak tersedia di region akun tersebut, fallback ke gemini-1.5-flash
+            if (!$response->successful() && $response->status() === 404) {
+                $model = 'gemini-1.5-flash';
+                $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                    'contents' => [
+                        [
+                            'role' => 'user',
+                            'parts' => [
+                                ['text' => $systemPrompt . "\n\nPesan Customer: \"" . $userMessage . "\"\n\nJawaban CS:"]
+                            ]
+                        ]
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.7,
+                        'maxOutputTokens' => 250,
+                    ]
+                ]);
+            }
 
             if ($response->successful()) {
                 $candidates = $response->json('candidates');
