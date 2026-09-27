@@ -3,7 +3,8 @@ const {
     DisconnectReason,
     useMultiFileAuthState,
     fetchLatestBaileysVersion,
-    makeInMemoryStore
+    makeInMemoryStore,
+    downloadMediaMessage
 } = require('@whiskeysockets/baileys');
 const express = require('express');
 const cors = require('cors');
@@ -138,16 +139,165 @@ async function connectToWhatsApp() {
 
             console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (Phone: ${actualPhone || 'LID: ' + senderNumber}): "${text}"`);
 
-            await handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text.trim());
+            await handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text.trim(), msg);
         }
     });
 }
 
 // Logic Chatbot Auto-Reply
-async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text) {
+async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text, rawMsg = null) {
     const lower = text.toLowerCase();
 
-    // 0. Perintah Khusus Admin (/rentspacesettings, /broadcast)
+    // 0. Perintah Khusus Admin: /broadcast send [Grup] from reply (Kirim foto + caption yang di-reply)
+    const replyBroadcastMatch = lower.match(/^\/broadcast\s+send\s+(\d+)\s+from\s+reply(?:\s+(.+))?$/i);
+    if (replyBroadcastMatch) {
+        const groupNum = parseInt(replyBroadcastMatch[1], 10);
+        const customCaptionOverride = replyBroadcastMatch[2] ? replyBroadcastMatch[2].trim() : null;
+
+        const quotedMsg = rawMsg?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+        if (!quotedMsg) {
+            await sock.sendMessage(sender, {
+                text: '⚠️ Pesan ini bukan balasan (reply) ke foto/media.\n\n' +
+                      '📌 *Cara Pakai:*\n' +
+                      '1. Kirim foto + caption terlebih dahulu ke chat/grup ini.\n' +
+                      '2. Geser / Balas (Reply) foto tersebut, lalu ketik:\n' +
+                      '   `/broadcast send ' + groupNum + ' from reply`\n' +
+                      '3. Bot akan otomatis mengunduh foto & caption tersebut dan mengirimkannya ke seluruh nomor di Grup ' + groupNum + '.'
+            });
+            return;
+        }
+
+        // Cek apakah pesan yang di-reply memiliki imageMessage atau videoMessage
+        const imageMessage = quotedMsg.imageMessage;
+        const videoMessage = quotedMsg.videoMessage;
+
+        if (!imageMessage && !videoMessage) {
+            // Jika yang di-reply hanya teks biasa
+            const quotedText = quotedMsg.conversation || quotedMsg.extendedTextMessage?.text || '';
+            if (quotedText) {
+                // Forward sebagai teks biasa
+                text = `/broadcast send ${groupNum} ${customCaptionOverride || quotedText}`;
+            } else {
+                await sock.sendMessage(sender, {
+                    text: '⚠️ Pesan yang Anda reply tidak berisi foto atau teks yang bisa disiarkan.'
+                });
+                return;
+            }
+        } else {
+            // Pesan yang di-reply adalah media (gambar/video)
+            try {
+                await sock.sendMessage(sender, {
+                    text: `⏳ Sedang mengunduh media dan menyiapkan broadcast ke Grup ${groupNum}... Mohon tunggu sebentar.`
+                });
+
+                // Ambil daftar target nomor dari Laravel
+                const targetUrl = LARAVEL_WEBHOOK_URL.replace('/wa/webhook', '/wa/broadcast-targets') + `?group=${groupNum}`;
+                const targetsRes = await axios.get(targetUrl, {
+                    headers: { 'X-API-KEY': API_KEY },
+                    timeout: 10000
+                });
+
+                if (!targetsRes.data || !targetsRes.data.status) {
+                    await sock.sendMessage(sender, {
+                        text: `⚠️ Gagal mengambil daftar target: ${targetsRes.data?.message || 'Grup tidak valid.'}`
+                    });
+                    return;
+                }
+
+                const groupName = targetsRes.data.group_name || `Grup ${groupNum}`;
+                const numbers = targetsRes.data.numbers || [];
+
+                if (numbers.length === 0) {
+                    await sock.sendMessage(sender, {
+                        text: `⚠️ Grup *${groupName}* tidak memiliki daftar nomor kontak penerima.`
+                    });
+                    return;
+                }
+
+                // Download media buffer
+                const mediaType = imageMessage ? 'image' : 'video';
+                const mediaBuffer = await downloadMediaMessage(
+                    {
+                        message: quotedMsg,
+                        key: {
+                            id: rawMsg.message.extendedTextMessage.contextInfo.stanzaId,
+                            remoteJid: sender,
+                            participant: rawMsg.message.extendedTextMessage.contextInfo.participant
+                        }
+                    },
+                    'buffer',
+                    {}
+                );
+
+                const finalCaption = customCaptionOverride || (imageMessage ? imageMessage.caption : videoMessage.caption) || '';
+
+                let successCount = 0;
+                let failCount = 0;
+                const total = numbers.length;
+
+                // Salam acak anti-spam
+                const greetings = ['Halo Kak! 😊', 'Halo Kak,', 'Hai Kak! ✨', 'Halo Kak, salam hangat dari Rent Space!'];
+
+                for (let i = 0; i < total; i++) {
+                    const num = numbers[i];
+                    const targetJid = formatToJid(num);
+
+                    let personalizedCaption = finalCaption;
+                    if (finalCaption.startsWith('Halo Kak')) {
+                        const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+                        personalizedCaption = finalCaption.replace(/^Halo Kak(!|,\s*|\s*)/, randomGreeting + ' ');
+                    }
+
+                    try {
+                        if (mediaType === 'image') {
+                            await sock.sendMessage(targetJid, {
+                                image: mediaBuffer,
+                                caption: personalizedCaption
+                            });
+                        } else {
+                            await sock.sendMessage(targetJid, {
+                                video: mediaBuffer,
+                                caption: personalizedCaption
+                            });
+                        }
+                        successCount++;
+                    } catch (sendErr) {
+                        console.error(`[RentSpace WA Bot] Gagal broadcast media ke ${num}:`, sendErr.message);
+                        failCount++;
+                    }
+
+                    // Anti-banned Humanized Delay (2-4 detik)
+                    const delayMs = Math.floor(Math.random() * 2000) + 2000;
+                    await new Promise(r => setTimeout(r, delayMs));
+
+                    // Jeda istirahat setiap 10 pesan (5 detik)
+                    if ((i + 1) % 10 === 0 && (i + 1) < total) {
+                        await new Promise(r => setTimeout(r, 5000));
+                    }
+                }
+
+                await sock.sendMessage(sender, {
+                    text: `🚀 *BROADCAST MEDIA SELESAI DIKIRIM!*\n` +
+                          `------------------------------------\n` +
+                          `• *Tipe*: ${mediaType.toUpperCase()} + Caption\n` +
+                          `• *Target Grup*: ${groupName}\n` +
+                          `• *Total Kontak*: ${total}\n` +
+                          `• *Berhasil Terkirim*: ${successCount}\n` +
+                          `• *Gagal*: ${failCount}\n\n` +
+                          `_Semua pesan media telah terkirim dengan jeda aman anti-banned._`
+                });
+                return;
+            } catch (mediaErr) {
+                console.error('[RentSpace WA Bot] Media Broadcast Error:', mediaErr);
+                await sock.sendMessage(sender, {
+                    text: `⚠️ Terjadi kesalahan saat memproses media broadcast: ${mediaErr.message}`
+                });
+                return;
+            }
+        }
+    }
+
+    // 0b. Perintah Khusus Admin Umum (/rentspacesettings, /broadcast)
     if (lower.startsWith('/rentspacesettings') || lower.startsWith('/broadcast')) {
         try {
             const res = await axios.post(LARAVEL_WEBHOOK_URL, {

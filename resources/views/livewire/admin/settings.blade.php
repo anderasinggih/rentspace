@@ -1539,7 +1539,10 @@
 
                 <!-- Info Panduan Jalankan Bot -->
                 <div class="p-4 rounded-xl bg-muted/40 border border-border/60 text-sm space-y-2">
-                    <p class="font-medium text-foreground">💡 Cara Menjalankan WhatsApp Bot di Komputer / Server:</p>
+                    <p class="font-medium text-foreground flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                        Cara Menjalankan WhatsApp Bot di Komputer / Server:
+                    </p>
                     <div class="bg-card p-3 rounded-lg font-mono text-xs text-muted-foreground overflow-x-auto border border-border">
                         cd "whatsapp-bot"<br>
                         npm start
@@ -1607,7 +1610,8 @@
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div>
                                     <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                        <span>🧠</span> Memori & Pengetahuan Khusus AI (Knowledge Base)
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                        Memori & Pengetahuan Khusus AI (Knowledge Base)
                                     </h4>
                                     <p class="text-[11px] text-muted-foreground">Tambah aturan khusus seperti jam buka, link lokasi maps, cara sewa, dll. Bisa juga ditambah langsung via WA pakai perintah <code>/rentspacesettings add Kunci = Nilai</code>.</p>
                                 </div>
@@ -1676,7 +1680,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="p-4 rounded-xl border border-border/80 bg-background/50 space-y-2">
                         <div class="flex items-center gap-2 text-sm font-semibold text-foreground">
-                            <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">📩</span>
+                            <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 inline-flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z"/><polyline points="15,9 18,9 18,11"/><path d="M6.5 5C9 5 11 7 11 9.5V17a2 2 0 0 1-2 2v0"/></svg>
+                            </span>
                             Notifikasi Otomatis
                         </div>
                         <ul class="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
@@ -1686,7 +1692,9 @@
                     </div>
                     <div class="p-4 rounded-xl border border-border/80 bg-background/50 space-y-2">
                         <div class="flex items-center gap-2 text-sm font-semibold text-foreground">
-                            <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">🤖</span>
+                            <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 inline-flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="8" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg>
+                            </span>
                             Chatbot Interaktif & AI
                         </div>
                         <ul class="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
@@ -1714,34 +1722,35 @@
                     <!-- Kotak Panduan & Deskripsi Fitur Broadcast -->
                     <div class="p-4 rounded-xl bg-background border border-emerald-500/30 text-xs text-muted-foreground space-y-2.5">
                         <div class="flex items-center gap-2 text-foreground font-bold text-xs uppercase tracking-wide">
-                            <span>📖</span> Panduan & Cara Kerja Fitur WhatsApp Broadcast
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+                            Panduan & Cara Kerja Fitur WhatsApp Broadcast
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-                            <div class="p-2.5 rounded-lg bg-muted/40 border border-border/70 space-y-1">
+                            <div class="p-3 rounded-lg bg-muted/40 border border-border/70 space-y-1">
                                 <div class="font-bold text-foreground flex items-center gap-1.5">
-                                    <span class="w-5 h-5 rounded-full bg-emerald-600/10 text-emerald-600 inline-flex items-center justify-center text-[10px]">1</span>
+                                    <span class="w-5 h-5 rounded-full bg-emerald-600/10 text-emerald-600 inline-flex items-center justify-center text-[10px] font-bold">1</span>
                                     Buat / Edit User Group
                                 </div>
                                 <p class="text-[11px] leading-relaxed">
-                                    Kelompokkan customer sesuai audiens (misal: <i>Penyewa iPhone 13</i>, <i>VIP Customer</i>). Anda bisa <b>impor otomatis dari database</b>, <b>ngetag 1 per 1 nama customer</b>, atau mengedit daftar grup kapan saja.
+                                    Kelompokkan customer sesuai audiens (misal: <i>Penyewa iPhone 13</i>, <i>VIP Customer</i>). Anda bisa <b>impor otomatis dari database</b>, <b>ngetag 1 per 1 nama customer</b>, atau ketik langsung daftar nomor pada kotak teks besar.
                                 </p>
                             </div>
-                            <div class="p-2.5 rounded-lg bg-muted/40 border border-border/70 space-y-1">
+                            <div class="p-3 rounded-lg bg-muted/40 border border-border/70 space-y-1">
                                 <div class="font-bold text-foreground flex items-center gap-1.5">
-                                    <span class="w-5 h-5 rounded-full bg-emerald-600/10 text-emerald-600 inline-flex items-center justify-center text-[10px]">2</span>
-                                    Template Shortcut Pesan
+                                    <span class="w-5 h-5 rounded-full bg-emerald-600/10 text-emerald-600 inline-flex items-center justify-center text-[10px] font-bold">2</span>
+                                    Template & Broadcast Foto
                                 </div>
                                 <p class="text-[11px] leading-relaxed">
-                                    Gunakan template siap pakai (seperti <code>/promo_weekend</code>) agar tidak perlu mengetik ulang pesan penawaran atau informasi rental berulang kali.
+                                    Gunakan template (<code>/promo_weekend</code>) atau kirim <b>FOTO + CAPTION</b> via WhatsApp dengan membalas pesan foto lalu ketik <code>/broadcast send [No_Grup] from reply</code>.
                                 </p>
                             </div>
-                            <div class="p-2.5 rounded-lg bg-muted/40 border border-border/70 space-y-1">
+                            <div class="p-3 rounded-lg bg-muted/40 border border-border/70 space-y-1">
                                 <div class="font-bold text-foreground flex items-center gap-1.5">
-                                    <span class="w-5 h-5 rounded-full bg-emerald-600/10 text-emerald-600 inline-flex items-center justify-center text-[10px]">3</span>
-                                    Eksekusi Web & WA Admin
+                                    <span class="w-5 h-5 rounded-full bg-emerald-600/10 text-emerald-600 inline-flex items-center justify-center text-[10px] font-bold">3</span>
+                                    Eksekusi Aman Anti-Banned
                                 </div>
                                 <p class="text-[11px] leading-relaxed">
-                                    Broadcast bisa dikirim dari tombol di web ini atau langsung dikirim via <b>Grup WA Admin</b> dengan perintah <code>/broadcast send [No_Grup] [Pesan]</code>.
+                                    Broadcast dikirim dengan jeda acak (2-4 detik) dan rotasi variasi sapaan agar akun WhatsApp tetap aman dari flag spam algoritma WhatsApp.
                                 </p>
                             </div>
                         </div>
@@ -1754,7 +1763,8 @@
                             <div class="p-4 rounded-xl bg-background border border-border space-y-3">
                                 <div class="flex items-center justify-between">
                                     <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                        <span>👥</span> Daftar Grup Penerima
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                        Daftar Grup Penerima
                                     </h4>
                                     <span class="text-[10px] text-muted-foreground font-medium">
                                         {{ count($broadcast_groups) }} Grup Terdaftar
@@ -1777,7 +1787,8 @@
                                             </div>
                                             <div class="flex items-center gap-1">
                                                 <button type="button" wire:click="editBroadcastGroup({{ $idx }})" 
-                                                    class="px-2 py-1 text-[11px] font-bold rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Edit Grup ini">
+                                                    class="px-2.5 py-1 text-[11px] font-bold rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors inline-flex items-center gap-1" title="Edit Grup ini">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                                                     Edit
                                                 </button>
                                                 <button type="button" wire:click="removeBroadcastGroup({{ $idx }})" 
@@ -1794,11 +1805,17 @@
                                     @endforelse
                                 </div>
 
-                                <!-- Form Buat / Edit Grup -->
+                                <!-- Form Buat / Edit Grup (Area Luas & Nyaman) -->
                                 <div class="pt-3 border-t border-border/60 space-y-3">
                                     <div class="flex items-center justify-between">
                                         <span class="text-[11px] font-bold text-foreground uppercase tracking-wide flex items-center gap-1.5">
-                                            <span>{{ $editing_group_index !== null ? '✏️ Edit Grup' : '➕ Buat Grup Baru' }}</span>
+                                            @if($editing_group_index !== null)
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                                <span>Edit Grup Broadcast</span>
+                                            @else
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                                                <span>Buat Grup Baru</span>
+                                            @endif
                                         </span>
                                         @if($editing_group_index !== null)
                                             <button type="button" wire:click="cancelEditBroadcastGroup" class="text-[10px] text-muted-foreground hover:underline">
@@ -1807,27 +1824,32 @@
                                         @endif
                                     </div>
 
-                                    <input type="text" wire:model="new_group_name" placeholder="Nama Grup (Misal: Member VIP / Pelanggan iPhone 13)"
-                                        class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-foreground mb-1">Nama Grup Audiens:</label>
+                                        <input type="text" wire:model="new_group_name" placeholder="Misal: Member VIP / Pelanggan iPhone 13"
+                                            class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-medium">
+                                        @error('new_group_name') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                    </div>
 
                                     <!-- Tagging Customer 1 per 1 dari Database -->
-                                    <div class="p-2.5 rounded-lg bg-muted/40 border border-border/80 space-y-2">
-                                        <label class="block text-[11px] font-bold text-foreground">
-                                            🏷️ Tag / Panggil Customer 1 per 1 dari Database:
+                                    <div class="p-3 rounded-lg bg-muted/40 border border-border/80 space-y-2">
+                                        <label class="block text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
+                                            Panggil / Tag Kontak Customer dari Database:
                                         </label>
                                         <div class="relative">
                                             <input type="text" wire:model.live.debounce.250ms="customer_search_query" 
-                                                placeholder="Ketik nama atau nomor WA customer untuk ngetag..."
+                                                placeholder="Ketik nama customer atau nomor WA..."
                                                 class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm">
                                             
                                             @if(!empty($searchCustomers))
-                                                <div class="absolute left-0 right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-xl z-20 max-h-40 overflow-y-auto divide-y divide-border">
+                                                <div class="absolute left-0 right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-xl z-20 max-h-48 overflow-y-auto divide-y divide-border">
                                                     @foreach($searchCustomers as $c)
                                                         <div wire:click="tagCustomerToGroup('{{ $c['phone'] }}', '{{ addslashes($c['nama']) }}')"
                                                             class="p-2 text-xs flex items-center justify-between hover:bg-muted/50 cursor-pointer">
                                                             <div>
                                                                 <span class="font-bold text-foreground">{{ $c['nama'] }}</span>
-                                                                <span class="text-muted-foreground ml-1">({{ $c['phone'] }})</span>
+                                                                <span class="text-muted-foreground ml-1 font-mono">({{ $c['phone'] }})</span>
                                                             </div>
                                                             <span class="text-[10px] text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
                                                                 + Tag ke Grup
@@ -1842,29 +1864,42 @@
                                         @if(!empty($selected_customer_tags))
                                             <div class="flex flex-wrap gap-1.5 pt-1">
                                                 @foreach($selected_customer_tags as $tag)
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-medium border border-emerald-500/20">
-                                                        <span>👤 {{ $tag['name'] }} ({{ $tag['phone'] }})</span>
-                                                        <button type="button" wire:click="removeCustomerTag('{{ $tag['phone'] }}')" class="hover:text-red-500 font-bold ml-0.5">×</button>
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-medium border border-emerald-500/20">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                        <span>{{ $tag['name'] }}</span>
+                                                        <span class="font-mono text-[10px] text-muted-foreground">({{ $tag['phone'] }})</span>
+                                                        <button type="button" wire:click="removeCustomerTag('{{ $tag['phone'] }}')" class="hover:text-red-500 font-bold ml-1" title="Hapus">×</button>
                                                     </span>
                                                 @endforeach
                                             </div>
                                         @endif
                                     </div>
 
-                                    <div>
-                                        <label class="block text-[10px] text-muted-foreground mb-1">Daftar Nomor WhatsApp di Grup ini (pisahkan baris baru atau koma):</label>
-                                        <textarea wire:model="new_group_numbers" rows="3" placeholder="0881082411878&#10;08123456789"
-                                            class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-mono"></textarea>
+                                    <!-- Kotak Teks Input Nomor Fleksibel & Luas -->
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <label class="block text-[11px] font-bold text-foreground">
+                                                Daftar Kontak Nomor WhatsApp:
+                                            </label>
+                                            <span class="text-[10px] text-muted-foreground font-mono">
+                                                Format: 08xxx / 628xxx (baris baru atau koma)
+                                            </span>
+                                        </div>
+                                        <textarea wire:model="new_group_numbers" rows="6" 
+                                            placeholder="Contoh:&#10;0881082411878&#10;081234567890&#10;085712345678"
+                                            class="w-full rounded-md border border-input bg-background p-3 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-mono leading-relaxed resize-y"></textarea>
+                                        @error('new_group_numbers') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
                                     </div>
 
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 pt-1">
                                         <button type="button" wire:click="saveBroadcastGroup"
-                                            class="inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-8 px-4 text-xs font-bold transition-colors">
-                                            {{ $editing_group_index !== null ? '💾 Simpan Perubahan Grup' : '+ Simpan Grup Baru' }}
+                                            class="inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-9 px-4 text-xs font-bold transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                            {{ $editing_group_index !== null ? 'Simpan Perubahan Grup' : 'Simpan Grup Baru' }}
                                         </button>
                                         @if($editing_group_index !== null)
                                             <button type="button" wire:click="cancelEditBroadcastGroup"
-                                                class="inline-flex items-center justify-center rounded-md bg-muted text-muted-foreground border border-border hover:bg-muted/80 h-8 px-3 text-xs font-medium transition-colors">
+                                                class="inline-flex items-center justify-center rounded-md bg-muted text-muted-foreground border border-border hover:bg-muted/80 h-9 px-3 text-xs font-medium transition-colors">
                                                 Batal
                                             </button>
                                         @endif
@@ -1872,14 +1907,17 @@
                                 </div>
 
                                 <!-- Filter & Impor Otomatis dari Database Customer -->
-                                <div class="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-2 mt-3">
+                                <div class="p-3.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-2.5 mt-3">
                                     <div class="flex items-center justify-between">
-                                        <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wide">📥 Impor Massal Otomatis Dari Database</span>
+                                        <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wide flex items-center gap-1.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                            Impor Massal Otomatis Dari Database Rental
+                                        </span>
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
                                         <div>
                                             <label class="block text-[10px] text-muted-foreground mb-1">Filter Unit Tertentu</label>
-                                            <select wire:model="import_filter_unit_id" class="w-full rounded border border-input bg-background px-2 py-1 text-xs">
+                                            <select wire:model="import_filter_unit_id" class="w-full rounded border border-input bg-background px-2 py-1.5 text-xs">
                                                 <option value="">-- Semua Unit --</option>
                                                 @foreach($unitsList as $u)
                                                     <option value="{{ $u->id }}">{{ $u->nama_lengkap ?: $u->seri }}</option>
@@ -1888,7 +1926,7 @@
                                         </div>
                                         <div>
                                             <label class="block text-[10px] text-muted-foreground mb-1">Status Sewa</label>
-                                            <select wire:model="import_filter_status" class="w-full rounded border border-input bg-background px-2 py-1 text-xs">
+                                            <select wire:model="import_filter_status" class="w-full rounded border border-input bg-background px-2 py-1.5 text-xs">
                                                 <option value="">-- Semua Status --</option>
                                                 <option value="completed">Sewa Selesai</option>
                                                 <option value="renting">Sedang Menyewa</option>
@@ -1897,8 +1935,9 @@
                                         </div>
                                     </div>
                                     <button type="button" wire:click="importCustomersToGroup"
-                                        class="w-full inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-7 px-3 text-xs font-bold transition-colors">
-                                        + Buat Grup Otomatis dari Data Rental Terpilih
+                                        class="w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-8 px-3 text-xs font-bold transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                        Buat Grup Otomatis dari Data Rental Terpilih
                                     </button>
                                 </div>
                             </div>
@@ -1906,7 +1945,8 @@
                             <!-- 2. Shortcut Template Pesan -->
                             <div class="p-4 rounded-xl bg-background border border-border space-y-3">
                                 <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                    <span>⚡</span> Shortcut & Template Pesan
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                    Shortcut & Template Pesan
                                 </h4>
 
                                 <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
@@ -1944,8 +1984,9 @@
                                     <textarea wire:model="new_shortcut_message" rows="2" placeholder="Isi pesan template..."
                                         class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm"></textarea>
                                     <button type="button" wire:click="addBroadcastShortcut"
-                                        class="inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-7 px-3 text-xs font-bold transition-colors">
-                                        + Tambah Shortcut
+                                        class="inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-8 px-3 text-xs font-bold transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                        Tambah Shortcut
                                     </button>
                                 </div>
                             </div>
@@ -1955,7 +1996,8 @@
                         <div class="p-5 rounded-xl bg-background border border-border flex flex-col justify-between space-y-4">
                             <div class="space-y-4">
                                 <h4 class="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                                    <span>🚀</span> Kirim Siaran Broadcast
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                    Kirim Siaran Broadcast
                                 </h4>
 
                                 <div>
@@ -1975,9 +2017,9 @@
                                         <label class="block text-xs font-bold text-muted-foreground uppercase">Isi Pesan Broadcast</label>
                                         <span class="text-[10px] text-muted-foreground">Bisa pilih template dari shortcut di sebelah kiri</span>
                                     </div>
-                                    <textarea wire:model="active_broadcast_message" rows="6" 
+                                    <textarea wire:model="active_broadcast_message" rows="8" 
                                         placeholder="Tulis pesan promosi atau pengumuman yang ingin dikirimkan ke pelanggan..."
-                                        class="w-full rounded-md border border-input bg-background p-3 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-sans leading-relaxed"></textarea>
+                                        class="w-full rounded-md border border-input bg-background p-3 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-sans leading-relaxed resize-y"></textarea>
                                     @error('active_broadcast_message') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
                                 </div>
 
@@ -1985,7 +2027,8 @@
                                 <div class="p-3 rounded-lg bg-muted/40 border border-border text-xs space-y-1.5">
                                     <div class="flex items-center justify-between">
                                         <span class="font-bold text-foreground flex items-center gap-1.5">
-                                            🛡️ Proteksi Anti-Banned WhatsApp
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                            Proteksi Anti-Banned WhatsApp
                                         </span>
                                         <select wire:model="broadcast_delay_mode" class="rounded border border-input bg-background px-2 py-0.5 text-xs font-medium">
                                             <option value="safe">Mode Aman (Jeda 2-4 detik + jeda istirahat)</option>

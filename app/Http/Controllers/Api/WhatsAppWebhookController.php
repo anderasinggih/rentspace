@@ -309,8 +309,9 @@ class WhatsAppWebhookController extends Controller
             $msg .= "1️⃣ `/broadcast groups`\n   Lihat daftar grup penerima broadcast.\n";
             $msg .= "2️⃣ `/broadcast sync`\n   Tarik/sinkronisasi semua nomor customer dari database ke grup 'Semua Pelanggan'.\n";
             $msg .= "3️⃣ `/broadcast shortcuts`\n   Lihat daftar template pesan broadcast.\n";
-            $msg .= "4️⃣ `/broadcast send [Nomor_Grup] [Pesan]`\n   Kirim pesan broadcast ke grup nomor urut tertentu.\n   _Contoh:_ `/broadcast send 1 Halo Kak, unit iPhone 13 ready nih! https://rentspacepurwokerto.my.id/booking`\n";
-            $msg .= "5️⃣ `/broadcast send [Nomor_Grup] /[Kode_Shortcut]`\n   Kirim broadcast menggunakan template shortcut.\n   _Contoh:_ `/broadcast send 1 /promo_weekend`\n\n";
+            $msg .= "4️⃣ `/broadcast send [Nomor_Grup] [Pesan]`\n   Kirim pesan broadcast teks ke grup.\n   _Contoh:_ `/broadcast send 1 Halo Kak, unit iPhone ready nih! https://rentspacepurwokerto.my.id/booking`\n";
+            $msg .= "5️⃣ `/broadcast send [Nomor_Grup] /[Kode_Shortcut]`\n   Kirim broadcast menggunakan template shortcut.\n   _Contoh:_ `/broadcast send 1 /promo_weekend`\n";
+            $msg .= "6️⃣ *Balas Foto + Ketik:* `/broadcast send [Nomor_Grup] from reply`\n   Kirim broadcast *foto berserta caption* dari pesan yang di-reply ke grup penerima.\n\n";
             $msg .= "🛡️ _Sistem dilengkapi proteksi anti-banned: jeda dinamis acak (2-4 detik per pesan) + rotasi salam._";
             return $msg;
         }
@@ -502,6 +503,39 @@ class WhatsAppWebhookController extends Controller
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Gagal forward chat ke admin sekunder: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Ambil target grup dan nomor telepon untuk broadcast (dipanggil oleh Bot Node.js)
+     */
+    public function getBroadcastTargets(Request $request)
+    {
+        $apiKey = $request->header('X-API-KEY');
+        $expectedKey = config('services.whatsapp.api_key', 'rentspace_secret_wa_token_2026');
+
+        if ($apiKey !== $expectedKey) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $groupNumber = (int) $request->query('group', 1);
+        $groups = json_decode(\App\Models\Setting::getVal('wa_broadcast_groups', '[]'), true) ?: [];
+
+        $groupIndex = $groupNumber - 1;
+        if (!isset($groups[$groupIndex])) {
+            return response()->json([
+                'status' => false,
+                'message' => "Grup nomor {$groupNumber} tidak ditemukan. Ketik /broadcast groups untuk cek daftar grup.",
+                'groups' => $groups
+            ], 404);
+        }
+
+        $targetGroup = $groups[$groupIndex];
+        return response()->json([
+            'status' => true,
+            'group_name' => $targetGroup['name'] ?? 'Grup ' . $groupNumber,
+            'numbers' => $targetGroup['numbers'] ?? [],
+            'count' => count($targetGroup['numbers'] ?? [])
+        ]);
     }
 }
 
