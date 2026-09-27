@@ -142,6 +142,10 @@ async function connectToWhatsApp() {
             const isGroup = sender.endsWith('@g.us');
             if (isGroup) {
                 const isAdminCommand = lowerText.startsWith('/rentspacesettings') || lowerText.startsWith('/broadcast');
+                // Perintah memori AI tidak perlu @mention (dipetakan ke grup report di sisi Laravel)
+                const isMemoryCommand = lowerText.startsWith('/memori')
+                    || lowerText.startsWith('/ingat')
+                    || lowerText.startsWith('/lupa');
 
                 // mentionedJid bisa ada di berbagai tipe pesan, dan pada WA modern
                 // identitas LID pun dipakai — karena itu kumpulkan dari semua contextInfo.
@@ -165,14 +169,14 @@ async function connectToWhatsApp() {
                 const isBotMentioned = botIds.length > 0
                     && mentionedJids.some((jid) => botIds.includes(stripJid(jid)));
 
-                console.log(`[RentSpace WA Bot] Grup pesan: isAdminCmd=${isAdminCommand}, isMentioned=${isBotMentioned}, botIds=${JSON.stringify(botIds)}, mentions=${JSON.stringify(mentionedJids)}`);
+                console.log(`[RentSpace WA Bot] Grup pesan: isAdminCmd=${isAdminCommand}, isMemoryCmd=${isMemoryCommand}, isMentioned=${isBotMentioned}, botIds=${JSON.stringify(botIds)}, mentions=${JSON.stringify(mentionedJids)}`);
 
-                if (!isAdminCommand && !isBotMentioned) {
+                if (!isAdminCommand && !isBotMentioned && !isMemoryCommand) {
                     continue; // abaikan pesan di grup yang tidak di-tag dan bukan perintah admin
                 }
 
-                // Jika bot di-mention di grup (bukan perintah admin), kirim ke endpoint report grup
-                if (!isAdminCommand && isBotMentioned) {
+                // Jika bot di-mention di grup (atau perintah memori), kirim ke endpoint report grup
+                if (!isAdminCommand && (isBotMentioned || isMemoryCommand)) {
                     // Bersihkan mention text (hapus @nomor dari pesan)
                     const rawText = msg.message?.extendedTextMessage?.text
                         || msg.message?.conversation

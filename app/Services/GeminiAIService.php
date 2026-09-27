@@ -46,7 +46,8 @@ class GeminiAIService
                 }
             }
         }
-        $isFollowUp = mb_strlen($userMessage) <= 30 && !empty(AiMemoryService::recentTurns($conv, 1, 100));
+        $recentTurns = AiMemoryService::recentTurns($conv, 3, 520);
+        $isFollowUp = mb_strlen($userMessage) <= 30 && !empty($recentTurns);
 
         $now = now();
         $currentTimeStr = $now->translatedFormat('l, d F Y H:i') . ' WIB';
@@ -56,7 +57,7 @@ class GeminiAIService
         $dataBlock = self::buildCustomerData($sections, $isFollowUp, $now);
 
         $memoryContext = AiMemoryService::contextFor($conv, $userMessage, 260);
-        $recentTurns = AiMemoryService::recentTurns($conv, 3, 520);
+        $chatContext = self::formatRecentTurns($recentTurns, 'Customer', 'CS');
 
         $systemPrompt = "Kamu adalah Customer Service WhatsApp di 'Rent Space Purwokerto' (rental iPhone, gadget, kamera di Purwokerto).
 Waktu saat ini: {$currentTimeStr}.
@@ -66,6 +67,7 @@ Lokasi Toko: {$address} | WhatsApp Admin: {$adminWa} | Booking: https://rentspac
 CARA PESAN (ringkas): buka https://rentspacepurwokerto.my.id/booking → pilih tanggal → pilih unit → isi data (nama, NIK, No. WA, alamat) → pilih pembayaran (QRIS / Transfer / Cash) → bayar & unggah bukti bila perlu → admin konfirmasi → unit siap diambil di toko. Kode promo bisa diinput di halaman booking.
 {$dataBlock}
 " . ($memoryContext !== '' ? "\nCATATAN PERCAKAPAN SEBELUMNYA:\n{$memoryContext}\n" : '')
+. ($chatContext !== '' ? "\nOBROLAN SEBELUMNYA:\n{$chatContext}\n" : '')
 . "PANDUAN MENJAWAB (SANGAT PENTING):
 1. GAYA BAHASA CS MANUSIA ASLI: santai, ramah, to the point. Panggil 'Kak {$customerName}'. Maksimal 1 emoji, jangan tabur emoticon.
 2. JANGAN pernah menutup dengan template 'Jika ada yang lain hubungi admin...' atau 'Ada yang bisa dibantu lagi?'. Cukup jawab solusinya.
@@ -121,8 +123,8 @@ CARA PESAN (ringkas): buka https://rentspacepurwokerto.my.id/booking → pilih t
         $needPengumuman = $sections['pengumuman'] ?? false;
 
         // Tanpa pemicu jelas dan pesan pendek: andalkan riwayat + memori saja.
-        if ($isFollowUp && ! $needKatalog && ! $needJadwal) {
-            return "PANDUAN JAWABAN: ini pertanyaan lanjutan, pakai konteks obrolan sebelumnya. Jangan mengulang katalog; jawab langsung dengan menyinggung obrolan tadi.";
+        if ($isFollowUp && ! $needKatalog && ! $needJadwal && ! $needPengumuman) {
+            return 'PANDUAN JAWABAN: pakai konteks obrolan sebelumnya, jangan mengulang daftar unit atau jadwal. Jawab langsung dan singkat.';
         }
 
         $block = '';
@@ -309,7 +311,7 @@ CARA PESAN (ringkas): buka https://rentspacepurwokerto.my.id/booking → pilih t
         $recentTurns = AiMemoryService::recentTurns($conv, 3, 600);
         $chatContext = self::formatRecentTurns($recentTurns);
 
-        [$dataBlock, $loadedLabels] = self::buildInternalData($userMessage, $intents, $now);
+        [$dataBlock, $loadedLabels] = self::buildInternalData($userMessage, $intents, $now, AiMemoryService::lastSections($conv));
 
         $systemPrompt = "Kamu adalah asisten internal tim *Rent Space Purwokerto* yang|super pintar dan punya AKSES PENUH ke data bisnis.
 Waktu saat ini: {$currentTimeStr}.
@@ -326,7 +328,7 @@ ATURAN PENTING (WAJIB DIPAATUHI):
 7. Kalau tidak ada yang cocok, sebutkan apa yang ADA yang mendekati (\"yang paling mendekati: ...\"), jangan langsung menyerah.
 8. Boleh tampilkan nama, nomor WA, alamat karena ini internal.
 9. Format WA: pakai *tebal* (satu bintang) dan bullet -. Jangan pakai markdown lain.
-10. Kata \"TERLAMBAT\" atau \"SUDAH MELEBIHI JADWAL\" berarti masalah nyata — wajib CHA-ATUR di jawaban.
+10. Kata \"TERLAMBAT\" atau \"SUDAH MELEBIHI JADWAL\" berarti masalah nyata — wajib disebut di jawaban.
 11. Jawaban internal to the point, tidak perlu basa-basi sapaan.
 
 YANG SUDAH DIPBAHAS (MEMORI TIM):
@@ -349,7 +351,13 @@ Jawab sebagai asisten data internal:";
         $text = self::askGemini($systemPrompt, $model, $apiKey, 0.2, 900, 45);
 
         if ($text !== null) {
-            AiMemoryService::saveTurn($conv, $userMessage, $text, $intent, $inputTokens, $askerName);
+            // 'cari' sering muncul karena heuristik kata, jadi tidak disimpan sebagai
+            // konteks lanjutan; kalau memang ini pertanyaan soal orang, tetap disimpan.
+            $carrySections = in_array($intent, ['cari', 'kode'], true)
+                ? $intents['sections']
+                : array_diff_key($intents['sections'], ['cari' => true]);
+
+            AiMemoryService::saveTurn($conv, $userMessage, $text, $intent, $inputTokens, $askerName, $carrySections);
         }
 
         return $text ?? self::fallbackMessage();
@@ -400,7 +408,7 @@ Jawab sebagai asisten data internal:";
         }
 
         // Pertanyaan soal orang: cari nama penyewa dari pertanyaan.
-        $sections['cari'] = ($sections['cari'] ?? false) || self::looksLikePersonLookup($question);
+        $sections['cari'] = ($sections['cari'] ?? false) || self::detectNameToken($question) !== null;
 
         $primary = 'umum';
         if ($sections) {
@@ -417,33 +425,66 @@ Jawab sebagai asisten data internal:";
     }
 
     /**
-     * Kandidat kode booking yang disebut tim (kode format 12 karakter acak).
+     * Kandidat kode booking yang disebut tim.
+     *
+     * Kode booking di sistem ini = 12 karakter acak (huruf + angka), jadi filternya
+     * ketat. Kalau longgar, kata biasa seperti "storefront" ikut terambil dan kita
+     * membuang token untuk mencari data yang jelas tidak ada.
      *
      * @return array<int,string>
      */
     private static function extractCodeCandidates(string $question): array
     {
         $upper = mb_strtoupper($question);
-        preg_match_all('/\b[A-Z0-9]{8,20}\b/u', $upper, $m);
+        preg_match_all('/\b[A-Z0-9-]{8,20}\b/u', $upper, $m);
 
         $codes = [];
         foreach (array_unique($m[0] ?? []) as $token) {
-            // Buang kata umum huruf besar (mis. "TERIMAKASIH")
-            if (preg_match('/^[A-Z]+$/', $token) && self::looksLikeIndonesianWord(mb_strtolower($token))) {
-                continue;
+            $plain = str_replace('-', '', $token);
+            $len = strlen($plain);
+
+            $hasDigit = (bool) preg_match('/\d/', $plain);
+            $hasLetter = (bool) preg_match('/[A-Z]/', $plain);
+
+            // Format 12 karakter huruf+angka, atau format berawalan "RS-".
+            $isCode = ($len >= 10 && $len <= 14 && $hasDigit && $hasLetter)
+                || (str_starts_with($token, 'RS-') && $len >= 5);
+
+            if ($isCode) {
+                $codes[] = $token;
             }
-            $codes[] = $token;
         }
 
         return array_slice($codes, 0, 3);
     }
 
-    private static function looksLikeIndonesianWord(string $word): bool
+    /**
+     * Kata tanya/biasa yang sering muncul tapi BUKAN nama penyewa.
+     * Tanpa daftar ini, kata seperti "gimana" atau "storefront" dianggap nama
+     * dan AI sia-sia mencari transaksi yang jelas tidak ada.
+     */
+    private const NON_NAME_WORDS = [
+        'gimana', 'kenapa', 'begitu', 'begini', 'seharusnya', 'mungkin', 'kadang',
+        'banyak', 'semua', 'tersedia', 'ready', 'statusnya', 'laporannya', 'laporan',
+        'rekap', 'rekapnya', 'summary', 'ringkasan', 'translate', 'fix', 'bener',
+    ];
+
+    /**
+     * Kata pertama di pertanyaan yang panjang dan layak dianggap nama penyewa.
+     */
+    private static function detectNameToken(string $question): ?string
     {
-        return in_array($word, array_merge(self::NAME_STOPWORDS, [
-            'makasih', 'terima', 'kasih', 'tolong', 'permisi', 'mohon', 'selamat', 'pagi', 'siang',
-            'sore', 'malam', 'jumpa', 'sampai', 'nanti', 'besok', 'lusa', 'tadi', 'kemarin',
-        ]), true);
+        $tokens = preg_split('/[^a-z]+/u', mb_strtolower($question), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        foreach ($tokens as $t) {
+            if (mb_strlen($t) < 4) {
+                continue;
+            }
+            if (in_array($t, self::NAME_STOPWORDS, true) || in_array($t, self::NON_NAME_WORDS, true)) {
+                continue;
+            }
+            return $t;
+        }
+        return null;
     }
 
     /**
@@ -473,18 +514,27 @@ Jawab sebagai asisten data internal:";
     {
         $s = $intents['sections'];
 
-        // Tanpa pemicu yang jelas dan pesannya pendek: ini pertanyaan lanjutan,
-        // jadi pakai kembali bagian data dari giliran sebelumnya. Ini yang bikin
-        // "trus yang tadi gimana?" tetap dijawab dari data, bukan dari ingatan free-form.
-        $isFollowUp = $s === [] && count($carryOver) > 0 && mb_strlen($question) <= 40;
+        // 'cari' bisa muncul hanya karena heuristik kata, jadi tidak dihitung sebagai
+        // pemicu yang pasti. Kalau tidak ada pemicu pasti dan pesannya pendek, ini
+        // pertanyaan lanjutan: pakai kembali bagian data dari giliran sebelumnya.
+        // Inilah yang bikin "trus yang tadi gimana?" dijawab dari data, bukan karangan.
+        $hasRealTrigger = count(array_diff(array_keys($s), ['cari'])) > 0;
+        $isFollowUp = ! $hasRealTrigger && count($carryOver) > 0 && mb_strlen($question) <= 40;
+
         if ($isFollowUp) {
+            $nameToken = self::detectNameToken($question);
+            $s = [];
             foreach ($carryOver as $section) {
                 $s[$section] = true;
+            }
+            // Kalau nama penyewa disebut secara spesifik, tetap cari transaksinya.
+            if ($nameToken !== null) {
+                $s['cari'] = true;
             }
         }
 
         // Tanpa pemicu yang jelas: pakai ringkasan default yang paling sering ditanya.
-        $default = $s === [];
+        $default = ! $hasRealTrigger && ! $isFollowUp;
         $want = [
             'kode' => $s['kode'] ?? false,
             'jadwal' => $default || ($s['jadwal'] ?? false) || ($s['terlambat'] ?? false),
@@ -556,7 +606,7 @@ Jawab sebagai asisten data internal:";
         $add('RINGKASAN & OMSET', 'ringkasan', fn () => $snapshot, 1);
 
         if ($want['kode']) {
-            $add('DETAIL KODE BOOKING YANG DITANYAKAN', 'kode', function () use ($question, $statusIndo) {
+            $add('DETAIL KODE BOOKING YANG DITANYAKAN', 'kode_' . md5($question), function () use ($question, $statusIndo) {
                 $codes = self::extractCodeCandidates($question);
                 if (empty($codes)) {
                     return '';
@@ -625,7 +675,21 @@ Jawab sebagai asisten data internal:";
         }
 
         if ($want['cari']) {
-            $add('PENCARIAN DATA PENYEWA (WAJIB DIBACA untuk soal orang tertentu)', 'cari', fn () => self::lookupRentalsByName($question), 2);
+            // Kalau nama yang diketik tidak ada di database dan ini bukan pertanyaan
+            // utama soal orang, jangan kirim apa pun (hemat token).
+            $isMain = ($intents['primary'] === 'cari') || ($intents['primary'] === 'kode');
+            $add(
+                'PENCARIAN DATA PENYEWA (WAJIB DIBACA untuk soal orang tertentu)',
+                'cari_' . ($isMain ? 'm' : 's') . '_' . md5($question),
+                function () use ($question, $isMain) {
+                    $text = self::lookupRentalsByName($question);
+                    if (! $isMain && str_starts_with($text, 'Tidak ada transaksi')) {
+                        return '';
+                    }
+                    return $text;
+                },
+                2
+            );
         }
 
         if ($want['denda']) {
@@ -746,14 +810,14 @@ Jawab sebagai asisten data internal:";
     /**
      * Ubah daftar turn terakhir menjadi blok teks ringkas untuk prompt.
      */
-    private static function formatRecentTurns(array $turns): string
+    private static function formatRecentTurns(array $turns, string $userLabel = 'Tim', string $botLabel = 'Kamu'): string
     {
         if (empty($turns)) {
             return '';
         }
         $text = '';
         foreach ($turns as $i => $turn) {
-            $text .= ($i + 1) . '. Tim: ' . $turn['user'] . "\n   Kamu: " . $turn['model'] . "\n";
+            $text .= ($i + 1) . ". {$userLabel}: " . $turn['user'] . "\n   {$botLabel}: " . $turn['model'] . "\n";
         }
         return rtrim($text);
     }

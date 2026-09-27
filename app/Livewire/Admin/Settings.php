@@ -85,6 +85,7 @@ class Settings extends Component
     public $is_chatbot_active = true;
     public $chatbot_api_key = '';
     public $chatbot_model = 'gemini-3.5-flash-lite';
+    public $chatbot_tpm_limit = '300000';
 
     public $admin_wa_secondary = '';
     public $admin_wa_group_id = '';
@@ -178,6 +179,7 @@ class Settings extends Component
         $this->is_chatbot_active = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
         $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
+        $this->chatbot_tpm_limit = (string) \App\Models\Setting::getVal('chatbot_tpm_limit', '300000');
         $this->admin_wa_secondary = \App\Models\Setting::getVal('admin_wa_secondary', '');
         $this->admin_wa_group_id = \App\Models\Setting::getVal('admin_wa_group_id', '');
         $this->admin_report_group_id = \App\Models\Setting::getVal('admin_report_group_id', '');
@@ -407,6 +409,7 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: 'gemini-3.5-flash-lite']);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_tpm_limit'], ['value' => (string) max(1000, (int) $this->chatbot_tpm_limit)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_secondary'], ['value' => trim($this->admin_wa_secondary)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_wa_group_id)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_report_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_report_group_id)]);

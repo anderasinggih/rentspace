@@ -73,7 +73,7 @@ class AiMemoryService
         }
 
         try {
-            foreach ([['user', $userText], ['model', $answerText]] as [$role, $content]) {
+            foreach ([['user', $userMessage], ['model', $answerText]] as [$role, $content]) {
                 AiMessage::create([
                     'ai_conversation_id' => $conv->id,
                     'role' => $role,
@@ -89,9 +89,9 @@ class AiMemoryService
             $memory = self::extract($memory, $userMessage, $answerText, $intent);
             // Ingat bagian data apa yang dipakai terakhir, supaya pertanyaan
             // lanjutan ("trus yang tadi gimana?") memuat data yang sama lagi.
-            if ($sections) {
-                $memory['last_sections'] = array_slice(array_values(array_keys($sections)), 0, 5);
-            }
+            // Digabung, bukan diganti, supaya konteks yang masih relevan tidak hilang.
+            $merged = array_values(array_unique(array_merge(array_keys($sections), $memory['last_sections'] ?? [])));
+            $memory['last_sections'] = array_slice($merged, 0, 5);
             $memory['last_intent'] = $intent;
             $conv->memory = $memory;
             $conv->turn_count = (int) $conv->turn_count + 1;
@@ -313,7 +313,7 @@ class AiMemoryService
         $focus = $memory['focus'] ?? [];
 
         // Fakta dari jawaban AI: baris "• [STATUS] ... | Kode: RSXXXX".
-        preg_match_all('/Kode:\s*([A-Z0-9][A-Z0-9\-]{2,})/i', $answerText, $codes);
+        preg_match_all('/Kode:?\s*([A-Z0-9][A-Z0-9\-]{2,})/i', $answerText, $codes);
         foreach (array_unique($codes[1] ?? []) as $code) {
             $code = strtoupper($code);
             $line = self::lineForCode($answerText, $code);

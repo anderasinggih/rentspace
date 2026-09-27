@@ -1597,6 +1597,13 @@
                                 placeholder="120363xxxxxx@g.us">
                             <span class="text-[10px] text-muted-foreground mt-0.5 block">AI hanya merespons di grup ini jika di-tag (<code>@mention</code>). Akses penuh data monitoring.</span>
                         </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Plafon Token Input / Menit</label>
+                            <input type="number" min="1000" step="10000" wire:model="chatbot_tpm_limit"
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="300000">
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block">Anti <code>429</code>: di atas 75% plafon, konteks AI otomatis dipangkas.</span>
+                        </div>
                     </div>
 
                     <!-- Kelola Memori / Pengetahuan Khusus AI -->
