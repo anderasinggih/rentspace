@@ -21,7 +21,11 @@ class GeminiAIService
             return null;
         }
 
-        $model = Setting::getVal('chatbot_model', 'gemini-2.0-flash-lite');
+        $model = Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
+        // Jika model masih berisi model lama yang sudah deprecated, sesuaikan ke gemini-3.5-flash-lite
+        if (in_array($model, ['gemini-2.0-flash-lite', 'gemini-1.5-flash-8b', 'gemini-1.5-flash', 'gemini-2.0-flash'])) {
+            $model = 'gemini-3.5-flash-lite';
+        }
         Log::info("GeminiAIService: Menjawab pesan customer '{$customerName}' menggunakan model {$model}");
 
         // Siapkan ringkasan data rental untuk knowledge base AI
@@ -55,9 +59,6 @@ PANDUAN MENJAWAB:
 5. Jawaban harus padat dan to the point, jangan terlalu panjang.";
 
         try {
-            // Gunakan model yang dipilih oleh admin di pengaturan (tanpa fallback)
-            $model = Setting::getVal('chatbot_model', 'gemini-2.0-flash-lite');
-
             $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
                 'contents' => [
                     [
