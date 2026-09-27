@@ -189,6 +189,7 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
     }
 
     // 4. Delegasikan query ke Laravel Webhook (untuk cek status booking atau katalog langsung dari DB)
+    try {
         const res = await axios.post(LARAVEL_WEBHOOK_URL, {
             sender_jid: sender,
             phone: senderNumber,
