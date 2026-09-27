@@ -46,6 +46,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/ratings', \App\Livewire\Admin\RatingManager::class)->name('admin.ratings');
         Route::get('/admin/scan', \App\Livewire\Admin\QuickScan::class)->name('admin.scan');
         Route::get('/admin/radar', \App\Livewire\Admin\RadarDevices::class)->name('admin.radar');
+        Route::get('/admin/whatsapp-qr', function() {
+            $botUrl = config('services.whatsapp.url', 'http://localhost:3001');
+            try {
+                $res = \Illuminate\Support\Facades\Http::timeout(5)->get("{$botUrl}/qr");
+                return response($res->body(), $res->status())->header('Content-Type', 'text/html');
+            } catch (\Exception $e) {
+                return "<div style='font-family:sans-serif;padding:2rem;text-align:center;color:#333;background:#f8fafc;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;'>
+                    <h2 style='color:#ef4444;'>WhatsApp Bot Belum Aktif di Server</h2>
+                    <p>Pastikan Anda sudah menjalankan bot di server via SSH/Terminal:</p>
+                    <pre style='background:#1e293b;color:#f8fafc;padding:12px 20px;border-radius:8px;'>cd ~/rentspace/whatsapp-bot && npm start</pre>
+                    <p style='font-size:13px;color:#64748b;'>Error: " . htmlspecialchars($e->getMessage()) . "</p>
+                    <a href='" . route('admin.settings', ['tab' => 'whatsapp']) . "' style='display:inline-block;margin-top:15px;padding:8px 16px;background:#0284c7;color:white;text-decoration:none;border-radius:6px;'>Kembali ke Settings</a>
+                </div>";
+            }
+        })->name('admin.whatsapp-qr');
 
         // Printable Report Routes
         Route::get('/admin/report/monthly', [\App\Http\Controllers\Admin\ReportController::class, 'monthly'])->name('admin.report.monthly');

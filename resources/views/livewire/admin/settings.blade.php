@@ -1529,7 +1529,7 @@
                         <p class="text-xs text-muted-foreground mt-0.5">Layanan bot WhatsApp mandiri (Baileys) untuk kirim invoice otomatis dan chatbot customer.</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <a href="http://localhost:3001/qr" target="_blank"
+                        <a href="{{ route('admin.whatsapp-qr') }}" target="_blank"
                             class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>
                             Buka Layar Scan QR Code
