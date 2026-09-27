@@ -348,7 +348,7 @@ PANDUAN MENJAWAB (SANGAT PENTING):
             : $returnToday->map(function ($r) use ($now, $statusIndo) {
                 $suffix = '';
                 if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast()) {
-                    $suffix = ' *** SUDAH MELEBIHI JADWAL ' . $now->diffInMinutes(\Carbon\Carbon::parse($r->waktu_selesai)) . ' MENIT ***';
+                    $suffix = ' *** SUDAH MELEBIHI JADWAL ' . self::minutesLate($now, $r->waktu_selesai) . ' MENIT ***';
                 } elseif ($r->handed_over_at) {
                     $suffix = ' | Sudah dikembalikan: ' . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M H:i');
                 }
@@ -364,8 +364,7 @@ PANDUAN MENJAWAB (SANGAT PENTING):
         $lateText = $lateRentals->isEmpty()
             ? "Tidak ada penyewa yang terlambat.\n"
             : $lateRentals->map(function ($r) use ($now, $statusIndo) {
-                $mnt = $now->diffInMinutes(\Carbon\Carbon::parse($r->waktu_selesai));
-                return self::rentalLine($r, $statusIndo, " *** TERLAMBAT {$mnt} MENIT ***");
+                return self::rentalLine($r, $statusIndo, ' *** TERLAMBAT ' . self::minutesLate($now, $r->waktu_selesai) . ' MENIT ***');
             })->implode('');
 
         // --- BOOKING MENUNGGU (status pending: sudah bayar, belum ambil) ---
@@ -413,7 +412,7 @@ PANDUAN MENJAWAB (SANGAT PENTING):
             ->get();
         foreach ($lateHistory as $r) {
             $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
-            $telat = \Carbon\Carbon::parse($r->waktu_selesai)->diffInMinutes(\Carbon\Carbon::parse($r->handed_over_at));
+            $telat = (int) round(\Carbon\Carbon::parse($r->waktu_selesai)->diffInMinutes(\Carbon\Carbon::parse($r->handed_over_at)));
             $lateHistoryText .= "• " . ($r->nama ?: '-') . " | Unit: {$uNames} | Telat: {$telat} menit"
                 . " | Jadwal: " . \Carbon\Carbon::parse($r->waktu_selesai)->translatedFormat('d M Y H:i')
                 . " | Aktual: " . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M Y H:i')
@@ -535,6 +534,21 @@ Jawab sebagai asisten data internal:";
         }
 
         return null;
+    }
+
+    /**
+     * Selisih menit yang sudah lewat, selalu bilangan bulat positif.
+     *
+     * Carbon 3 mengembalikan diffInMinutes() sebagai float dan bernilai
+     * negatif kalau argumennya di masa lalu, sehingga laporan bisa tampil
+     * "Terlambat -826 menit". Absolutkan dan bulatkan di sini.
+     */
+    private static function minutesLate(\Carbon\Carbon $now, $since): int
+    {
+        if (!$since) return 0;
+        $since = \Carbon\Carbon::parse($since);
+        if ($since->greaterThanOrEqualTo($now)) return 0;
+        return (int) round($since->diffInMinutes($now));
     }
 
     /**
