@@ -1743,20 +1743,52 @@
                                         </div>
                                     @empty
                                         <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
-                                            Belum ada grup. Buat grup baru atau klik "Impor Semua Pelanggan".
+                                            Belum ada grup. Buat grup baru atau impor langsung dari database customer.
                                         </div>
                                     @endforelse
                                 </div>
 
-                                <!-- Form Buat Grup Baru -->
+                                <!-- Filter & Impor dari Database Customer -->
+                                <div class="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wide">📥 Impor Otomatis Dari Database</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-[10px] text-muted-foreground mb-1">Filter Unit Tertentu</label>
+                                            <select wire:model="import_filter_unit_id" class="w-full rounded border border-input bg-background px-2 py-1 text-xs">
+                                                <option value="">-- Semua Unit --</option>
+                                                @foreach($unitsList as $u)
+                                                    <option value="{{ $u->id }}">{{ $u->nama_lengkap ?: $u->seri }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] text-muted-foreground mb-1">Status Sewa</label>
+                                            <select wire:model="import_filter_status" class="w-full rounded border border-input bg-background px-2 py-1 text-xs">
+                                                <option value="">-- Semua Status --</option>
+                                                <option value="completed">Sewa Selesai</option>
+                                                <option value="renting">Sedang Menyewa</option>
+                                                <option value="paid">Lunas / Terbayar</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="button" wire:click="importCustomersToGroup"
+                                        class="w-full inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-7 px-3 text-xs font-bold transition-colors">
+                                        + Buat Grup dari Data Rental Terpilih
+                                    </button>
+                                </div>
+
+                                <!-- Form Buat Grup Baru Manual -->
                                 <div class="pt-2 border-t border-border/60 space-y-2">
-                                    <input type="text" wire:model="new_group_name" placeholder="Nama Grup (Misal: Pelanggan VIP / Member)"
+                                    <span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">✍️ Buat Grup Manual</span>
+                                    <input type="text" wire:model="new_group_name" placeholder="Nama Grup (Misal: Partner Toko / Grup Khusus)"
                                         class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary">
-                                    <textarea wire:model="new_group_numbers" rows="2" placeholder="Nomor WhatsApp (pisahkan baris baru atau koma, misal: 0881082411878, 08123456789)"
+                                    <textarea wire:model="new_group_numbers" rows="2" placeholder="Nomor WhatsApp manual (pisahkan baris baru atau koma, misal: 0881082411878, 08123456789)"
                                         class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-mono"></textarea>
                                     <button type="button" wire:click="addBroadcastGroup"
-                                        class="inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-7 px-3 text-xs font-bold transition-colors">
-                                        + Simpan Grup Baru
+                                        class="inline-flex items-center justify-center rounded-md bg-muted text-foreground border border-border shadow hover:bg-muted/80 h-7 px-3 text-xs font-semibold transition-colors">
+                                        + Simpan Grup Manual
                                     </button>
                                 </div>
                             </div>
@@ -1833,10 +1865,26 @@
                                         <label class="block text-xs font-bold text-muted-foreground uppercase">Isi Pesan Broadcast</label>
                                         <span class="text-[10px] text-muted-foreground">Bisa pilih template dari shortcut di sebelah kiri</span>
                                     </div>
-                                    <textarea wire:model="active_broadcast_message" rows="7" 
+                                    <textarea wire:model="active_broadcast_message" rows="6" 
                                         placeholder="Tulis pesan promosi atau pengumuman yang ingin dikirimkan ke pelanggan..."
                                         class="w-full rounded-md border border-input bg-background p-3 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-sans leading-relaxed"></textarea>
                                     @error('active_broadcast_message') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Proteksi Anti-Banned WhatsApp -->
+                                <div class="p-3 rounded-lg bg-muted/40 border border-border text-xs space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-foreground flex items-center gap-1.5">
+                                            🛡️ Proteksi Anti-Banned WhatsApp
+                                        </span>
+                                        <select wire:model="broadcast_delay_mode" class="rounded border border-input bg-background px-2 py-0.5 text-xs font-medium">
+                                            <option value="safe">Mode Aman (Jeda 2-4 detik + jeda istirahat)</option>
+                                            <option value="normal">Mode Cepat (Jeda 1-2 detik)</option>
+                                        </select>
+                                    </div>
+                                    <p class="text-[11px] text-muted-foreground leading-normal">
+                                        Sistem secara otomatis memvariasikan salam pembuka dan memberikan jeda acak di setiap pengiriman agar tidak terdeteksi bot/spam oleh algoritma WhatsApp.
+                                    </p>
                                 </div>
                             </div>
 

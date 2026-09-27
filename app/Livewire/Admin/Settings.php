@@ -102,6 +102,9 @@ class Settings extends Component
     public $active_broadcast_group = '';
     public $active_broadcast_message = '';
     public $is_sending_broadcast = false;
+    public $broadcast_delay_mode = 'safe'; // 'safe' (2-4s random delay + pause) or 'normal' (1-2s)
+    public $import_filter_unit_id = '';
+    public $import_filter_status = '';
 
     public $onesignal_app_id = '';
     public $onesignal_rest_api_key = '';
@@ -552,19 +555,41 @@ class Settings extends Component
     public function importCustomersToGroup()
     {
         if (auth()->user()->role !== 'admin') return;
-        // Ambil semua nomor wa unik dari tabel rentals
-        $numbers = \App\Models\Rental::whereNotNull('no_wa')
-            ->where('no_wa', '!=', '')
-            ->pluck('no_wa')
+
+        $query = \App\Models\Rental::whereNotNull('no_wa')->where('no_wa', '!=', '');
+
+        $filterLabel = 'Semua Pelanggan';
+
+        if (!empty($this->import_filter_unit_id)) {
+            $unit = \App\Models\Unit::find($this->import_filter_unit_id);
+            if ($unit) {
+                $query->whereHas('units', function ($q) use ($unit) {
+                    $q->where('units.id', $unit->id);
+                });
+                $filterLabel = 'Pelanggan ' . ($unit->nama_lengkap ?: $unit->seri);
+            }
+        }
+
+        if (!empty($this->import_filter_status)) {
+            $query->where('status', $this->import_filter_status);
+            $filterLabel .= ' (' . ucfirst($this->import_filter_status) . ')';
+        }
+
+        $numbers = $query->pluck('no_wa')
             ->map(fn($n) => preg_replace('/[^0-9]/', '', $n))
             ->filter(fn($n) => strlen($n) >= 9)
             ->unique()
             ->values()
             ->toArray();
 
+        if (empty($numbers)) {
+            session()->flash('broadcast_error', 'Tidak ada data kontak nomor WhatsApp yang cocok dengan filter yang dipilih.');
+            return;
+        }
+
         $this->broadcast_groups[] = [
             'id' => uniqid('grp_'),
-            'name' => 'Semua Pelanggan Rental (' . count($numbers) . ' kontak)',
+            'name' => $filterLabel . ' (' . count($numbers) . ' kontak)',
             'numbers' => $numbers,
             'count' => count($numbers),
             'created_at' => now()->toDateTimeString(),
@@ -575,7 +600,7 @@ class Settings extends Component
             ['value' => json_encode(array_values($this->broadcast_groups))]
         );
 
-        session()->flash('general_message', 'Berhasil mengimpor ' . count($numbers) . ' kontak pelanggan ke grup broadcast.');
+        session()->flash('general_message', "Berhasil membuat grup \"{$filterLabel}\" dengan " . count($numbers) . " kontak dari database.");
     }
 
     public function removeBroadcastGroup($index)
@@ -653,9 +678,11 @@ class Settings extends Component
 
         // Temukan nomor-nomor di group
         $selectedNumbers = [];
+        $groupName = '';
         foreach ($this->broadcast_groups as $grp) {
             if ($grp['id'] === $this->active_broadcast_group) {
                 $selectedNumbers = $grp['numbers'] ?? [];
+                $groupName = $grp['name'] ?? 'Grup';
                 break;
             }
         }
@@ -668,19 +695,43 @@ class Settings extends Component
         $waService = app(\App\Services\WhatsAppService::class);
         $successCount = 0;
         $failCount = 0;
+        $total = count($selectedNumbers);
 
-        foreach ($selectedNumbers as $phone) {
-            $res = $waService->sendMessage($phone, $this->active_broadcast_message);
+        // Variasi salam anti-spam identik
+        $greetings = ['Halo Kak! 😊', 'Halo Kak,', 'Hai Kak! ✨', 'Halo Kak, salam dari Rent Space!'];
+
+        foreach ($selectedNumbers as $i => $phone) {
+            $msgToSend = $this->active_broadcast_message;
+            if (str_starts_with($msgToSend, 'Halo Kak')) {
+                $greeting = $greetings[array_rand($greetings)];
+                $msgToSend = preg_replace('/^Halo Kak(!|,\s*|\s*)/', $greeting . ' ', $msgToSend);
+            }
+
+            $res = $waService->sendMessage($phone, $msgToSend);
             if ($res) {
                 $successCount++;
             } else {
                 $failCount++;
             }
-            // Sedikit jeda aman untuk mencegah flood
-            usleep(250000); // 0.25 detik
+
+            // ANTI-BANNED PROTECTION:
+            // Jeda dinamis acak menyerupai manusia agar tidak terdeteksi bot spam oleh WhatsApp
+            if ($this->broadcast_delay_mode === 'safe') {
+                $sleepUs = rand(2000000, 4000000); // 2.0 s/d 4.0 detik per pesan
+                usleep($sleepUs);
+
+                // Istirahat ekstra 5 detik setiap kelipatan 10 pesan
+                if (($i + 1) % 10 === 0 && ($i + 1) < $total) {
+                    sleep(5);
+                }
+            } else {
+                // Normal mode
+                $sleepUs = rand(1000000, 2000000); // 1.0 s/d 2.0 detik
+                usleep($sleepUs);
+            }
         }
 
-        session()->flash('general_message', "Broadcast selesai dikirim: {$successCount} sukses, {$failCount} gagal.");
+        session()->flash('general_message', "✅ Broadcast ke {$groupName} selesai: {$successCount} sukses, {$failCount} gagal.");
         $this->reset(['active_broadcast_message', 'active_broadcast_group']);
     }
 
@@ -931,10 +982,13 @@ class Settings extends Component
             ->orderBy('sent_at', 'desc')
             ->paginate(10, ['*'], 'customerMailPage');
 
+        $unitsList = \App\Models\Unit::orderBy('seri')->get();
+
         return view('livewire.admin.settings', [
             'users' => $usersQuery->paginate($this->perPage, ['*'], 'userPage'),
             'adminMailLogs' => $adminMailLogs,
-            'customerMailLogs' => $customerMailLogs
+            'customerMailLogs' => $customerMailLogs,
+            'unitsList' => $unitsList,
         ])->layout('layouts.admin');
     }
 }

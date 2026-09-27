@@ -36,6 +36,12 @@ class WhatsAppWebhookController extends Controller
             return response()->json(['status' => true, 'reply' => $adminReply]);
         }
 
+        // 0b. Cek Perintah Khusus Admin: /broadcast
+        if (str_starts_with(strtolower($text), '/broadcast')) {
+            $broadcastReply = $this->handleBroadcastAdminCommand($text, $phone);
+            return response()->json(['status' => true, 'reply' => $broadcastReply]);
+        }
+
         // 1. Cek perintah KATALOG / LIST / DAFTAR HARGA
         if (preg_match('/^(katalog|pricelist|harga|list|daftar\s*harga|1)$/i', $text)) {
             $reply = $this->buildCatalogResponse();
@@ -283,6 +289,181 @@ class WhatsAppWebhookController extends Controller
         }
 
         return "⚠️ Perintah tidak dikenali. Ketik `/rentspacesettings help` untuk bantuan.";
+    }
+
+    /**
+     * Handler untuk /broadcast (Kelola dan Eksekusi Broadcast via WA Admin / Grup Admin)
+     */
+    private function handleBroadcastAdminCommand(string $text, ?string $phone): string
+    {
+        $raw = trim(substr($text, strlen('/broadcast')));
+        $groups = json_decode(\App\Models\Setting::getVal('wa_broadcast_groups', '[]'), true) ?: [];
+        $shortcuts = json_decode(\App\Models\Setting::getVal('wa_broadcast_shortcuts', '[]'), true) ?: [];
+
+        // 1. Menu Bantuan
+        if (empty($raw) || strtolower($raw) === 'help') {
+            $msg = "📢 *RENT SPACE BROADCAST COMMANDS* 📢\n";
+            $msg .= "------------------------------------\n";
+            $msg .= "Kelola dan kirim broadcast langsung dari chat/grup admin.\n\n";
+            $msg .= "📋 *Pilihan Perintah:*\n";
+            $msg .= "1️⃣ `/broadcast groups`\n   Lihat daftar grup penerima broadcast.\n";
+            $msg .= "2️⃣ `/broadcast sync`\n   Tarik/sinkronisasi semua nomor customer dari database ke grup 'Semua Pelanggan'.\n";
+            $msg .= "3️⃣ `/broadcast shortcuts`\n   Lihat daftar template pesan broadcast.\n";
+            $msg .= "4️⃣ `/broadcast send [Nomor_Grup] [Pesan]`\n   Kirim pesan broadcast ke grup nomor urut tertentu.\n   _Contoh:_ `/broadcast send 1 Halo Kak, unit iPhone 13 ready nih! https://rentspacepurwokerto.my.id/booking`\n";
+            $msg .= "5️⃣ `/broadcast send [Nomor_Grup] /[Kode_Shortcut]`\n   Kirim broadcast menggunakan template shortcut.\n   _Contoh:_ `/broadcast send 1 /promo_weekend`\n\n";
+            $msg .= "🛡️ _Sistem dilengkapi proteksi anti-banned: jeda dinamis acak (2-4 detik per pesan) + rotasi salam._";
+            return $msg;
+        }
+
+        // 2. Daftar Grup: /broadcast groups atau /broadcast list
+        if (preg_match('/^(groups|group|list)$/i', $raw)) {
+            if (empty($groups)) {
+                return "ℹ️ Belum ada grup broadcast tersimpan.\nKetik `/broadcast sync` untuk menarik semua kontak customer dari database.";
+            }
+
+            $msg = "👥 *DAFTAR GRUP BROADCAST (" . count($groups) . "):*\n";
+            $msg .= "------------------------------------\n";
+            foreach ($groups as $idx => $grp) {
+                $no = $idx + 1;
+                $name = $grp['name'] ?? 'Grup';
+                $cnt = $grp['count'] ?? count($grp['numbers'] ?? []);
+                $msg .= "{$no}. *{$name}* — {$cnt} Nomor\n";
+            }
+            $msg .= "\n💡 _Kirim broadcast dengan format:_ `/broadcast send [No_Grup] [Pesan]`";
+            return $msg;
+        }
+
+        // 3. Sinkronkan nomor pelanggan dari database: /broadcast sync
+        if (strtolower($raw) === 'sync' || strtolower($raw) === 'import') {
+            $numbers = \App\Models\Rental::whereNotNull('no_wa')
+                ->where('no_wa', '!=', '')
+                ->pluck('no_wa')
+                ->map(fn($n) => preg_replace('/[^0-9]/', '', $n))
+                ->filter(fn($n) => strlen($n) >= 9)
+                ->unique()
+                ->values()
+                ->toArray();
+
+            // Cek apakah sudah ada grup 'Semua Pelanggan'
+            $updated = false;
+            foreach ($groups as &$grp) {
+                if (str_contains(strtolower($grp['name']), 'pelanggan')) {
+                    $grp['numbers'] = $numbers;
+                    $grp['count'] = count($numbers);
+                    $grp['updated_at'] = now()->toDateTimeString();
+                    $updated = true;
+                    break;
+                }
+            }
+
+            if (!$updated) {
+                $groups[] = [
+                    'id' => uniqid('grp_'),
+                    'name' => 'Semua Pelanggan Rental (' . count($numbers) . ' kontak)',
+                    'numbers' => $numbers,
+                    'count' => count($numbers),
+                    'created_at' => now()->toDateTimeString(),
+                ];
+            }
+
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'wa_broadcast_groups'],
+                ['value' => json_encode(array_values($groups))]
+            );
+
+            return "✅ *Sinkronisasi Database Berhasil!*\nTotal *" . count($numbers) . " kontak* nomor pelanggan rental berhasil dimuat ke grup broadcast.";
+        }
+
+        // 4. Daftar Template / Shortcut: /broadcast shortcuts
+        if (preg_match('/^(shortcuts|shortcut|templates)$/i', $raw)) {
+            if (empty($shortcuts)) {
+                return "ℹ️ Belum ada shortcut template tersimpan.";
+            }
+
+            $msg = "⚡ *DAFTAR TEMPLATE SHORTCUT:* \n";
+            $msg .= "------------------------------------\n";
+            foreach ($shortcuts as $s) {
+                $code = $s['code'] ?? '';
+                $title = $s['title'] ?? '';
+                $msg .= "• */{$code}* ({$title})\n  \"" . ($s['message'] ?? '') . "\"\n\n";
+            }
+            return $msg;
+        }
+
+        // 5. Eksekusi Pengiriman: /broadcast send [Nomor_Grup] [Pesan / /shortcut]
+        if (preg_match('/^send\s+(\d+)\s+(.+)$/is', $raw, $matches)) {
+            $groupIndex = (int) $matches[1] - 1;
+            $content = trim($matches[2]);
+
+            if (!isset($groups[$groupIndex])) {
+                return "⚠️ Grup nomor *{$matches[1]}* tidak ditemukan.\nKetik `/broadcast groups` untuk melihat nomor grup.";
+            }
+
+            $targetGroup = $groups[$groupIndex];
+            $targetNumbers = $targetGroup['numbers'] ?? [];
+
+            if (empty($targetNumbers)) {
+                return "⚠️ Grup *{$targetGroup['name']}* tidak memiliki daftar nomor kontak.";
+            }
+
+            // Jika konten adalah shortcut (misal: /promo_weekend)
+            $actualMessage = $content;
+            if (str_starts_with($content, '/')) {
+                $shortcutCode = ltrim($content, '/');
+                foreach ($shortcuts as $sc) {
+                    if (strtolower($sc['code']) === strtolower($shortcutCode)) {
+                        $actualMessage = $sc['message'];
+                        break;
+                    }
+                }
+            }
+
+            // Eksekusi pengiriman dengan proteksi anti-banned
+            $waService = app(\App\Services\WhatsAppService::class);
+            $total = count($targetNumbers);
+            $success = 0;
+            $failed = 0;
+
+            // Variasi awalan agar pesan tidak identik 100% (anti-spam flag)
+            $greetings = ['Halo Kak! 😊', 'Halo Kak,', 'Hai Kak! ✨', 'Halo Kak, salam dari Rent Space!'];
+
+            foreach ($targetNumbers as $i => $num) {
+                // Beri variasi salam acak jika pesan dimulai dengan 'Halo Kak'
+                $finalMessage = $actualMessage;
+                if (str_starts_with($actualMessage, 'Halo Kak')) {
+                    $randomGreeting = $greetings[array_rand($greetings)];
+                    $finalMessage = preg_replace('/^Halo Kak(!|,\s*|\s*)/', $randomGreeting . ' ', $actualMessage);
+                }
+
+                $res = $waService->sendMessage($num, $finalMessage);
+                if ($res) {
+                    $success++;
+                } else {
+                    $failed++;
+                }
+
+                // JEDA AMAN ANTI-BANNED (Human-like delay):
+                // Jeda acak antara 2 sampai 4 detik per nomor
+                $delayUs = rand(2000000, 4000000); // 2.0 s/d 4.0 detik
+                usleep($delayUs);
+
+                // Tambahan jeda istirahat ekstra setiap 10 pesan (istirahat 5 detik)
+                if (($i + 1) % 10 === 0 && ($i + 1) < $total) {
+                    sleep(5);
+                }
+            }
+
+            return "🚀 *BROADCAST SELESAI DIKIRIM!*\n" .
+                   "------------------------------------\n" .
+                   "• *Target Grup*: {$targetGroup['name']}\n" .
+                   "• *Total Kontak*: {$total}\n" .
+                   "• *Berhasil Terkirim*: {$success}\n" .
+                   "• *Gagal*: {$failed}\n" .
+                   "• *Waktu*: " . now()->translatedFormat('d M Y H:i') . " WIB\n\n" .
+                   "_Semua pesan terkirim dengan jeda aman anti-banned._";
+        }
+
+        return "⚠️ Perintah tidak dikenali. Ketik `/broadcast help` untuk petunjuk lengkap.";
     }
 
     /**

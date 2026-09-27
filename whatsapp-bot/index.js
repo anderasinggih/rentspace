@@ -106,13 +106,19 @@ async function connectToWhatsApp() {
             if (!msg.message || msg.key.fromMe) continue;
 
             const sender = msg.key.remoteJid;
-            // Ignore group messages for customer private bot
-            if (sender.endsWith('@g.us')) continue;
-
             const text = msg.message.conversation ||
                          msg.message.extendedTextMessage?.text ||
                          msg.message.imageMessage?.caption ||
                          '';
+
+            const trimmedText = text.trim();
+            const lowerText = trimmedText.toLowerCase();
+
+            // Jika dari Grup WhatsApp (@g.us), hanya proses perintah admin khusus
+            const isGroup = sender.endsWith('@g.us');
+            if (isGroup && !lowerText.startsWith('/rentspacesettings') && !lowerText.startsWith('/broadcast')) {
+                continue;
+            }
 
             let actualPhone = '';
             // Jika remoteJid adalah normal WhatsApp user (@s.whatsapp.net)
@@ -140,6 +146,31 @@ async function connectToWhatsApp() {
 // Logic Chatbot Auto-Reply
 async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text) {
     const lower = text.toLowerCase();
+
+    // 0. Perintah Khusus Admin (/rentspacesettings, /broadcast)
+    if (lower.startsWith('/rentspacesettings') || lower.startsWith('/broadcast')) {
+        try {
+            const res = await axios.post(LARAVEL_WEBHOOK_URL, {
+                sender_jid: sender,
+                phone: senderNumber,
+                actual_phone: actualPhone,
+                name: pushName,
+                text: text
+            }, {
+                headers: { 'X-API-KEY': API_KEY },
+                timeout: 15000
+            });
+
+            if (res.data && res.data.reply) {
+                await sock.sendMessage(sender, { text: res.data.reply });
+                return;
+            }
+        } catch (err) {
+            console.error('[RentSpace WA Bot] Admin Command Error:', err.message);
+            await sock.sendMessage(sender, { text: '⚠️ Terjadi kesalahan saat memproses perintah admin: ' + err.message });
+            return;
+        }
+    }
 
     // 1. Menu Bantuan / Halo
     if (['halo', 'hai', 'hi', 'p', 'menu', 'bantuan', 'start', 'info'].includes(lower)) {
