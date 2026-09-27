@@ -59,23 +59,52 @@ class GeminiAIService
         $memoryContext = AiMemoryService::contextFor($conv, $userMessage, 260);
         $chatContext = self::formatRecentTurns($recentTurns, 'Customer', 'CS');
 
-        $systemPrompt = "Kamu adalah Customer Service WhatsApp di 'Rent Space Purwokerto' (rental iPhone, gadget, kamera di Purwokerto).
-Waktu saat ini: {$currentTimeStr}.
-Customer yang sedang chat bernama: {$customerName}.
-Lokasi Toko: {$address} | WhatsApp Admin: {$adminWa} | Booking: https://rentspacepurwokerto.my.id/booking
+        // Pertanyaan customer sebelumnya, supaya model tidak salah menjawab
+        // pertanyaan yang sudah lewat (mis. dijawab iPhone 12 padahal yang
+        // ditanya iPhone 13).
+        $prevQuestion = '';
+        if (!empty($recentTurns)) {
+            $prevQuestion = trim((string) end($recentTurns)['user']);
+        }
+        $isFirstTurn = $prevQuestion === '';
 
-CARA PESAN (ringkas): buka https://rentspacepurwokerto.my.id/booking → pilih tanggal → pilih unit → isi data (nama, NIK, No. WA, alamat) → pilih pembayaran (QRIS / Transfer / Cash) → bayar & unggah bukti bila perlu → admin konfirmasi → unit siap diambil di toko. Kode promo bisa diinput di halaman booking.
+        $systemPrompt = "Kamu CS WhatsApp asli dari 'Rent Space Purwokerto' (rental iPhone, gadget, kamera, PS3 di Purwokerto).
+Waktu saat ini: {$currentTimeStr}.
+Nama customer: {$customerName}.
+Toko: {$address} | WA Admin: {$adminWa} | Booking: https://rentspacepurwokerto.my.id/booking
+
+CARA PESAN: buka https://rentspacepurwokerto.my.id/booking → pilih tanggal → pilih unit → isi data → pilih pembayaran (QRIS / Transfer / Cash) → bayar & unggah bukti bila perlu → admin konfirmasi → unit siap diambil di toko. Kode promo bisa diinput di halaman booking.
 {$dataBlock}
 " . ($memoryContext !== '' ? "\nCATATAN PERCAKAPAN SEBELUMNYA:\n{$memoryContext}\n" : '')
 . ($chatContext !== '' ? "\nOBROLAN SEBELUMNYA:\n{$chatContext}\n" : '')
-. "PANDUAN MENJAWAB (SANGAT PENTING):
-1. GAYA BAHASA CS MANUSIA ASLI: santai, ramah, to the point. Panggil 'Kak {$customerName}'. Maksimal 1 emoji, jangan tabur emoticon.
-2. JANGAN pernah menutup dengan template 'Jika ada yang lain hubungi admin...' atau 'Ada yang bisa dibantu lagi?'. Cukup jawab solusinya.
-3. INGAT PERCAKAPAN SEBELUMNYA: pertanyaan lanjutan ('jam berapa?', 'yang 128 gb?', 'harga sewanya?') harus dipahami dari riwayat obrolan. Jangan minta mengulang pertanyaan yang sudah jelas.
-4. JADWAL REAL-TIME: pakai bagian STATUS JADWAL. Kalau unit yang ditanyakan sedang dibooking, infokan jujur kapan baru bebas. Kalau tidak ada, katakan ready dan arahkan ke halaman booking.
-5. PROMO: sebutkan promo yang tertulis di data, jangan karang promo baru.
-6. FALLBACK: kalau tidak tahu atau tidak yakin (negosiasi harga, masalah teknis, di luar data), sarankan customer balas 'ADMIN'.
-7. Jawaban singkat 2-4 kalimat, kecuali panduan cara pesan.";
+. ($prevQuestion !== '' ? "\nCustomer SEKARANG nanya: \"{$userMessage}\"\nCustomer SEBELUMNYA nanya: \"{$prevQuestion}\"\n" : "\nCustomer nanya: \"{$userMessage}\"\n")
+. "\nCARA JAWAB (WAJIB, ini yang bikin kelihatan manusia):
+1. Jawab HANYA pertanyaan terakhir di atas. Kalau customer ganti topik, jangan campur jawaban yang lama.
+2. PANJANG: 1-2 kalimat pendek, maksimal sekitar 200 karakter. Bukan paragraf, bukan daftar panjang. Kalau mepet, tulis yang paling penting saja.
+3. JANGAN buka dengan 'Halo Kak' / 'Hai Kak' lagi kalau obrolan sudah berjalan. Sapaan cuma di pesan pertama saja.
+4. JANGAN sebut kode internal unit ('ID: 8'), kategori, atau istilah teknis. Customer cuma butuh: nama unit, harga, dan kapan bebas.
+5. JANGAN mengulang-ulang pertanyaan customer dan JANGAN menutup dengan basa-basi ('Jika ada yang lain...', 'Ada yang bisa dibantu lagi?'). Beri jawabannya, lalu STOP.
+6. Jangan tempel promo/kode diskon kalau customer tidak tanya promo atau harga.
+7. Emoji paling banyak 1, dan jangan pakai 🙏/😊 di tiap balasan. Jangan pakai markdown *, [], atau bullet kecuali customer memang minta daftar.
+8. Ikuti gaya customer: kalau dia ngetik singkat dan santai ('ip 12 ready kapan?'), kamu balas singkat dan santai juga. Huruf besar di awal kalimat saja.
+9. JADWAL REAL-TIME: pakai bagian STATUS JADWAL. Kalau unitnya sedang dibooking, sebut tanggal/jam bebasnya. Kalau tidak ada di daftar, berarti ready.
+10. Kalau tidak yakin (hanya untuk negosiasi harga, kendala teknis, atau di luar data), jawab singkat lalu bilang balas 'ADMIN'.
+
+CONTOH GAYA (ikuti pola ini, jangan lebih panjang):
+Customer: 'sewa tank ada?'
+CS: 'tank belum ada kak 😅 yang ada iPhone, kamera, sama PS3. PS3-nya 50rb/24 jam aja'
+
+Customer: 'ip 12 ready kapan?'
+CS: 'ip 12 ada 2, yang satu bebas besok jam 4 sore. yang satu lagi udah selesai dari tadi, buat hari ini bisa. mau ambil yang mana kak?'
+
+Customer: 'ip 13 ready kapan?'
+CS: 'ip 13 ready kak, mau hari ini atau besok?'
+
+Customer: 'harga iphone 12 pro max 128gb berapa?'
+CS: '12 pro max 128gb 250rb/24 jam kak, 12 jam 150rb'
+
+Customer: 'cara pesannya gimana?'
+CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi data, terus bayar QRIS. nanti unitnya siap di toko'";
 
         $inputTokens = AiMemoryService::estimateTokens($systemPrompt);
         $budget = AiMemoryService::consumeTokenBudget('wa_customer', $inputTokens);
@@ -85,9 +114,16 @@ CARA PESAN (ringkas): buka https://rentspacepurwokerto.my.id/booking → pilih t
             $inputTokens = AiMemoryService::estimateTokens($systemPrompt);
         }
 
-        $text = self::askGemini($systemPrompt, $model, $apiKey, 0.6, 200, 30);
+        $text = self::askGemini($systemPrompt, $model, $apiKey, 0.7, 130, 25);
 
         if ($text !== null) {
+            // Panduan cara pesan memang perlu ruang lebih; sisanya dibatasi ketat
+            // supaya tetap resemble chat CS, bukan paragraf AI.
+            $text = self::tidyCustomerReply(
+                $text,
+                $isFirstTurn,
+                ($sections['cara_pesan'] ?? false) ? 520 : 300
+            );
             AiMemoryService::saveTurn($conv, $userMessage, $text, self::customerIntent($sections), $inputTokens, $customerName);
             // Cache lama tetap diisi agar kompatibel dengan alur lama (rapid reply).
             $cacheKey = 'wa_chat_history_' . md5($peer);
@@ -97,6 +133,87 @@ CARA PESAN (ringkas): buka https://rentspacepurwokerto.my.id/booking → pilih t
         }
 
         return $text;
+    }
+
+    /**
+     * Bersihkan jawaban AI biar tidak terlihat seperti bot.
+     *
+     * Model tetap suka membuka balasan dengan "Halo Kak {nama}, ..." di setiap
+     * pesan dan kadang memuntahkan seluruh daftar unit. Dua hal itu yang bikin
+     * customer komentar "kayak AI banget", jadi dibersihkan di sini (bukan
+     * bergantung pada prompt saja).
+     */
+    private static function tidyCustomerReply(string $text, bool $isFirstTurn, int $limit = 300): string
+    {
+        $text = self::formatForWhatsApp($text);
+
+        // 1. Buang sapaan pembuka kalau obrolan sudah berjalan.
+        //    Polanya sengaja ketat (sapaan + maksimal nama): kalau longgar,
+        //    kalimat bermakna seperti "Maaf belum ada kak, PS3 saja..." ikut hilang.
+        if (! $isFirstTurn) {
+            $stripped = preg_replace(
+                '/^(?:halo|hai|hi|hei|permisi|assalamualaikum|salam|selamat\s+(?:pagi|siang|sore|malam))'
+                . '(?:\s*(?:kak\w*|mas|mba|mba|bang|bro|om|bu|dadak|adyok|apak|teman|pak|dear)){0,2}'
+                . '(?:\s+[A-Za-z][\w\'-]{1,20})?\s*[,!]\s*/iu',
+                '',
+                $text,
+                1
+            );
+            if (is_string($stripped) && trim($stripped) !== '') {
+                $text = ltrim($stripped);
+            }
+        }
+
+        // 2. Buang ekor basa-basi (kalimat penutup template).
+        $text = preg_replace(
+            '/\s*(?:kalau|jika|bila)\b[^.!?\n]{0,80}(?:hubungi admin|terima kasih|🙏|😊)[^.!?\n]*[.!?]?\s*$/iu',
+            '',
+            $text
+        ) ?? $text;
+        $text = preg_replace(
+            '/\s*(?:ada yang bisa dibantu (?:lagi|apapun)\??|ada lagi yang bisa dibantu\??|jika ada yang lain[^\n]*|butuh bantuan lagi\??|mau lihat unit yang tersedia\??|butuh info lainnya\??)\s*$/iu',
+            '',
+            $text
+        ) ?? $text;
+        $text = rtrim(trim($text), " \t\n,.;:-");
+
+        // 3. Buang kebocoran data internal + rapikan artefak format.
+        // "ada dua unit (ID: 8 dan ID: 17)" persis yang bikin customer bilang
+        // "kok kayak AI banget", jadi ID internal tidak boleh lolos ke chat.
+        $text = preg_replace(
+            '/\s*\(?\bID:\s*\d+(?:\s*(?:dan|,&)\s*ID:\s*\d+)*\)?/iu',
+            '',
+            $text
+        ) ?? $text;
+        // "ya.PS3" -> "ya. PS3" (model kadang lupa spasi setelah titik).
+        $text = preg_replace('/([.!?])([A-Z][a-z])/u', '$1 $2', $text) ?? $text;
+        $text = preg_replace('/[ \t]{2,}/u', ' ', $text) ?? $text;
+        $text = preg_replace('/\s+([,.!?])/u', '$1', $text) ?? $text;
+        $text = rtrim(trim($text), " \t\n,.;:-");
+
+        // Huruf besar di awal kalimat, biar tidak terlihat seperti potongan-potongan.
+        // Lewati nama brand (iPhone, PS3, QRIS, ...) supaya casing-nya tidak rusak.
+        $firstWord = mb_strtolower(strtok($text, " \t\n,.:;!?") ?: '');
+        $brands = ['iphone', 'ipad', 'imac', 'ps', 'ps3', 'ps4', 'qris', 'wa', 'ds', 'dll', 'usb', 'tv', 'kip', 'ovo', 'dana', 'gopay', 'link'];
+        if (!in_array($firstWord, $brands, true) && preg_match('/^[a-z]/u', $text)) {
+            $text = mb_strtoupper(mb_substr($text, 0, 1)) . mb_substr($text, 1);
+        }
+
+        // 4. Potong kalau masih kepanjangan, di batas kalimat terdekat.
+        if (mb_strlen($text) > $limit) {
+            $head = mb_substr($text, 0, $limit);
+            $cut = max(
+                (int) mb_strrpos($head, '. '),
+                (int) mb_strrpos($head, '! '),
+                (int) mb_strrpos($head, '? '),
+                (int) mb_strrpos($head, "\n")
+            );
+            $text = $cut > 60
+                ? rtrim(mb_substr($head, 0, $cut + 1))
+                : rtrim(mb_substr($head, 0, $limit - 1)) . '…';
+        }
+
+        return trim($text) ?: $text;
     }
 
     private static function customerIntent(array $sections): string
@@ -136,12 +253,15 @@ CARA PESAN (ringkas): buka https://rentspacepurwokerto.my.id/booking → pilih t
                     $cat = $u->category?->name ?? 'Unit';
                     $p24 = $u->harga_per_hari ? 'Rp ' . number_format($u->harga_per_hari, 0, ',', '.') . '/24 jam' : '-';
                     $p12 = $u->harga_per_jam ? 'Rp ' . number_format($u->harga_per_jam * 12, 0, ',', '.') . '/12 jam' : '-';
-                    $text .= "- [ID: {$u->id}] {$u->nama_lengkap} ({$cat}, {$p24} / {$p12})\n";
+                    // ID unit sengaja TIDAK ikut: itu kode internal, dan kalau
+                    // muncul di jawaban customer jadi jelas "dijawab AI" sekaligus
+                    // tidak ada artinya buat dia.
+                    $text .= "- {$u->nama_lengkap} ({$cat}, {$p24} / {$p12})\n";
                 }
                 return $text;
             });
             if ($units !== '') {
-                $block .= "DAFTAR UNIT & HARGA:\n{$units}";
+                $block .= "DAFTAR UNIT & HARGA (pakai nama unit, jangan sebut ID internal):\n{$units}";
             }
         }
 
@@ -321,15 +441,16 @@ Lokasi Toko: {$address}.
 ATURAN PENTING (WAJIB DIPAATUHI):
 1. Data di bawah ini adalah KEBENARAN. Jawab HANYA dari data tersebut, jangan mengarang nama, nomor, atau angka.
 2. MEMORI: bagian \"YANG SUDAH DIPBAHAS\" adalah catatan percakapan sebelumnya dengan tim (kode booking, nama penyewa, topik). Pakai itu untuk menjawab pertanyaan lanjutan yang singkat, misalnya \"yang tadi\", \"trus dia\", \"yang nomor tadi\". Kalau pertanyaannya menyebut kode atau nama yang ada di memori, jawab langsung dari memori itu tanpa meminta penjelasan ulang.
-3. Data di bawah sudah DISARING sesuai pertanyaan. Bagian yang tidak dimuat berarti tidak relevan dengan pertanyaan ini. Kalau kamu butuh bagian yang tidak dimuat, JANGAN mengarang: katakan data itu tidak ikut dimuat dan sebut kata kuncinya (mis. \"denda\", \"riwayat\", \"nama penyewa\", \"jadwal hari ini\") supaya tim bisa bertanya lagi.
+3. Data di bawah sudah DISARING sesuai pertanyaan. Kalau bagian yang kamu butuh tidak ada, JANGAN mengarang isinya — katakan bagian itu tidak ikut dimuat dan sebut kata kuncinya (mis. \"denda\", \"jadwal hari ini\") supaya tim bisa bertanya lagi. Tapi kalau bagiannya ADA, itu jawabannya: jangan minta tim mengulang dan jangan bilang data tidak dimuat, langsung jawab dari isinya.
 4. Kalau ditanya \"hari ini\" / \"siapa yang mau ambil\" / \"siapa yang balikin\", pakai bagian JADWAL PENGAMBILAN HARI INI dan JADWAL PENGEMBALIAN HARI INI (sudah mencakup SEMUA status: pending, sudah bayar, sedang disewa). Jangan menebak.
-5. Kalau pertanyaan menyiratkan laporan harian, jawaban WAJIB memuat: jumlah penyewa yang ambil, jumlah yang balikin, dan status keterlambatan — lengkap dengan nama & jamnya.
-6. Bahasa gaul tim (cuk, yg, trs/trus, ngambil, balikin, telat, denda, omset, cod, msh, blm) adalah pertanyaan bisnis sungguhan, jawab dengan data.
-7. Kalau tidak ada yang cocok, sebutkan apa yang ADA yang mendekati (\"yang paling mendekati: ...\"), jangan langsung menyerah.
-8. Boleh tampilkan nama, nomor WA, alamat karena ini internal.
-9. Format WA: pakai *tebal* (satu bintang) dan bullet -. Jangan pakai markdown lain.
-10. Kata \"TERLAMBAT\" atau \"SUDAH MELEBIHI JADWAL\" berarti masalah nyata — wajib disebut di jawaban.
-11. Jawaban internal to the point, tidak perlu basa-basi sapaan.
+5. Kalau ditanya \"riwayat\", \"historical\", atau rentang tanggal (\"dari tgl 1 September sampai sekarang\", \"bulan lalu\"), pakai bagian RIWAYAT TRANSAKSI. bagian itu sudah memuat periode, total transaksi, jumlah penyewa berbeda, omset, daftar nama penyewa, dan detail transaksinya — jawab langsung dari sana, jangan bilang datanya tidak ada.
+6. Kalau pertanyaan menyiratkan laporan harian, jawaban WAJIB memuat: jumlah penyewa yang ambil, jumlah yang balikin, dan status keterlambatan — lengkap dengan nama & jamnya.
+7. Bahasa gaul tim (cuk, yg, trs/trus, ngambil, balikin, telat, denda, omset, cod, msh, blm) adalah pertanyaan bisnis sungguhan, jawab dengan data.
+8. Kalau tidak ada yang cocok, sebutkan apa yang ADA yang mendekati (\"yang paling mendekati: ...\"), jangan langsung menyerah.
+9. Boleh tampilkan nama, nomor WA, alamat karena ini internal.
+10. Format WA: pakai *tebal* (satu bintang) dan bullet -. Jangan pakai markdown lain.
+11. Kata \"TERLAMBAT\" atau \"SUDAH MELEBIHI JADWAL\" berarti masalah nyata — wajib disebut di jawaban.
+12. Jawaban internal to the point, tidak perlu basa-basi sapaan.
 
 YANG SUDAH DIPBAHAS (MEMORI TIM):
 " . ($memoryContext !== '' ? $memoryContext . "\n" : "(belum ada obrolan sebelumnya di grup ini)") . "
@@ -373,7 +494,7 @@ Jawab sebagai asisten data internal:";
         'kembali' => ['balikin', 'kembali', 'kembalikan', 'pengembalian', 'pulang', 'balik', 'ngembal'],
         'terlambat' => ['telat', 'terlambat', 'lewat jadwal', 'mewati', 'overtime', 'nyusul', 'keterlambatan'],
         'denda' => ['denda', 'rusak', 'kerusakan', 'damage', 'fine', 'bayar denda'],
-        'riwayat' => ['riwayat', 'pernah', 'dulu', 'kemarin', 'bulan lalu', 'tahun lalu', 'semua transaksi', 'historis'],
+        'riwayat' => ['riwayat', 'pernah', 'dulu', 'histor', 'historis', 'sejak', 'dari tgl', 'dari tanggal', 's/d', 's.d.', 'bulan lalu', 'tahun lalu', 'semua transaksi'],
         'pending' => ['pending', 'belum bayar', 'blm bayar', 'gak bayar', 'nggak bayar', 'menunggu', 'nunggu', 'konfirmasi'],
         'aktif' => ['sedang disewa', 'lagi dipakai', 'sedang dipakai', 'aktif', 'sibuk', 'yang jalan'],
         'jadwal' => ['hari ini', 'hr ini', 'ambil', 'ngambil', 'pengambilan', 'jadwal', 'datang', 'mampir', 'besok'],
@@ -467,7 +588,142 @@ Jawab sebagai asisten data internal:";
         'gimana', 'kenapa', 'begitu', 'begini', 'seharusnya', 'mungkin', 'kadang',
         'banyak', 'semua', 'tersedia', 'ready', 'statusnya', 'laporannya', 'laporan',
         'rekap', 'rekapnya', 'summary', 'ringkasan', 'translate', 'fix', 'bener',
+        // Kata yang muncul di pertanyaan periode: jangan dianggap nama penyewa.
+        'september', 'agustus', 'oktober', 'november', 'desember', 'januari',
+        'februari', 'maret,', 'april', 'agustus,', 'tanggal', 'histor', 'historis',
+        'historical', 'sejak',         'sampe', 'sampai', 'skrng', 'sekarang,', 'daftar', 'list', 'lists',
+        'namanya', 'mulyadi', 'bula', 'tgl', 'bln', 'thn',
+        'riwayat', 'pernah', 'dulu', 'datang', 'lompat', 'gas', 'poll',
+        'lalu', 'terakhir', 'sejak', 'transaksi', 'sewa', 'unit',
     ];
+
+    /**
+     * Nama bulan (Indonesia + Inggris) -> nomor bulan, buat deteksi rentang tanggal.
+     */
+    private const MONTH_WORDS = [
+        'januari' => 1, 'jan' => 1, 'january' => 1,
+        'februari' => 2, 'feb' => 2, 'february' => 2,
+        'maret' => 3, 'mar' => 3, 'march' => 3,
+        'april' => 4, 'apr' => 4,
+        'mei' => 5, 'may' => 5,
+        'juni' => 6, 'jun' => 6, 'june' => 6,
+        'juli' => 7, 'jul' => 7, 'july' => 7,
+        'agustus' => 8, 'agu' => 8, 'august' => 8, 'ags' => 8,
+        'september' => 9, 'sep' => 9, 'sept' => 9,
+        'oktober' => 10, 'okt' => 10, 'oct' => 10,
+        'november' => 11, 'nov' => 11, 'nopember' => 11,
+        'desember' => 12, 'des' => 12, 'dec' => 12, 'december' => 12,
+    ];
+
+    /**
+     * Tebak rentang tanggal dari kalimat tim, lalu kembalikan [start, end, label].
+     *
+     * Dipakai untuk pertanyaan "dari tgl 1 September sampai sekarang" / "bulan lalu" /
+     * "tahun 2025". Tanpa ini, AI cuma bisa bilang "tidak ikut dimuat" padahal
+     * datanya ada.
+     *
+     * @return array{0:\Carbon\Carbon,1:\Carbon\Carbon,2:string}|null
+     */
+    private static function parseDateRange(string $question, \Carbon\Carbon $now): ?array
+    {
+        $q = mb_strtolower(self::stripInvisible($question));
+
+        // "hari ini" / "kemarin" / "n hari terakhir"
+        if (preg_match('/(\d{1,3})\s*hari\s+(terakhir|keduaan)/u', $q, $m)) {
+            $n = max(1, (int) $m[1]);
+            $start = $now->copy()->subDays($n - 1)->startOfDay();
+            return [$start, $now->copy()->endOfDay(), $n . ' hari terakhir (' . $start->translatedFormat('d M') . ' - ' . $now->translatedFormat('d M Y') . ')'];
+        }
+        if (str_contains($q, 'hari ini')) {
+            return [$now->copy()->startOfDay(), $now->copy()->endOfDay(), 'hari ini (' . $now->translatedFormat('d M Y') . ')'];
+        }
+        if (str_contains($q, 'kemarin')) {
+            $y = $now->copy()->subDay();
+            return [$y->copy()->startOfDay(), $y->copy()->endOfDay(), 'kemarin (' . $y->translatedFormat('d M Y') . ')'];
+        }
+
+        // "tahun ini" / "tahun lalu" / "tahun 2025"
+        $year = null;
+        if (preg_match('/tahun\s*(\d{4})/u', $q, $m)) {
+            $year = (int) $m[1];
+        } elseif (str_contains($q, 'tahun lalu')) {
+            $year = $now->year - 1;
+        } elseif (str_contains($q, 'tahun ini')) {
+            $year = $now->year;
+        }
+        if ($year !== null) {
+            $start = \Carbon\Carbon::create($year, 1, 1)->startOfDay();
+            $end = \Carbon\Carbon::create($year, 12, 31)->endOfDay();
+            return [$start, $end, 'tahun ' . $year];
+        }
+
+        // "bulan lalu" / "bulan ini" / "bulan September"
+        // Tim sering ketik "bula" (tanpa n), jadi dua-duanya diterima.
+        // Tim juga sering menulis "dari tgl 1 September" tanpa kata "bulan",
+        // jadi nama bulan dicari di seluruh kalimat kalau pola "bulan X" tidak kena.
+        $month = null;
+        $named = null;
+        if (preg_match('/bulan?\s+([a-z]{3,9})/u', $q, $m)) {
+            $word = mb_substr($m[1], 0, 9);
+            $named = self::MONTH_WORDS[$word] ?? self::MONTH_WORDS[mb_substr($word, 0, 3)] ?? null;
+        } elseif (preg_match('/\b(januari|jan|februari|feb|maret|mar|april|apr|mei|may|juni|jun|juli|jul|agustus|agu|august|ags|september|sept|sep|oktober|okt|oct|november|nov|desember|dec|december)\b/u', $q, $m)) {
+            $word = $m[1];
+            $named = self::MONTH_WORDS[$word] ?? null;
+        }
+        // $relatif = bulan dihitung dari posisi sekarang ("bulan lalu"), jadi
+        //	tahunnya sudah pasti dan tidak boleh digeser lagi di bawah.
+        $relatif = false;
+        $tahunRelatif = null;
+        if ($named !== null) {
+            $month = $named;
+        } elseif (str_contains($q, 'bulan lalu')) {
+            $month = $now->month === 1 ? 12 : $now->month - 1;
+            $relatif = true;
+            if ($now->month === 1) {
+                $tahunRelatif = $now->year - 1;
+            }
+        } elseif (str_contains($q, 'bulan ini') || str_contains($q, 'bulan sekarang')) {
+            $month = $now->month;
+            $relatif = true;
+        }
+
+        if ($month === null) {
+            return null;
+        }
+
+        // Tahun: default tahun berjalan, tapi bulan yang sudah lewat pakai tahun lalu.
+        $tahun = $now->year;
+        if (preg_match('/\b(20\d{2})\b/u', $q, $m)) {
+            $tahun = (int) $m[1];
+        } elseif ($relatif) {
+            $tahun = $tahunRelatif ?? $now->year;
+        } elseif ($month < $now->month) {
+            $tahun = $now->year - 1;
+        }
+
+        $start = \Carbon\Carbon::create($tahun, $month, 1)->startOfDay();
+        $end = \Carbon\Carbon::create($tahun, $month, 1)->endOfMonth()->endOfDay();
+
+        // "dari tgl 1 September" -> mulai tanggal tersebut, "sampai tgl 15" -> dipotong.
+        if (preg_match('/(?:tgl|tanggal|dr)\s*(\d{1,2})\b/u', $q, $m) && $month === $now->month) {
+            $start = \Carbon\Carbon::create($tahun, $month, max(1, (int) $m[1]))->startOfDay();
+        }
+        if (preg_match('/(?:sampai|smpe|sm|s\/d|s\.d\.)\s*(?:tgl\s*)?(\d{1,2})\b/u', $q, $m)) {
+            $d = (int) $m[1];
+            if ($d >= 1 && $d <= 31) {
+                $end = \Carbon\Carbon::create($tahun, $month, $d)->endOfDay();
+            }
+        }
+
+        $bulanIndo = $start->translatedFormat('F Y');
+
+        // "sampai sekarang" = jangan lewat hari ini.
+        if (preg_match('/sampai|smpe|skrng|s\.d\.|sekarang|now/u', $q)) {
+            $end = min($end, $now->copy()->endOfDay());
+        }
+
+        return [$start, $end, '1 ' . $bulanIndo . ($end->lt($start->copy()->endOfMonth()) ? ' - ' . $end->translatedFormat('d M Y') : '')];
+    }
 
     /**
      * Kata pertama di pertanyaan yang panjang dan layak dianggap nama penyewa.
@@ -725,7 +981,66 @@ Jawab sebagai asisten data internal:";
         }
 
         if ($want['riwayat']) {
-            $add('RIWAYAT PERNAH TERLAMBAT MENGEMBALIKAN', 'riwayat', function () use ($statusIndo) {
+            $range = self::parseDateRange($question, $now);
+            [$rStart, $rEnd, $rLabel] = $range ?? [$now->copy()->subDays(30)->startOfDay(), $now->copy()->endOfDay(), '30 hari terakhir'];
+
+            $add('RIWAYAT TRANSAKSI — ' . mb_strtoupper($rLabel), 'riwayat_' . $rStart->format('Ymd') . '_' . $rEnd->format('Ymd'), function () use ($rStart, $rEnd, $rLabel, $statusIndo) {
+                $base = fn () => \App\Models\Rental::whereBetween('waktu_mulai', [$rStart, $rEnd])
+                    ->whereNotIn('status', ['cancelled']);
+
+                // Hitungan & omset dihitung dari seluruh periode, bukan dari 30 baris
+                // yang ditampilkan — kalau tidak, totalnya jadi tidak akurat.
+                $totalTransaksi = (int) $base()->count();
+                $jumlahNama = (int) $base()->whereNotNull('nama')->where('nama', '!=', '')->distinct()->count('nama');
+                $omset = (int) $base()->whereIn('status', ['renting', 'paid', 'completed'])
+                    ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, subtotal_harga)'));
+
+                $rows = $base()->with('units')->orderByDesc('waktu_mulai')->limit(30)->get();
+
+                if ($rows->isEmpty()) {
+                    return "Tidak ada transaksi pada rentang {$rLabel}.\n";
+                }
+
+                // Komposisi status dihitung dari seluruh periode, bukan 30 baris tampil.
+                $summary = [];
+                foreach ($base()->selectRaw('status, COUNT(*) as jml')->groupBy('status')->pluck('jml', 'status') as $st => $n) {
+                    $summary[] = ($statusIndo[$st] ?? $st) . ': ' . $n;
+                }
+
+                // Daftar nama unik + berapa kali, itu yang paling sering ditanyakan.
+                $names = $rows->whereNotNull('nama')->where('nama', '!=', '')
+                    ->groupBy('nama')
+                    ->map(fn ($grp, $nama) => ['nama' => $nama, 'jumlah' => $grp->count(), 'terakhir' => $grp->max('waktu_mulai')])
+                    ->sortByDesc('terakhir')
+                    ->values();
+
+                $out = "Periode: {$rLabel}.\n";
+                $out .= 'Total: ' . $totalTransaksi . ' transaksi | ' . $jumlahNama . ' penyewa berbeda | Omset: Rp ' . number_format($omset, 0, ',', '.') . "\n";
+                $out .= 'Status: ' . implode(', ', $summary) . "\n";
+                $out .= "Daftar nama penyewa (urut terbaru, dari 30 transaksi terbaru):\n";
+                $i = 0;
+                foreach ($names as $n) {
+                    if ($i++ >= 40) {
+                        $out .= '- ...dan ' . ($names->count() - 40) . ' nama lain.\n';
+                        break;
+                    }
+                    $tgl = \Carbon\Carbon::parse($n['terakhir'])->translatedFormat('d M');
+                    $out .= '- ' . $n['nama'] . ' (' . $n['jumlah'] . 'x, terakhir ' . $tgl . ")\n";
+                }
+                // Transaksi dibuat ringkas: yang ditanyakan biasanya "siapa", bukan detail unit.
+                $out .= "Transaksi:\n" . $rows->map(function ($r) use ($statusIndo) {
+                    $u = $r->units->map(fn ($x) => $x->nama_lengkap ?: $x->seri)->implode(', ') ?: '-';
+                    $tgl = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M') : '-';
+                    return '- ' . $tgl . ' | ' . ($r->nama ?: '-') . ' | ' . $u
+                        . ' | ' . ($statusIndo[$r->status] ?? $r->status)
+                        . ' | Rp ' . number_format($r->grand_total ?: $r->subtotal_harga, 0, ',', '.')
+                        . ' | ' . ($r->no_wa ?: '-') . "\n";
+                })->implode('');
+                return $out;
+            }, 2);
+
+            // Riwayat yang pernah terlambat, tetap berguna saat minta "riwayat".
+            $add('RIWAYAT PERNAH TERLAMBAT MENGEMBALIKAN (semua waktu)', 'riwayat_telat', function () use ($statusIndo) {
                 $rows = \App\Models\Rental::with(['units'])
                     ->whereNotNull('handed_over_at')->whereNotNull('waktu_selesai')
                     ->whereColumn('handed_over_at', '>', 'waktu_selesai')
@@ -736,7 +1051,7 @@ Jawab sebagai asisten data internal:";
                     : $rows->map(fn ($r) => self::rentalLine(
                         $r,
                         $statusIndo,
-                        ' | Telat: ' . (int) round(\Carbon\Carbon::parse($r->waktu_selesai)->diffInMinutes(\Carbon\Carbon::parse($r->handed_over_at))) . ' menit'
+                        ' | Telat: ' . self::minutesLate(\Carbon\Carbon::parse($r->handed_over_at), $r->waktu_selesai) . ' menit'
                     ))->implode('');
             }, 5);
         }
