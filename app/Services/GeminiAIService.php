@@ -48,6 +48,7 @@ class GeminiAIService
         // Ambil rental aktif (renting/paid) mulai dari hari ini
         $now = now();
         $nextWeek = now()->addDays(7);
+        $currentTimeStr = $now->translatedFormat('l, d F Y H:i') . ' WIB';
         $activeRentals = \App\Models\Rental::with('units')
             ->whereIn('status', ['paid', 'renting', 'pending_confirmation'])
             ->where('waktu_selesai', '>=', $now)
@@ -314,7 +315,7 @@ PANDUAN MENJAWAB (SANGAT PENTING):
             $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
             $startStr = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M H:i') : '-';
             $endStr   = $r->waktu_selesai ? \Carbon\Carbon::parse($r->waktu_selesai)->translatedFormat('d M H:i') : '-';
-            $total    = 'Rp ' . number_format($r->grand_total ?: $r->total_harga, 0, ',', '.');
+            $total    = 'Rp ' . number_format($r->grand_total ?: $r->subtotal_harga, 0, ',', '.');
             $phone    = $r->no_wa ?: '-';
             $alamat   = $r->alamat ?: '-';
             $nama     = $r->nama ?: 'Pelanggan';
@@ -352,17 +353,17 @@ PANDUAN MENJAWAB (SANGAT PENTING):
         // Hari ini
         $profitToday = \App\Models\Rental::whereIn('status', ['renting', 'paid', 'completed'])
             ->whereBetween('waktu_mulai', [$todayStart, $todayEnd])
-            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, total_harga)'));
+            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, subtotal_harga)'));
 
         // Bulan ini
         $profitMonth = \App\Models\Rental::whereIn('status', ['renting', 'paid', 'completed'])
             ->whereYear('waktu_mulai', $now->year)
             ->whereMonth('waktu_mulai', $now->month)
-            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, total_harga)'));
+            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, subtotal_harga)'));
 
         // Total semua waktu
         $profitAllTime = \App\Models\Rental::whereIn('status', ['renting', 'paid', 'completed'])
-            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, total_harga)'));
+            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, subtotal_harga)'));
 
         $profitText = "- Hari ini: Rp " . number_format($profitToday, 0, ',', '.') . "\n";
         $profitText .= "- Bulan ini (" . $now->translatedFormat('F Y') . "): Rp " . number_format($profitMonth, 0, ',', '.') . "\n";

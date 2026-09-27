@@ -64,7 +64,7 @@ class WhatsAppService
 
         $start = $rental->waktu_mulai ? \Carbon\Carbon::parse($rental->waktu_mulai)->translatedFormat('d M Y H:i') : '-';
         $end = $rental->waktu_selesai ? \Carbon\Carbon::parse($rental->waktu_selesai)->translatedFormat('d M Y H:i') : '-';
-        $total = 'Rp ' . number_format($rental->grand_total ?: $rental->total_harga, 0, ',', '.');
+        $total = 'Rp ' . number_format($rental->grand_total ?: $rental->subtotal_harga, 0, ',', '.');
         $paymentUrl = route('public.payment', $rental->booking_code);
 
         $msg = "Halo Kak *{$rental->nama}*! 👋\n\n" .
@@ -98,7 +98,7 @@ class WhatsAppService
 
         $start = $rental->waktu_mulai ? \Carbon\Carbon::parse($rental->waktu_mulai)->translatedFormat('d M Y H:i') : '-';
         $end = $rental->waktu_selesai ? \Carbon\Carbon::parse($rental->waktu_selesai)->translatedFormat('d M Y H:i') : '-';
-        $total = 'Rp ' . number_format($rental->grand_total ?: $rental->total_harga, 0, ',', '.');
+        $total = 'Rp ' . number_format($rental->grand_total ?: $rental->subtotal_harga, 0, ',', '.');
         $invoiceUrl = route('public.success', $rental->booking_code);
 
         $msg = "Halo Kak *{$rental->nama}*! 🎉\n\n" .
