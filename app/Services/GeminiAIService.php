@@ -299,6 +299,15 @@ PANDUAN MENJAWAB (SANGAT PENTING):
         $todayStart = $now->copy()->startOfDay();
         $todayEnd = $now->copy()->endOfDay();
 
+        $statusIndo = [
+            'pending' => 'MENUNGGU (belum bayar)',
+            'pending_confirmation' => 'MENUNGGU KONFIRMASI',
+            'paid' => 'SUDAH BAYAR (belum ambil)',
+            'renting' => 'SEDANG DISEWA',
+            'completed' => 'SELESAI',
+            'cancelled' => 'DIBATALKAN',
+        ];
+
         // --- DATA RENTAL AKTIF (sedang disewa / sudah booking) ---
         $activeRentals = \App\Models\Rental::with(['units'])
             ->whereIn('status', ['renting', 'paid', 'pending_confirmation'])
@@ -307,47 +316,57 @@ PANDUAN MENJAWAB (SANGAT PENTING):
             ->get();
 
         $rentingText = "";
-        $lateText = "";
-        $returnTodayText = "";
-        $pickupTodayText = "";
-
         foreach ($activeRentals as $r) {
-            $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
-            $startStr = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M H:i') : '-';
-            $endStr   = $r->waktu_selesai ? \Carbon\Carbon::parse($r->waktu_selesai)->translatedFormat('d M H:i') : '-';
-            $total    = 'Rp ' . number_format($r->grand_total ?: $r->subtotal_harga, 0, ',', '.');
-            $phone    = $r->no_wa ?: '-';
-            $alamat   = $r->alamat ?: '-';
-            $nama     = $r->nama ?: 'Pelanggan';
-            $kode     = $r->booking_code ?: '-';
-
-            $line = "• {$uNames} | Penyewa: {$nama} | WA: {$phone} | Alamat: {$alamat} | Kode: {$kode} | Mulai: {$startStr} | Selesai: {$endStr} | Total: {$total}\n";
-
             if ($r->status === 'renting') {
-                $rentingText .= $line;
-
-                // Cek telat: sudah melewati waktu selesai
-                if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast()) {
-                    $mnt = $now->diffInMinutes(\Carbon\Carbon::parse($r->waktu_selesai));
-                    $lateText .= "• {$uNames} | {$nama} | WA: {$phone} | Terlambat {$mnt} menit (Selesai: {$endStr})\n";
-                }
-
-                // Kembali hari ini
-                if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->betweenIncluded($todayStart, $todayEnd)) {
-                    $returnTodayText .= $line;
-                }
-            }
-
-            // Ambil (pickup) hari ini
-            if ($r->waktu_mulai && \Carbon\Carbon::parse($r->waktu_mulai)->betweenIncluded($todayStart, $todayEnd)) {
-                $pickupTodayText .= $line;
+                $rentingText .= self::rentalLine($r, $statusIndo);
             }
         }
-
         if (empty($rentingText)) $rentingText = "Tidak ada unit yang sedang disewa saat ini.\n";
-        if (empty($lateText)) $lateText = "Tidak ada penyewa yang terlambat.\n";
-        if (empty($returnTodayText)) $returnTodayText = "Tidak ada pengembalian yang dijadwalkan hari ini.\n";
-        if (empty($pickupTodayText)) $pickupTodayText = "Tidak ada pengambilan yang dijadwalkan hari ini.\n";
+
+        // --- JADWAL PENGAMBILAN HARI INI ---
+        // Query TERPISAH dari $activeRentals: booking status pending tidak lolos
+        // filter di atas, padahal penyewanya tetap dijadwalkan datang hari ini.
+        $pickupToday = \App\Models\Rental::with(['units'])
+            ->whereIn('status', ['pending', 'pending_confirmation', 'paid', 'renting'])
+            ->whereBetween('waktu_mulai', [$todayStart, $todayEnd])
+            ->orderBy('waktu_mulai', 'asc')
+            ->get();
+        $pickupTodayText = $pickupToday->isEmpty()
+            ? "Tidak ada pengambilan yang dijadwalkan hari ini.\n"
+            : $pickupToday->map(fn($r) => self::rentalLine($r, $statusIndo))->implode('');
+
+        // --- JADWAL PENGEMBALIAN HARI INI ---
+        // Termasuk yang waktunya sudah lewat (dulu hilang karena activeRentals
+        // hanya memuat rental yang belum selesai).
+        $returnToday = \App\Models\Rental::with(['units'])
+            ->whereIn('status', ['renting', 'paid', 'pending_confirmation', 'completed'])
+            ->whereBetween('waktu_selesai', [$todayStart, $todayEnd])
+            ->orderBy('waktu_selesai', 'asc')
+            ->get();
+        $returnTodayText = $returnToday->isEmpty()
+            ? "Tidak ada pengembalian yang dijadwalkan hari ini.\n"
+            : $returnToday->map(function ($r) use ($now, $statusIndo) {
+                $suffix = '';
+                if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast()) {
+                    $suffix = ' *** SUDAH MELEBIHI JADWAL ' . $now->diffInMinutes(\Carbon\Carbon::parse($r->waktu_selesai)) . ' MENIT ***';
+                } elseif ($r->handed_over_at) {
+                    $suffix = ' | Sudah dikembalikan: ' . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M H:i');
+                }
+                return self::rentalLine($r, $statusIndo, $suffix);
+            })->implode('');
+
+        // --- PENYEWA TERLAMBAT (status aktif yang sudah lewat dari jadwal) ---
+        $lateRentals = \App\Models\Rental::with(['units'])
+            ->whereIn('status', ['renting', 'paid', 'pending_confirmation'])
+            ->where('waktu_selesai', '<', $now)
+            ->orderBy('waktu_selesai', 'asc')
+            ->get();
+        $lateText = $lateRentals->isEmpty()
+            ? "Tidak ada penyewa yang terlambat.\n"
+            : $lateRentals->map(function ($r) use ($now, $statusIndo) {
+                $mnt = $now->diffInMinutes(\Carbon\Carbon::parse($r->waktu_selesai));
+                return self::rentalLine($r, $statusIndo, " *** TERLAMBAT {$mnt} MENIT ***");
+            })->implode('');
 
         // --- BOOKING MENUNGGU (status pending: sudah bayar, belum ambil) ---
         $pendingText = "";
@@ -357,26 +376,28 @@ PANDUAN MENJAWAB (SANGAT PENTING):
             ->limit(40)
             ->get();
         foreach ($pendingBookings as $r) {
-            $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
-            $startStr = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M Y H:i') : '-';
-            $endStr   = $r->waktu_selesai ? \Carbon\Carbon::parse($r->waktu_selesai)->translatedFormat('d M Y H:i') : '-';
-            $pendingText .= "• {$uNames} | Penyewa: " . ($r->nama ?: '-') . " | WA: " . ($r->no_wa ?: '-')
-                . " | Ambil: {$startStr} | Selesai: {$endStr} | Kode: " . ($r->booking_code ?: '-') . "\n";
+            $pendingText .= self::rentalLine($r, $statusIndo);
         }
         if (empty($pendingText)) $pendingText = "Tidak ada booking yang menunggu pengambilan.\n";
 
-        // --- RIWAYAT: PERNAH KENA DENDA ---
+        // --- RIWAYAT: PERNAH KENA DENDA (denda keterlambatan + kerusakan) ---
         $fineText = "";
         $finedRentals = \App\Models\Rental::with(['units'])
-            ->where('denda', '>', 0)
+            ->where(function ($q) {
+                $q->where('denda', '>', 0)->orWhere('denda_kerusakan', '>', 0);
+            })
             ->orderByDesc('denda')
+            ->orderByDesc('denda_kerusakan')
             ->limit(40)
             ->get();
         foreach ($finedRentals as $r) {
             $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
-            $fineText .= "• " . ($r->nama ?: '-') . " | Unit: {$uNames} | Denda: Rp "
-                . number_format($r->denda, 0, ',', '.')
+            $parts = [];
+            if (($r->denda ?? 0) > 0) $parts[] = 'Denda telat: Rp ' . number_format($r->denda, 0, ',', '.');
+            if (($r->denda_kerusakan ?? 0) > 0) $parts[] = 'Denda kerusakan: Rp ' . number_format($r->denda_kerusakan, 0, ',', '.');
+            $fineText .= "• " . ($r->nama ?: '-') . " | Unit: {$uNames} | " . implode(', ', $parts)
                 . " | Alasan: " . ($r->catatan_kerusakan ?: '-')
+                . " | Tanggal: " . \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M Y')
                 . " | Kode: " . ($r->booking_code ?: '-') . "\n";
         }
         if (empty($fineText)) $fineText = "Belum ada penyewa yang pernah dikenakan denda.\n";
@@ -444,11 +465,13 @@ ATURAN PENTING (WAJIB DIPAATUHI):
 1. DATA DI BAWAH INI ADALAH KEBENARAN. Jawab HANYA dari data tersebut. Jangan mengarang nama, nomor, atau angka.
 2. Kalau ada pertanyaan soal SEORANG PENYEWA, cek dulu bagian \"PENCARIAN DATA PENYEWA\" dan \"SELURUH TRANSAKSI PENYEWA\". Data di situ lebih lengkap daripada ringkasan lain.
 3. JANGAN pernah menjawab \"tidak ada data\" sebelum sections yang relevan benar-benar dicek. Banyak transaksi berstatus pending / completed / cancelled yang TIDAK muncul di ringkasan hari ini, tapi tetap ada di riwayat.
-4. Kalau ditanya \"hari ini\" atau \"minggu ini\", pakai bagian JADWAL PENGAMBILAN/PENGEMBALIAN HARI INI. Jangan menebak.
-5. Bahasa gaul dan singkatan tim (mis. \"cuk\" = customer, \"yg\" = yang, \"trs/trus\" = terus, \"ngambil\" = mengambil, \"telat\" = terlambat, \"denda\", \"omset\", \"cod\") harus dipahami sebagai pertanyaan bisnis sungguhan, lalu dijawab dengan data.
-6. Kalau memang tidak ada yang cocok, sebutkan apa yang ADA yang mendekati (mis. \"yang paling mendekati: ...\"), jangan langsung menyerah.
-7. Jawab langsung to the point seperti laporan internal. Boleh tampilkan nama, nomor WA, alamat karena ini internal.
-8. Format WA: pakai *tebal* (satu bintang) untuk judul, dan bullet -. Jangan pakai markdown lain.
+4. Kalau ditanya \"hari ini\" / \"siapa yang mau ambil\" / \"siapa yang balikin\", pakai bagian JADWAL PENGAMBILAN HARI INI dan JADWAL PENGEMBALIAN HARI INI. Bagian itu sudah mencakup SEMUA status (pending, sudah bayar, sedang disewa). Jangan menebak.
+5. Kalau pertanyaan menyiratkan \"laporan hari ini\", jawaban WAJIB memuat: jumlah penyewa yang ambil, jumlah yang balikin, dan status keterlambatan — lengkap dengan nama & jamnya.
+6. Bahasa gaul dan singkatan tim (mis. \"cuk\" = customer, \"yg\" = yang, \"trs/trus\" = terus, \"ngambil\" = mengambil, \"balikin\" = mengembalikan, \"telat\" = terlambat, \"denda\", \"omset\", \"cod\") harus dipahami sebagai pertanyaan bisnis sungguhan, lalu dijawab dengan data.
+7. Kalau memang tidak ada yang cocok, sebutkan apa yang ADA yang mendekati (mis. \"yang paling mendekati: ...\"), jangan langsung menyerah.
+8. Jawab langsung to the point seperti laporan internal. Boleh tampilkan nama, nomor WA, alamat karena ini internal.
+9. Format WA: pakai *tebal* (satu bintang) untuk judul, dan bullet -. Jangan pakai markdown lain.
+10. Kata \"TERLAMBAT\" atau \"SUDAH MELEBIHI JADWAL\" pada data berarti masalah nyata — sampaikan di jawaban, jangan diabaikan.
 
 DATA UNIT TOKO:
 {$unitListText}
@@ -459,7 +482,7 @@ SELURUH TRANSAKSI PENYEWA (WAJIB DIBACA untuk pertanyaan soal orang tertentu):
 UNIT YANG SEDANG DISEWA / AKTIF SAAT INI:
 {$rentingText}
 
-BOOKING MENUNGGU PENGAMBILAN (status pending, sudah bayar belum ambil):
+BOOKING MENUNGGU PENGAMBILAN (status pending, belum bayar):
 {$pendingText}
 
 JADWAL PENGAMBILAN HARI INI:
@@ -512,6 +535,26 @@ Jawab sebagai asisten data internal:";
         }
 
         return null;
+    }
+
+    /**
+     * Satu baris ringkasan transaksi untuk ditampilkan ke AI.
+     */
+    private static function rentalLine($r, array $statusIndo = [], string $suffix = ''): string
+    {
+        $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ') ?: '-';
+        $startStr = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M H:i') : '-';
+        $endStr   = $r->waktu_selesai ? \Carbon\Carbon::parse($r->waktu_selesai)->translatedFormat('d M H:i') : '-';
+        $total    = 'Rp ' . number_format($r->grand_total ?: $r->subtotal_harga, 0, ',', '.');
+        $status   = $statusIndo[$r->status] ?? $r->status;
+
+        return "• [{$status}] Unit: {$uNames} | Penyewa: " . ($r->nama ?: '-')
+            . " | WA: " . ($r->no_wa ?: '-')
+            . " | Alamat: " . ($r->alamat ?: '-')
+            . " | Ambil: {$startStr} | Selesai: {$endStr}"
+            . " | Total: {$total}"
+            . " | Kode: " . ($r->booking_code ?: '-')
+            . $suffix . "\n";
     }
 
     /**
