@@ -114,7 +114,7 @@ async function connectToWhatsApp() {
                          msg.message.imageMessage?.caption ||
                          '';
 
-            const senderNumber = sender.replace('@s.whatsapp.net', '');
+            const senderNumber = sender.replace('@s.whatsapp.net', '').replace('@lid', '');
             const pushName = msg.pushName || 'Kak';
 
             if (!text.trim()) continue;

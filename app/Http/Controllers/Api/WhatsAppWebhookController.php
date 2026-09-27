@@ -21,6 +21,7 @@ class WhatsAppWebhookController extends Controller
 
         $phone = $request->input('phone');
         $name = $request->input('name', 'Kak');
+        $text = trim((string) $request->input('text', ''));
         $action = $request->input('action');
 
         // Jika ada request forward ke admin lain (Customer butuh bantuan admin)
