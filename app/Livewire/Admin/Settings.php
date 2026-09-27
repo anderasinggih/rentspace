@@ -92,10 +92,15 @@ class Settings extends Component
     public $new_knowledge_value = '';
 
     // WhatsApp Broadcast Properties
+    // WhatsApp Broadcast Properties
     public $broadcast_groups = [];
     public $broadcast_shortcuts = [];
     public $new_group_name = '';
     public $new_group_numbers = '';
+    public $editing_group_index = null; // null jika mode tambah baru, index jika edit
+    public $editing_group_id = null;
+    public $customer_search_query = ''; // pencarian customer untuk ngetag 1 per 1
+    public $selected_customer_tags = []; // array of ['phone' => '...', 'name' => '...']
     public $new_shortcut_code = '';
     public $new_shortcut_title = '';
     public $new_shortcut_message = '';
@@ -513,7 +518,68 @@ class Settings extends Component
     }
 
     // WhatsApp Broadcast Group & Shortcut Methods
-    public function addBroadcastGroup()
+    public function editBroadcastGroup($index)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        if (!isset($this->broadcast_groups[$index])) return;
+
+        $grp = $this->broadcast_groups[$index];
+        $this->editing_group_index = $index;
+        $this->editing_group_id = $grp['id'] ?? null;
+        $this->new_group_name = $grp['name'] ?? '';
+        $this->new_group_numbers = implode("\n", $grp['numbers'] ?? []);
+        $this->selected_customer_tags = [];
+    }
+
+    public function cancelEditBroadcastGroup()
+    {
+        $this->reset(['editing_group_index', 'editing_group_id', 'new_group_name', 'new_group_numbers', 'selected_customer_tags', 'customer_search_query']);
+    }
+
+    public function tagCustomerToGroup(string $phone, string $name)
+    {
+        $clean = preg_replace('/[^0-9]/', '', $phone);
+        if (empty($clean)) return;
+
+        // Cek jika nomor sudah ada di input
+        $existing = preg_split('/[\r\n,]+/', $this->new_group_numbers);
+        $existing = array_map(fn($n) => preg_replace('/[^0-9]/', '', trim($n)), $existing);
+        $existing = array_filter($existing);
+
+        if (!in_array($clean, $existing)) {
+            $existing[] = $clean;
+            $this->new_group_numbers = implode("\n", $existing);
+        }
+
+        // Tambah ke selected_customer_tags untuk visual badge jika belum ada
+        $alreadyTagged = false;
+        foreach ($this->selected_customer_tags as $tag) {
+            if ($tag['phone'] === $clean) {
+                $alreadyTagged = true;
+                break;
+            }
+        }
+        if (!$alreadyTagged) {
+            $this->selected_customer_tags[] = [
+                'phone' => $clean,
+                'name' => $name ?: 'Pelanggan',
+            ];
+        }
+
+        $this->customer_search_query = '';
+    }
+
+    public function removeCustomerTag(string $phone)
+    {
+        $this->selected_customer_tags = array_values(array_filter($this->selected_customer_tags, fn($t) => $t['phone'] !== $phone));
+        
+        $existing = preg_split('/[\r\n,]+/', $this->new_group_numbers);
+        $existing = array_map(fn($n) => preg_replace('/[^0-9]/', '', trim($n)), $existing);
+        $existing = array_filter($existing, fn($n) => $n !== $phone && !empty($n));
+        $this->new_group_numbers = implode("\n", $existing);
+    }
+
+    public function saveBroadcastGroup()
     {
         if (auth()->user()->role !== 'admin') return;
         $this->validate([
@@ -529,27 +595,43 @@ class Settings extends Component
         $cleanNumbers = [];
         foreach ($rawLines as $num) {
             $c = preg_replace('/[^0-9]/', '', trim($num));
-            if (!empty($c)) {
+            if (!empty($c) && strlen($c) >= 9) {
                 $cleanNumbers[] = $c;
             }
         }
         $cleanNumbers = array_values(array_unique($cleanNumbers));
 
-        $this->broadcast_groups[] = [
-            'id' => uniqid('grp_'),
-            'name' => trim($this->new_group_name),
-            'numbers' => $cleanNumbers,
-            'count' => count($cleanNumbers),
-            'created_at' => now()->toDateTimeString(),
-        ];
+        if ($this->editing_group_index !== null && isset($this->broadcast_groups[$this->editing_group_index])) {
+            // Mode Update
+            $this->broadcast_groups[$this->editing_group_index]['name'] = trim($this->new_group_name);
+            $this->broadcast_groups[$this->editing_group_index]['numbers'] = $cleanNumbers;
+            $this->broadcast_groups[$this->editing_group_index]['count'] = count($cleanNumbers);
+            $this->broadcast_groups[$this->editing_group_index]['updated_at'] = now()->toDateTimeString();
+            $actionMsg = 'Grup broadcast WhatsApp berhasil diperbarui.';
+        } else {
+            // Mode Tambah Baru
+            $this->broadcast_groups[] = [
+                'id' => uniqid('grp_'),
+                'name' => trim($this->new_group_name),
+                'numbers' => $cleanNumbers,
+                'count' => count($cleanNumbers),
+                'created_at' => now()->toDateTimeString(),
+            ];
+            $actionMsg = 'Grup broadcast WhatsApp berhasil dibuat.';
+        }
 
         \App\Models\Setting::updateOrCreate(
             ['key' => 'wa_broadcast_groups'],
             ['value' => json_encode(array_values($this->broadcast_groups))]
         );
 
-        $this->reset(['new_group_name', 'new_group_numbers']);
-        session()->flash('general_message', 'Grup broadcast WhatsApp berhasil dibuat.');
+        $this->cancelEditBroadcastGroup();
+        session()->flash('general_message', $actionMsg);
+    }
+
+    public function addBroadcastGroup()
+    {
+        $this->saveBroadcastGroup();
     }
 
     public function importCustomersToGroup()
@@ -984,11 +1066,35 @@ class Settings extends Component
 
         $unitsList = \App\Models\Unit::orderBy('seri')->get();
 
+        // Cari data pelanggan untuk ditag 1 per 1 ke grup
+        $searchCustomers = [];
+        if (!empty(trim($this->customer_search_query))) {
+            $q = trim($this->customer_search_query);
+            $searchCustomers = \App\Models\Rental::whereNotNull('no_wa')
+                ->where('no_wa', '!=', '')
+                ->where(function ($sub) use ($q) {
+                    $sub->where('nama', 'like', "%{$q}%")
+                        ->orWhere('no_wa', 'like', "%{$q}%");
+                })
+                ->select('nama', 'no_wa')
+                ->distinct()
+                ->limit(8)
+                ->get()
+                ->map(fn($r) => [
+                    'nama' => $r->nama,
+                    'phone' => preg_replace('/[^0-9]/', '', $r->no_wa),
+                ])
+                ->unique('phone')
+                ->values()
+                ->toArray();
+        }
+
         return view('livewire.admin.settings', [
             'users' => $usersQuery->paginate($this->perPage, ['*'], 'userPage'),
             'adminMailLogs' => $adminMailLogs,
             'customerMailLogs' => $customerMailLogs,
             'unitsList' => $unitsList,
+            'searchCustomers' => $searchCustomers,
         ])->layout('layouts.admin');
     }
 }

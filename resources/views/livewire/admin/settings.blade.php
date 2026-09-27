@@ -1705,8 +1705,44 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
                             </div>
                             <div>
-                                <h3 class="text-base font-bold text-foreground">WhatsApp Broadcast & Template Shortcut</h3>
-                                <p class="text-xs text-muted-foreground mt-0.5">Kirim pesan massal (promo, update stok, info toko) ke grup pengguna WhatsApp yang terdaftar.</p>
+                                <h3 class="text-base font-bold text-foreground">WhatsApp Broadcast & User Group Management</h3>
+                                <p class="text-xs text-muted-foreground mt-0.5">Kelola audiens promosi, tag kontak customer perorangan/kategori, dan eksekusi broadcast massal aman anti-banned.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kotak Panduan & Deskripsi Fitur Broadcast -->
+                    <div class="p-4 rounded-xl bg-background border border-emerald-500/30 text-xs text-muted-foreground space-y-2.5">
+                        <div class="flex items-center gap-2 text-foreground font-bold text-xs uppercase tracking-wide">
+                            <span>📖</span> Panduan & Cara Kerja Fitur WhatsApp Broadcast
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                            <div class="p-2.5 rounded-lg bg-muted/40 border border-border/70 space-y-1">
+                                <div class="font-bold text-foreground flex items-center gap-1.5">
+                                    <span class="w-5 h-5 rounded-full bg-emerald-600/10 text-emerald-600 inline-flex items-center justify-center text-[10px]">1</span>
+                                    Buat / Edit User Group
+                                </div>
+                                <p class="text-[11px] leading-relaxed">
+                                    Kelompokkan customer sesuai audiens (misal: <i>Penyewa iPhone 13</i>, <i>VIP Customer</i>). Anda bisa <b>impor otomatis dari database</b>, <b>ngetag 1 per 1 nama customer</b>, atau mengedit daftar grup kapan saja.
+                                </p>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-muted/40 border border-border/70 space-y-1">
+                                <div class="font-bold text-foreground flex items-center gap-1.5">
+                                    <span class="w-5 h-5 rounded-full bg-emerald-600/10 text-emerald-600 inline-flex items-center justify-center text-[10px]">2</span>
+                                    Template Shortcut Pesan
+                                </div>
+                                <p class="text-[11px] leading-relaxed">
+                                    Gunakan template siap pakai (seperti <code>/promo_weekend</code>) agar tidak perlu mengetik ulang pesan penawaran atau informasi rental berulang kali.
+                                </p>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-muted/40 border border-border/70 space-y-1">
+                                <div class="font-bold text-foreground flex items-center gap-1.5">
+                                    <span class="w-5 h-5 rounded-full bg-emerald-600/10 text-emerald-600 inline-flex items-center justify-center text-[10px]">3</span>
+                                    Eksekusi Web & WA Admin
+                                </div>
+                                <p class="text-[11px] leading-relaxed">
+                                    Broadcast bisa dikirim dari tombol di web ini atau langsung dikirim via <b>Grup WA Admin</b> dengan perintah <code>/broadcast send [No_Grup] [Pesan]</code>.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -1718,28 +1754,38 @@
                             <div class="p-4 rounded-xl bg-background border border-border space-y-3">
                                 <div class="flex items-center justify-between">
                                     <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                        <span>👥</span> Grup Penerima Broadcast
+                                        <span>👥</span> Daftar Grup Penerima
                                     </h4>
-                                    <button type="button" wire:click="importCustomersToGroup"
-                                        class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-600/10 text-emerald-600 hover:bg-emerald-600/20 transition-colors">
-                                        + Impor Semua Pelanggan
-                                    </button>
+                                    <span class="text-[10px] text-muted-foreground font-medium">
+                                        {{ count($broadcast_groups) }} Grup Terdaftar
+                                    </span>
                                 </div>
 
-                                <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
                                     @forelse($broadcast_groups as $idx => $grp)
-                                        <div class="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/70 text-xs">
-                                            <div>
-                                                <span class="font-bold text-foreground">{{ $grp['name'] }}</span>
-                                                <span class="ml-2 text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full font-bold">
-                                                    {{ $grp['count'] ?? count($grp['numbers'] ?? []) }} Kontak
-                                                </span>
+                                        <div class="flex items-center justify-between p-2.5 rounded-lg {{ $editing_group_index === $idx ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-muted/30 border-border/70' }} border text-xs transition-colors">
+                                            <div class="flex-1 pr-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-foreground">{{ $grp['name'] }}</span>
+                                                    <span class="text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full font-bold">
+                                                        {{ $grp['count'] ?? count($grp['numbers'] ?? []) }} Kontak
+                                                    </span>
+                                                </div>
+                                                <div class="text-[10px] text-muted-foreground mt-0.5 truncate">
+                                                    {{ implode(', ', array_slice($grp['numbers'] ?? [], 0, 4)) }}{{ count($grp['numbers'] ?? []) > 4 ? '...' : '' }}
+                                                </div>
                                             </div>
-                                            <button type="button" wire:click="removeBroadcastGroup({{ $idx }})" 
-                                                wire:confirm="Hapus grup broadcast ini?"
-                                                class="text-red-500 hover:text-red-700 p-1" title="Hapus Grup">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                            </button>
+                                            <div class="flex items-center gap-1">
+                                                <button type="button" wire:click="editBroadcastGroup({{ $idx }})" 
+                                                    class="px-2 py-1 text-[11px] font-bold rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Edit Grup ini">
+                                                    Edit
+                                                </button>
+                                                <button type="button" wire:click="removeBroadcastGroup({{ $idx }})" 
+                                                    wire:confirm="Hapus grup broadcast ini?"
+                                                    class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50" title="Hapus Grup">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                                </button>
+                                            </div>
                                         </div>
                                     @empty
                                         <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
@@ -1748,10 +1794,87 @@
                                     @endforelse
                                 </div>
 
-                                <!-- Filter & Impor dari Database Customer -->
-                                <div class="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-2">
+                                <!-- Form Buat / Edit Grup -->
+                                <div class="pt-3 border-t border-border/60 space-y-3">
                                     <div class="flex items-center justify-between">
-                                        <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wide">📥 Impor Otomatis Dari Database</span>
+                                        <span class="text-[11px] font-bold text-foreground uppercase tracking-wide flex items-center gap-1.5">
+                                            <span>{{ $editing_group_index !== null ? '✏️ Edit Grup' : '➕ Buat Grup Baru' }}</span>
+                                        </span>
+                                        @if($editing_group_index !== null)
+                                            <button type="button" wire:click="cancelEditBroadcastGroup" class="text-[10px] text-muted-foreground hover:underline">
+                                                Batal Edit
+                                            </button>
+                                        @endif
+                                    </div>
+
+                                    <input type="text" wire:model="new_group_name" placeholder="Nama Grup (Misal: Member VIP / Pelanggan iPhone 13)"
+                                        class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary">
+
+                                    <!-- Tagging Customer 1 per 1 dari Database -->
+                                    <div class="p-2.5 rounded-lg bg-muted/40 border border-border/80 space-y-2">
+                                        <label class="block text-[11px] font-bold text-foreground">
+                                            🏷️ Tag / Panggil Customer 1 per 1 dari Database:
+                                        </label>
+                                        <div class="relative">
+                                            <input type="text" wire:model.live.debounce.250ms="customer_search_query" 
+                                                placeholder="Ketik nama atau nomor WA customer untuk ngetag..."
+                                                class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm">
+                                            
+                                            @if(!empty($searchCustomers))
+                                                <div class="absolute left-0 right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-xl z-20 max-h-40 overflow-y-auto divide-y divide-border">
+                                                    @foreach($searchCustomers as $c)
+                                                        <div wire:click="tagCustomerToGroup('{{ $c['phone'] }}', '{{ addslashes($c['nama']) }}')"
+                                                            class="p-2 text-xs flex items-center justify-between hover:bg-muted/50 cursor-pointer">
+                                                            <div>
+                                                                <span class="font-bold text-foreground">{{ $c['nama'] }}</span>
+                                                                <span class="text-muted-foreground ml-1">({{ $c['phone'] }})</span>
+                                                            </div>
+                                                            <span class="text-[10px] text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
+                                                                + Tag ke Grup
+                                                            </span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        <!-- Badge Tag Customer yang Ditambahkan -->
+                                        @if(!empty($selected_customer_tags))
+                                            <div class="flex flex-wrap gap-1.5 pt-1">
+                                                @foreach($selected_customer_tags as $tag)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-medium border border-emerald-500/20">
+                                                        <span>👤 {{ $tag['name'] }} ({{ $tag['phone'] }})</span>
+                                                        <button type="button" wire:click="removeCustomerTag('{{ $tag['phone'] }}')" class="hover:text-red-500 font-bold ml-0.5">×</button>
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] text-muted-foreground mb-1">Daftar Nomor WhatsApp di Grup ini (pisahkan baris baru atau koma):</label>
+                                        <textarea wire:model="new_group_numbers" rows="3" placeholder="0881082411878&#10;08123456789"
+                                            class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-mono"></textarea>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" wire:click="saveBroadcastGroup"
+                                            class="inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-8 px-4 text-xs font-bold transition-colors">
+                                            {{ $editing_group_index !== null ? '💾 Simpan Perubahan Grup' : '+ Simpan Grup Baru' }}
+                                        </button>
+                                        @if($editing_group_index !== null)
+                                            <button type="button" wire:click="cancelEditBroadcastGroup"
+                                                class="inline-flex items-center justify-center rounded-md bg-muted text-muted-foreground border border-border hover:bg-muted/80 h-8 px-3 text-xs font-medium transition-colors">
+                                                Batal
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Filter & Impor Otomatis dari Database Customer -->
+                                <div class="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-2 mt-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wide">📥 Impor Massal Otomatis Dari Database</span>
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
                                         <div>
@@ -1775,20 +1898,7 @@
                                     </div>
                                     <button type="button" wire:click="importCustomersToGroup"
                                         class="w-full inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow hover:bg-emerald-700 h-7 px-3 text-xs font-bold transition-colors">
-                                        + Buat Grup dari Data Rental Terpilih
-                                    </button>
-                                </div>
-
-                                <!-- Form Buat Grup Baru Manual -->
-                                <div class="pt-2 border-t border-border/60 space-y-2">
-                                    <span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">✍️ Buat Grup Manual</span>
-                                    <input type="text" wire:model="new_group_name" placeholder="Nama Grup (Misal: Partner Toko / Grup Khusus)"
-                                        class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary">
-                                    <textarea wire:model="new_group_numbers" rows="2" placeholder="Nomor WhatsApp manual (pisahkan baris baru atau koma, misal: 0881082411878, 08123456789)"
-                                        class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-mono"></textarea>
-                                    <button type="button" wire:click="addBroadcastGroup"
-                                        class="inline-flex items-center justify-center rounded-md bg-muted text-foreground border border-border shadow hover:bg-muted/80 h-7 px-3 text-xs font-semibold transition-colors">
-                                        + Simpan Grup Manual
+                                        + Buat Grup Otomatis dari Data Rental Terpilih
                                     </button>
                                 </div>
                             </div>
