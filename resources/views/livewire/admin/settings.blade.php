@@ -45,6 +45,12 @@
                 {{ $activeTab === 'database' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
             </button>
+            <button wire:click="$set('activeTab', 'whatsapp')"
+                title="WhatsApp Bot"
+                class="flex-1 inline-flex items-center justify-center rounded-lg py-2 text-sm font-medium transition-all
+                {{ $activeTab === 'whatsapp' ? 'bg-emerald-500 text-white shadow-sm' : 'text-muted-foreground hover:text-emerald-500 hover:bg-muted/50' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </button>
         </div>
     </div>
 
@@ -1507,6 +1513,62 @@
                                 <span wire:loading wire:target="importData">Memproses...</span>
                             </button>
                         </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if($activeTab === 'whatsapp')
+            <div class="bg-background rounded-xl border border-border overflow-hidden shadow-sm p-6 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <span class="inline-block w-3 h-3 rounded-full bg-emerald-500"></span>
+                            WhatsApp Gateway & Auto-Reply Bot
+                        </h2>
+                        <p class="text-xs text-muted-foreground mt-0.5">Layanan bot WhatsApp mandiri (Baileys) untuk kirim invoice otomatis dan chatbot customer.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <a href="http://localhost:3001/qr" target="_blank"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>
+                            Buka Layar Scan QR Code
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Info Panduan Jalankan Bot -->
+                <div class="p-4 rounded-xl bg-muted/40 border border-border/60 text-sm space-y-2">
+                    <p class="font-medium text-foreground">💡 Cara Menjalankan WhatsApp Bot di Komputer / Server:</p>
+                    <div class="bg-card p-3 rounded-lg font-mono text-xs text-muted-foreground overflow-x-auto border border-border">
+                        cd "whatsapp-bot"<br>
+                        npm start
+                    </div>
+                    <p class="text-xs text-muted-foreground">Scan QR code yang muncul di terminal atau klik tombol <strong>"Buka Layar Scan QR Code"</strong> di atas melalui aplikasi WhatsApp di HP Anda (Perangkat Tertaut).</p>
+                </div>
+
+                <!-- Fitur yang Berjalan Otomatis -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl border border-border/80 bg-background/50 space-y-2">
+                        <div class="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">📩</span>
+                            Notifikasi Otomatis
+                        </div>
+                        <ul class="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
+                            <li>Kirim detail order & link pembayaran saat customer selesai booking</li>
+                            <li>Kirim notifikasi pembayaran lunas & link invoice saat transaksi berhasil</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 rounded-xl border border-border/80 bg-background/50 space-y-2">
+                        <div class="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">🤖</span>
+                            Chatbot Interaktif
+                        </div>
+                        <ul class="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
+                            <li>Customer ketik <strong>KATALOG / 1</strong>: Bot membalas daftar unit & harga</li>
+                            <li>Customer ketik <strong>CEK [KODE_BOOKING]</strong>: Bot membalas detail status pemesanan</li>
+                            <li>Customer ketik <strong>MENU</strong>: Menampilkan navigasi bantuan</li>
+                        </ul>
                     </div>
                 </div>
             </div>

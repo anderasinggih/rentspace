@@ -15,4 +15,5 @@ use App\Http\Controllers\Api\ShortcutController;
 
 Route::prefix('v1')->group(function () {
     Route::post('/shortcut/unit-action', [ShortcutController::class, 'handleAction']);
+    Route::post('/wa/webhook', [\App\Http\Controllers\Api\WhatsAppWebhookController::class, 'handle']);
 });

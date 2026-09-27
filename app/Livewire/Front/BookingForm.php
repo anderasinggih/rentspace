@@ -702,6 +702,11 @@ class BookingForm extends Component
                 route('admin.monitoring')
             );
         } catch (\Exception $e) { }
+
+        // --- NOTIFIKASI WHATSAPP KE CUSTOMER (BOOKING BARU) ---
+        try {
+            app(\App\Services\WhatsAppService::class)->sendBookingCreatedNotification($rental);
+        } catch (\Exception $e) { }
         
         // Attach all selected promos for accurate usage tracking (including stacked ones)
         if (!empty($this->selected_promo_ids)) {

@@ -133,6 +133,9 @@ class Payment extends Component
                         'status' => 'paid',
                         'paid_at' => now(),
                     ]);
+                    try {
+                        app(\App\Services\WhatsAppService::class)->sendPaymentSuccessNotification($this->rental);
+                    } catch (\Exception $e) { }
                     return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
 

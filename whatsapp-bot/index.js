@@ -1,0 +1,265 @@
+const {
+    default: makeWASocket,
+    DisconnectReason,
+    useMultiFileAuthState,
+    fetchLatestBaileysVersion,
+    makeInMemoryStore
+} = require('@whiskeysockets/baileys');
+const express = require('express');
+const cors = require('cors');
+const qrcodeTerminal = require('qrcode-terminal');
+const pino = require('pino');
+const axios = require('axios');
+const path = require('path');
+const fs = require('fs');
+require('dotenv').config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const PORT = process.env.PORT || 3001;
+const API_KEY = process.env.API_KEY || 'rentspace_secret_wa_token_2026';
+const LARAVEL_WEBHOOK_URL = process.env.LARAVEL_WEBHOOK_URL || 'http://localhost:8000/api/v1/wa/webhook';
+
+let sock = null;
+let qrCodeRaw = null;
+let connectionStatus = 'connecting'; // 'connecting' | 'open' | 'close'
+let botUser = null;
+
+// Auth middleware for REST API
+const authMiddleware = (req, res, next) => {
+    const authHeader = req.headers['authorization'] || req.headers['x-api-key'];
+    if (!authHeader || (authHeader !== API_KEY && authHeader !== `Bearer ${API_KEY}`)) {
+        return res.status(401).json({ status: false, message: 'Unauthorized. Invalid API Key.' });
+    }
+    next();
+};
+
+const formatToJid = (phone) => {
+    let clean = phone.replace(/[^0-9]/g, '');
+    if (clean.startsWith('0')) {
+        clean = '62' + clean.slice(1);
+    } else if (clean.startsWith('+62')) {
+        clean = clean.replace('+', '');
+    }
+    return `${clean}@s.whatsapp.net`;
+};
+
+async function connectToWhatsApp() {
+    const sessionDir = path.join(__dirname, 'auth_info_baileys');
+    if (!fs.existsSync(sessionDir)) {
+        fs.mkdirSync(sessionDir, { recursive: true });
+    }
+
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+    const { version, isLatest } = await fetchLatestBaileysVersion();
+    console.log(`[RentSpace WA Bot] Using Baileys v${version.join('.')}, isLatest: ${isLatest}`);
+
+    sock = makeWASocket({
+        version,
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: false,
+        auth: state,
+        browser: ['RentSpace Purwokerto', 'Chrome', '1.0.0']
+    });
+
+    sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect, qr } = update;
+
+        if (qr) {
+            qrCodeRaw = qr;
+            connectionStatus = 'qr_ready';
+            console.log('\n[RentSpace WA Bot] SCAN QR CODE DI BAWAH INI:');
+            qrcodeTerminal.generate(qr, { small: true });
+        }
+
+        if (connection === 'close') {
+            connectionStatus = 'close';
+            qrCodeRaw = null;
+            botUser = null;
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            console.log(`[RentSpace WA Bot] Connection closed (code: ${statusCode}). Reconnecting: ${shouldReconnect}`);
+
+            if (shouldReconnect) {
+                setTimeout(connectToWhatsApp, 5000);
+            } else {
+                console.log('[RentSpace WA Bot] Logged out. Session cleared, please restart to re-scan.');
+                fs.rmSync(sessionDir, { recursive: true, force: true });
+            }
+        } else if (connection === 'open') {
+            connectionStatus = 'open';
+            qrCodeRaw = null;
+            botUser = sock.user;
+            console.log(`[RentSpace WA Bot] ✅ WHATSAPP BOT CONNECTED! Logged in as: ${botUser?.name || botUser?.id}`);
+        }
+    });
+
+    // Handle Incoming Messages
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+        if (type !== 'notify') return;
+
+        for (const msg of messages) {
+            if (!msg.message || msg.key.fromMe) continue;
+
+            const sender = msg.key.remoteJid;
+            // Ignore group messages for customer private bot
+            if (sender.endsWith('@g.us')) continue;
+
+            const text = msg.message.conversation ||
+                         msg.message.extendedTextMessage?.text ||
+                         msg.message.imageMessage?.caption ||
+                         '';
+
+            const senderNumber = sender.replace('@s.whatsapp.net', '');
+            const pushName = msg.pushName || 'Kak';
+
+            if (!text.trim()) continue;
+
+            console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (${senderNumber}): "${text}"`);
+
+            await handleIncomingCustomerMessage(sender, senderNumber, pushName, text.trim());
+        }
+    });
+}
+
+// Logic Chatbot Auto-Reply
+async function handleIncomingCustomerMessage(sender, senderNumber, pushName, text) {
+    const lower = text.toLowerCase();
+
+    // 1. Menu Bantuan / Halo
+    if (['halo', 'hai', 'hi', 'p', 'menu', 'bantuan', 'start', 'info'].includes(lower)) {
+        const replyMenu = `Halo Kak *${pushName}*! 👋\n` +
+            `Selamat datang di WhatsApp Official *Rent Space Purwokerto* 🎮📷\n\n` +
+            `Ada yang bisa kami bantu? Silakan balas dengan angka atau kata kunci:\n\n` +
+            `*1* / *KATALOG* : Cek daftar unit & harga sewa\n` +
+            `*2* / *CEK [KODE]* : Cek status booking (Contoh: *CEK RS-123456*)\n` +
+            `*3* / *WEB* : Kunjungi website & booking online\n` +
+            `*4* / *ADMIN* : Hubungkan langsung dengan Admin kami\n\n` +
+            `_Ketik pilihan Anda di bawah ini ya!_`;
+
+        await sock.sendMessage(sender, { text: replyMenu });
+        return;
+    }
+
+    // 2. Info Web Booking
+    if (lower === '3' || lower === 'web' || lower === 'booking') {
+        const reply = `Kakak bisa langsung lihat ketersediaan unit dan booking online melalui website resmi kami:\n\n` +
+            `🌐 https://rentspacepurwokerto.my.id/booking\n\n` +
+            `Bisa pilih tanggal, durasi sewa, dan metode pembayaran otomatis.`;
+        await sock.sendMessage(sender, { text: reply });
+        return;
+    }
+
+    // 3. Hubungi Admin
+    if (lower === '4' || lower === 'admin' || lower === 'cs') {
+        const reply = `Mohon tunggu sebentar ya Kak *${pushName}*, pesan Kakak sudah kami teruskan ke Customer Support / Admin Rent Space. Admin akan segera membalas chat ini. 🙏`;
+        await sock.sendMessage(sender, { text: reply });
+        return;
+    }
+
+    // 4. Delegasikan query ke Laravel Webhook (untuk cek status booking atau katalog langsung dari DB)
+    try {
+        const res = await axios.post(LARAVEL_WEBHOOK_URL, {
+            sender_jid: sender,
+            phone: senderNumber,
+            name: pushName,
+            text: text
+        }, {
+            headers: { 'X-API-KEY': API_KEY },
+            timeout: 8000
+        });
+
+        if (res.data && res.data.reply) {
+            await sock.sendMessage(sender, { text: res.data.reply });
+            return;
+        }
+    } catch (err) {
+        console.error('[RentSpace WA Bot] Laravel Webhook Error:', err.message);
+    }
+
+    // Fallback pesan default jika tidak dikenali
+    const defaultReply = `Terima kasih sudah menghubungi *Rent Space Purwokerto*! 🙏\n\n` +
+        `Ketik *MENU* untuk melihat opsi layanan, atau tunggu sebentar tim Admin kami akan segera merespon chat Kakak.`;
+    await sock.sendMessage(sender, { text: defaultReply });
+}
+
+// REST Endpoints
+app.get('/status', (req, res) => {
+    res.json({
+        status: true,
+        connection: connectionStatus,
+        bot_user: botUser,
+        qr_available: !!qrCodeRaw
+    });
+});
+
+app.get('/qr', (req, res) => {
+    if (!qrCodeRaw) {
+        return res.status(404).json({
+            status: false,
+            message: connectionStatus === 'open' ? 'Already connected!' : 'QR Code not ready yet.'
+        });
+    }
+    // Simple HTML page to view QR in browser if needed
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>RentSpace WA QR Scanner</title>
+        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+        <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: white; margin: 0; }
+            .card { background: #1e293b; padding: 2rem; border-radius: 1rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+            canvas { background: white; padding: 10px; border-radius: 8px; margin: 1.5rem 0; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h2>Scan WhatsApp QR Code</h2>
+            <p>Buka WhatsApp > Perangkat Tertaut > Tautkan Perangkat</p>
+            <canvas id="canvas"></canvas>
+            <p style="font-size: 0.85rem; color: #94a3b8;">Halaman otomatis refresh setiap 15 detik</p>
+        </div>
+        <script>
+            QRCode.toCanvas(document.getElementById('canvas'), ${JSON.stringify(qrCodeRaw)}, { width: 260 }, function (error) {
+                if (error) console.error(error);
+            });
+            setTimeout(() => { location.reload(); }, 15000);
+        </script>
+    </body>
+    </html>
+    `;
+    res.send(html);
+});
+
+// Endpoint untuk kirim pesan WhatsApp dari Laravel
+app.post('/send-message', authMiddleware, async (req, res) => {
+    const { phone, message } = req.body;
+
+    if (!phone || !message) {
+        return res.status(400).json({ status: false, message: 'Parameter "phone" dan "message" wajib diisi.' });
+    }
+
+    if (connectionStatus !== 'open' || !sock) {
+        return res.status(503).json({ status: false, message: 'WhatsApp bot sedang tidak terhubung (disconnected).' });
+    }
+
+    try {
+        const jid = formatToJid(phone);
+        const sent = await sock.sendMessage(jid, { text: message });
+        return res.json({ status: true, message: 'Pesan berhasil dikirim.', message_id: sent.key.id });
+    } catch (error) {
+        console.error('[RentSpace WA Bot] Gagal mengirim pesan:', error);
+        return res.status(500).json({ status: false, message: 'Gagal mengirim pesan: ' + error.message });
+    }
+});
+
+// Jalankan bot & server
+app.listen(PORT, () => {
+    console.log(`[RentSpace WA Bot API] Server running on http://localhost:${PORT}`);
+    connectToWhatsApp();
+});

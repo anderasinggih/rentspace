@@ -40,4 +40,8 @@ return [
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
     ],
+    'whatsapp' => [
+        'url' => env('WHATSAPP_BOT_URL', 'http://localhost:3001'),
+        'api_key' => env('WHATSAPP_BOT_API_KEY', 'rentspace_secret_wa_token_2026'),
+    ],
 ];
