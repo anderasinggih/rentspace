@@ -86,6 +86,10 @@ class Settings extends Component
     public $chatbot_api_key = '';
     public $chatbot_model = 'gemini-3.5-flash-lite';
 
+    public $admin_wa_secondary = '';
+    public $chatbot_custom_knowledge = [];
+    public $new_knowledge_key = '';
+    public $new_knowledge_value = '';
     public $onesignal_app_id = '';
     public $onesignal_rest_api_key = '';
     public $onesignal_safari_web_id = '';
@@ -151,6 +155,9 @@ class Settings extends Component
         $this->is_chatbot_active = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
         $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
+        $this->admin_wa_secondary = \App\Models\Setting::getVal('admin_wa_secondary', '');
+        $rawKnowledge = \App\Models\Setting::getVal('chatbot_custom_knowledge', '[]');
+        $this->chatbot_custom_knowledge = json_decode($rawKnowledge, true) ?: [];
 
         // Load OneSignal Settings
         $this->onesignal_app_id = \App\Models\Setting::getVal('onesignal_app_id', '');
@@ -357,7 +364,9 @@ class Settings extends Component
         // Save Chatbot Settings
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
-        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: 'gemini-2.0-flash-lite']);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: 'gemini-3.5-flash-lite']);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_secondary'], ['value' => trim($this->admin_wa_secondary)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_custom_knowledge'], ['value' => json_encode(array_values($this->chatbot_custom_knowledge))]);
 
         // Save OneSignal Settings
         \App\Models\Setting::updateOrCreate(['key' => 'onesignal_app_id'], ['value' => trim($this->onesignal_app_id)]);
@@ -428,6 +437,46 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'is_greeting_active'], ['value' => $this->is_greeting_active ? '1' : '0']);
 
         session()->flash('greeting_message', 'Sapaan Beranda berhasil diperbarui!');
+    }
+
+    public function addKnowledge()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->validate([
+            'new_knowledge_key' => 'required',
+            'new_knowledge_value' => 'required',
+        ], [
+            'new_knowledge_key.required' => 'Topik/Kata kunci wajib diisi.',
+            'new_knowledge_value.required' => 'Jawaban/Aturan wajib diisi.',
+        ]);
+
+        $this->chatbot_custom_knowledge[] = [
+            'key' => trim($this->new_knowledge_key),
+            'value' => trim($this->new_knowledge_value),
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'chatbot_custom_knowledge'],
+            ['value' => json_encode(array_values($this->chatbot_custom_knowledge))]
+        );
+
+        $this->reset(['new_knowledge_key', 'new_knowledge_value']);
+        session()->flash('general_message', 'Memori pengetahuan AI berhasil ditambahkan.');
+    }
+
+    public function removeKnowledge($index)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        unset($this->chatbot_custom_knowledge[$index]);
+        $this->chatbot_custom_knowledge = array_values($this->chatbot_custom_knowledge);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'chatbot_custom_knowledge'],
+            ['value' => json_encode($this->chatbot_custom_knowledge)]
+        );
+
+        session()->flash('general_message', 'Memori pengetahuan AI berhasil dihapus.');
     }
 
     public function addFaq()

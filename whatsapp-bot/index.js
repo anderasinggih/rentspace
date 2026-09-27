@@ -155,9 +155,25 @@ async function handleIncomingCustomerMessage(sender, senderNumber, pushName, tex
     }
 
     // 3. Hubungi Admin
-    if (lower === '4' || lower === 'admin' || lower === 'cs') {
-        const reply = `Mohon tunggu sebentar ya Kak *${pushName}*, pesan Kakak sudah kami teruskan ke Customer Support / Admin Rent Space. Admin akan segera membalas chat ini. 🙏`;
+    if (['4', 'admin', 'cs', 'bantuan admin', 'hubungi admin', 'kontak admin'].includes(lower)) {
+        const reply = `Mohon tunggu sebentar ya Kak *${pushName}*, pesan Kakak sudah kami teruskan ke Admin Rent Space. Admin kami akan segera menghubungi atau merespon chat Kakak di nomor ini. 🙏`;
         await sock.sendMessage(sender, { text: reply });
+
+        // Forward notifikasi ke webhook Laravel agar bisa memberitahu admin sekunder/tim admin
+        try {
+            await axios.post(LARAVEL_WEBHOOK_URL, {
+                action: 'forward_admin',
+                sender_jid: sender,
+                phone: senderNumber,
+                name: pushName,
+                text: text
+            }, {
+                headers: { 'X-API-KEY': API_KEY },
+                timeout: 8000
+            });
+        } catch (err) {
+            console.error('[RentSpace WA Bot] Forward Admin Error:', err.message);
+        }
         return;
     }
 

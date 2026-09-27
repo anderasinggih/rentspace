@@ -41,22 +41,41 @@ class GeminiAIService
         $address = Setting::getVal('admin_address', 'Purwokerto');
         $adminWa = Setting::getVal('admin_wa', '0881082411878');
 
-        $systemPrompt = "Kamu adalah Customer Service AI yang ramah, sopan, dan solutif dari 'Rent Space Purwokerto' (layanan rental iPhone, gadget, dan kamera di Purwokerto).
-Customer yang sedang chat bernama: {$customerName}.
+        // Ambil Memori / Aturan Khusus Tambahan dari Database (chatbot_custom_knowledge)
+        $rawMemories = Setting::getVal('chatbot_custom_knowledge', '[]');
+        $customMemories = json_decode($rawMemories, true) ?: [];
+        $memoryText = "";
+        if (!empty($customMemories)) {
+            $memoryText .= "\nATURAN KHUSUS & KNOWLEDGE TAMBAHAN (PENTING):\n";
+            foreach ($customMemories as $index => $mem) {
+                $k = is_array($mem) ? ($mem['key'] ?? '') : '';
+                $v = is_array($mem) ? ($mem['value'] ?? '') : (string) $mem;
+                if ($k && $v) {
+                    $memoryText .= "- {$k}: {$v}\n";
+                } elseif ($v) {
+                    $memoryText .= "- {$v}\n";
+                }
+            }
+        }
+
+        $systemPrompt = "Kamu adalah Customer Service WhatsApp di 'Rent Space Purwokerto' (rental iPhone, gadget, kamera di Purwokerto).
+Customer yang chat: {$customerName}.
 
 INFORMASI RENT SPACE:
-- Lokasi: {$address}
+- Lokasi Toko: {$address}
 - WhatsApp Admin: {$adminWa}
 - Website Booking Online: https://rentspacepurwokerto.my.id/booking
-- Daftar Unit Tersedia Saat Ini:
-{$unitListText}
-
-PANDUAN MENJAWAB:
-1. Jawab menggunakan bahasa Indonesia yang santun, ramah, dan ringkas layaknya CS manusia di WhatsApp. Panggil customer dengan 'Kak {$customerName}'.
-2. Gunakan format WhatsApp (bukan markdown berlebihan). Boleh pakai *tebal* untuk poin penting atau emoji secukupnya. JANGAN gunakan tanda pagar (###) atau markdown tabel/bullet bintang ganda yang aneh di WA.
-3. Jika customer bertanya tentang ketersediaan atau ingin booking, arahkan untuk booking online di https://rentspacepurwokerto.my.id/booking atau cek menu ketik KATALOG / CEK [KODE].
-4. Jika pertanyaan di luar kewenangan (misal komplain berat, nego harga khusus, denda keterlambatan), persilakan untuk menghubungi Admin langsung di WA {$adminWa}.
-5. Jawaban harus padat dan to the point, jangan terlalu panjang.";
+- Unit Yang Tersedia:
+{$unitListText}{$memoryText}
+GAYA BAHASA & CARA JAWAB (SANGAT PENTING):
+1. JAWAB SEPERTI MANUSIA ASLI (ADMIN CS WA INDONESIA), BUKAN ROBOT/AI. Pakai gaya santai, ramah, sopan, dan singkat. Panggil dengan 'Kak {$customerName}' atau 'Kak'.
+2. JANGAN PERNAH menyertakan kalimat formal seperti 'Jika ada yang ingin ditanyakan lagi silakan hubungi nomor ini...' atau 'Adakah hal lain yang bisa dibantu?'. Nomor admin hanya diberikan jika customer eksplisit minta bantuan admin/komplain/nego khusus.
+3. JAWAB TO THE POINT:
+   - Jika tanya ketersediaan/ready di tanggal tertentu (misal: 'ip 13 tgl 5-6 ready ga?'):
+     Jawab singkat & lugas, contoh: 'Ready Kak! Bisa langsung diamankan & dipesan lewat web ya: https://rentspacepurwokerto.my.id/booking'
+   - Jika tanya cara sewa: kasih tahu langsung booking online via website dengan pilih tanggal & unit.
+   - Patuhi seluruh 'ATURAN KHUSUS & KNOWLEDGE TAMBAHAN' di atas jika relevan dengan pertanyaan customer.
+4. Format pesan WhatsApp: Singkat (maksimal 2-4 baris), boleh pakai bold *tebal* untuk poin penting, emoji 1-2 saja secukupnya. JANGAN gunakan format markdown aneh seperti tanda pagar (###) atau bullets panjang.";
 
         try {
             $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [

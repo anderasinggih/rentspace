@@ -21,7 +21,19 @@ class WhatsAppWebhookController extends Controller
 
         $phone = $request->input('phone');
         $name = $request->input('name', 'Kak');
-        $text = trim((string) $request->input('text', ''));
+        $action = $request->input('action');
+
+        // Jika ada request forward ke admin lain (Customer butuh bantuan admin)
+        if ($action === 'forward_admin') {
+            $this->notifySecondaryAdmin($name, $phone, $text);
+            return response()->json(['status' => true, 'message' => 'Admin notified']);
+        }
+
+        // 0. Cek Perintah Khusus Admin: /rentspacesettings
+        if (str_starts_with(strtolower($text), '/rentspacesettings')) {
+            $adminReply = $this->handleRentSpaceSettingsCommand($text, $phone);
+            return response()->json(['status' => true, 'reply' => $adminReply]);
+        }
 
         // 1. Cek perintah KATALOG / LIST / DAFTAR HARGA
         if (preg_match('/^(katalog|pricelist|harga|list|daftar\s*harga|1)$/i', $text)) {
@@ -171,4 +183,141 @@ class WhatsAppWebhookController extends Controller
         }
         return $clean;
     }
+
+    /**
+     * Handler untuk /rentspacesettings (Kelola memori/pengetahuan AI via chat WhatsApp)
+     */
+    private function handleRentSpaceSettingsCommand(string $text, ?string $phone): string
+    {
+        $raw = trim(substr($text, strlen('/rentspacesettings')));
+        $memories = json_decode(\App\Models\Setting::getVal('chatbot_custom_knowledge', '[]'), true) ?: [];
+
+        // 1. Tampilkan Menu Bantuan jika tanpa argumen
+        if (empty($raw) || strtolower($raw) === 'help' || strtolower($raw) === 'list') {
+            $msg = "🛠️ *RENT SPACE AI SETTINGS* 🛠️\n";
+            $msg .= "------------------------------------\n";
+            $msg .= "Kelola memori & aturan respon AI langsung dari WA.\n\n";
+            $msg .= "📋 *Perintah yang Tersedia:*\n";
+            $msg .= "1️⃣ `/rentspacesettings list`\n   Lihat daftar semua memori AI saat ini.\n";
+            $msg .= "2️⃣ `/rentspacesettings add [Kunci] = [Nilai/Aturan]`\n   Tambah memori baru.\n   _Contoh:_ `/rentspacesettings add Lokasi = https://maps.app... (Pasar Pereng)`\n   _Contoh:_ `/rentspacesettings add Jam Buka = Pengambilan unit dilayani jam 08:00 - 22:00, di atas jam 10 malam store close`\n";
+            $msg .= "3️⃣ `/rentspacesettings del [Nomor]`\n   Hapus memori sesuai nomor urut.\n   _Contoh:_ `/rentspacesettings del 1`\n";
+            $msg .= "4️⃣ `/rentspacesettings clear`\n   Hapus semua memori tambahan AI.\n\n";
+
+            if (empty($memories)) {
+                $msg .= "ℹ️ _Saat ini belum ada memori khusus yang tersimpan._";
+            } else {
+                $msg .= "📝 *Daftar Memori Saat Ini (" . count($memories) . "):*\n";
+                foreach ($memories as $idx => $m) {
+                    $no = $idx + 1;
+                    $k = $m['key'] ?? 'Aturan';
+                    $v = $m['value'] ?? '';
+                    $msg .= "{$no}. *{$k}*: {$v}\n";
+                }
+            }
+
+            return $msg;
+        }
+
+        // 2. Tambah Memori: /rentspacesettings add [Kunci] = [Nilai]
+        if (preg_match('/^add\s+(.+)$/i', $raw, $matches)) {
+            $content = trim($matches[1]);
+            $key = 'Aturan Tambahan';
+            $val = $content;
+
+            if (str_contains($content, '=')) {
+                $parts = explode('=', $content, 2);
+                $key = trim($parts[0]);
+                $val = trim($parts[1]);
+            }
+
+            if (empty($val)) {
+                return "⚠️ Format salah Kak. Gunakan:\n`/rentspacesettings add Kunci = Nilai / Aturan`";
+            }
+
+            $memories[] = [
+                'key' => $key,
+                'value' => $val,
+                'created_at' => now()->toDateTimeString(),
+            ];
+
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'chatbot_custom_knowledge'],
+                ['value' => json_encode($memories)]
+            );
+
+            return "✅ *Memori AI Berhasil Ditambahkan!*\n\n" .
+                   "• *Kunci*: {$key}\n" .
+                   "• *Isi/Aturan*: {$val}\n\n" .
+                   "_AI akan otomatis menggunakan aturan ini saat menjawab pertanyaan customer._";
+        }
+
+        // 3. Hapus Memori: /rentspacesettings del [Nomor]
+        if (preg_match('/^(del|delete|hapus)\s+(\d+)$/i', $raw, $matches)) {
+            $targetIndex = (int) $matches[2] - 1;
+
+            if (!isset($memories[$targetIndex])) {
+                return "⚠️ Memori nomor *{$matches[2]}* tidak ditemukan.\nKetik `/rentspacesettings list` untuk melihat daftar nomor.";
+            }
+
+            $removed = $memories[$targetIndex];
+            array_splice($memories, $targetIndex, 1);
+
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'chatbot_custom_knowledge'],
+                ['value' => json_encode($memories)]
+            );
+
+            $delKey = $removed['key'] ?? 'Aturan';
+            return "🗑️ *Memori Berhasil Dihapus!*\nMemori nomor *{$matches[2]}* ({$delKey}) telah dihapus dari database.";
+        }
+
+        // 4. Kosongkan Memori: /rentspacesettings clear
+        if (strtolower($raw) === 'clear') {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'chatbot_custom_knowledge'],
+                ['value' => json_encode([])]
+            );
+            return "🧹 *Semua Memori Khusus AI Berhasil Dikosongkan!*";
+        }
+
+        return "⚠️ Perintah tidak dikenali. Ketik `/rentspacesettings help` untuk bantuan.";
+    }
+
+    /**
+     * Kirim notifikasi / forward permintaan bantuan customer ke WhatsApp Admin Sekunder
+     */
+    private function notifySecondaryAdmin(string $customerName, ?string $customerPhone, string $message): void
+    {
+        $secondaryAdmin = \App\Models\Setting::getVal('admin_wa_secondary');
+        if (empty($secondaryAdmin)) {
+            return;
+        }
+
+        $cleanSecondary = preg_replace('/[^0-9]/', '', $secondaryAdmin);
+        if (empty($cleanSecondary)) {
+            return;
+        }
+
+        $timeStr = now()->translatedFormat('d M Y H:i');
+        $phoneStr = $customerPhone ?: '-';
+        $waLink = $customerPhone ? "https://wa.me/" . preg_replace('/^0/', '62', $customerPhone) : '-';
+
+        $noticeMsg = "🚨 *NOTIFIKASI PERMINTAAN BANTUAN CUSTOMER* 🚨\n" .
+            "------------------------------------\n" .
+            "Halo Admin, ada customer di WhatsApp Bot yang membutuhkan bantuan admin langsung:\n\n" .
+            "• *Nama*: {$customerName}\n" .
+            "• *Nomor WA*: {$phoneStr}\n" .
+            "• *Waktu*: {$timeStr} WIB\n" .
+            "• *Pesan Terakhir*: \"{$message}\"\n\n" .
+            "👉 Chat langsung customer:\n{$waLink}\n\n" .
+            "_Pesan ini diteruskan otomatis oleh WhatsApp Bot Rent Space._";
+
+        try {
+            app(\App\Services\WhatsAppService::class)->sendMessage($cleanSecondary, $noticeMsg);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Gagal forward chat ke admin sekunder: ' . $e->getMessage());
+        }
+    }
 }
+
+

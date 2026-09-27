@@ -1566,7 +1566,7 @@
                     </div>
 
                     <div class="space-y-4 pt-2 border-t border-purple-500/20">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1.5">Model AI</label>
                                 <select wire:model="chatbot_model"
@@ -1593,13 +1593,81 @@
                                 </div>
                                 <p class="text-[10px] text-muted-foreground mt-1">Dapatkan API Key di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-purple-500 underline font-medium">Google AI Studio</a>.</p>
                             </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1.5">Nomor WA Admin Lain (Forward/Notice)</label>
+                                <input type="text" wire:model="admin_wa_secondary" 
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                    placeholder="Contoh: 08123456789">
+                                <p class="text-[10px] text-muted-foreground mt-1">Jika customer minta bicara dengan admin, bot akan otomatis mengirimkan notifikasi ke nomor ini.</p>
+                            </div>
+                        </div>
+
+                        <!-- Kelola Memori / Pengetahuan Tambahan AI -->
+                        <div class="pt-4 border-t border-purple-500/20 space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div>
+                                    <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                        <span>🧠</span> Memori & Pengetahuan Khusus AI (Knowledge Base)
+                                    </h4>
+                                    <p class="text-[11px] text-muted-foreground">Tambah aturan khusus seperti jam buka, link lokasi maps, cara sewa, dll. Bisa juga ditambah langsung via WA pakai perintah <code>/rentspacesettings add Kunci = Nilai</code>.</p>
+                                </div>
+                            </div>
+
+                            <!-- List Memori yang Ada -->
+                            <div class="space-y-2">
+                                @forelse($chatbot_custom_knowledge as $index => $item)
+                                    <div class="flex items-start justify-between gap-3 p-2.5 rounded-lg bg-background/80 border border-border text-xs">
+                                        <div class="flex-1">
+                                            <span class="font-bold text-purple-600 dark:text-purple-400">#{{ $index + 1 }}. {{ $item['key'] ?? 'Aturan' }}:</span>
+                                            <p class="text-muted-foreground mt-0.5 break-words">{{ $item['value'] ?? '' }}</p>
+                                        </div>
+                                        @if(auth()->user()->role === 'admin')
+                                            <button type="button" wire:click="removeKnowledge({{ $index }})" 
+                                                wire:confirm="Hapus memori ini?"
+                                                class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="Hapus">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                            </button>
+                                        @endif
+                                    </div>
+                                @empty
+                                    <div class="p-3 text-center rounded-lg border border-dashed border-border/80 text-xs text-muted-foreground">
+                                        Belum ada memori khusus. Tambahkan melalui form di bawah atau via chat WhatsApp.
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <!-- Form Tambah Memori -->
+                            @if(auth()->user()->role === 'admin')
+                                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-2">
+                                    <div class="sm:col-span-4">
+                                        <input type="text" wire:model="new_knowledge_key" 
+                                            class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary"
+                                            placeholder="Contoh: Lokasi / Jam Store">
+                                        @error('new_knowledge_key') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div class="sm:col-span-6">
+                                        <input type="text" wire:model="new_knowledge_value" 
+                                            class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary"
+                                            placeholder="Contoh: https://maps.app... (Pasar Pereng) atau Buka 08:00 - 22:00">
+                                        @error('new_knowledge_value') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <button type="button" wire:click="addKnowledge"
+                                            class="w-full inline-flex items-center justify-center rounded-md bg-purple-600 text-white shadow hover:bg-purple-700 h-8 px-3 text-xs font-bold transition-colors">
+                                            + Tambah
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         @if(auth()->user()->role === 'admin')
-                            <button type="button" wire:click="saveGeneralSettings"
-                                class="inline-flex items-center justify-center rounded-md bg-purple-600 text-white shadow hover:bg-purple-700 h-8 px-4 text-xs font-bold transition-colors">
-                                Simpan Pengaturan AI
-                            </button>
+                            <div class="pt-2">
+                                <button type="button" wire:click="saveGeneralSettings"
+                                    class="inline-flex items-center justify-center rounded-md bg-purple-600 text-white shadow hover:bg-purple-700 h-8 px-4 text-xs font-bold transition-colors">
+                                    Simpan Pengaturan AI
+                                </button>
+                            </div>
                         @endif
                     </div>
                 </div>
