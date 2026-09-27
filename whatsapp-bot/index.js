@@ -124,7 +124,7 @@ async function connectToWhatsApp() {
                 continue;
             }
 
-            // Resolve actual phone number SEBELUM blok grup
+            // Resolve identitas pengirim SEBELUM blok grup (dipakai juga di grup)
             let actualPhone = '';
             if (sender.endsWith('@s.whatsapp.net')) {
                 actualPhone = sender.replace('@s.whatsapp.net', '');
@@ -134,24 +134,38 @@ async function connectToWhatsApp() {
                 actualPhone = (msg.key.senderPn || '').replace('@s.whatsapp.net', '') || '';
             }
 
+            const senderNumber = actualPhone || sender.replace('@s.whatsapp.net', '').replace('@lid', '');
+            const pushName = msg.pushName || 'Kak';
+
             // Jika dari Grup WhatsApp (@g.us), hanya proses perintah admin khusus
             // ATAU jika dari grup report internal dan bot di-tag (@mention)
             const isGroup = sender.endsWith('@g.us');
             if (isGroup) {
                 const isAdminCommand = lowerText.startsWith('/rentspacesettings') || lowerText.startsWith('/broadcast');
 
-                // Cek apakah bot di-mention — mentionedJid bisa ada di berbagai tipe pesan
-                const contextInfo = msg.message?.extendedTextMessage?.contextInfo
+                // mentionedJid bisa ada di berbagai tipe pesan, dan pada WA modern
+                // identitas LID pun dipakai — karena itu kumpulkan dari semua contextInfo.
+                const contextInfo =
+                    msg.message?.extendedTextMessage?.contextInfo
                     || msg.message?.imageMessage?.contextInfo
                     || msg.message?.videoMessage?.contextInfo
-                    || msg.message?.conversation?.contextInfo
+                    || msg.message?.documentMessage?.contextInfo
+                    || msg.message?.audioMessage?.contextInfo
+                    || msg.message?.stickerMessage?.contextInfo
+                    || msg.message?.buttonsMessage?.contextInfo
+                    || msg.message?.listMessage?.contextInfo
+                    || msg.message?.ephemeralMessage?.message?.extendedTextMessage?.contextInfo
                     || {};
                 const mentionedJids = contextInfo?.mentionedJid || [];
-                const botJid = sock.user?.id || '';
-                const botNumber = botJid.split(':')[0].split('@')[0];
-                const isBotMentioned = mentionedJids.some(jid => jid.split(':')[0].split('@')[0] === botNumber);
 
-                console.log(`[RentSpace WA Bot] Grup pesan: isAdminCmd=${isAdminCommand}, isMentioned=${isBotMentioned}, botNum=${botNumber}, mentions=${JSON.stringify(mentionedJids)}`);
+                // Bandingkan user bot pada kedua format: PN (nomor HP) dan LID.
+                const stripJid = (jid) => (jid || '').split(':')[0].split('@')[0];
+                const botIds = [stripJid(sock.user?.id), stripJid(sock.user?.lid)]
+                    .filter((v) => v && v !== '0');
+                const isBotMentioned = botIds.length > 0
+                    && mentionedJids.some((jid) => botIds.includes(stripJid(jid)));
+
+                console.log(`[RentSpace WA Bot] Grup pesan: isAdminCmd=${isAdminCommand}, isMentioned=${isBotMentioned}, botIds=${JSON.stringify(botIds)}, mentions=${JSON.stringify(mentionedJids)}`);
 
                 if (!isAdminCommand && !isBotMentioned) {
                     continue; // abaikan pesan di grup yang tidak di-tag dan bukan perintah admin
@@ -195,9 +209,6 @@ async function connectToWhatsApp() {
             }
 
 
-
-            const senderNumber = actualPhone || sender.replace('@s.whatsapp.net', '').replace('@lid', '');
-            const pushName = msg.pushName || 'Kak';
 
             if (!text.trim()) continue;
 
