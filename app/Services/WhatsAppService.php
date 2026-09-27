@@ -56,7 +56,8 @@ class WhatsAppService
         $phone = $rental->no_wa;
         if (!$phone) return false;
 
-        $unitNames = $rental->units->pluck('nama')->implode(', ');
+        $rental->loadMissing('units');
+        $unitNames = $rental->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->filter()->implode(', ');
         if (empty($unitNames)) {
             $unitNames = 'Unit Rental';
         }
@@ -89,7 +90,8 @@ class WhatsAppService
         $phone = $rental->no_wa;
         if (!$phone) return false;
 
-        $unitNames = $rental->units->pluck('nama')->implode(', ');
+        $rental->loadMissing('units');
+        $unitNames = $rental->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->filter()->implode(', ');
         if (empty($unitNames)) {
             $unitNames = 'Unit Rental';
         }

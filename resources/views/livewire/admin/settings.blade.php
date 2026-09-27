@@ -1547,6 +1547,49 @@
                     <p class="text-xs text-muted-foreground">Scan QR code yang muncul di terminal atau klik tombol <strong>"Buka Layar Scan QR Code"</strong> di atas melalui aplikasi WhatsApp di HP Anda (Perangkat Tertaut).</p>
                 </div>
 
+                <!-- Integrasi AI Gemini Auto-Reply -->
+                <div class="p-5 border border-purple-500/20 bg-purple-500/5 rounded-xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-purple-500/10 text-purple-600 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-foreground">AI Chatbot WhatsApp (Google Gemini)</h3>
+                                <p class="text-xs text-muted-foreground mt-0.5">Menjawab pertanyaan seputar sewa, lokasi, dan rekomendasi unit secara otomatis 24 jam.</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" wire:model="is_chatbot_active" class="sr-only peer">
+                            <div class="w-11 h-6 bg-zinc-700/50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-transparent after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600 shadow-inner"></div>
+                        </label>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-purple-500/20">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1.5">Gemini API Key</label>
+                            <div class="relative">
+                                <input type="password" wire:model.live="chatbot_api_key" 
+                                    class="w-full rounded-md border border-input bg-background pl-3 pr-24 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                    placeholder="AIzaSy...">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <span class="text-[10px] font-bold text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+                                        {{ $chatbot_api_key ? 'Tersimpan (...' . substr($chatbot_api_key, -4) . ')' : 'Belum Ada Key' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-muted-foreground mt-1.5">Dapatkan API Key gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-purple-500 underline font-medium">Google AI Studio</a>.</p>
+                        </div>
+
+                        @if(auth()->user()->role === 'admin')
+                            <button type="button" wire:click="saveGeneralSettings"
+                                class="inline-flex items-center justify-center rounded-md bg-purple-600 text-white shadow hover:bg-purple-700 h-8 px-4 text-xs font-bold transition-colors">
+                                Simpan Kunci AI
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Fitur yang Berjalan Otomatis -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="p-4 rounded-xl border border-border/80 bg-background/50 space-y-2">
@@ -1562,12 +1605,12 @@
                     <div class="p-4 rounded-xl border border-border/80 bg-background/50 space-y-2">
                         <div class="flex items-center gap-2 text-sm font-semibold text-foreground">
                             <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">🤖</span>
-                            Chatbot Interaktif
+                            Chatbot Interaktif & AI
                         </div>
                         <ul class="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
-                            <li>Customer ketik <strong>KATALOG / 1</strong>: Bot membalas daftar unit & harga</li>
-                            <li>Customer ketik <strong>CEK [KODE_BOOKING]</strong>: Bot membalas detail status pemesanan</li>
-                            <li>Customer ketik <strong>MENU</strong>: Menampilkan navigasi bantuan</li>
+                            <li>Customer ketik <strong>KATALOG / 1</strong>: Bot membalas daftar unit & harga rapi</li>
+                            <li>Customer ketik <strong>CEK [KODE_BOOKING]</strong>: Bot membalas status booking</li>
+                            <li>Pertanyaan bebas (rekomendasi, syarat, dll) dijawab otomatis oleh AI</li>
                         </ul>
                     </div>
                 </div>

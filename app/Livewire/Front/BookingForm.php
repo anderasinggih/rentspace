@@ -703,11 +703,17 @@ class BookingForm extends Component
             );
         } catch (\Exception $e) { }
 
-        // --- NOTIFIKASI WHATSAPP KE CUSTOMER (BOOKING BARU) ---
-        try {
-            app(\App\Services\WhatsAppService::class)->sendBookingCreatedNotification($rental);
-        } catch (\Exception $e) { }
-        
+        // Create rental items
+        foreach ($this->selected_unit_ids as $uid) {
+            $u = Unit::find($uid);
+            $uPrice = ($days * $u->harga_per_hari) + ($remainingHours * $u->harga_per_jam);
+            \App\Models\RentalItem::create([
+                'rental_id' => $rental->id,
+                'unit_id' => $uid,
+                'price_snapshot' => $uPrice
+            ]);
+        }
+
         // Attach all selected promos for accurate usage tracking (including stacked ones)
         if (!empty($this->selected_promo_ids)) {
             $rental->appliedPromos()->attach($this->selected_promo_ids);
@@ -725,20 +731,13 @@ class BookingForm extends Component
         $owned[] = $rental->booking_code;
         session(['owned_bookings' => $owned]);
 
-        // Create rental items
-        foreach ($this->selected_unit_ids as $uid) {
-            $u = Unit::find($uid);
-            $uPrice = ($days * $u->harga_per_hari) + ($remainingHours * $u->harga_per_jam);
-            \App\Models\RentalItem::create([
-                'rental_id' => $rental->id,
-                'unit_id' => $uid,
-                'price_snapshot' => $uPrice
-            ]);
-        }
+        // --- NOTIFIKASI WHATSAPP KE CUSTOMER (BOOKING BARU) ---
+        try {
+            $rental->load('units');
+            app(\App\Services\WhatsAppService::class)->sendBookingCreatedNotification($rental);
+        } catch (\Exception $e) { }
 
         $this->dispatch('booking-submitted');
-
-
 
         return redirect()->route('public.payment', $rental->booking_code);
     }
