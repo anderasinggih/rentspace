@@ -17,8 +17,12 @@ class GeminiAIService
         $apiKey = Setting::getVal('chatbot_api_key', config('services.gemini.key'));
 
         if (!$apiKey) {
+            Log::info('GeminiAIService: API Key belum diisi di Pengaturan.');
             return null;
         }
+
+        $model = Setting::getVal('chatbot_model', 'gemini-2.0-flash-lite');
+        Log::info("GeminiAIService: Menjawab pesan customer '{$customerName}' menggunakan model {$model}");
 
         // Siapkan ringkasan data rental untuk knowledge base AI
         $units = Unit::where('is_active', true)->with('category')->get();

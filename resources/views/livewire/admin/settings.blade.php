@@ -1571,13 +1571,13 @@
                                 <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1.5">Model AI</label>
                                 <select wire:model="chatbot_model"
                                     class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-medium">
-                                    <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite (Paling Cepat & Hemat - 15 RPM)</option>
-                                    <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash 8B (Super Ringan & Hemat)</option>
-                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Standar Seimbang)</option>
+                                    <option value="gemini-2.0-flash-lite">Gemini Flash Lite (Terbaru, Paling Cepat & Hemat - 15 RPM)</option>
+                                    <option value="gemini-1.5-flash-8b">Gemini Flash 8B (Super Ringan & Hemat - 15 RPM)</option>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Standar)</option>
                                     <option value="gemini-2.0-flash">Gemini 2.0 Flash (Kemampuan Lebih Tinggi)</option>
-                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Paling Pintar / Penalaran Kompleks)</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Paling Pintar)</option>
                                 </select>
-                                <p class="text-[10px] text-muted-foreground mt-1">Disarankan <strong>Gemini 2.0 Flash Lite</strong> atau <strong>1.5 Flash 8B</strong> untuk auto-reply WhatsApp.</p>
+                                <p class="text-[10px] text-muted-foreground mt-1">Gunakan <strong>Gemini Flash Lite</strong> untuk auto-reply WhatsApp tercepat & kuota free 15 RPM.</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1.5">Gemini API Key</label>
