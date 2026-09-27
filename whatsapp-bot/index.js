@@ -28,6 +28,33 @@ let qrCodeRaw = null;
 let connectionStatus = 'connecting'; // 'connecting' | 'open' | 'close'
 let botUser = null;
 
+// Laravel + AI butuh 10-25 detik untuk menjawab. Kalau pesan customer diproses
+// paralel, jawabannya arrive telat dan terlihat seperti bot "bales pesan
+// sebelumnya". Jadi satu chat = satu giliran AI pada satu waktu.
+const chatQueues = new Map(); // jid -> { running, pending: [] }
+const COALESCE_MS = 1200;    // jeda menunggu pesan beruntun (ketik cepat)
+const PRESENCE_TTL_MS = 20000;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Sapaan singkat yang bukan pertanyaan baru: jawaban yang sedang jalan tetap dikirim.
+// Dicek per kata (bukan regex utuh) supaya "ok makasih", "terima kasih ya kak",
+// dan emoji doang tetap kena, sementara "kak ip 13 ready?" tetap dianggap pertanyaan.
+const ACK_WORDS = new Set([
+    'ok', 'oke', 'okay', 'sip', 'sipp', 'siap', 'ya', 'iya', 'yes', 'nah', 'good', 'mantap',
+    'mksh', 'makasih', 'terima', 'kasih', 'terimaksih', 'thanks', 'thank', 'you', 'banyak',
+    'ntar', 'tunggu', 'wait', 'haha', 'hihi', 'hehe', 'wkwk', 'betul', 'benar',
+    'kak', 'kakak', 'sih', 'dong', 'dear',
+]);
+const isAck = (text) => {
+    const raw = String(text || '').trim();
+    if (!raw || raw.length > 40) return false;
+    const words = raw.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return true;   // cuma emoji, mis. "🙏"
+    if (words.length > 5) return false;
+    return words.every((w) => ACK_WORDS.has(w));
+};
+
 // Auth middleware for REST API
 const authMiddleware = (req, res, next) => {
     const authHeader = req.headers['authorization'] || req.headers['x-api-key'];
@@ -218,14 +245,125 @@ async function connectToWhatsApp() {
 
             console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (${isGroup ? 'Group: ' + sender : 'Phone: ' + (actualPhone || 'LID: ' + senderNumber)}): "${text}"`);
 
-            await handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text.trim(), msg);
+            enqueueCustomerMessage(sender, senderNumber, actualPhone, pushName, text.trim(), msg);
         }
     });
 }
 
+/**
+ * Masukkan pesan ke antrean chat, lalu jalankan worker-nya kalau belum jalan.
+ *
+ * Aturannya:
+ * - Satu chat hanya boleh punya satu permintaan AI yang jalan (tidak paralel).
+ * - Pesan yang masuk saat AI masih berpikir TIDAK langsung diproses; dia ditunggu
+ *   dan digabung dengan pesan beruntun berikutnya.
+ * - Kalau ada pertanyaan baru yang menimpa, jawaban untuk pertanyaan lama
+ *   dibuang (lihat guard di handleIncomingCustomerMessage). Customers yang sudah
+ *   nanya ulang tidak ALU-aluan dapat jawaban basi.
+ */
+function enqueueCustomerMessage(sender, senderNumber, actualPhone, pushName, text, rawMsg) {
+    let state = chatQueues.get(sender);
+    if (!state) {
+        state = { running: false, pending: [] };
+        chatQueues.set(sender, state);
+    }
+
+    state.pending.push({ sender, senderNumber, actualPhone, pushName, text, rawMsg });
+
+    if (!state.running) {
+        drainCustomerQueue(sender);
+    }
+}
+
+async function drainCustomerQueue(sender) {
+    const state = chatQueues.get(sender);
+    if (!state || state.running) return;
+    state.running = true;
+
+    try {
+        while (state.pending.length) {
+            // Tunggu dulu: orang yang ngetik cepat sering kirim 2-3 pesan beruntun
+            // ("ip 12" lalu "ready kapan?"). Dijawab satu kali, bukan dua kali.
+            await sleep(COALESCE_MS);
+            const batch = state.pending.splice(0, state.pending.length);
+            const last = batch[batch.length - 1];
+
+            // Guard: kalau selagi menjawab ada pertanyaan baru yang masuk, jawaban
+            // ini sudah basi -> jangan dikirim, biar tidak terlihat "nge-lag".
+            const guard = () => {
+                const pending = (chatQueues.get(sender)?.pending || []);
+                return !pending.some((m) => !isAck(m.text));
+            };
+
+            const merged = mergeBatchText(batch);
+
+            try {
+                await sock.sendPresenceUpdate('composing', sender, PRESENCE_TTL_MS);
+            } catch (_) { /* presence bukan hal kritis */ }
+
+            try {
+                await handleIncomingCustomerMessage(
+                    last.sender, last.senderNumber, last.actualPhone, last.pushName, merged, last.rawMsg, guard
+                );
+            } catch (err) {
+                console.error('[RentSpace WA Bot] Error saat membalas:', err.message);
+            }
+
+            try {
+                await sock.sendPresenceUpdate('paused', sender);
+            } catch (_) { /* abaikan */ }
+        }
+    } finally {
+        state.running = false;
+        if (state.pending.length) {
+            // Ada pesan yang masuk tepat di detik terakhir while loop selesai.
+            // Kalau tidak dijalankan ulang di sini, pesannya nyangkut di antrean
+            // tanpa pernah dibalas.
+            drainCustomerQueue(sender);
+        } else if (chatQueues.get(sender) === state) {
+            chatQueues.delete(sender);
+        }
+    }
+}
+
+/**
+ * Gabung beberapa pesan beruntun jadi satu pertanyaan.
+ *
+ * Kebanyakan orang yang ngetik cepat mengirim potongan ("ip 12" lalu "yang pro
+ * max" lalu "harga berapa?"), jadi lebih baik dirangkai utuh daripada diambil
+ * satu. Kalau gabungannya sudah panjang, pakai pesan terakhir yang memang
+ * pertanyaannya supaya tidak dijawab dua kali.
+ */
+function mergeBatchText(batch) {
+    if (batch.length === 1) return batch[0].text;
+
+    const joined = batch.map((m) => m.text).join(' ');
+    if (joined.length <= 80) return joined;
+
+    for (let i = batch.length - 1; i >= 0; i--) {
+        if (/[?？]\s*$/.test(batch[i].text) || /\b(kapan|berapa|harga|mana|ready|ada|tersedia|boleh|bisa)\b/i.test(batch[i].text)) {
+            return batch[i].text;
+        }
+    }
+    return joined;
+}
+
 // Logic Chatbot Auto-Reply
-async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text, rawMsg = null) {
+async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text, rawMsg = null, guard = null) {
     const lower = text.toLowerCase();
+
+    // Semua pengiriman melewati sini supaya bisa di-skip kalau jawabannya sudah
+    // basi (customer sudah ganti pertanyaan).
+    let staleSkipped = 0;
+    const send = async (content) => {
+        if (guard && !guard()) {
+            staleSkipped++;
+            console.log(`[RentSpace WA Bot] Jawaban dibuang (sudah ada pertanyaan baru): "${String(content?.text || '').slice(0, 80)}"`);
+            return false;
+        }
+        await sock.sendMessage(sender, content);
+        return true;
+    };
 
     // 0. Perintah Khusus Admin: /broadcast send [Grup] from reply (Kirim foto + caption yang di-reply)
     const replyBroadcastMatch = lower.match(/^\/broadcast\s+send\s+(\d+)\s+from\s+reply(?:\s+(.+))?$/i);
@@ -396,7 +534,7 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
             }
         } catch (err) {
             console.error('[RentSpace WA Bot] Admin Command Error:', err.message);
-            await sock.sendMessage(sender, { text: '⚠️ Terjadi kesalahan saat memproses perintah admin: ' + err.message });
+            await send({ text: '⚠️ Terjadi kesalahan saat memproses perintah admin: ' + err.message });
             return;
         }
     }
@@ -412,7 +550,7 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
             `*4* / *ADMIN* : Hubungkan langsung dengan Admin kami\n\n` +
             `_Ketik pilihan Anda di bawah ini ya!_`;
 
-        await sock.sendMessage(sender, { text: replyMenu });
+        await send({ text: replyMenu });
         return;
     }
 
@@ -421,14 +559,14 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
         const reply = `Kakak bisa langsung lihat ketersediaan unit dan booking online melalui website resmi kami:\n\n` +
             `🌐 https://rentspacepurwokerto.my.id/booking\n\n` +
             `Bisa pilih tanggal, durasi sewa, dan metode pembayaran otomatis.`;
-        await sock.sendMessage(sender, { text: reply });
+        await send({ text: reply });
         return;
     }
 
     // 3. Hubungi Admin
     if (['4', 'admin', 'cs', 'bantuan admin', 'hubungi admin', 'kontak admin'].includes(lower)) {
         const reply = `Mohon tunggu sebentar ya Kak *${pushName}*, pesan Kakak sudah kami teruskan ke Admin Rent Space. Admin kami akan segera menghubungi atau merespon chat Kakak di nomor ini. 🙏`;
-        await sock.sendMessage(sender, { text: reply });
+        await send({ text: reply });
 
         // Forward notifikasi ke webhook Laravel agar bisa memberitahu admin sekunder/tim admin
         try {
@@ -448,7 +586,7 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
         return;
     }
 
-    // 4. Delegasikan query ke Laravel Webhook (untuk cek status booking atau katalog langsung dari DB)
+    // 4. Delegasikan query ke Laravel Webhook (AI Gemini: katalog, jadwal, promo, cek status)
     try {
         const res = await axios.post(LARAVEL_WEBHOOK_URL, {
             sender_jid: sender,
@@ -458,21 +596,25 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
             text: text
         }, {
             headers: { 'X-API-KEY': API_KEY },
-            timeout: 10000
+            // Harus LEBIH LAMA dari timeout AI di sisi Laravel (30 detik), kalau tidak
+            // jawaban yang lambat justru dibuang dan customer tidak dapat apa-apa.
+            timeout: 45000
         });
 
         if (res.data && res.data.reply) {
-            await sock.sendMessage(sender, { text: res.data.reply });
+            await send({ text: res.data.reply });
             return;
         }
     } catch (err) {
         console.error('[RentSpace WA Bot] Laravel Webhook Error:', err.message);
     }
 
-    // Fallback pesan default jika tidak dikenali
-    const defaultReply = `Terima kasih sudah menghubungi *Rent Space Purwokerto*! 🙏\n\n` +
-        `Ketik *MENU* untuk melihat opsi layanan, atau tunggu sebentar tim Admin kami akan segera merespon chat Kakak.`;
-    await sock.sendMessage(sender, { text: defaultReply });
+    // Kalau AI tidak mengembalikan apa-apa, jangan diam. Satu kalimat saja,
+    // bukan template panjang yang justru makin kelihatan bot.
+    if (staleSkipped === 0) {
+        const defaultReply = `Maaf kak, untuk itu aku cekin dulu ya. Balas *ADMIN* kalau mau langsung ngobrol sama admin.`;
+        await send({ text: defaultReply });
+    }
 }
 
 // REST Endpoints
