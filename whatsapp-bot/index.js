@@ -193,7 +193,7 @@ async function connectToWhatsApp() {
                             text: cleanText
                         }, {
                             headers: { 'X-API-KEY': API_KEY },
-                            timeout: 20000
+                            timeout: 60000
                         });
 
                         if (res.data && res.data.reply) {

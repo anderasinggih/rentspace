@@ -243,7 +243,7 @@ PANDUAN MENJAWAB (SANGAT PENTING):
                 ];
             }
 
-            $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+            $response = Http::timeout(30)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
                 'contents' => $contents,
                 'generationConfig' => [
                     'temperature' => 0.6,
@@ -269,7 +269,7 @@ PANDUAN MENJAWAB (SANGAT PENTING):
                     }
                     \Illuminate\Support\Facades\Cache::put($sessionKey, $history, 7200);
 
-                    return $text;
+                    return self::formatForWhatsApp($text);
                 }
             } else {
                 Log::warning('GeminiAIService Error: ' . $response->body());
@@ -349,6 +349,60 @@ PANDUAN MENJAWAB (SANGAT PENTING):
         if (empty($returnTodayText)) $returnTodayText = "Tidak ada pengembalian yang dijadwalkan hari ini.\n";
         if (empty($pickupTodayText)) $pickupTodayText = "Tidak ada pengambilan yang dijadwalkan hari ini.\n";
 
+        // --- BOOKING MENUNGGU (status pending: sudah bayar, belum ambil) ---
+        $pendingText = "";
+        $pendingBookings = \App\Models\Rental::with(['units'])
+            ->where('status', 'pending')
+            ->orderBy('waktu_mulai', 'asc')
+            ->limit(40)
+            ->get();
+        foreach ($pendingBookings as $r) {
+            $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
+            $startStr = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M Y H:i') : '-';
+            $endStr   = $r->waktu_selesai ? \Carbon\Carbon::parse($r->waktu_selesai)->translatedFormat('d M Y H:i') : '-';
+            $pendingText .= "• {$uNames} | Penyewa: " . ($r->nama ?: '-') . " | WA: " . ($r->no_wa ?: '-')
+                . " | Ambil: {$startStr} | Selesai: {$endStr} | Kode: " . ($r->booking_code ?: '-') . "\n";
+        }
+        if (empty($pendingText)) $pendingText = "Tidak ada booking yang menunggu pengambilan.\n";
+
+        // --- RIWAYAT: PERNAH KENA DENDA ---
+        $fineText = "";
+        $finedRentals = \App\Models\Rental::with(['units'])
+            ->where('denda', '>', 0)
+            ->orderByDesc('denda')
+            ->limit(40)
+            ->get();
+        foreach ($finedRentals as $r) {
+            $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
+            $fineText .= "• " . ($r->nama ?: '-') . " | Unit: {$uNames} | Denda: Rp "
+                . number_format($r->denda, 0, ',', '.')
+                . " | Alasan: " . ($r->catatan_kerusakan ?: '-')
+                . " | Kode: " . ($r->booking_code ?: '-') . "\n";
+        }
+        if (empty($fineText)) $fineText = "Belum ada penyewa yang pernah dikenakan denda.\n";
+
+        // --- RIWAYAT: PERNAH TERLAMBAT MENGEMBALIKAN ---
+        $lateHistoryText = "";
+        $lateHistory = \App\Models\Rental::with(['units'])
+            ->whereNotNull('handed_over_at')
+            ->whereNotNull('waktu_selesai')
+            ->whereColumn('handed_over_at', '>', 'waktu_selesai')
+            ->orderByDesc('handed_over_at')
+            ->limit(40)
+            ->get();
+        foreach ($lateHistory as $r) {
+            $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
+            $telat = \Carbon\Carbon::parse($r->waktu_selesai)->diffInMinutes(\Carbon\Carbon::parse($r->handed_over_at));
+            $lateHistoryText .= "• " . ($r->nama ?: '-') . " | Unit: {$uNames} | Telat: {$telat} menit"
+                . " | Jadwal: " . \Carbon\Carbon::parse($r->waktu_selesai)->translatedFormat('d M Y H:i')
+                . " | Aktual: " . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M Y H:i')
+                . " | Kode: " . ($r->booking_code ?: '-') . "\n";
+        }
+        if (empty($lateHistoryText)) $lateHistoryText = "Belum ada riwayat penyewa yang terlambat mengembalikan unit.\n";
+
+        // --- PENCARIAN DATA PENYEWA BERDASARKAN NAMA DI PERTANYAAN ---
+        $lookupText = self::lookupRentalsByName($userMessage);
+
         // --- PROFIT / PENDAPATAN ---
         // Hari ini
         $profitToday = \App\Models\Rental::whereIn('status', ['renting', 'paid', 'completed'])
@@ -386,17 +440,27 @@ Waktu saat ini: {$currentTimeStr}.
 Penanya dari dalam tim: {$askerName}.
 Lokasi Toko: {$address}.
 
-PANDUAN MENJAWAB:
-- Jawab langsung to the point, seperti laporan internal. Jangan basa-basi berlebihan.
-- Boleh tampilkan data detail (nama, nomor WA, alamat penyewa) karena ini percakapan internal tim.
-- Gunakan format yang rapi dan mudah dibaca. Minimal emoji, maksimal informasi.
-- Jawab singkat tapi lengkap.
+ATURAN PENTING (WAJIB DIPAATUHI):
+1. DATA DI BAWAH INI ADALAH KEBENARAN. Jawab HANYA dari data tersebut. Jangan mengarang nama, nomor, atau angka.
+2. Kalau ada pertanyaan soal SEORANG PENYEWA, cek dulu bagian \"PENCARIAN DATA PENYEWA\" dan \"SELURUH TRANSAKSI PENYEWA\". Data di situ lebih lengkap daripada ringkasan lain.
+3. JANGAN pernah menjawab \"tidak ada data\" sebelum sections yang relevan benar-benar dicek. Banyak transaksi berstatus pending / completed / cancelled yang TIDAK muncul di ringkasan hari ini, tapi tetap ada di riwayat.
+4. Kalau ditanya \"hari ini\" atau \"minggu ini\", pakai bagian JADWAL PENGAMBILAN/PENGEMBALIAN HARI INI. Jangan menebak.
+5. Bahasa gaul dan singkatan tim (mis. \"cuk\" = customer, \"yg\" = yang, \"trs/trus\" = terus, \"ngambil\" = mengambil, \"telat\" = terlambat, \"denda\", \"omset\", \"cod\") harus dipahami sebagai pertanyaan bisnis sungguhan, lalu dijawab dengan data.
+6. Kalau memang tidak ada yang cocok, sebutkan apa yang ADA yang mendekati (mis. \"yang paling mendekati: ...\"), jangan langsung menyerah.
+7. Jawab langsung to the point seperti laporan internal. Boleh tampilkan nama, nomor WA, alamat karena ini internal.
+8. Format WA: pakai *tebal* (satu bintang) untuk judul, dan bullet -. Jangan pakai markdown lain.
 
 DATA UNIT TOKO:
 {$unitListText}
 
+SELURUH TRANSAKSI PENYEWA (WAJIB DIBACA untuk pertanyaan soal orang tertentu):
+{$lookupText}
+
 UNIT YANG SEDANG DISEWA / AKTIF SAAT INI:
 {$rentingText}
+
+BOOKING MENUNGGU PENGAMBILAN (status pending, sudah bayar belum ambil):
+{$pendingText}
 
 JADWAL PENGAMBILAN HARI INI:
 {$pickupTodayText}
@@ -404,8 +468,14 @@ JADWAL PENGAMBILAN HARI INI:
 JADWAL PENGEMBALIAN HARI INI:
 {$returnTodayText}
 
-PENYEWA TERLAMBAT MENGEMBALIKAN:
+PENYEWA TERLAMBAT MENGEMBALIKAN (sedang berjalan):
 {$lateText}
+
+RIWAYAT PERNAH KENA DENDA:
+{$fineText}
+
+RIWAYAT PERNAH TERLAMBAT MENGEMBALIKAN (selesai):
+{$lateHistoryText}
 
 DATA PENDAPATAN / PROFIT:
 {$profitText}
@@ -414,15 +484,15 @@ Pertanyaan tim: \"{$userMessage}\"
 Jawab sebagai asisten data internal:";
 
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(12)->post(
+            $response = \Illuminate\Support\Facades\Http::timeout(45)->post(
                 "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
                 [
                     'contents' => [
                         ['role' => 'user', 'parts' => [['text' => $systemPrompt]]]
                     ],
                     'generationConfig' => [
-                        'temperature' => 0.3,
-                        'maxOutputTokens' => 400,
+                        'temperature' => 0.2,
+                        'maxOutputTokens' => 900,
                     ]
                 ]
             );
@@ -432,7 +502,7 @@ Jawab sebagai asisten data internal:";
                 if (!empty($candidates[0]['content']['parts'][0]['text'])) {
                     $text = trim($candidates[0]['content']['parts'][0]['text']);
                     $text = preg_replace('/^#+\s*/m', '', $text);
-                    return $text;
+                    return self::formatForWhatsApp($text);
                 }
             } else {
                 \Illuminate\Support\Facades\Log::warning('GeminiAIService::replyInternal Error: ' . $response->body());
@@ -442,5 +512,147 @@ Jawab sebagai asisten data internal:";
         }
 
         return null;
+    }
+
+    /**
+     * Kata umum/singkatan tim yang TIDAK boleh dipakai sebagai kata kunci nama.
+     */
+    private const NAME_STOPWORDS = [
+        'yang', 'atas', 'nama', 'itu', 'ini', 'kapan', 'trus', 'trs', 'yg', 'ada', 'cuk', 'sih', 'dong',
+        'kok', 'oke', 'saya', 'kita', 'tadi', 'kemarin', 'lusa', 'bulan', 'minggu', 'tahun', 'omset',
+        'rupiah', 'unit', 'sewa', 'sewaan', 'penyewa', 'untuk', 'utk', 'dari', 'pada', 'dengan',
+        'dalam', 'sudah', 'belum', 'tidak', 'gak', 'nggak', 'belom', 'tolong', 'please', 'sekarang',
+        'lagi', 'masih', 'juga', 'aja', 'doang', 'gitu', 'gini', 'sip', 'siap', 'makasih', 'terima',
+        'kasih', 'nih', 'tuh', 'hari', 'kemana', 'siapa', 'berapa', 'berapa', 'berapa', 'mau',
+        'ambil', 'ngambil', 'mengambil', 'kembalikan', 'balikin', 'telat', 'terlambat', 'denda',
+        'lapor', 'laporan', 'report', 'data', 'cek', 'lihat', 'tampilkan', 'info', 'keterangan',
+        'yang', 'orang', 'customer', 'pelanggan', 'transaksi', 'rental', 'sewa', 'status', 'kode',
+    ];
+
+    /**
+     * Cari transaksi berdasarkan kata kunci nama yang muncul di pertanyaan tim.
+     *
+     * Tujuannya agar pertanyaan seperti "adi haryanto ambil kapan" dijawab dari
+     * data nyata, bukan ditebak AI. Hanya rental yang namanya mengandung kata
+     * kunci tersebut yang ditampilkan.
+     */
+    private static function lookupRentalsByName(string $userMessage): string
+    {
+        try {
+            $normalized = mb_strtolower(self::stripInvisible($userMessage));
+            $tokens = preg_split('/[^a-z0-9]+/u', $normalized, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+            // Kumpulkan kata kunci: panjang >= 4 dan bukan kata umum.
+            $keywords = [];
+            foreach ($tokens as $t) {
+                if (mb_strlen($t) < 4) continue;
+                if (in_array($t, self::NAME_STOPWORDS, true)) continue;
+                $keywords[$t] = mb_strlen($t);
+            }
+            if (empty($keywords)) {
+                return "Tidak ada kata kunci nama yang terdeteksi di pertanyaan ini.\n";
+            }
+
+            // Urutkan dari kata kunci terpanjang (lebih spesifik).
+            arsort($keywords);
+            $keywords = array_slice($keywords, 0, 4, true);
+
+            $scored = [];
+            foreach (array_keys($keywords) as $kw) {
+                $hits = \App\Models\Rental::with(['units'])
+                    ->whereRaw('LOWER(nama) LIKE ?', ['%' . $kw . '%'])
+                    ->orderByDesc('waktu_mulai')
+                    ->limit(25)
+                    ->get();
+                foreach ($hits as $r) {
+                    $score = mb_strlen($kw);
+                    $key = $r->id;
+                    if (!isset($scored[$key]) || $scored[$key]['score'] < $score) {
+                        $scored[$key] = ['score' => $score, 'rental' => $r];
+                    }
+                }
+            }
+
+            if (empty($scored)) {
+                return "Tidak ada transaksi yang cocok dengan nama tersebut.\n";
+            }
+
+            // Urutkan: skor nama lebih tinggi dulu, lalu transaksi terbaru.
+            usort($scored, function ($a, $b) {
+                if ($a['score'] !== $b['score']) return $b['score'] <=> $a['score'];
+                return $b['rental']->waktu_mulai <=> $a['rental']->waktu_mulai;
+            });
+
+            $out = "Ditemukan " . count($scored) . " transaksi yang cocok:\n";
+            $i = 0;
+            foreach ($scored as $entry) {
+                if ($i++ >= 12) {
+                    $out .= "• ...dan " . (count($scored) - 12) . " transaksi lain.\n";
+                    break;
+                }
+                $r = $entry['rental'];
+                $uNames = $r->units->map(fn($u) => $u->nama_lengkap ?: $u->seri)->implode(', ');
+                $startStr = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M Y H:i') : '-';
+                $endStr   = $r->waktu_selesai ? \Carbon\Carbon::parse($r->waktu_selesai)->translatedFormat('d M Y H:i') : '-';
+                $total = 'Rp ' . number_format($r->grand_total ?: $r->subtotal_harga, 0, ',', '.');
+                $out .= "• " . ($r->nama ?: '-') . " | Status: " . $r->status . " | Unit: {$uNames}"
+                    . " | Ambil: {$startStr} | Selesai: {$endStr}"
+                    . " | WA: " . ($r->no_wa ?: '-') . " | Total: {$total}"
+                    . " | Denda: Rp " . number_format($r->denda ?? 0, 0, ',', '.')
+                    . " | Kode: " . ($r->booking_code ?: '-') . "\n";
+            }
+            return $out;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('lookupRentalsByName gagal: ' . $e->getMessage());
+            return "Pencarian nama gagal dijalankan.\n";
+        }
+    }
+
+    /**
+     * Buang karakter tak terlihat (zero-width, word joiner, bidi, BOM) yang
+     * kadang muncul dari output AI dan merusak rendering WhatsApp.
+     */
+    private static function stripInvisible(string $text): string
+    {
+        $clean = preg_replace(
+            '/[\x{00AD}\x{180E}\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}-\x{2064}\x{2066}-\x{2069}\x{FEFF}]/u',
+            '',
+            $text
+        );
+        return $clean ?? $text;
+    }
+
+    /**
+     * Ubah output AI (markdown) menjadi format yang didukung WhatsApp.
+     *
+     * WhatsApp hanya memahami *tebal*, _miring_, ~coret~, bukan **tebal**
+     * dan bukan backtick. Tanpa konversi ini bintang/backtick tampil mentah.
+     */
+    private static function formatForWhatsApp(string $text): string
+    {
+        $text = self::stripInvisible($text);
+
+        // **tebal** -> *teal*
+        $text = preg_replace('/\*\*(.+?)\*\*/s', '*$1*', $text) ?? $text;
+        // __miring__ -> _miring_
+        $text = preg_replace('/__(.+?)__/s', '_$1_', $text) ?? $text;
+        // `kode` -> ~kode~ (inline code WhatsApp pakai ~)
+        $text = preg_replace('/`([^`\n]+)`/u', '~$1~', $text) ?? $text;
+        // Sisa backtick liar dibuang
+        $text = str_replace('`', '', $text);
+        // Judul markdown # dibuang
+        $text = preg_replace('/^\s*#{1,6}\s*/m', '', $text) ?? $text;
+
+        // Rapikan spasi & baris kosong berlebih
+        $text = preg_replace('/[ \t]+$/m', '', $text) ?? $text;
+        $text = preg_replace("/\n{3,}/", "\n\n", $text) ?? $text;
+        $text = trim($text);
+
+        // WhatsApp batasi 4096 karakter per pesan
+        if (mb_strlen($text) > 4000) {
+            $text = mb_substr($text, 0, 3900) . "\n\n_(Pesan dipotong karena terlalu panjang.)_";
+        }
+
+        return $text;
     }
 }
