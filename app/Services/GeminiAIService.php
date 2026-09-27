@@ -51,27 +51,16 @@ PANDUAN MENJAWAB:
 5. Jawaban harus padat dan to the point, jangan terlalu panjang.";
 
         try {
-            // Menggunakan Gemini Flash-8b / Flash-Lite (model paling hemat kuota, super cepat, free tier 15 RPM)
-            $model = 'gemini-1.5-flash-8b';
-            $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
-                'contents' => [
-                    [
-                        'role' => 'user',
-                        'parts' => [
-                            ['text' => $systemPrompt . "\n\nPesan Customer: \"" . $userMessage . "\"\n\nJawaban CS:"]
-                        ]
-                    ]
-                ],
-                'generationConfig' => [
-                    'temperature' => 0.7,
-                    'maxOutputTokens' => 250,
-                ]
-            ]);
+            // Prioritaskan Gemini Flash-Lite (hemat, responsif, 15 RPM free tier)
+            $candidateModels = [
+                'gemini-2.0-flash-lite',
+                'gemini-1.5-flash-8b',
+                'gemini-1.5-flash',
+            ];
 
-            // Jika flash-8b tidak tersedia di region akun tersebut, fallback ke gemini-1.5-flash
-            if (!$response->successful() && $response->status() === 404) {
-                $model = 'gemini-1.5-flash';
-                $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+            $response = null;
+            foreach ($candidateModels as $model) {
+                $res = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
                     'contents' => [
                         [
                             'role' => 'user',
@@ -85,6 +74,11 @@ PANDUAN MENJAWAB:
                         'maxOutputTokens' => 250,
                     ]
                 ]);
+
+                if ($res->successful()) {
+                    $response = $res;
+                    break;
+                }
             }
 
             if ($response->successful()) {
