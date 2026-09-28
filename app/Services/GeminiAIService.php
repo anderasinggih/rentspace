@@ -1270,10 +1270,12 @@ Jawab sebagai asisten data internal:";
             }
             return $rows->map(function ($r) use ($now, $statusIndo) {
                 $suffix = '';
-                if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast()) {
+                if ($r->status === 'completed' && $r->completed_at) {
+                    $suffix = ' | Sudah dikembalikan pada: ' . \Carbon\Carbon::parse($r->completed_at)->translatedFormat('d M H:i');
+                } elseif ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast() && $r->status === 'renting') {
                     $suffix = ' *** SUDAH MELEBIHI JADWAL ' . self::minutesLate($now, $r->waktu_selesai) . ' MENIT ***';
                 } elseif ($r->handed_over_at) {
-                    $suffix = ' | Sudah dikembalikan: ' . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M H:i');
+                    $suffix = ' | Unit sudah diambil customer sejak: ' . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M H:i');
                 }
                 return self::rentalLine($r, $statusIndo, $suffix);
             })->implode('');
@@ -1395,16 +1397,16 @@ Jawab sebagai asisten data internal:";
 
         $add('RIWAYAT PERNAH TERLAMBAT MENGEMBALIKAN (semua waktu)', 'riwayat_telat', function () use ($statusIndo) {
             $rows = \App\Models\Rental::with(['units'])
-                ->whereNotNull('handed_over_at')->whereNotNull('waktu_selesai')
-                ->whereColumn('handed_over_at', '>', 'waktu_selesai')
-                ->orderByDesc('handed_over_at')
+                ->whereNotNull('completed_at')->whereNotNull('waktu_selesai')
+                ->whereColumn('completed_at', '>', 'waktu_selesai')
+                ->orderByDesc('completed_at')
                 ->limit(10)->get();
             return $rows->isEmpty()
                 ? "Belum ada riwayat penyewa yang terlambat mengembalikan unit.\n"
                 : $rows->map(fn ($r) => self::rentalLine(
                     $r,
                     $statusIndo,
-                    ' | Telat: ' . self::minutesLate(\Carbon\Carbon::parse($r->handed_over_at), $r->waktu_selesai) . ' menit'
+                    ' | Telat: ' . self::minutesLate(\Carbon\Carbon::parse($r->completed_at), $r->waktu_selesai) . ' menit'
                 ))->implode('');
         }, ($s['riwayat'] ?? false) || ($s['terlambat'] ?? false) ? 5 : 9);
 
