@@ -797,6 +797,8 @@ ATURAN PENTING (WAJIB DIPAATUHI):
 11. Format WA: pakai *tebal* (satu bintang) dan bullet -. Jangan pakai markdown lain.
 12. Kata \"TERLAMBAT\" atau \"SUDAH MELEBIHI JADWAL\" berarti masalah nyata — wajib disebut di jawaban.
 13. Jawaban internal to the point, tidak perlu basa-basi sapaan.
+14. NOMINAL, BUKAN JUMLAH TRANSAKSI: kalau tim tanya \"berapa\", \"berapa duit\", \"nominalnya berapa\", atau menyebut status+periode (\"yg statusnya completed + paid bulan ini\"), jawaban WAJIB berisi ANGKA RUPIAH untuk status dan periode itu — boleh dijumlahkan sendiri dari rincian per status. JANGAN balas cuma jumlah transaksi (\"176 transaksi\") dan JANGAN menggantinya dengan ringkasan omset yang lain. Kalau status itu memang tidak ada transaksinya, sebutkan angkanya Rp 0.
+15. KALAU ANGKA BEDA DENGAN DASHBOARD WEB: omset punya dua dasar, \"tanggal mulai sewa\" (waktu_mulai, angka bawaan) dan \"tanggal pembayaran\" (paid_at, angka yang sama dengan dashboard web). Jelaskan selisihnya sebagai perbedaan dasar itu. JANGAN mengarang alasan lain seperti \"total 30 hari terakhir\" atau \"statusnya belum completed\".
 
 YANG SUDAH DIPBAHAS (MEMORI TIM):
 " . ($memoryContext !== '' ? $memoryContext . "\n" : "(belum ada obrolan sebelumnya di grup ini)") . "
@@ -1109,8 +1111,21 @@ Jawab sebagai asisten data internal:";
         'jadwal' => ['hari ini', 'hr ini', 'ambil', 'ngambil', 'pengambilan', 'jadwal', 'datang', 'mampir', 'besok'],
         'cari' => ['transaksi', 'rental', 'booking', 'penyewa', 'cari', 'siapa'],
         'unit' => ['unit', 'iphone', 'ipho', 'ip ', 'hp', 'kamera', 'harga', 'katalog', 'daftar', 'stok', 'ada unit', 'series', 'ready', 'siap', 'inventaris', 'tersedia'],
-        'pendapatan' => ['omset', 'profit', 'pendapatan', 'pemasukan', 'revenue', 'uang masuk', 'berapa total'],
+        'pendapatan' => ['omset', 'profit', 'pendapatan', 'pemasukan', 'revenue', 'uang masuk', 'berapa total', 'duit', 'nominal', 'uangnya', 'berapa rp', 'rp berapa'],
     ];
+
+    /**
+     * Kata status transaksi — dipakai untuk deteksi "duit per status".
+     */
+    private const STATUS_WORDS = [
+        'completed', 'selesai', 'paid', 'bayar', 'renting', 'disewa', 'dibatalkan',
+        'cancelled', 'pending', 'menunggu', 'status',
+    ];
+
+    /**
+     * Kata "minta angka" — disandingkan dengan STATUS_WORDS.
+     */
+    private const ASK_MONEY_WORDS = ['berapa', 'nominal', 'duit', 'jumlah', 'total', 'rp'];
 
     /**
      * Deteksi bagian data yang perlu dimuat untuk sebuah pertanyaan.
@@ -1140,6 +1155,13 @@ Jawab sebagai asisten data internal:";
         // Pertanyaan soal orang: cari nama penyewa dari pertanyaan.
         $sections['cari'] = ($sections['cari'] ?? false) || self::detectNameToken($question) !== null;
 
+        // "yg statusnya completed + paid jadi berapa" = pertanyaan uang per status,
+        // walau tidak ada kata "omset". Kalau tidak dikenali di sini, rincian per
+        // status tenggelam di urutan prioritas dan bot hanya bisa balas jumlah transaksi.
+        if (! ($sections['pendapatan'] ?? false) && self::looksLikeStatusMoneyQuestion($q)) {
+            $sections['pendapatan'] = true;
+        }
+
         $primary = 'umum';
         if ($sections) {
             $priority = ['kode', 'terlambat', 'denda', 'kembali', 'jadwal', 'pending', 'cari', 'riwayat', 'aktif', 'unit', 'pendapatan'];
@@ -1152,6 +1174,35 @@ Jawab sebagai asisten data internal:";
         }
 
         return ['primary' => $primary, 'sections' => $sections];
+    }
+
+    /**
+     * True kalau pertanyaannya menyebut status transaksi DAN minta angka.
+     *
+     * Dipakai hanya untuk mengurutkan blok data, jadi cukup konservatif: cukup
+     * satu kata status dan satu kata tanya angka.
+     */
+    private static function looksLikeStatusMoneyQuestion(string $q): bool
+    {
+        $hasStatus = false;
+        foreach (self::STATUS_WORDS as $word) {
+            if (str_contains($q, $word)) {
+                $hasStatus = true;
+                break;
+            }
+        }
+
+        if (! $hasStatus) {
+            return false;
+        }
+
+        foreach (self::ASK_MONEY_WORDS as $word) {
+            if (str_contains($q, $word)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1379,6 +1430,120 @@ Jawab sebagai asisten data internal:";
     }
 
     /**
+     * Pecah omset per status untuk satu cakupan query: jumlah transaksi + nominal.
+     *
+     * Tanpa angka per status, pertanyaan "yg statusnya completed + paid berapa?"
+     * tidak punya apa-apa untuk dijawab, jadi AI balas jumlah transaksi lalu
+     * mengulang ringkasan omset. Satu query sudah cukup untuk dua-duanya.
+     *
+     * @param  callable():\Illuminate\Database\Eloquent\Builder  $scope
+     * @return array<string,array{trx:int,rp:int}>  status => ['trx' => n, 'rp' => nominal]
+     */
+    private static function revenueByStatus(callable $scope, array $skip = []): array
+    {
+        $rows = $scope()
+            ->selectRaw('status, COUNT(*) as trx, SUM(COALESCE(grand_total, subtotal_harga, 0)) as rp')
+            ->groupBy('status')
+            ->get();
+
+        $out = [];
+        foreach ($rows as $row) {
+            if (in_array($row->status, $skip, true)) {
+                continue;
+            }
+            $out[$row->status] = ['trx' => (int) $row->trx, 'rp' => (int) $row->rp];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Rincian omset per status: bulan ini, bulan ini versi dashboard web, dan
+     * seumur hidup.
+     *
+     * Ini yang menjawab "yg statusnya completed + paid bulan ini berapa?".
+     * Sebelumnya data ini tidak ada sama sekali, jadi bot tidak punya angka
+     * untuk dijawab — dia balas jumlah transaksi ("176 transaksi") lalu
+     * mengulang ringkasan omset, padahal yang ditanya nominalnya.
+     *
+     * @param  array<string,string>  $statusIndo
+     */
+    private static function statusRevenueText(\Carbon\Carbon $now, array $statusIndo): string
+    {
+        $bulan = $now->translatedFormat('F Y');
+
+        // Status yang dihitung sebagai omset. Status "menunggu" sengaja TIDAK
+        // masuk supaya totalnya sama persis dengan "Omset bulan ini" di ringkasan;
+        // kalau ikut, dua blok jadi beda dan bot melaporkan angka yang salah.
+        $statusOmset = ['paid', 'renting', 'completed'];
+        $statusBelumBayar = ['pending', 'pending_confirmation'];
+
+        // Satu query per cakupan, lalu dipakai untuk total maupun rinciannya.
+        $rekap = function (callable $scope) use ($statusIndo, $statusOmset, $statusBelumBayar) {
+            $rows = self::revenueByStatus($scope, ['cancelled']);
+
+            $total = 0;
+            foreach ($rows as $status => $row) {
+                if (in_array($status, $statusOmset, true)) {
+                    $total += $row['rp'];
+                }
+            }
+
+            return [
+                'total' => 'Rp ' . number_format($total, 0, ',', '.'),
+                'omset' => self::revenueByStatusLine($rows, $statusIndo, $statusOmset),
+                'belumBayar' => self::revenueByStatusLine($rows, $statusIndo, $statusBelumBayar),
+            ];
+        };
+
+        $mulai = $rekap(fn () => \App\Models\Rental::whereYear('waktu_mulai', $now->year)
+            ->whereMonth('waktu_mulai', $now->month));
+
+        $bayar = $rekap(fn () => \App\Models\Rental::whereBetween('paid_at', [
+            $now->copy()->startOfMonth(), $now->copy()->endOfMonth(),
+        ]));
+
+        $semua = $rekap(fn () => \App\Models\Rental::query());
+
+        $text = "Total bulan ini ({$bulan}): dari tanggal mulai sewa {$mulai['total']}"
+            . " | versi dashboard web (dari tanggal pembayaran) {$bayar['total']}\n";
+        $text .= "Bulan ini ({$bulan}) per status, dari tanggal mulai sewa: {$mulai['omset']}\n";
+        $text .= "Bulan ini ({$bulan}) per status, versi dashboard web (dari tanggal pembayaran): {$bayar['omset']}\n";
+        $text .= "Belum dibayar bulan ini ({$bulan}, bukan omset): {$mulai['belumBayar']}\n";
+        $text .= "Semua waktu per status, dari tanggal mulai sewa: {$semua['omset']}\n";
+
+        return $text;
+    }
+
+    /**
+     * Rincian omset per status dalam satu baris: "SELESAI: 12 trs / Rp 5.000.000".
+     *
+     * Status dengan nominal 0 dilewati supaya barisnya tidak rame di prompt.
+     * Urutan status mengikuti $statusIndo supaya konsisten dengan blok lain.
+     * $only membatasi status yang ditampilkan (kosong = semua).
+     *
+     * @param  array<string,array{trx:int,rp:int}>  $byStatus
+     * @param  array<int,string>  $only
+     */
+    private static function revenueByStatusLine(array $byStatus, array $statusIndo, array $only = []): string
+    {
+        $parts = [];
+        foreach ($statusIndo as $status => $label) {
+            if ($only !== [] && ! in_array($status, $only, true)) {
+                continue;
+            }
+
+            $row = $byStatus[$status] ?? null;
+            if ($row === null || $row['rp'] <= 0) {
+                continue;
+            }
+            $parts[] = "{$label}: {$row['trx']} trs / Rp " . number_format($row['rp'], 0, ',', '.');
+        }
+
+        return $parts === [] ? 'belum ada' : implode(' | ', $parts);
+    }
+
+    /**
      * Susun blok data untuk tim: SEMUA bagian data bisnis, tanpa syarat kata kunci.
      *
      * Dulu bagian data hanya dimuat kalau pertanyaan memuat kata kuncinya, jadi
@@ -1423,6 +1588,11 @@ Jawab sebagai asisten data internal:";
             $profitAll = \App\Models\Rental::whereIn('status', ['renting', 'paid', 'completed'])
                 ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, subtotal_harga)'));
 
+            // Catatan: angka-angka di sini dihitung dari TANGGAL MULI SEWA.
+            // Dashboard web menghitung dari TANGGAL PEMBAYARAN (paid_at), jadi
+            // angkanya selalu beda sedikit. Kedua angka dimuat di blok OMSET PER
+            // STATUS — kalau tidak, tim membandingkan angka bot dengan angka web
+            // lalu AI mengarang alasan yang ngawur ("total 30 hari terakhir").
             $lines[] = '- Omset hari ini: Rp ' . number_format($profitToday, 0, ',', '.');
             $lines[] = '- Omset bulan ini (' . $now->translatedFormat('F Y') . '): Rp ' . number_format($profitMonth, 0, ',', '.');
             $lines[] = '- Omset total: Rp ' . number_format($profitAll, 0, ',', '.');
@@ -1442,6 +1612,12 @@ Jawab sebagai asisten data internal:";
         };
 
         $add('RINGKASAN & OMSET', 'ringkasan', fn () => $snapshot, 1);
+
+        // Nominal per status. Berdiri sendiri (bukan di dalam ringkasan) supaya
+        // ringkasan tetap ramping, tapi diprioritaskan kalau pertanyaannya
+        // memang soal uang per status.
+        $add('OMSET PER STATUS (nominal tiap status)', 'omset_per_status', fn () => self::statusRevenueText($now, $statusIndo),
+            ($s['pendapatan'] ?? false) ? 1 : 3);
 
         // Kode booking yang disebut = sumber data paling presisi, selalu paling depan.
         $add('DETAIL KODE BOOKING YANG DITANYAKAN', 'kode_' . md5($question), function () use ($question, $statusIndo) {
@@ -1587,9 +1763,17 @@ Jawab sebagai asisten data internal:";
             }
 
             // Komposisi status dihitung dari seluruh periode, bukan 30 baris tampil.
+            // Nominal per status ikut dalam satu query yang sama: tanpa itu,
+            // "yang statusnya completed + paid periode ini berapa?" cuma bisa
+            // dijawab pakai jumlah transaksi.
+            $byStatus = self::revenueByStatus($base);
             $summary = [];
-            foreach ($base()->selectRaw('status, COUNT(*) as jml')->groupBy('status')->pluck('jml', 'status') as $st => $n) {
-                $summary[] = ($statusIndo[$st] ?? $st) . ': ' . $n;
+            foreach ($statusIndo as $st => $label) {
+                if (! isset($byStatus[$st])) {
+                    continue;
+                }
+                $row = $byStatus[$st];
+                $summary[] = "{$label}: {$row['trx']} transaksi / Rp " . number_format($row['rp'], 0, ',', '.');
             }
 
             // Daftar nama unik + berapa kali, itu yang paling sering ditanyakan.

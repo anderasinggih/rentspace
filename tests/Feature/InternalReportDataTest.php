@@ -248,6 +248,76 @@ class InternalReportDataTest extends TestCase
         $this->assertStringNotContainsString('obrolan lama sekali', $rapat);
     }
 
+    public function test_omset_per_status_memuat_nominal_bukan_cuma_jumlah_transaksi(): void
+    {
+        [$text, $loaded] = $this->buildData('kalo bulan ini dihitung yang completed dan paid jadi berapa?');
+
+        $this->assertContains('OMSET PER STATUS (nominal tiap status)', $loaded);
+
+        // September 2026 dari dataset: selesai 120.000 + 150.000, disewa 150.000 + 120.000.
+        $this->assertStringContainsString('SELESAI: 2 trs / Rp 270.000', $text);
+        $this->assertStringContainsString('SEDANG DISEWA: 2 trs / Rp 270.000', $text);
+        $this->assertStringContainsString('MENUNGGU (belum bayar): 1 trs / Rp 180.000', $text);
+
+        // Versi dashboard web: transaksi Lestari dibayar 2 September walau sewa-nya
+        // mulai 28 Agustus, jadi SELESAI bulan ini jadi 3 transaksi.
+        $this->assertStringContainsString('versi dashboard web (dari tanggal pembayaran)', $text);
+        $this->assertStringContainsString('SELESAI: 3 trs / Rp 370.000', $text);
+
+        // Status yang memang tidak ada transaksinya boleh hilang, asal tidak dikarang jadi 0 palsu.
+        $this->assertStringNotContainsString('DIBATALKAN', $text);
+    }
+
+    public function test_pertanyaan_status_tanpa_kata_omset_tetap_muat_rincian_omset(): void
+    {
+        // Pertanyaan aslinya dari tim tidak pernah menyebut "omset" sama sekali.
+        foreach ([
+            'kalo bulan ini dihitung yang completed dan paid jadi berapa',
+            'skrng hitungin yg cuma statusnya paid coba',
+            'nominalnya berapa',
+        ] as $question) {
+            [, $loaded] = $this->buildData($question);
+            $this->assertContains(
+                'OMSET PER STATUS (nominal tiap status)',
+                $loaded,
+                "Rincian omset per status tidak dimuat untuk: {$question}"
+            );
+        }
+    }
+
+    public function test_omset_dihitung_dari_dua_dasar_supaya_selisih_dengan_web_bisa_dijelaskan(): void
+    {
+        [$text] = $this->buildData('di web kok omsetnya beda?');
+
+        // Dasar "tanggal mulai sewa": September = 150.000 + 120.000 (renting) + 120.000 + 150.000 (selesai).
+        $this->assertStringContainsString('Omset bulan ini (September 2026): Rp 540.000', $text);
+        $this->assertStringContainsString('Total bulan ini (September 2026): dari tanggal mulai sewa Rp 540.000', $text);
+
+        // Dasar "tanggal pembayaran" (sama dengan dashboard web): transaksi Lestari
+        // dibayar 2 September walau sewa-nya mulai 28 Agustus, jadi angkanya beda.
+        $this->assertStringContainsString('versi dashboard web (dari tanggal pembayaran) Rp 640.000', $text);
+    }
+
+    public function test_prompt_memaksa_jawab_nominal_bukan_jumlah_transaksi(): void
+    {
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response($this->geminiSays('Oke bos.')),
+        ]);
+
+        GeminiAIService::replyInternal('cuma status paid bulan ini berapa duit?', 'Rani');
+
+        Http::assertSent(function ($request) {
+            $prompt = $request['contents'][0]['parts'][0]['text'];
+
+            $this->assertStringContainsString('NOMINAL, BUKAN JUMLAH TRANSAKSI', $prompt);
+            $this->assertStringContainsString('JANGAN balas cuma jumlah transaksi', $prompt);
+            $this->assertStringContainsString('tanggal pembayaran', $prompt);
+            $this->assertStringContainsString('OMSET PER STATUS', $prompt);
+
+            return true;
+        });
+    }
+
     public function test_pengaturan_admin_menampilkan_dan_menyimpan_batas_data_laporan(): void
     {
         $blade = file_get_contents(resource_path('views/livewire/admin/settings.blade.php'));
