@@ -1644,6 +1644,9 @@ Jawab sebagai asisten data internal:";
                     'generationConfig' => [
                         'temperature' => $temperature,
                         'maxOutputTokens' => $maxTokens,
+                        'thinkingConfig' => [
+                            'thinkingBudget' => 0,
+                        ],
                     ],
                 ]
             );
