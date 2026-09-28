@@ -84,7 +84,7 @@ class Settings extends Component
 
     public $is_chatbot_active = true;
     public $chatbot_api_key = '';
-    public $chatbot_model = 'gemini-3.5-flash-lite';
+    public $chatbot_model = \App\Services\GeminiAIService::DEFAULT_MODEL;
     public $chatbot_tpm_limit = '300000';
     public $chatbot_report_data_limit = '0';
 
@@ -97,9 +97,9 @@ class Settings extends Component
     // API key & model dipisah per fitur supaya kuota tiap fitur bisa diatur
     // dan diamankan terpisah (lihat GeminiAIService::apiKeyFor).
     public $report_api_key = '';
-    public $report_model = 'gemini-3.5-flash-lite';
+    public $report_model = \App\Services\GeminiAIService::DEFAULT_MODEL;
     public $broadcast_api_key = '';
-    public $broadcast_model = 'gemini-3.5-flash-lite';
+    public $broadcast_model = \App\Services\GeminiAIService::DEFAULT_MODEL;
     public $ai_key_test = [];   // hasil tombol "Tes" per fitur
     public $ai_key_test_slot = []; // hasil tes per slot kunci: "customer_3" => hasil
     public $testing_ai_feature = null;
@@ -200,7 +200,7 @@ class Settings extends Component
         // Load Chatbot Settings
         $this->is_chatbot_active = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
-        $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
+        $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', \App\Services\GeminiAIService::DEFAULT_MODEL);
         $this->chatbot_tpm_limit = (string) \App\Models\Setting::getVal('chatbot_tpm_limit', '300000');
         $this->chatbot_report_data_limit = (string) \App\Models\Setting::getVal('chatbot_report_data_limit', '0');
 
@@ -215,9 +215,9 @@ class Settings extends Component
         // Key & model laporan & broadcast. Kosong = otomatis pakai key customer,
         // jadi instalasi lama yang hanya punya satu key tidak ikut rusak.
         $this->report_api_key = (string) \App\Models\Setting::getVal('report_api_key', '');
-        $this->report_model = (string) \App\Models\Setting::getVal('report_model', 'gemini-3.5-flash-lite');
+        $this->report_model = (string) \App\Models\Setting::getVal('report_model', \App\Services\GeminiAIService::DEFAULT_MODEL);
         $this->broadcast_api_key = (string) \App\Models\Setting::getVal('broadcast_api_key', '');
-        $this->broadcast_model = (string) \App\Models\Setting::getVal('broadcast_model', 'gemini-3.5-flash-lite');
+        $this->broadcast_model = (string) \App\Models\Setting::getVal('broadcast_model', \App\Services\GeminiAIService::DEFAULT_MODEL);
         $this->ai_key_test = [];
         $this->ai_key_test_slot = [];
         $this->admin_wa_secondary = \App\Models\Setting::getVal('admin_wa_secondary', '');
@@ -519,7 +519,7 @@ class Settings extends Component
     /** Tulis kunci + model ketiga fitur ke tabel settings. */
     private function persistAiFeatureSettings(): void
     {
-        $default = 'gemini-3.5-flash-lite';
+        $default = \App\Services\GeminiAIService::DEFAULT_MODEL;
 
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => trim((string) $this->chatbot_api_key)]);
 

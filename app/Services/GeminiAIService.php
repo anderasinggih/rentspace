@@ -50,7 +50,14 @@ class GeminiAIService
         'broadcast' => 'broadcast_model',
     ];
 
-    private const DEFAULT_MODEL = 'gemini-3.6-flash';
+    /**
+     * Model bawaan kalau admin mengosongkan field model.
+     *
+     * Public supaya halaman Pengaturan memakai konstanta yang sama, bukan
+     * menyalin stringnya. Saat string-nya dicopier, admin yang mengosongkan
+     * model diam-diam tersimpan model lama yang tidak lagi jadi default.
+     */
+    public const DEFAULT_MODEL = 'gemini-3.6-flash';
 
     /** Model lama yang sudah tidak ada di katalog API Google. */
     private const LEGACY_MODELS = [
