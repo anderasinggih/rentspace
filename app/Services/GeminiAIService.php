@@ -8,6 +8,100 @@ use Illuminate\Support\Facades\Log;
 
 class GeminiAIService
 {
+    /** Setting pemanggil API key tiap fitur. */
+    private const FEATURE_KEY_SETTING = [
+        'customer' => 'chatbot_api_key',
+        'report' => 'report_api_key',
+        'broadcast' => 'broadcast_api_key',
+    ];
+
+    /** Padanan key fitur di config/services.php (jejak .env). */
+    private const FEATURE_CONFIG_KEY = [
+        'customer' => 'services.gemini.key',
+        'report' => 'services.gemini.report_key',
+        'broadcast' => 'services.gemini.broadcast_key',
+    ];
+
+    /** Setting pemanggil model AI tiap fitur. */
+    private const FEATURE_MODEL_SETTING = [
+        'customer' => 'chatbot_model',
+        'report' => 'report_model',
+        'broadcast' => 'broadcast_model',
+    ];
+
+    private const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
+
+    /** Model lama yang sudah tidak ada di katalog API Google. */
+    private const LEGACY_MODELS = [
+        'gemini-2.0-flash-lite',
+        'gemini-1.5-flash-8b',
+        'gemini-1.5-flash',
+        'gemini-2.0-flash',
+    ];
+
+    /** Label fitur untuk pesan error ke admin. */
+    private const FEATURE_LABELS = [
+        'customer' => 'jawab customer',
+        'report' => 'laporan grup tim',
+        'broadcast' => 'broadcast',
+    ];
+
+    /**
+     * API key untuk sebuah fitur, beserta urutan cadangannya.
+     *
+     * Tiap fitur punya key sendiri supaya kuota yang dipakai customer (paling
+     * rame, paling gampang kena 429) tidak ikut tersedot oleh query laporan
+     * tim atau percobaan draf broadcast. Urutan: key fitur di DB -> key fitur
+     * di .env -> key customer (DB lalu .env). Karena itu instalasi lama yang
+     * baru punya satu key tetap jalan tanpa perlu diisi ulang.
+     */
+    public static function apiKeyFor(string $feature): ?string
+    {
+        $settingKey = self::FEATURE_KEY_SETTING[$feature] ?? 'chatbot_api_key';
+        $configPath = self::FEATURE_CONFIG_KEY[$feature] ?? 'services.gemini.key';
+
+        $key = trim((string) Setting::getVal($settingKey, ''));
+        if ($key !== '') {
+            return $key;
+        }
+
+        $key = trim((string) (config($configPath) ?: ''));
+        if ($key !== '') {
+            return $key;
+        }
+
+        if ($settingKey !== 'chatbot_api_key') {
+            $fallback = trim((string) Setting::getVal('chatbot_api_key', ''));
+            if ($fallback !== '') {
+                return $fallback;
+            }
+        }
+
+        return trim((string) (config('services.gemini.key') ?: '')) ?: null;
+    }
+
+    /**
+     * Model AI untuk sebuah fitur, dinormalisasi bila versi lamanya masih
+     * tersimpan di Setting.
+     */
+    public static function modelFor(string $feature): string
+    {
+        $settingKey = self::FEATURE_MODEL_SETTING[$feature] ?? 'chatbot_model';
+
+        $model = trim((string) Setting::getVal($settingKey, ''));
+        if ($model === '' || in_array($model, self::LEGACY_MODELS, true)) {
+            return self::DEFAULT_MODEL;
+        }
+
+        return $model;
+    }
+
+    /** Nama fitur yang bisa dibaca manusia, untuk pesan error. */
+    public static function featureLabel(string $feature): string
+    {
+        return self::FEATURE_LABELS[$feature] ?? $feature;
+    }
+
     /** Kunci pemicu -> konteks tambahan untuk chat customer. */
     private const CUSTOMER_SECTION_RULES = [
         'katalog' => ['harga', 'katalog', 'daftar', 'list', 'ipho', 'iphone', 'hp', 'kamera', 'unit', 'stok', 'ready', 'tersedia', 'ada tidak', 'modal', 'series', 'tipe', 'promo', 'diskon', 'murah'],
@@ -25,13 +119,13 @@ class GeminiAIService
      */
     public static function reply(string $userMessage, string $customerName = 'Kak', ?string $senderJid = null, ?string $customerPhone = null): ?string
     {
-        $apiKey = Setting::getVal('chatbot_api_key', config('services.gemini.key'));
+        $apiKey = self::apiKeyFor('customer');
         if (!$apiKey) {
-            Log::info('GeminiAIService: API Key belum diisi di Pengaturan.');
+            Log::info('GeminiAIService: API Key Customer belum diisi di Pengaturan.');
             return null;
         }
 
-        $model = self::activeModel();
+        $model = self::modelFor('customer');
 
         $peer = $senderJid ?: ($customerPhone ?: $customerName);
         $conv = AiMemoryService::session('wa_customer', (string) $peer, $customerName);
@@ -397,24 +491,27 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
      *
      * Dipanggil HANYA ketika bot di-tag (@mention) di grup report terdaftar.
      *
-     * Dua hal yang dijaga di sini:
-     * 1. MEMORI: percakapan grup disimpan di tabel ai_messages, jadi pertanyaan
+     * Tiga hal yang dijaga di sini:
+     * 1. AKSES PENUH: SELURUH data bisnis ikut dikirim (jadwal, keterlambatan,
+     *    inventaris + status tiap unit, transaksi, riwayat, denda). Tidak ada
+     *    syarat kata kunci — tim bertanya dengan bahasa sehari-hari, dan jawaban
+     *    "data tidak ikut dimuat, sebut kata kunci" dianggap bot tidak berguna.
+     * 2. MEMORI: percakapan grup disimpan di tabel ai_messages, jadi pertanyaan
      *    lanjutan ("yang tadi itu gimana?", "trus si Rina telat berapa?") tetap nyambung
      *    walau sudah lewat jam atau bot restart.
-     * 2. HEMAT TOKEN: data yang dikirim hanya bagian yang relevan dengan pertanyaan
-     *    (tidak lagi semua tabel rental setiap kali ditanya), memakai ringkasan
-     *    memori + maksimal 3 turn terakhir, dan dipotong sesuai batas karakter.
+     * 3. TOKEN: data tetap dibatasi plafond karakter dan tidak pernah boncos —
+     *    kalau memang tidak kebudget, bagian yang paling relevan yang ditulis duluan.
      */
     public static function replyInternal(string $userMessage, string $askerName = 'Tim'): ?string
     {
-        $apiKey = Setting::getVal('chatbot_api_key', config('services.gemini.key'));
+        $apiKey = self::apiKeyFor('report');
         if (!$apiKey) {
-            self::$lastError = 'API key kosong';
-            Log::warning('GeminiAIService::replyInternal: API key AI kosong.');
-            return self::fallbackMessage();
+            self::$lastError = 'API key laporan kosong';
+            Log::warning('GeminiAIService::replyInternal: API key AI laporan kosong.');
+            return self::fallbackMessage('report');
         }
 
-        $model = self::activeModel();
+        $model = self::modelFor('report');
 
         // Sesi bersama untuk grup report: semua anggota tim memakai satu memori.
         $groupId = Setting::sanitizeJid(Setting::getVal('admin_report_group_id', ''));
@@ -431,9 +528,9 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
         $recentTurns = AiMemoryService::recentTurns($conv, 3, 600);
         $chatContext = self::formatRecentTurns($recentTurns);
 
-        [$dataBlock, $loadedLabels] = self::buildInternalData($userMessage, $intents, $now, AiMemoryService::lastSections($conv));
+        [$dataBlock, $loadedLabels, $overflowBlocks] = self::buildInternalData($userMessage, $intents, $now);
 
-        $systemPrompt = "Kamu adalah asisten internal tim *Rent Space Purwokerto* yang|super pintar dan punya AKSES PENUH ke data bisnis.
+        $systemPrompt = "Kamu adalah asisten internal tim *Rent Space Purwokerto* yang|super pintar dan punya AKSES PENUH ke SELURUH data bisnis.
 Waktu saat ini: {$currentTimeStr}.
 Penanya dari dalam tim: {$askerName}.
 Lokasi Toko: {$address}.
@@ -441,21 +538,22 @@ Lokasi Toko: {$address}.
 ATURAN PENTING (WAJIB DIPAATUHI):
 1. Data di bawah ini adalah KEBENARAN. Jawab HANYA dari data tersebut, jangan mengarang nama, nomor, atau angka.
 2. MEMORI: bagian \"YANG SUDAH DIPBAHAS\" adalah catatan percakapan sebelumnya dengan tim (kode booking, nama penyewa, topik). Pakai itu untuk menjawab pertanyaan lanjutan yang singkat, misalnya \"yang tadi\", \"trus dia\", \"yang nomor tadi\". Kalau pertanyaannya menyebut kode atau nama yang ada di memori, jawab langsung dari memori itu tanpa meminta penjelasan ulang.
-3. Data di bawah sudah DISARING sesuai pertanyaan. Kalau bagian yang kamu butuh tidak ada, JANGAN mengarang isinya — katakan bagian itu tidak ikut dimuat dan sebut kata kuncinya (mis. \"denda\", \"jadwal hari ini\") supaya tim bisa bertanya lagi. Tapi kalau bagiannya ADA, itu jawabannya: jangan minta tim mengulang dan jangan bilang data tidak dimuat, langsung jawab dari isinya.
-4. Kalau ditanya \"hari ini\" / \"siapa yang mau ambil\" / \"siapa yang balikin\", pakai bagian JADWAL PENGAMBILAN HARI INI dan JADWAL PENGEMBALIAN HARI INI (sudah mencakup SEMUA status: pending, sudah bayar, sedang disewa). Jangan menebak.
-5. Kalau ditanya \"riwayat\", \"historical\", atau rentang tanggal (\"dari tgl 1 September sampai sekarang\", \"bulan lalu\"), pakai bagian RIWAYAT TRANSAKSI. bagian itu sudah memuat periode, total transaksi, jumlah penyewa berbeda, omset, daftar nama penyewa, dan detail transaksinya — jawab langsung dari sana, jangan bilang datanya tidak ada.
-6. Kalau pertanyaan menyiratkan laporan harian, jawaban WAJIB memuat: jumlah penyewa yang ambil, jumlah yang balikin, dan status keterlambatan — lengkap dengan nama & jamnya.
-7. Bahasa gaul tim (cuk, yg, trs/trus, ngambil, balikin, telat, denda, omset, cod, msh, blm) adalah pertanyaan bisnis sungguhan, jawab dengan data.
-8. Kalau tidak ada yang cocok, sebutkan apa yang ADA yang mendekati (\"yang paling mendekati: ...\"), jangan langsung menyerah.
-9. Boleh tampilkan nama, nomor WA, alamat karena ini internal.
-10. Format WA: pakai *tebal* (satu bintang) dan bullet -. Jangan pakai markdown lain.
-11. Kata \"TERLAMBAT\" atau \"SUDAH MELEBIHI JADWAL\" berarti masalah nyata — wajib disebut di jawaban.
-12. Jawaban internal to the point, tidak perlu basa-basi sapaan.
+3. DATA LENGKAP: semua bagian data bisnis sudah dimuat di bawah (jadwal hari ini, pengembalian, keterlambatan, inventaris + status siap tiap unit, transaksi, riwayat, denda, omset). Tidak ada kata kunci yang harus dipatuhi dan tidak ada bagian yang \"tidak ikut dimuat\" — JANGAN pernah meminta tim menyebutkan kata kunci atau menyebut kata kunci di jawaban. Kalau sebuah data memang tidak ada (mis. tidak ada penyewa yang terlambat), katakan memang tidak ada, itu jawaban yang benar.
+4. STOK UNIT: untuk \"ip 13 ready?\", \"ada unit apa aja?\", \"unitnya lagi dipakai siapa?\" pakai bagian KETERSEDIAAN UNIT TOKO. \"SIAP DIPAKAI sekarang\" = ready, \"SEDANG DIPAKAI s/d ...\" = sedang disewa sampai jam itu, \"Berikutnya: ...\" = jadwal sewa berikutnya. Sebutkan nama unit persis seperti tertulis di data.
+5. Kalau ditanya \"hari ini\" / \"siapa yang mau ambil\" / \"siapa yang balikin\", pakai bagian JADWAL PENGAMBILAN HARI INI dan JADWAL PENGEMBALIAN HARI INI (sudah mencakup SEMUA status: pending, sudah bayar, sedang disewa). Jangan menebak.
+6. Kalau ditanya \"riwayat\", \"historical\", atau rentang tanggal (\"dari tgl 1 September sampai sekarang\", \"bulan lalu\"), pakai bagian RIWAYAT TRANSAKSI. bagian itu sudah memuat periode, total transaksi, jumlah penyewa berbeda, omset, daftar nama penyewa, dan detail transaksinya — jawab langsung dari sana, jangan bilang datanya tidak ada.
+7. Kalau pertanyaan menyiratkan laporan harian, jawaban WAJIB memuat: jumlah penyewa yang ambil, jumlah yang balikin, dan status keterlambatan — lengkap dengan nama & jamnya.
+8. Bahasa gaul tim (cuk, yg, trs/trus, ngambil, balikin, telat, denda, omset, cod, msh, blm, ready) adalah pertanyaan bisnis sungguhan, jawab dengan data.
+9. Kalau tidak ada yang cocok, sebutkan apa yang ADA yang mendekati (\"yang paling mendekati: ...\"), jangan langsung menyerah.
+10. Boleh tampilkan nama, nomor WA, alamat karena ini internal.
+11. Format WA: pakai *tebal* (satu bintang) dan bullet -. Jangan pakai markdown lain.
+12. Kata \"TERLAMBAT\" atau \"SUDAH MELEBIHI JADWAL\" berarti masalah nyata — wajib disebut di jawaban.
+13. Jawaban internal to the point, tidak perlu basa-basi sapaan.
 
 YANG SUDAH DIPBAHAS (MEMORI TIM):
 " . ($memoryContext !== '' ? $memoryContext . "\n" : "(belum ada obrolan sebelumnya di grup ini)") . "
 " . ($chatContext !== '' ? "\nOBROLAN TERAKHIR:\n" . $chatContext . "\n" : '') . "
-DATA BISNIS (bagian relevan untuk pertanyaan ini: " . implode(', ', $loadedLabels) . "):
+DATA BISNIS LENGKAP (bagian yang tersedia: " . implode(', ', $loadedLabels) . "):
 {$dataBlock}
 
 Pertanyaan tim: \"{$userMessage}\"
@@ -464,12 +562,30 @@ Jawab sebagai asisten data internal:";
         $inputTokens = AiMemoryService::estimateTokens($systemPrompt);
         $budget = AiMemoryService::consumeTokenBudget('wa_group_report', $inputTokens);
         if (! $budget['ok']) {
-            Log::warning('GeminiAIService::replyInternal dipangkas demi batas token/menit.', $budget);
+            // Di grup report data TIDAK boleh dikorbankan: yang dipangkas hanya
+            // catatan obrolan sebelumnya. Dikasih tahu lewat log, bukan lewat
+            // jawaban ke WhatsApp, karena timnya memang minta akses penuh.
+            Log::warning('GeminiAIService::replyInternal: obrolan sebelumnya dipangkas demi batas token/menit (data tetap lengkap).', $budget);
             $systemPrompt = self::shrinkInternalPrompt($systemPrompt);
             $inputTokens = AiMemoryService::estimateTokens($systemPrompt);
         }
 
         $text = self::askGemini($systemPrompt, $model, $apiKey, 0.2, 900, 45);
+
+        // Jaring pengaman: kalau jawaban pertama malah menyuruh tim memakai kata
+        // kunci, kirim giliran kedua dengan bagian data yang tadi tidak kebudget.
+        if ($text !== null && $overflowBlocks !== [] && self::isHedgingAnswer($text)) {
+            $extra = mb_substr(implode("\n\n", $overflowBlocks), 0, 8000);
+            $retryPrompt = $systemPrompt
+                . "\n\nBAGIAN DATA TAMBAHAN (baru ditambahkan di giliran ini):\n{$extra}\n"
+                . "JAWAB ULANG pertanyaan tim di atas memakai data ini juga. Jangan minta kata kunci, jangan bilang ada data yang tidak dimuat.";
+
+            Log::info('GeminiAIService::replyInternal: jawaban pertama menyuruh pakai kata kunci, mencoba lagi dengan data tambahan.');
+            $retry = self::askGemini($retryPrompt, $model, $apiKey, 0.2, 900, 30);
+            if ($retry !== null) {
+                $text = $retry;
+            }
+        }
 
         if ($text !== null) {
             // 'cari' sering muncul karena heuristik kata, jadi tidak disimpan sebagai
@@ -481,14 +597,195 @@ Jawab sebagai asisten data internal:";
             AiMemoryService::saveTurn($conv, $userMessage, $text, $intent, $inputTokens, $askerName, $carrySections);
         }
 
-        return $text ?? self::fallbackMessage();
+        return $text ?? self::fallbackMessage('report');
     }
 
     /**
-     * Kunci pemicu -> bagian data yang dimuat.
+     * Susun draf pesan broadcast dari brief singkat milik admin.
      *
-     * Tujuannya satu: jangan pernah mengirim seluruh database ke model kalau
-     * tim hanya menanyakan satu hal.
+     * Dulu admin harus mengetik sendiri tiap kalimat promosi dari nol, itu
+     * lambat dan gampang kelewatan detail. Sekarang cukup satu kalimat
+     * ("promo gawaiipi 13, diskon 20% weekend ini") dan AI merangkai drafnya.
+     *
+     * Draf ini TIDAK langsung dikirim: hasilnya hanya diisi ke kolom pesan biar
+     * admin tetap bisa baca dan ubah sebelum menekan tombol kirim. Katalog unit
+     * ikut dikirim supaya harga yang muncul di copy bukan karangan.
+     */
+    public static function draftBroadcast(string $brief, string $tone = 'promosi'): ?string
+    {
+        $apiKey = self::apiKeyFor('broadcast');
+        if (!$apiKey) {
+            self::$lastError = 'API key broadcast kosong';
+            Log::warning('GeminiAIService::draftBroadcast: API key AI broadcast kosong.');
+            return null;
+        }
+
+        $model = self::modelFor('broadcast');
+        $now = now();
+        $address = Setting::getVal('admin_address', 'Purwokerto');
+        $tones = [
+            'promosi' => 'promosi yang menggoda dan singkat, gaya chat punches promotions',
+            'info' => 'pengumuman resmi yang lugas dan singkat',
+            'santai' => 'ngobrol santai, hangat, kayak CS balas pelanggan',
+        ];
+        $toneKey = array_key_exists($tone, $tones) ? $tone : 'promosi';
+
+        $catalog = self::broadcastCatalogText();
+        $knowledge = self::customKnowledgeText();
+
+        $header = "Kamu copywriter WhatsApp untuk 'Rent Space Purwokerto' (rental iPhone, gadget, kamera, PS3).\n"
+            . "Toko: {$address} | Booking: https://rentspacepurwokerto.my.id/booking\n"
+            . "Waktu saat ini: " . $now->translatedFormat('l, d F Y H:i') . " WIB\n";
+
+        $prompt = $header
+            . ($knowledge !== '' ? "\nCATATAN TOKEN / PROMO BERLAKU:\n{$knowledge}\n" : '')
+            . "\nKATALOG UNIT YANG BENERAN ADA (hanya boleh menyebut unit & harga dari daftar ini):\n{$catalog}\n"
+            . "\nATURAN MENULIS:\n"
+            . "1. Panjang 3-6 baris, maksimal sekitar 500 karakter. Ini dikirim massal, jadi jangan panjang.\n"
+            . "2. Boleh dipakai markdown WhatsApp: *tebal* (satu bintang) dan - untuk bullet. Jangan pakai heading atau **.\n"
+            . "3. DILARANG mengarang harga, promo, kode diskon, atau nama unit yang tidak ada di katalog. Kalau brief-nya minta info yang tidak ada di katalog, tulis tanpa angka itu dan sisipkan kalimat \"info lengkapnya chat admin\".\n"
+            . "4. Gaya: {$tones[$toneKey]}. Bahasa Indonesia santai, sapaan 'Kak' boleh maksimal sekali di awal.\n"
+            . "5. Emoji paling banyak 2 dan hanya di awal atau akhir. Jangan pakai emoji di tiap baris.\n"
+            . "6. Akhiri dengan ajakan bertindak yang jelas (booking sekarang / chat admin), tanpa basa-basi.\n"
+            . "7. Kembalikan HANYA teks pesan akhirnya. Tanpa pengantar, tanpa tanda kutip, tanpa catatan apa pun.\n"
+            . "8. Kalau brief-nya terlalu singkat (mis. 'buatkan promo'), buat versi umum yang aman tanpa angka yang tidak ada di katalog.\n"
+            . "\nBRIEF DARI ADMIN:\n" . mb_substr(trim($brief), 0, 1000)
+            . "\n\nTulis pesan broadcast-nya sekarang:";
+
+
+        $inputTokens = AiMemoryService::estimateTokens($prompt);
+        AiMemoryService::consumeTokenBudget('wa_broadcast', $inputTokens);
+
+        $text = self::askGemini($prompt, $model, $apiKey, 0.8, 400, 30);
+        if ($text === null) {
+            return null;
+        }
+
+        // Buang pengantar ala "Berikut draf pesan:" kalau model ternyata tetap
+        // mengembalikannya meski sudah dilarang di prompt.
+        $text = self::stripDraftPreamble($text);
+
+        return $text;
+    }
+
+    /**
+     * Buang baris pertama yang isinya cuma basa-basi pengantar.
+     *
+     * Baris pertama dibuang kalau setelah semua kata basa-basi dan tandanya
+     * dihapus tidak tersisa satu huruf pun — jadi kalimat sungguhan yang kebetulan
+     * diawali kata serupa ("Ini promo akhir bulan!") tetap utuh. Panjang baris
+     * ikut dijaga supaya baris isi yang kata kuncinya kebetulan habis tidak
+     * ikut terpotong.
+     */
+    private static function stripDraftPreamble(string $text): string
+    {
+        $filler = '/\b(berikut|inilah|ini|itu|oke|ok|siap|hai|halo|kak|dong|ya|draf|isi|naskah|hasil|contoh|versi|pesan|teks|content|broadcast|untuk|promosi|wa|adalah|yang|kopikan|seperti)\b|[^a-z0-9\n]/iu';
+
+        $parts = preg_split('/\R/u', trim($text), 2);
+        if (! is_array($parts) || count($parts) < 2) {
+            return trim($text, " \t\n\r\"'`");
+        }
+
+        $first = trim($parts[0]);
+        $residue = preg_replace($filler, '', $first) ?? '';
+
+        if ($residue === '' && mb_strlen($first) <= 60) {
+            $text = $parts[1];
+        }
+
+        return trim($text, " \t\n\r\"'`");
+    }
+
+    /**
+     * Daftar unit + harga untuk merangkai draf broadcast.
+     *
+     * Sengaja jauh lebih ramping daripada konteks internal: broadcast cuma perlu
+     * nama unit dan harga supaya copy-nya tidak mengarang, bukan status
+     * ketersediaan per jam.
+     */
+    private static function broadcastCatalogText(): string
+    {
+        $text = self::cached('broadcast_catalog', 300, function () {
+            $units = Unit::where('is_active', true)->with('category')->orderBy('nama_lengkap')->limit(60)->get();
+            if ($units->isEmpty()) {
+                return "(belum ada unit aktif terdaftar)\n";
+            }
+
+            $lines = '';
+            foreach ($units as $u) {
+                $harga = [];
+                if ($u->harga_per_hari) {
+                    $harga[] = '24 jam Rp ' . number_format($u->harga_per_hari, 0, ',', '.');
+                }
+                if ($u->harga_per_jam) {
+                    $harga[] = '12 jam Rp ' . number_format($u->harga_per_jam * 12, 0, ',', '.');
+                }
+                $lines .= '- ' . ($u->nama_lengkap ?: $u->seri)
+                    . ' (' . ($u->category?->name ?? 'Unit') . ')'
+                    . ($harga ? ': ' . implode(', ', $harga) : '')
+                    . "\n";
+            }
+
+            return $lines . "\n";
+        });
+
+        return $text !== '' ? $text : "(belum ada unit aktif terdaftar)\n";
+    }
+
+    /**
+     * Panggil API dengan prompt sependek mungkin untuk memeriksa kunci & model.
+     *
+     * Dipakai tombol "Tes" di Pengaturan: tanpa ini, kunci yang salah ketik baru
+     * ketahuan setelah bot gagal menjawab di depan customer.
+     */
+    public static function testKey(string $feature): array
+    {
+        $apiKey = self::apiKeyFor($feature);
+        if (!$apiKey) {
+            return ['ok' => false, 'message' => 'API Key belum diisi untuk fitur ini.'];
+        }
+
+        $model = self::modelFor($feature);
+        $text = self::askGemini('Balas dengan satu kata: SIAP', $model, $apiKey, 0.1, 16, 20);
+
+        if ($text === null) {
+            return ['ok' => false, 'message' => 'Gagal: ' . (self::$lastError ?: 'tidak diketahui')];
+        }
+
+        return ['ok' => true, 'message' => "Kunci valid, model {$model} merespons (HTTP OK)."];
+    }
+
+    /**
+     * Pengaman terakhir kalau datanya fantastis (mis. 100 ribu transaksi). Konteks
+     * model yang dipakai menerima 1 juta token, jadi angka ini masih jauh di bawahnya.
+     */
+    private const INTERNAL_DATA_HARD_CAP = 200000;
+
+    /**
+     * Plafon karakter data grup report, dibaca dari Pengaturan.
+     *
+     * 0 = TANPA BATAS (default). Di grup report tim ingin akses penuh: semua
+     * transaksi, semua unit, semua riwayat ikut terpakai, bukan cuma bagian yang
+     * kata kuncinya kena. Jadi angka default-nya 0, bukan pluckingan karakter.
+     */
+    private static function internalDataBudget(): int
+    {
+        $limit = (int) Setting::getVal('chatbot_report_data_limit', '0');
+
+        if ($limit <= 0) {
+            return self::INTERNAL_DATA_HARD_CAP;
+        }
+
+        return min($limit, self::INTERNAL_DATA_HARD_CAP);
+    }
+
+    /**
+     * Pemicu kata -> bagian data yang DIPRIORITASKAN (urutan tulis), bukan syarat dimuat.
+     *
+     * Tim ngomong bebas ("ip 13 ready??", "hari ini yg ambil siapa aja"), jadi
+     * kata kunci tidak boleh menentukan apakah data ikut atau tidak. Yang dia
+     * lakukan cuma mengurutkan: kalau data harus dipangkas, bagian yang paling
+     * relevan tetap ditulis paling dulu.
      */
     private const INTERNAL_SECTION_RULES = [
         'kembali' => ['balikin', 'kembali', 'kembalikan', 'pengembalian', 'pulang', 'balik', 'ngembal'],
@@ -499,7 +796,7 @@ Jawab sebagai asisten data internal:";
         'aktif' => ['sedang disewa', 'lagi dipakai', 'sedang dipakai', 'aktif', 'sibuk', 'yang jalan'],
         'jadwal' => ['hari ini', 'hr ini', 'ambil', 'ngambil', 'pengambilan', 'jadwal', 'datang', 'mampir', 'besok'],
         'cari' => ['transaksi', 'rental', 'booking', 'penyewa', 'cari', 'siapa'],
-        'unit' => ['unit', 'iphone', 'hp', 'kamera', 'harga', 'katalog', 'daftar', 'stok', 'ada unit', 'series'],
+        'unit' => ['unit', 'iphone', 'ipho', 'ip ', 'hp', 'kamera', 'harga', 'katalog', 'daftar', 'stok', 'ada unit', 'series', 'ready', 'siap', 'inventaris', 'tersedia'],
         'pendapatan' => ['omset', 'profit', 'pendapatan', 'pemasukan', 'revenue', 'uang masuk', 'berapa total'],
     ];
 
@@ -595,6 +892,14 @@ Jawab sebagai asisten data internal:";
         'namanya', 'mulyadi', 'bula', 'tgl', 'bln', 'thn',
         'riwayat', 'pernah', 'dulu', 'datang', 'lompat', 'gas', 'poll',
         'lalu', 'terakhir', 'sejak', 'transaksi', 'sewa', 'unit',
+        // Akibat dari keywords/tanya yang sering nempel: "sekarang" (bukan "sekarang,"),
+        // "omsetnya", dan nama-nama barang. Kalau tidak, pencarian penyewa meleset ke
+        // kata benda dan jawabannya Berubah jadi "tidak ada transaksi yang cocok".
+        'sekarang', 'skrg', 'omsetnya', 'pendapatan', 'pemasukan', 'profit', 'revenue',
+        'harga', 'harganya', 'stok', 'inventaris', 'katalog', 'unitnya', 'apanya', 'bisa', 'boleh',
+        'iphone', 'ipho', 'ipad', 'imac', 'android', 'samsung', 'canon', 'nikon', 'sony',
+        'playstation', 'ps3', 'ps4', 'ps5', 'kamera', 'lensa', 'drone', 'gopro', 'macbook',
+        'hari', 'kemarin', 'pagi', 'siang', 'sore', 'malam', 'minggu', 'pekan', 'seminggu',
     ];
 
     /**
@@ -762,47 +1067,20 @@ Jawab sebagai asisten data internal:";
     }
 
     /**
-     * Susun blok data yang dikirim ke model, hanya bagian relevan + batas karakter.
+     * Susun blok data untuk tim: SEMUA bagian data bisnis, tanpa syarat kata kunci.
      *
-     * @return array{0:string,1:array<int,string>} [teks data, label yang dimuat]
+     * Dulu bagian data hanya dimuat kalau pertanyaan memuat kata kuncinya, jadi
+     * "ip 13 ready??" dijawab "inventaris tidak ikut dimuat, sebut kata kunci".
+     * Sekarang semua bagian selalu ikut; kata kuncinya cuma dipakai untuk MENGURUTKAN
+     * mana yang ditulis duluan, sehingga kalau data harus dipangkas, bagian yang paling
+     * relevan tetap ada. Bagian yang tidak kebudget dikembalikan terpisah supaya
+     * bisa dicoba lagi (lihat retry di replyInternal).
+     *
+     * @return array{0:string,1:array<int,string>,2:array<int,string>} [teks data, label yang dimuat, teks bagian yang tidak kebudget]
      */
-    private static function buildInternalData(string $question, array $intents, \Carbon\Carbon $now, array $carryOver = []): array
+    private static function buildInternalData(string $question, array $intents, \Carbon\Carbon $now): array
     {
         $s = $intents['sections'];
-
-        // 'cari' bisa muncul hanya karena heuristik kata, jadi tidak dihitung sebagai
-        // pemicu yang pasti. Kalau tidak ada pemicu pasti dan pesannya pendek, ini
-        // pertanyaan lanjutan: pakai kembali bagian data dari giliran sebelumnya.
-        // Inilah yang bikin "trus yang tadi gimana?" dijawab dari data, bukan karangan.
-        $hasRealTrigger = count(array_diff(array_keys($s), ['cari'])) > 0;
-        $isFollowUp = ! $hasRealTrigger && count($carryOver) > 0 && mb_strlen($question) <= 40;
-
-        if ($isFollowUp) {
-            $nameToken = self::detectNameToken($question);
-            $s = [];
-            foreach ($carryOver as $section) {
-                $s[$section] = true;
-            }
-            // Kalau nama penyewa disebut secara spesifik, tetap cari transaksinya.
-            if ($nameToken !== null) {
-                $s['cari'] = true;
-            }
-        }
-
-        // Tanpa pemicu yang jelas: pakai ringkasan default yang paling sering ditanya.
-        $default = ! $hasRealTrigger && ! $isFollowUp;
-        $want = [
-            'kode' => $s['kode'] ?? false,
-            'jadwal' => $default || ($s['jadwal'] ?? false) || ($s['terlambat'] ?? false),
-            'kembali' => $default || ($s['kembali'] ?? false) || ($s['terlambat'] ?? false),
-            'terlambat' => $default || ($s['terlambat'] ?? false),
-            'cari' => ! $default && (($s['cari'] ?? false) || ($s['kode'] ?? false)),
-            'denda' => $s['denda'] ?? false,
-            'pending' => ($s['pending'] ?? false) || ($s['jadwal'] ?? false),
-            'riwayat' => $s['riwayat'] ?? false,
-            'aktif' => $s['aktif'] ?? false,
-            'unit' => $s['unit'] ?? false,
-        ];
 
         $statusIndo = [
             'pending' => 'MENUNGGU (belum bayar)',
@@ -840,245 +1118,240 @@ Jawab sebagai asisten data internal:";
             return implode("\n", $lines);
         });
 
-        $blocks = [];
-        $loaded = [];
-        $budget = 6000; // ≈1.900 token untuk seluruh data
+        $collected = [];   // [prioritas, label, isi] — dikumpulkan dulu
 
-        $add = function (string $label, string $key, callable $builder, int $priority) use (&$blocks, &$loaded, &$budget) {
-            $text = self::cached('sec_' . $key, 45, $builder);
-            $cost = mb_strlen($text);
-            if ($cost > $budget) {
-                $text = mb_substr($text, 0, max(0, $budget - 60)) . "\n- (data dipotong, ada lagi di luar bagian ini)\n";
-                $cost = mb_strlen($text);
-            }
-            if ($cost <= 0) {
+        $add = function (string $label, string $key, callable $builder, int $priority) use (&$collected) {
+            $text = trim(self::cached('sec_' . $key, 45, $builder));
+            if ($text === '') {
                 return;
             }
-            $budget -= $cost;
-            $blocks[$priority][] = "{$label}:\n{$text}";
-            $loaded[] = $label;
+
+            $collected[] = [$priority, $label, $text];
         };
 
         $add('RINGKASAN & OMSET', 'ringkasan', fn () => $snapshot, 1);
 
-        if ($want['kode']) {
-            $add('DETAIL KODE BOOKING YANG DITANYAKAN', 'kode_' . md5($question), function () use ($question, $statusIndo) {
-                $codes = self::extractCodeCandidates($question);
-                if (empty($codes)) {
-                    return '';
+        // Kode booking yang disebut = sumber data paling presisi, selalu paling depan.
+        $add('DETAIL KODE BOOKING YANG DITANYAKAN', 'kode_' . md5($question), function () use ($question, $statusIndo) {
+            $codes = self::extractCodeCandidates($question);
+            if (empty($codes)) {
+                return '';
+            }
+            $rows = \App\Models\Rental::with('units')
+                ->whereIn('booking_code', $codes)
+                ->orderByDesc('waktu_mulai')
+                ->limit(5)->get();
+            if ($rows->isEmpty()) {
+                return "Kode yang disebut tidak ada di database.\n";
+            }
+            return $rows->map(fn ($r) => self::rentalLine($r, $statusIndo))->implode('');
+        }, ($s['kode'] ?? false) ? 1 : 4);
+
+        // Pencarian nama penyewa: hanya ada isinya kalau pertanyaan memang menyebut nama.
+        // Tanpa cek ini, kata umum seperti "gimana" ikut di-LIKE ke tabel rental dan
+        // muncul sebagai "tidak ada transaksi yang cocok" yang hanya membingungkan.
+        $nameToken = self::detectNameToken($question);
+        $add('PENCARIAN DATA PENYEWA (untuk soal orang tertentu)', 'cari_' . md5($question), function () use ($question, $nameToken) {
+            if ($nameToken === null) {
+                return '';
+            }
+            $text = self::lookupRentalsByName($question);
+            return str_contains($text, 'Tidak ada kata kunci nama') ? '' : $text;
+        }, $nameToken !== null ? 1 : 9);
+
+        // Inventaris + status siap per unit. Inilah yang jawab "ip 13 ready??" tanpa
+        // perlu kata kunci, karena daftar unit TIDAK lagi terpisah dari status pakainya.
+        $add('KETERSEDIAAN UNIT TOKO (stok & status siap)', 'ketersediaan', function () use ($now) {
+            return self::unitAvailabilityText($now);
+        }, ($s['unit'] ?? false) ? 1 : 2);
+
+        $add('JADWAL PENGAMBILAN HARI INI', 'jadwal', function () use ($todayStart, $todayEnd, $statusIndo) {
+            $rows = \App\Models\Rental::with(['units'])
+                ->whereIn('status', ['pending', 'pending_confirmation', 'paid', 'renting'])
+                ->whereBetween('waktu_mulai', [$todayStart, $todayEnd])
+                ->orderBy('waktu_mulai')
+                ->limit(20)->get();
+            return $rows->isEmpty()
+                ? "Tidak ada pengambilan yang dijadwalkan hari ini.\n"
+                : $rows->map(fn ($r) => self::rentalLine($r, $statusIndo))->implode('');
+        }, ($s['jadwal'] ?? false) || ($s['terlambat'] ?? false) ? 1 : 2);
+
+        $add('JADWAL PENGEMBALIAN HARI INI', 'kembali', function () use ($todayStart, $todayEnd, $now, $statusIndo) {
+            $rows = \App\Models\Rental::with(['units'])
+                ->whereIn('status', ['renting', 'paid', 'pending_confirmation', 'completed'])
+                ->whereBetween('waktu_selesai', [$todayStart, $todayEnd])
+                ->orderBy('waktu_selesai')
+                ->limit(20)->get();
+            if ($rows->isEmpty()) {
+                return "Tidak ada pengembalian yang dijadwalkan hari ini.\n";
+            }
+            return $rows->map(function ($r) use ($now, $statusIndo) {
+                $suffix = '';
+                if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast()) {
+                    $suffix = ' *** SUDAH MELEBIHI JADWAL ' . self::minutesLate($now, $r->waktu_selesai) . ' MENIT ***';
+                } elseif ($r->handed_over_at) {
+                    $suffix = ' | Sudah dikembalikan: ' . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M H:i');
                 }
-                $rows = \App\Models\Rental::with('units')
-                    ->whereIn('booking_code', $codes)
-                    ->orderByDesc('waktu_mulai')
-                    ->limit(5)->get();
-                if ($rows->isEmpty()) {
-                    return "Kode yang disebut tidak ada di database.\n";
+                return self::rentalLine($r, $statusIndo, $suffix);
+            })->implode('');
+        }, ($s['kembali'] ?? false) || ($s['terlambat'] ?? false) ? 1 : 2);
+
+        $add('PENYEWA TERLAMBAT (sedang berjalan)', 'telat', function () use ($now, $statusIndo) {
+            $rows = \App\Models\Rental::with(['units'])
+                ->whereIn('status', ['renting', 'paid', 'pending_confirmation'])
+                ->where('waktu_selesai', '<', $now)
+                ->orderBy('waktu_selesai')
+                ->limit(15)->get();
+            return $rows->isEmpty()
+                ? "Tidak ada penyewa yang terlambat.\n"
+                : $rows->map(fn ($r) => self::rentalLine(
+                    $r,
+                    $statusIndo,
+                    ' *** TERLAMBAT ' . self::minutesLate($now, $r->waktu_selesai) . ' MENIT ***'
+                ))->implode('');
+        }, ($s['terlambat'] ?? false) ? 1 : 3);
+
+        $add('RIWAYAT PERNAH KENA DENDA', 'denda', function () use ($statusIndo) {
+            $rows = \App\Models\Rental::with(['units'])
+                ->where(function ($q) {
+                    $q->where('denda', '>', 0)->orWhere('denda_kerusakan', '>', 0);
+                })
+                ->orderByDesc('denda')->orderByDesc('denda_kerusakan')
+                ->limit(10)->get();
+            if ($rows->isEmpty()) {
+                return "Belum ada penyewa yang pernah dikenakan denda.\n";
+            }
+            return $rows->map(function ($r) use ($statusIndo) {
+                $line = self::rentalLine($r, $statusIndo);
+                return $line . '  Denda telat: Rp ' . number_format($r->denda ?? 0, 0, ',', '.')
+                    . ' | Denda kerusakan: Rp ' . number_format($r->denda_kerusakan ?? 0, 0, ',', '.')
+                    . ' | Alasan: ' . ($r->catatan_kerusakan ?: '-') . "\n";
+            })->implode('');
+        }, ($s['denda'] ?? false) ? 3 : 7);
+
+        $add('BOOKING MENUNGGU PENGAMBILAN (belum bayar)', 'pending', function () use ($statusIndo) {
+            $rows = \App\Models\Rental::with(['units'])
+                ->where('status', 'pending')
+                ->orderBy('waktu_mulai')
+                ->limit(12)->get();
+            return $rows->isEmpty()
+                ? "Tidak ada booking yang menunggu pengambilan.\n"
+                : $rows->map(fn ($r) => self::rentalLine($r, $statusIndo))->implode('');
+        }, ($s['pending'] ?? false) || ($s['jadwal'] ?? false) ? 3 : 6);
+
+        $add('UNIT YANG SEDANG DISEWA', 'aktif', function () use ($statusIndo) {
+            $rows = \App\Models\Rental::with(['units'])
+                ->where('status', 'renting')
+                ->where('waktu_selesai', '>=', now())
+                ->orderBy('waktu_selesai')
+                ->limit(20)->get();
+            return $rows->isEmpty()
+                ? "Tidak ada unit yang sedang disewa saat ini.\n"
+                : $rows->map(fn ($r) => self::rentalLine($r, $statusIndo))->implode('');
+        }, ($s['aktif'] ?? false) ? 3 : 5);
+
+        // Riwayat: kalau tim menyebut periode, periodenya dipakai; kalau tidak,
+        // tetap 30 hari terakhir supaya "berapa omset bulan ini" ada jawabannya.
+        $range = self::parseDateRange($question, $now);
+        [$rStart, $rEnd, $rLabel] = $range ?? [$now->copy()->subDays(30)->startOfDay(), $now->copy()->endOfDay(), '30 hari terakhir'];
+
+        $add('RIWAYAT TRANSAKSI — ' . mb_strtoupper($rLabel), 'riwayat_' . $rStart->format('Ymd') . '_' . $rEnd->format('Ymd'), function () use ($rStart, $rEnd, $rLabel, $statusIndo) {
+            $base = fn () => \App\Models\Rental::whereBetween('waktu_mulai', [$rStart, $rEnd])
+                ->whereNotIn('status', ['cancelled']);
+
+            // Hitungan & omset dihitung dari seluruh periode, bukan dari 30 baris
+            // yang ditampilkan — kalau tidak, totalnya jadi tidak akurat.
+            $totalTransaksi = (int) $base()->count();
+            $jumlahNama = (int) $base()->whereNotNull('nama')->where('nama', '!=', '')->distinct()->count('nama');
+            $omset = (int) $base()->whereIn('status', ['renting', 'paid', 'completed'])
+                ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, subtotal_harga)'));
+
+            $rows = $base()->with('units')->orderByDesc('waktu_mulai')->limit(30)->get();
+
+            if ($rows->isEmpty()) {
+                return "Tidak ada transaksi pada rentang {$rLabel}.\n";
+            }
+
+            // Komposisi status dihitung dari seluruh periode, bukan 30 baris tampil.
+            $summary = [];
+            foreach ($base()->selectRaw('status, COUNT(*) as jml')->groupBy('status')->pluck('jml', 'status') as $st => $n) {
+                $summary[] = ($statusIndo[$st] ?? $st) . ': ' . $n;
+            }
+
+            // Daftar nama unik + berapa kali, itu yang paling sering ditanyakan.
+            $names = $rows->whereNotNull('nama')->where('nama', '!=', '')
+                ->groupBy('nama')
+                ->map(fn ($grp, $nama) => ['nama' => $nama, 'jumlah' => $grp->count(), 'terakhir' => $grp->max('waktu_mulai')])
+                ->sortByDesc('terakhir')
+                ->values();
+
+            $out = "Periode: {$rLabel}.\n";
+            $out .= 'Total: ' . $totalTransaksi . ' transaksi | ' . $jumlahNama . ' penyewa berbeda | Omset: Rp ' . number_format($omset, 0, ',', '.') . "\n";
+            $out .= 'Status: ' . implode(', ', $summary) . "\n";
+            $out .= "Daftar nama penyewa (urut terbaru, dari 30 transaksi terbaru):\n";
+            $i = 0;
+            foreach ($names as $n) {
+                if ($i++ >= 40) {
+                    $out .= '- ...dan ' . ($names->count() - 40) . ' nama lain.\n';
+                    break;
                 }
-                return $rows->map(fn ($r) => self::rentalLine($r, $statusIndo))->implode('');
-            }, 1);
-        }
+                $tgl = \Carbon\Carbon::parse($n['terakhir'])->translatedFormat('d M');
+                $out .= '- ' . $n['nama'] . ' (' . $n['jumlah'] . 'x, terakhir ' . $tgl . ")\n";
+            }
+            // Transaksi dibuat ringkas: yang ditanyakan biasanya "siapa", bukan detail unit.
+            $out .= "Transaksi:\n" . $rows->map(function ($r) use ($statusIndo) {
+                $u = $r->units->map(fn ($x) => $x->nama_lengkap ?: $x->seri)->implode(', ') ?: '-';
+                $tgl = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M') : '-';
+                return '- ' . $tgl . ' | ' . ($r->nama ?: '-') . ' | ' . $u
+                    . ' | ' . ($statusIndo[$r->status] ?? $r->status)
+                    . ' | Rp ' . number_format($r->grand_total ?: $r->subtotal_harga, 0, ',', '.')
+                    . ' | ' . ($r->no_wa ?: '-') . "\n";
+            })->implode('');
+            return $out;
+        }, ($s['riwayat'] ?? false) ? 1 : 8);
 
-        if ($want['jadwal']) {
-            $add('JADWAL PENGAMBILAN HARI INI', 'jadwal', function () use ($todayStart, $todayEnd, $statusIndo) {
-                $rows = \App\Models\Rental::with(['units'])
-                    ->whereIn('status', ['pending', 'pending_confirmation', 'paid', 'renting'])
-                    ->whereBetween('waktu_mulai', [$todayStart, $todayEnd])
-                    ->orderBy('waktu_mulai')
-                    ->limit(20)->get();
-                return $rows->isEmpty()
-                    ? "Tidak ada pengambilan yang dijadwalkan hari ini.\n"
-                    : $rows->map(fn ($r) => self::rentalLine($r, $statusIndo))->implode('');
-            }, 2);
-        }
+        $add('RIWAYAT PERNAH TERLAMBAT MENGEMBALIKAN (semua waktu)', 'riwayat_telat', function () use ($statusIndo) {
+            $rows = \App\Models\Rental::with(['units'])
+                ->whereNotNull('handed_over_at')->whereNotNull('waktu_selesai')
+                ->whereColumn('handed_over_at', '>', 'waktu_selesai')
+                ->orderByDesc('handed_over_at')
+                ->limit(10)->get();
+            return $rows->isEmpty()
+                ? "Belum ada riwayat penyewa yang terlambat mengembalikan unit.\n"
+                : $rows->map(fn ($r) => self::rentalLine(
+                    $r,
+                    $statusIndo,
+                    ' | Telat: ' . self::minutesLate(\Carbon\Carbon::parse($r->handed_over_at), $r->waktu_selesai) . ' menit'
+                ))->implode('');
+        }, ($s['riwayat'] ?? false) || ($s['terlambat'] ?? false) ? 5 : 9);
 
-        if ($want['kembali']) {
-            $add('JADWAL PENGEMBALIAN HARI INI', 'kembali', function () use ($todayStart, $todayEnd, $now, $statusIndo) {
-                $rows = \App\Models\Rental::with(['units'])
-                    ->whereIn('status', ['renting', 'paid', 'pending_confirmation', 'completed'])
-                    ->whereBetween('waktu_selesai', [$todayStart, $todayEnd])
-                    ->orderBy('waktu_selesai')
-                    ->limit(20)->get();
-                if ($rows->isEmpty()) {
-                    return "Tidak ada pengembalian yang dijadwalkan hari ini.\n";
-                }
-                return $rows->map(function ($r) use ($now, $statusIndo) {
-                    $suffix = '';
-                    if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast()) {
-                        $suffix = ' *** SUDAH MELEBIHI JADWAL ' . self::minutesLate($now, $r->waktu_selesai) . ' MENIT ***';
-                    } elseif ($r->handed_over_at) {
-                        $suffix = ' | Sudah dikembalikan: ' . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M H:i');
-                    }
-                    return self::rentalLine($r, $statusIndo, $suffix);
-                })->implode('');
-            }, 3);
-        }
+        // Budget dibagi sesuai PRIORITAS, bukan sesuai urutan pemanggilan.
+        // Dulu budget habis sesuai urutan $add(), jadi bagian yang paling relevan
+        // dengan pertanyaan (mis. daftar penyewa terlambat) justru sering yang
+        // dibuang padahal masih muat. usort() stabil, jadi urutan aslinya tetap
+        // terjaga di dalam prioritas yang sama.
+        usort($collected, fn (array $a, array $b) => $a[0] <=> $b[0]);
 
-        if ($want['terlambat']) {
-            $add('PENYEWA TERLAMBAT (sedang berjalan)', 'telat', function () use ($now, $statusIndo) {
-                $rows = \App\Models\Rental::with(['units'])
-                    ->whereIn('status', ['renting', 'paid', 'pending_confirmation'])
-                    ->where('waktu_selesai', '<', $now)
-                    ->orderBy('waktu_selesai')
-                    ->limit(15)->get();
-                return $rows->isEmpty()
-                    ? "Tidak ada penyewa yang terlambat.\n"
-                    : $rows->map(fn ($r) => self::rentalLine(
-                        $r,
-                        $statusIndo,
-                        ' *** TERLAMBAT ' . self::minutesLate($now, $r->waktu_selesai) . ' MENIT ***'
-                    ))->implode('');
-            }, 2);
-        }
+        $blocks = [];
+        $loaded = [];
+        $overflow = [];   // bagian yang tidak kebudget -> dicoba lagi kalau jawaban pertama masih menyuruh pakai kata kunci
+        $budget = self::internalDataBudget();
 
-        if ($want['cari']) {
-            // Kalau nama yang diketik tidak ada di database dan ini bukan pertanyaan
-            // utama soal orang, jangan kirim apa pun (hemat token).
-            $isMain = ($intents['primary'] === 'cari') || ($intents['primary'] === 'kode');
-            $add(
-                'PENCARIAN DATA PENYEWA (WAJIB DIBACA untuk soal orang tertentu)',
-                'cari_' . ($isMain ? 'm' : 's') . '_' . md5($question),
-                function () use ($question, $isMain) {
-                    $text = self::lookupRentalsByName($question);
-                    if (! $isMain && str_starts_with($text, 'Tidak ada transaksi')) {
-                        return '';
-                    }
-                    return $text;
-                },
-                2
-            );
-        }
+        foreach ($collected as [$priority, $label, $body]) {
+            // Label + pemisah ikut dihitung, supaya total data yang benar-benar
+            // terkirim tidak melewati plafon yang sudah diatur di Pengaturan.
+            $cost = mb_strlen($label) + 1 + mb_strlen($body) + ($blocks === [] ? 0 : 2);
 
-        if ($want['denda']) {
-            $add('RIWAYAT PERNAH KENA DENDA', 'denda', function () use ($statusIndo) {
-                $rows = \App\Models\Rental::with(['units'])
-                    ->where(function ($q) {
-                        $q->where('denda', '>', 0)->orWhere('denda_kerusakan', '>', 0);
-                    })
-                    ->orderByDesc('denda')->orderByDesc('denda_kerusakan')
-                    ->limit(10)->get();
-                if ($rows->isEmpty()) {
-                    return "Belum ada penyewa yang pernah dikenakan denda.\n";
-                }
-                return $rows->map(function ($r) use ($statusIndo) {
-                    $line = self::rentalLine($r, $statusIndo);
-                    return $line . '  Denda telat: Rp ' . number_format($r->denda ?? 0, 0, ',', '.')
-                        . ' | Denda kerusakan: Rp ' . number_format($r->denda_kerusakan ?? 0, 0, ',', '.')
-                        . ' | Alasan: ' . ($r->catatan_kerusakan ?: '-') . "\n";
-                })->implode('');
-            }, 4);
-        }
+            // Tidak dipotong/dibuang, tapi disimpan utuh di $overflow supaya masih
+            // bisa dikirim di giliran kedua kalau ternyata jawabannya belum cukup.
+            if ($cost > $budget) {
+                $overflow[] = "{$label}:\n{$body}";
+                continue;
+            }
 
-        if ($want['pending']) {
-            $add('BOOKING MENUNGGU PENGAMBILAN (belum bayar)', 'pending', function () use ($statusIndo) {
-                $rows = \App\Models\Rental::with(['units'])
-                    ->where('status', 'pending')
-                    ->orderBy('waktu_mulai')
-                    ->limit(12)->get();
-                return $rows->isEmpty()
-                    ? "Tidak ada booking yang menunggu pengambilan.\n"
-                    : $rows->map(fn ($r) => self::rentalLine($r, $statusIndo))->implode('');
-            }, 4);
-        }
-
-        if ($want['riwayat']) {
-            $range = self::parseDateRange($question, $now);
-            [$rStart, $rEnd, $rLabel] = $range ?? [$now->copy()->subDays(30)->startOfDay(), $now->copy()->endOfDay(), '30 hari terakhir'];
-
-            $add('RIWAYAT TRANSAKSI — ' . mb_strtoupper($rLabel), 'riwayat_' . $rStart->format('Ymd') . '_' . $rEnd->format('Ymd'), function () use ($rStart, $rEnd, $rLabel, $statusIndo) {
-                $base = fn () => \App\Models\Rental::whereBetween('waktu_mulai', [$rStart, $rEnd])
-                    ->whereNotIn('status', ['cancelled']);
-
-                // Hitungan & omset dihitung dari seluruh periode, bukan dari 30 baris
-                // yang ditampilkan — kalau tidak, totalnya jadi tidak akurat.
-                $totalTransaksi = (int) $base()->count();
-                $jumlahNama = (int) $base()->whereNotNull('nama')->where('nama', '!=', '')->distinct()->count('nama');
-                $omset = (int) $base()->whereIn('status', ['renting', 'paid', 'completed'])
-                    ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, subtotal_harga)'));
-
-                $rows = $base()->with('units')->orderByDesc('waktu_mulai')->limit(30)->get();
-
-                if ($rows->isEmpty()) {
-                    return "Tidak ada transaksi pada rentang {$rLabel}.\n";
-                }
-
-                // Komposisi status dihitung dari seluruh periode, bukan 30 baris tampil.
-                $summary = [];
-                foreach ($base()->selectRaw('status, COUNT(*) as jml')->groupBy('status')->pluck('jml', 'status') as $st => $n) {
-                    $summary[] = ($statusIndo[$st] ?? $st) . ': ' . $n;
-                }
-
-                // Daftar nama unik + berapa kali, itu yang paling sering ditanyakan.
-                $names = $rows->whereNotNull('nama')->where('nama', '!=', '')
-                    ->groupBy('nama')
-                    ->map(fn ($grp, $nama) => ['nama' => $nama, 'jumlah' => $grp->count(), 'terakhir' => $grp->max('waktu_mulai')])
-                    ->sortByDesc('terakhir')
-                    ->values();
-
-                $out = "Periode: {$rLabel}.\n";
-                $out .= 'Total: ' . $totalTransaksi . ' transaksi | ' . $jumlahNama . ' penyewa berbeda | Omset: Rp ' . number_format($omset, 0, ',', '.') . "\n";
-                $out .= 'Status: ' . implode(', ', $summary) . "\n";
-                $out .= "Daftar nama penyewa (urut terbaru, dari 30 transaksi terbaru):\n";
-                $i = 0;
-                foreach ($names as $n) {
-                    if ($i++ >= 40) {
-                        $out .= '- ...dan ' . ($names->count() - 40) . ' nama lain.\n';
-                        break;
-                    }
-                    $tgl = \Carbon\Carbon::parse($n['terakhir'])->translatedFormat('d M');
-                    $out .= '- ' . $n['nama'] . ' (' . $n['jumlah'] . 'x, terakhir ' . $tgl . ")\n";
-                }
-                // Transaksi dibuat ringkas: yang ditanyakan biasanya "siapa", bukan detail unit.
-                $out .= "Transaksi:\n" . $rows->map(function ($r) use ($statusIndo) {
-                    $u = $r->units->map(fn ($x) => $x->nama_lengkap ?: $x->seri)->implode(', ') ?: '-';
-                    $tgl = $r->waktu_mulai ? \Carbon\Carbon::parse($r->waktu_mulai)->translatedFormat('d M') : '-';
-                    return '- ' . $tgl . ' | ' . ($r->nama ?: '-') . ' | ' . $u
-                        . ' | ' . ($statusIndo[$r->status] ?? $r->status)
-                        . ' | Rp ' . number_format($r->grand_total ?: $r->subtotal_harga, 0, ',', '.')
-                        . ' | ' . ($r->no_wa ?: '-') . "\n";
-                })->implode('');
-                return $out;
-            }, 2);
-
-            // Riwayat yang pernah terlambat, tetap berguna saat minta "riwayat".
-            $add('RIWAYAT PERNAH TERLAMBAT MENGEMBALIKAN (semua waktu)', 'riwayat_telat', function () use ($statusIndo) {
-                $rows = \App\Models\Rental::with(['units'])
-                    ->whereNotNull('handed_over_at')->whereNotNull('waktu_selesai')
-                    ->whereColumn('handed_over_at', '>', 'waktu_selesai')
-                    ->orderByDesc('handed_over_at')
-                    ->limit(10)->get();
-                return $rows->isEmpty()
-                    ? "Belum ada riwayat penyewa yang terlambat mengembalikan unit.\n"
-                    : $rows->map(fn ($r) => self::rentalLine(
-                        $r,
-                        $statusIndo,
-                        ' | Telat: ' . self::minutesLate(\Carbon\Carbon::parse($r->handed_over_at), $r->waktu_selesai) . ' menit'
-                    ))->implode('');
-            }, 5);
-        }
-
-        if ($want['aktif']) {
-            $add('UNIT YANG SEDANG DISEWA', 'aktif', function () use ($statusIndo) {
-                $rows = \App\Models\Rental::with(['units'])
-                    ->where('status', 'renting')
-                    ->where('waktu_selesai', '>=', now())
-                    ->orderBy('waktu_selesai')
-                    ->limit(20)->get();
-                return $rows->isEmpty()
-                    ? "Tidak ada unit yang sedang disewa saat ini.\n"
-                    : $rows->map(fn ($r) => self::rentalLine($r, $statusIndo))->implode('');
-            }, 4);
-        }
-
-        if ($want['unit']) {
-            $add('DAFTAR UNIT TOKO', 'unit', function () {
-                $units = \App\Models\Unit::where('is_active', true)->with('category')->get();
-                $text = '';
-                foreach ($units as $u) {
-                    $p24 = $u->harga_per_hari ? 'Rp ' . number_format($u->harga_per_hari, 0, ',', '.') . '/24jam' : '-';
-                    $text .= "- [ID:{$u->id}] {$u->nama_lengkap} (" . ($u->category?->name ?? 'Unit') . ", {$p24})\n";
-                }
-                return $text !== '' ? $text : "Belum ada unit aktif.\n";
-            }, 6);
+            $budget -= $cost;
+            $blocks[$priority][] = "{$label}:\n{$body}";
+            $loaded[] = $label;
         }
 
         ksort($blocks);
@@ -1088,7 +1361,110 @@ Jawab sebagai asisten data internal:";
         // Rapikan baris kosong berlebih pada blok data.
         $text = trim(preg_replace('/\n{3,}/', "\n\n", $text) ?? $text);
 
-        return [$text, $loaded];
+        return [$text, $loaded, $overflow];
+    }
+
+    /**
+     * Inventaris unit + status siapnya per unit.
+     *
+     * Inilah yang menjawab "ip 13 ready??" dari data nyata. Sebelumnya bagian ini
+     * hanya memuat daftar unit + harga (tanpa status) dan hanya ikut kalau
+     * pertanyaannya memuat kata kunci seperti "stok"/"unit", jadi team sering
+     * diberi jawaban "inventaris tidak ikut dimuat" padahal unitnya ada di toko.
+     *
+     * Kuerinya tetap irit: satu query booking untuk semua unit, lalu dikelompokkan
+     * per unit di memori — bukan satu query per unit.
+     */
+    private static function unitAvailabilityText(\Carbon\Carbon $now): string
+    {
+        $units = Unit::where('is_active', true)->with('category')->get();
+        if ($units->isEmpty()) {
+            return "Belum ada unit aktif di toko.\n";
+        }
+
+        // Booking yang relevan: yang masih berjalan (termasuk yang sudah lewat
+        // jadwal, itu justru yang paling harus kelihatan) dan yang akan datang.
+        //
+        // Dulu difilter "waktu_selesai >= sekarang - 1 jam", sehingga unit yang
+        // masih dipegang penyewa yang telat ikut hilang dari daftar dan dilaporkan
+        // "SIAP DIPAKAI" padahal barangnya belum kembali. Dipakai yang 300
+        // booking terbaru (bukan terlama), lalu dibalik lagi ke urut kronologis
+        // supaya indeks terakhir = booking yang sedang berjalan.
+        $rentals = \App\Models\Rental::with('units')
+            ->whereIn('status', ['pending', 'pending_confirmation', 'paid', 'renting'])
+            ->orderByDesc('waktu_mulai')
+            ->limit(300)->get()
+            ->reverse()->values();
+
+        $byUnit = [];
+        foreach ($rentals as $r) {
+            foreach ($r->units as $u) {
+                $byUnit[$u->id][] = $r;
+            }
+        }
+
+        $text = '';
+        $siap = 0;
+
+        foreach ($units as $u) {
+            $harga = [];
+            if ($u->harga_per_hari) {
+                $harga[] = '24 jam: Rp ' . number_format($u->harga_per_hari, 0, ',', '.');
+            }
+            if ($u->harga_per_jam) {
+                $harga[] = '12 jam: Rp ' . number_format($u->harga_per_jam * 12, 0, ',', '.');
+            }
+
+            $lines = $byUnit[$u->id] ?? [];
+            // Daftar urut mulai dari paling awal, jadi indeks terakhir yang sudah
+            // mulai = booking yang sedang berjalan.
+            $jalanIdx = null;
+            foreach ($lines as $i => $r) {
+                if (! $r->waktu_mulai) {
+                    continue;
+                }
+                if (\Carbon\Carbon::parse($r->waktu_mulai)->lessThanOrEqualTo($now)) {
+                    $jalanIdx = $i;
+                }
+            }
+
+            if ($jalanIdx !== null) {
+                $r = $lines[$jalanIdx];
+                $selesai = $r->waktu_selesai ? \Carbon\Carbon::parse($r->waktu_selesai) : null;
+                $status = 'SEDANG DIPAKAI s/d ' . ($selesai ? $selesai->translatedFormat('d M H:i') : '-');
+                if ($selesai && $selesai->lessThan($now)) {
+                    $status .= ' *** MELEBIHI JADWAL ' . self::minutesLate($now, $selesai) . ' MENIT ***';
+                }
+                $status .= ' | Penyewa: ' . ($r->nama ?: '-') . ' (' . ($r->no_wa ?: '-') . ') | Kode: ' . ($r->booking_code ?: '-');
+            } else {
+                $siap++;
+                $status = 'SIAP DIPAKAI sekarang';
+            }
+
+            $next = $lines[$jalanIdx === null ? 0 : $jalanIdx + 1] ?? null;
+            if ($next && $next->waktu_mulai) {
+                $mulai = \Carbon\Carbon::parse($next->waktu_mulai)->translatedFormat('d M H:i');
+                $selesai = $next->waktu_selesai ? \Carbon\Carbon::parse($next->waktu_selesai)->translatedFormat('d M H:i') : '-';
+                $status .= ' | Berikutnya: ' . $mulai . ' - ' . $selesai
+                    . ' (' . ($next->nama ?: '-') . ', ' . ($next->status) . ')';
+            }
+
+            $text .= "- [ID:{$u->id}] {$u->nama_lengkap} | Kategori: " . ($u->category?->name ?? 'Unit')
+                . ($harga ? ' | ' . implode(' | ', $harga) : '') . ' | ' . $status . "\n";
+        }
+
+        $text .= "Total: {$siap} dari " . $units->count() . " unit siap dipakai sekarang.\n";
+
+        try {
+            $nonAktif = (int) Unit::where('is_active', false)->count();
+            if ($nonAktif > 0) {
+                $text .= "Catatan: {$nonAktif} unit lain berstatus non-aktif (rusak/perbaikan), tidak disewakan.\n";
+            }
+        } catch (\Throwable $e) {
+            // Jumlah unit non-aktif hanya pelengkap; kalau gagal query tidak boleh menggagalkan seluruh bagian.
+        }
+
+        return $text;
     }
 
     /**
@@ -1108,18 +1484,44 @@ Jawab sebagai asisten data internal:";
 
     /**
      * Ringkas prompt saat pemakaian token menit ini sudah mendekati plafon.
-     * Lebih baik konteksnya dikurangi daripada dapat Error 429.
+     *
+     * Yang dipangkas HANYA catatan obrolan ("YANG SUDAH DIPBAHAS" dan "OBROLAN
+     * TERAKHIR"). Blok DATA BISNIS sengaja tidak pernah disentuh: di grup report
+     * data yang hilang berarti bot menjawab "data tidak dimuat", dan itu justru
+     * keluhan yang paling ingin dihilangkan.
      */
     private static function shrinkInternalPrompt(string $prompt): string
     {
-        // Buang blok data, sisakan aturan + memori + pertanyaan.
-        $pos = strpos($prompt, 'DATA BISNIS');
-        if ($pos !== false) {
-            $questionPos = strpos($prompt, 'Pertanyaan tim:');
-            $question = $questionPos !== false ? substr($prompt, $questionPos) : '';
-            $prompt = substr($prompt, 0, $pos) . "DATA BISNIS: (dikurangi sementara karena pemakaian token sedang tinggi; jawab sebatas yang sudah ada, jangan mengarang.)\n\n" . $question;
+        $dataPos = strpos($prompt, 'DATA BISNIS');
+        if ($dataPos === false) {
+            return $prompt;
         }
-        return $prompt;
+
+        $head = substr($prompt, 0, $dataPos);
+        $dataPos = strpos($prompt, 'DATA BISNIS');
+        $tail = substr($prompt, $dataPos);
+
+        $head = preg_replace('/YANG SUDAH DIPBAHAS \(MEMORI TIM\):.*?(?=DATA BISNIS|\z)/s', "YANG SUDAH DIPBAHAS (MEMORI TIM):\n(dikurangi sementara karena pemakaian token sedang tinggi)\n", $head) ?? $head;
+        $head = preg_replace('/OBROLAN TERAKHIR:.*?(?=DATA BISNIS|\z)/s', '', $head) ?? $head;
+
+        return $head . $tail;
+    }
+
+    /**
+     * Deteksi jawaban ala "data tidak ikut dimuat, coba pake kata kunci ...".
+     *
+     * Kalimat itu yang paling dikeluhkan tim di grup report: mereka cuma ingin
+     * bertanya dengan bahasa sehari-hari, bukan menghafal daftar kata kunci.
+     * Kalau model tetap mengulanginya, berarti datanya memang kurang — jadi
+     * lebih baik giliran kedua dengan data tambahan daripada mengirim unload
+     * "sebut kata kunci" ke WhatsApp.
+     */
+    private static function isHedgingAnswer(string $text): bool
+    {
+        return (bool) preg_match(
+            '/tidak ikut dimuat|belum dimuat|tidak dimuat|data tidak tersedia|tidak tersedia di sini|kata kunci|silakan (tanyakan|coba)|coba tanyakan dengan/i',
+            $text
+        );
     }
 
     /**
@@ -1208,20 +1610,21 @@ Jawab sebagai asisten data internal:";
      * tidak ada yang terjadi dan tim mengira botnya "nyabodoh". Sekarang kegagalan
      * ini dikembalikan sebagai pesan yang isinya memberi tahu apa yang salah.
      */
-    private static function fallbackMessage(): string
+    private static function fallbackMessage(string $feature = 'report'): string
     {
         $reason = self::$lastError ?: 'sebab tidak diketahui';
+        $label = self::featureLabel($feature);
 
         if (str_contains($reason, 'API_KEY_INVALID') || str_contains($reason, 'API key not valid')) {
-            $hint = "Kunci API AI tidak valid. Buka *Web Admin -> Settings -> Tab Chatbot*, isi *Gemini API Key* yang benar lalu simpan.";
+            $hint = "Kunci API AI ({$label}) tidak valid. Buka *Web Admin -> Pengaturan -> Tab WhatsApp*, isi *API Key {$label}* yang benar lalu simpan.";
         } elseif (str_contains($reason, '429') || str_contains($reason, 'RESOURCE_EXHAUSTED')) {
-            $hint = "Kuota API AI habis / kena rate limit. Tunggu sebentar atau ganti model ke yang lebih hemat di *Web Admin -> Settings -> Tab Chatbot*.";
+            $hint = "Kuota API AI ({$label}) habis / kena rate limit. Tunggu sebentar, atau pisahkan ke kunci API sendiri di *Web Admin -> Pengaturan -> Tab WhatsApp*.";
         } elseif (str_contains($reason, '404') || str_contains($reason, 'NOT_FOUND')) {
-            $hint = "Model AI yang dipilih tidak tersedia. Ganti model di *Web Admin -> Settings -> Tab Chatbot* (kosongkan dulu supaya kembali ke default).";
+            $hint = "Model AI ({$label}) yang dipilih tidak tersedia. Ganti modelnya di *Web Admin -> Pengaturan -> Tab WhatsApp* (kosongkan dulu supaya kembali ke default).";
         } elseif (stripos($reason, 'timed out') !== false || stripos($reason, 'cURL error 28') !== false) {
             $hint = "Server terlalu lama menunggu jawaban AI. Coba ulangi pertanyaannya sebentar lagi.";
         } else {
-            $hint = "Cek *Web Admin -> Settings -> Tab Chatbot* (kunci API & model), lalu coba ulangi.";
+            $hint = "Cek *Web Admin -> Pengaturan -> Tab WhatsApp* (API Key & Model {$label}), lalu coba ulangi.";
         }
 
         return self::formatForWhatsApp(
@@ -1229,16 +1632,6 @@ Jawab sebagai asisten data internal:";
             . "Sebab: " . mb_substr($reason, 0, 220) . "\n\n"
             . $hint
         );
-    }
-
-    /** Model aktif, dinormalisasi bila versi lamanya masih tersimpan di Setting. */
-    private static function activeModel(): string
-    {
-        $model = Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
-        if (in_array($model, ['gemini-2.0-flash-lite', 'gemini-1.5-flash-8b', 'gemini-1.5-flash', 'gemini-2.0-flash'])) {
-            return 'gemini-3.5-flash-lite';
-        }
-        return $model;
     }
 
     /**

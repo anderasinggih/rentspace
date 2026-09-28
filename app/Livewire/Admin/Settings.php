@@ -86,6 +86,17 @@ class Settings extends Component
     public $chatbot_api_key = '';
     public $chatbot_model = 'gemini-3.5-flash-lite';
     public $chatbot_tpm_limit = '300000';
+    public $chatbot_report_data_limit = '0';
+
+    // API key & model dipisah per fitur supaya kuota tiap fitur bisa diatur
+    // dan diamankan terpisah (lihat GeminiAIService::apiKeyFor).
+    public $report_api_key = '';
+    public $report_model = 'gemini-3.5-flash-lite';
+    public $broadcast_api_key = '';
+    public $broadcast_model = 'gemini-3.5-flash-lite';
+    public $ai_key_test = [];   // hasil tombol "Tes" per fitur
+    public $testing_ai_feature = null;
+    public $aiSettingsMessage = null; // ['ok' => bool, 'text' => string] — hanya tampil di tab WhatsApp
 
     public $admin_wa_secondary = '';
     public $admin_wa_group_id = '';
@@ -113,6 +124,9 @@ class Settings extends Component
     public $broadcast_delay_mode = 'safe'; // 'safe' (2-4s random delay + pause) or 'normal' (1-2s)
     public $import_filter_unit_id = '';
     public $import_filter_status = '';
+    public $broadcast_ai_brief = '';
+    public $broadcast_ai_tone = 'promosi';
+    public $is_generating_broadcast = false;
 
     public $onesignal_app_id = '';
     public $onesignal_rest_api_key = '';
@@ -180,6 +194,15 @@ class Settings extends Component
         $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
         $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
         $this->chatbot_tpm_limit = (string) \App\Models\Setting::getVal('chatbot_tpm_limit', '300000');
+        $this->chatbot_report_data_limit = (string) \App\Models\Setting::getVal('chatbot_report_data_limit', '0');
+
+        // Key & model laporan & broadcast. Kosong = otomatis pakai key customer,
+        // jadi instalasi lama yang hanya punya satu key tidak ikut rusak.
+        $this->report_api_key = (string) \App\Models\Setting::getVal('report_api_key', '');
+        $this->report_model = (string) \App\Models\Setting::getVal('report_model', 'gemini-3.5-flash-lite');
+        $this->broadcast_api_key = (string) \App\Models\Setting::getVal('broadcast_api_key', '');
+        $this->broadcast_model = (string) \App\Models\Setting::getVal('broadcast_model', 'gemini-3.5-flash-lite');
+        $this->ai_key_test = [];
         $this->admin_wa_secondary = \App\Models\Setting::getVal('admin_wa_secondary', '');
         $this->admin_wa_group_id = \App\Models\Setting::getVal('admin_wa_group_id', '');
         $this->admin_report_group_id = \App\Models\Setting::getVal('admin_report_group_id', '');
@@ -380,8 +403,9 @@ class Settings extends Component
             'home_description' => 'required',
             'late_tolerance_minutes' => 'required|numeric|min:0',
             'admin_wa' => 'required',
-            'admin_address' => 'required'
+            'admin_address' => 'required',
         ]);
+        $this->validateAiFeatureSettings();
 
         \App\Models\Setting::updateOrCreate(['key' => 'home_title'], ['value' => $this->home_title]);
         \App\Models\Setting::updateOrCreate(['key' => 'home_description'], ['value' => $this->home_description]);
@@ -407,9 +431,13 @@ class Settings extends Component
 
         // Save Chatbot Settings
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
-        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
-        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: 'gemini-3.5-flash-lite']);
+        $this->persistAiFeatureSettings();
+        $this->ai_key_test = [];
+        $this->aiSettingsMessage = ['ok' => true, 'text' => 'Pengaturan AI tersimpan (kunci & model per fitur).'];
+
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_tpm_limit'], ['value' => (string) max(1000, (int) $this->chatbot_tpm_limit)]);
+        // 0 = tanpa batas: grup report boleh memuat semua data tanpa dipotong.
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_report_data_limit'], ['value' => (string) max(0, (int) $this->chatbot_report_data_limit)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_secondary'], ['value' => trim($this->admin_wa_secondary)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_wa_group_id)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_report_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_report_group_id)]);
@@ -421,42 +449,162 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'onesignal_safari_web_id'], ['value' => trim($this->onesignal_safari_web_id)]);
 
 
-        // Physically update .env file
+        // Cerminkan kunci AI ke .env sebagai jaring pengaman kalau database
+        // nanti tidak terbaca. Yang penting di sini DB, bukan .env.
+        $this->syncGeminiKeysToEnv([
+            'GEMINI_API_KEY' => $this->chatbot_api_key,
+            'GEMINI_REPORT_API_KEY' => $this->report_api_key,
+            'GEMINI_BROADCAST_API_KEY' => $this->broadcast_api_key,
+        ]);
+
+        session()->flash('general_message', 'Pengaturan AI & Umum berhasil disimpan.');
+    }
+
+    /**
+     * Aturan validasi untuk enam field kunci/model AI per fitur.
+     *
+     * Dipisah dari `saveGeneralSettings` supaya tombol "Tes Kunci" bisa
+     * validating & menyimpan hanya bagian AI, tanpa ikut mensyaratkan field
+     * umum yang tidak ada hubungannya (mis. `home_title`).
+     */
+    private function validateAiFeatureSettings(): void
+    {
+        $this->validate([
+            'chatbot_api_key' => 'nullable|string|max:200',
+            'report_api_key' => 'nullable|string|max:200',
+            'broadcast_api_key' => 'nullable|string|max:200',
+            'chatbot_model' => 'nullable|string',
+            'report_model' => 'nullable|string',
+            'broadcast_model' => 'nullable|string',
+        ], [
+            'chatbot_api_key.max' => 'API Key Customer kelewat panjang (maksimal 200 karakter).',
+            'report_api_key.max' => 'API Key Laporan kelewat panjang (maksimal 200 karakter).',
+            'broadcast_api_key.max' => 'API Key Broadcast kelewat panjang (maksimal 200 karakter).',
+        ]);
+    }
+
+    /** Tulis kunci + model ketiga fitur ke tabel settings. */
+    private function persistAiFeatureSettings(): void
+    {
+        $default = 'gemini-3.5-flash-lite';
+
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => trim((string) $this->chatbot_api_key)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: $default]);
+        \App\Models\Setting::updateOrCreate(['key' => 'report_api_key'], ['value' => trim((string) $this->report_api_key)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'report_model'], ['value' => $this->report_model ?: $default]);
+        \App\Models\Setting::updateOrCreate(['key' => 'broadcast_api_key'], ['value' => trim((string) $this->broadcast_api_key)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'broadcast_model'], ['value' => $this->broadcast_model ?: $default]);
+    }
+
+    /**
+     * Tulis kunci AI ke .env tanpa mengubah baris yang sama dua kali.
+     *
+     * Versi lama memakai `str_contains($env, "KEY=")` lalu `preg_replace("/^KEY=/m")`.
+     * Dua hal salah di situ: (1) pengecekan menemukan baris yang sudah dikomentari
+     * (`#GEMINI_API_KEY=...`) tapi regex-nya tidak, jadi hasilnya kunci aktif baru
+     * ditambahkan di bawah dan kunci lama tetap ada — env jadi punya duplikat; dan
+     * (2) nilai kosong untuk fitur yang sengaja dikosongkan ikut menimpa baris yang
+     * ada, padahal "kosong" di Pengaturan berarti "pakai key customer".
+     *
+     * Jadi sekarang satu baris saja yang disobek: yang sudah ada ditulis ulang,
+     * yang belum ada ditambahkan, dan nilai kosong berarti "kosongkan".
+     */
+    private function syncGeminiKeysToEnv(array $values): void
+    {
         try {
             $envPath = base_path('.env');
-            if (file_exists($envPath)) {
-                $envContent = file_get_contents($envPath);
-                $key = 'GEMINI_API_KEY';
-                $newValue = $this->chatbot_api_key;
-
-                if (str_contains($envContent, "{$key}=")) {
-                    // Replace existing
-                    $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$newValue}", $envContent);
-                } else {
-                    // Append new
-                    $envContent .= "\n{$key}={$newValue}\n";
-                }
-
-                // Update other Keys in .env if needed (keeping existing ones)
-                $keys = [
-                    // Add other env keys here if necessary
-                ];
-
-                foreach ($keys as $k => $v) {
-                    if (str_contains($envContent, "{$k}=")) {
-                        $envContent = preg_replace("/^{$k}=.*/m", "{$k}={$v}", $envContent);
-                    } else {
-                        $envContent .= "\n{$k}={$v}\n";
-                    }
-                }
-
-                file_put_contents($envPath, $envContent);
+            if (! is_writable($envPath)) {
+                return;
             }
-        } catch (\Exception $e) {
-            // Log or ignore if permission denied
+
+            $envContent = file_get_contents($envPath);
+            if ($envContent === false) {
+                return;
+            }
+
+            $appended = [];
+            foreach ($values as $key => $value) {
+                $value = trim((string) $value);
+
+                if (preg_match("/^{$key}=.*$/m", $envContent)) {
+                    $envContent = preg_replace("/^{$key}=.*$/m", "{$key}={$value}", $envContent, 1);
+                } else {
+                    $appended[] = "{$key}={$value}";
+                }
+            }
+
+            if ($appended !== []) {
+                $envContent = rtrim($envContent, "\n") . "\n\n# Ditulis dari menu Pengaturan (AI per fitur)\n" . implode("\n", $appended) . "\n";
+            }
+
+            file_put_contents($envPath, $envContent);
+        } catch (\Throwable $e) {
+            // .env hanya cadangan; kegagalan menulis tidak boleh menggagalkan simpan.
+            \Illuminate\Support\Facades\Log::warning('Gagal menulis kunci AI ke .env: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Uji kunci API satu fitur dengan satu panggilan sangat kecil ke modelnya.
+     *
+     * Kunci & model fitur itu ditulis ke database dulu supaya yang dites benar
+     * yang akan dipakai — kalau tidak, tombol "Tes" selalu menguji kunci lama
+     * di database padahal admin sudah mengetik yang baru, dan tampilannya berbohong.
+     */
+    public function testAiKey(string $feature)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        if (! in_array($feature, ['customer', 'report', 'broadcast'], true)) return;
+
+        $this->validateAiFeatureSettings();
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
+        }
+        $this->persistAiFeatureSettings();
+
+        $this->testing_ai_feature = $feature;
+        $result = \App\Services\GeminiAIService::testKey($feature);
+        $this->testing_ai_feature = null;
+
+        $this->ai_key_test = [$feature => $result];
+        $this->aiSettingsMessage = $result['ok']
+            ? ['ok' => true, 'text' => 'Kunci & model ' . ucfirst(\App\Services\GeminiAIService::featureLabel($feature)) . ' tersimpan dan valid.']
+            : ['ok' => false, 'text' => $result['message']];
+    }
+
+    /**
+     * Susun draf pesan broadcast dari brief yang diketik admin.
+     *
+     * Hasilnya hanya mengisi kolom pesan — belum dikirim. Admin tetap wajib baca
+     * dan ubah dulu, karena AI boleh salah menyebut stok atau promo.
+     */
+    public function generateBroadcastDraft()
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        $this->validate([
+            'broadcast_ai_brief' => 'required|string|max:1000',
+        ], [
+            'broadcast_ai_brief.required' => 'Tulis dulu singkatannya, mis. "promo iPhone 13 diskon weekend ini".',
+        ]);
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
         }
 
-        session()->flash('general_message', 'Pengaturan Umum berhasil disimpan & .env diperbarui.');
+        $this->is_generating_broadcast = true;
+        try {
+            $draft = \App\Services\GeminiAIService::draftBroadcast($this->broadcast_ai_brief, $this->broadcast_ai_tone);
+        } finally {
+            $this->is_generating_broadcast = false;
+        }
+
+        if ($draft === null) {
+            $this->aiSettingsMessage = ['ok' => false, 'text' => 'Gagal menyusun draf broadcast. Cek API Key & Model bagian Broadcast di atas.'];
+            return;
+        }
+
+        $this->active_broadcast_message = $draft;
+        $this->aiSettingsMessage = ['ok' => true, 'text' => 'Draf dibuat dari brief. Tinjau & ubah dulu sebelum dikirim.'];
     }
 
     public function updatedIsMaintenance($value)

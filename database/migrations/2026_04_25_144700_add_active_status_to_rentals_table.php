@@ -14,7 +14,7 @@ return new class extends Migration
     {
         // Many databases don't support modifying ENUM directly via Blueprint comfortably, 
         // so we use raw SQL for best compatibility.
-        DB::statement("ALTER TABLE rentals MODIFY COLUMN status ENUM('pending', 'paid', 'completed', 'cancelled', 'active', 'confirmed') DEFAULT 'pending'");
+        $this->changeStatusEnum(['pending', 'paid', 'completed', 'cancelled', 'active', 'confirmed']);
     }
 
     /**
@@ -22,6 +22,26 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE rentals MODIFY COLUMN status ENUM('pending', 'paid', 'completed', 'cancelled') DEFAULT 'pending'");
+        $this->changeStatusEnum(['pending', 'paid', 'completed', 'cancelled']);
+    }
+
+    /**
+     * Ubah daftar nilai status.
+     *
+     * MySQL boleh pakai SQL mentah, driver lain (mis. sqlite untuk pengujian)
+     * tidak mengenal "MODIFY COLUMN" sehingga harus lewat Schema Builder.
+     */
+    private function changeStatusEnum(array $values): void
+    {
+        if (DB::connection()->getDriverName() === 'mysql') {
+            $list = implode(', ', array_map(fn ($v) => "'{$v}'", $values));
+            DB::statement("ALTER TABLE rentals MODIFY COLUMN status ENUM({$list}) DEFAULT 'pending'");
+
+            return;
+        }
+
+        Schema::table('rentals', function (Blueprint $table) use ($values) {
+            $table->enum('status', $values)->default('pending')->change();
+        });
     }
 };

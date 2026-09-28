@@ -839,8 +839,8 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"/><circle cx="17" cy="7" r="5"/></svg>
                                     </div>
                                     <div>
-                                        <h3 class="text-sm font-bold text-foreground">AI Chatbot (Gemini Flash)</h3>
-                                        <p class="text-[10px] text-muted-foreground/80 lowercase">Aktifkan asisten pintar untuk melayani pelanggan 24/7.</p>
+                                        <h3 class="text-sm font-bold text-foreground">AI Chatbot</h3>
+                                        <p class="text-[10px] text-muted-foreground/80 lowercase">Asisten pintar untuk melayani pelanggan 24/7.</p>
                                     </div>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
@@ -849,19 +849,17 @@
                                 </label>
                             </div>
 
-                            <div class="space-y-2 {{ !$is_chatbot_active ? 'opacity-40 pointer-events-none' : '' }} transition-all">
-                                <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider">Gemini API Key</label>
-                                <div class="relative">
-                                    <input type="password" wire:model.live="chatbot_api_key" 
-                                        class="w-full rounded-md border border-input bg-background pl-3 pr-24 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono"
-                                        placeholder="••••••••••••••••">
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                        <span class="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                                            Ending: {{ substr($chatbot_api_key, -5) ?: 'N/A' }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                            {{-- Input API key sengaja TIDAK diulang di sini. Dulu ada salinan
+                                 yang terikat ke properti yang sama persis dengan Tab WhatsApp,
+                                 jadi perubahan di satu tab bisa ketimpa diam-diam dari tab
+                                 lain. Semua kunci & model AI sekarang hanya diatur sekali
+                                 di Tab WhatsApp. --}}
+                            <a href="{{ route('admin.settings', ['tab' => 'whatsapp']) }}"
+                                wire:navigate
+                                class="flex items-center justify-between gap-2 w-full rounded-lg border border-border bg-background hover:bg-muted px-3 py-2 text-xs font-bold text-foreground transition-colors">
+                                <span>Kelola Kunci API &amp; Model AI</span>
+                                <span class="text-[10px] font-normal text-muted-foreground">3 fitur terpisah (Customer · Laporan · Broadcast) →</span>
+                            </a>
                         </div>
 
                         <!-- OneSignal Push Notification Integration -->
@@ -1551,32 +1549,127 @@
                         </label>
                     </div>
 
+                    <!-- Kunci API & Model AI, dipisah per fitur -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-start justify-between gap-3">
+                            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                                Kunci API & Model AI
+                            </h4>
+                            <p class="text-[10px] text-muted-foreground leading-relaxed text-right">
+                                Tiap fitur punya kunci sendiri supaya kuota tidak saling makan.<br>
+                                Kosongkan = <b>otomatis pakai kunci Customer</b>.
+                            </p>
+                        </div>
+
+                        @php
+                            // Class ditulis utuh (bukan dirakit dari nama warna) karena
+                            // Tailwind v4 di proyek ini hanya memindai blade & js.
+                            $aiFeatures = [
+                                [
+                                    'id' => 'customer',
+                                    'title' => 'Jawab Customer',
+                                    'desc' => 'Auto-reply chat WA masuk. Paling banyak dipakai, jadi paling cepat kena limit.',
+                                    'keyProp' => 'chatbot_api_key',
+                                    'modelProp' => 'chatbot_model',
+                                    'chipOwn' => 'text-emerald-600 bg-emerald-500/10',
+                                    'chipOn' => 'text-emerald-600',
+                                ],
+                                [
+                                    'id' => 'report',
+                                    'title' => 'Laporan Grup Tim',
+                                    'desc' => 'Jawab pertanyaan internal di grup report: jadwal, keterlambatan, denda, omset, riwayat.',
+                                    'keyProp' => 'report_api_key',
+                                    'modelProp' => 'report_model',
+                                    'chipOwn' => 'text-purple-600 bg-purple-500/10',
+                                    'chipOn' => 'text-purple-600',
+                                ],
+                                [
+                                    'id' => 'broadcast',
+                                    'title' => 'Broadcast',
+                                    'desc' => 'Menyusun draf pesan promosi dari brief singkat. Tidak mengirim pesan sendiri.',
+                                    'keyProp' => 'broadcast_api_key',
+                                    'modelProp' => 'broadcast_model',
+                                    'chipOwn' => 'text-amber-600 bg-amber-500/10',
+                                    'chipOn' => 'text-amber-600',
+                                ],
+                            ];
+                        @endphp
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                            @foreach($aiFeatures as $f)
+                                @php
+                                    $keyValue = (string) ($this->{$f['keyProp']} ?? '');
+                                    $test = $ai_key_test[$f['id']] ?? null;
+                                    // Hasil tes hanya relevan kalau kunci yang di kolom
+                                    // masih sama dengan yang benar-benar diuji; kalau
+                                    // admin sudah mengedit berkali-kali, jangan tampilkan
+                                    // centang lama seolah-olah kunci baru ikut teruji.
+                                    $testIsCurrent = $test && trim($keyValue) === trim((string) \App\Services\GeminiAIService::apiKeyFor($f['id']));
+                                @endphp
+                                <div wire:key="ai-feature-{{ $f['id'] }}" class="rounded-lg border border-border/70 bg-muted/20 p-2.5 space-y-2">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-[11px] font-bold text-foreground leading-tight">{{ $f['title'] }}</span>
+                                        @if(trim($keyValue) !== '')
+                                            <span class="shrink-0 text-[9px] font-bold {{ $f['chipOwn'] }} px-1.5 py-0.5 rounded">Kunci Sendiri</span>
+                                        @else
+                                            <span class="shrink-0 text-[9px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Pakai Kunci Customer</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-[10px] text-muted-foreground leading-snug">{{ $f['desc'] }}</p>
+
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Model AI</label>
+                                        <select wire:model.live="{{ $f['modelProp'] }}"
+                                            class="w-full rounded-md border border-input bg-background px-2 py-1.5 text-[11px] shadow-sm font-medium">
+                                            <option value="gemini-3.5-flash-lite">Flash Lite — Paling Hemat</option>
+                                            <option value="gemini-2.5-flash-lite">2.5 Flash Lite</option>
+                                            <option value="gemini-2.5-flash">2.5 Flash</option>
+                                            <option value="gemini-3.5-flash">3.5 Flash</option>
+                                            <option value="gemini-2.5-pro">2.5 Pro — Paling Cerdas</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">API Key</label>
+                                        <div class="relative">
+                                            <input type="password" wire:model.blur="{{ $f['keyProp'] }}"
+                                                class="w-full rounded-md border border-input bg-background px-2 py-1.5 pr-16 text-[11px] shadow-sm font-mono"
+                                                placeholder="AIzaSy...">
+                                            <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 pointer-events-none">
+                                                <span class="text-[9px] font-bold {{ trim($keyValue) ? $f['chipOn'] : 'text-muted-foreground' }}">
+                                                    {{ trim($keyValue) ? '✓ Ada' : 'Kosong' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5">
+                                        <button type="button" wire:click="testAiKey('{{ $f['id'] }}')"
+                                            wire:loading.attr="disabled"
+                                            wire:target="testAiKey('{{ $f['id'] }}')"
+                                            class="inline-flex items-center justify-center gap-1 rounded border border-border bg-background hover:bg-muted px-2 py-1 text-[10px] font-bold transition-colors disabled:opacity-50">
+                                            <span wire:loading.remove wire:target="testAiKey('{{ $f['id'] }}')">Tes Kunci</span>
+                                            <span wire:loading wire:target="testAiKey('{{ $f['id'] }}')">Menguji...</span>
+                                        </button>
+                                        @if($testIsCurrent)
+                                            <span class="text-[10px] font-bold {{ $test['ok'] ? 'text-emerald-600' : 'text-red-500' }} leading-tight truncate"
+                                                title="{{ $test['message'] }}">
+                                                {{ $test['ok'] ? '✓ Valid' : '✗ Gagal' }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    @if($testIsCurrent && ! $test['ok'])
+                                        <p class="text-[10px] text-red-500 leading-snug break-words">{{ $test['message'] }}</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
                     <!-- Grid Form Konfigurasi AI -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div>
-                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Model AI</label>
-                            <select wire:model="chatbot_model"
-                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-medium">
-                                <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite (Cepat & Hemat)</option>
-                                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                                <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
-                                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Gemini API Key</label>
-                            <div class="relative">
-                                <input type="password" wire:model.live="chatbot_api_key" 
-                                    class="w-full rounded-md border border-input bg-background pl-3 pr-20 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
-                                    placeholder="AIzaSy...">
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                    <span class="text-[9px] font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.5 rounded">
-                                        {{ $chatbot_api_key ? '✓ Ada' : 'Belum Ada' }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Nomor WA Admin Lain (Forward)</label>
                             <input type="text" wire:model="admin_wa_secondary" 
@@ -1596,6 +1689,13 @@
                                 class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
                                 placeholder="120363xxxxxx@g.us">
                             <span class="text-[10px] text-muted-foreground mt-0.5 block">AI hanya merespons di grup ini jika di-tag (<code>@mention</code>). Akses penuh data monitoring.</span>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Batas Data AI Grup Report (karakter)</label>
+                            <input type="number" min="0" step="5000" wire:model="chatbot_report_data_limit"
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="0">
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block"><code>0</code> = <b>tanpa batas</b>: semua transaksi, unit, dan riwayat ikut dimuat. Isi angka kalau mau AI di grup report dibatasi (mis. <code>30000</code>).</span>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Plafon Token Input / Menit</label>
@@ -1661,11 +1761,20 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="pt-1">
+                            <div class="pt-1 flex flex-wrap items-center gap-3">
                                 <button type="button" wire:click="saveGeneralSettings"
-                                    class="inline-flex items-center justify-center rounded-md bg-purple-600 text-white shadow-sm hover:bg-purple-700 h-8 px-4 text-xs font-bold transition-colors">
-                                    Simpan Pengaturan AI
+                                    wire:loading.attr="disabled"
+                                    wire:target="saveGeneralSettings"
+                                    class="inline-flex items-center justify-center rounded-md bg-purple-600 text-white shadow-sm hover:bg-purple-700 px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
+                                    <span wire:loading.remove wire:target="saveGeneralSettings">Simpan Pengaturan AI</span>
+                                    <span wire:loading wire:target="saveGeneralSettings">Menyimpan...</span>
                                 </button>
+
+                                @if($aiSettingsMessage)
+                                    <span class="text-[11px] font-bold {{ $aiSettingsMessage['ok'] ? 'text-emerald-600' : 'text-red-500' }}">
+                                        {{ $aiSettingsMessage['ok'] ? '✓' : '✗' }} {{ $aiSettingsMessage['text'] }}
+                                    </span>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -1908,6 +2017,37 @@
                                         @endforeach
                                     </select>
                                     @error('active_broadcast_group') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block text-[11px] font-bold text-muted-foreground uppercase">Rakit Pesan dengan AI</label>
+                                        <span class="text-[10px] text-muted-foreground">Isi draf, belum dikirim</span>
+                                    </div>
+                                    <textarea wire:model="broadcast_ai_brief" rows="2"
+                                        placeholder="Contoh: promo iPhone 13 diskon 20% buat weekend ini, remind unit ada"
+                                        class="w-full rounded-md border border-input bg-background p-2.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary resize-y"></textarea>
+                                    @error('broadcast_ai_brief') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+
+                                    <div class="flex items-center gap-1.5 mt-1.5">
+                                        <select wire:model="broadcast_ai_tone"
+                                            class="rounded border border-input bg-background px-2 py-1 text-[11px] font-medium">
+                                            <option value="promosi">Gaya Promosi</option>
+                                            <option value="info">Pengumuman</option>
+                                            <option value="santai">Santai / CS</option>
+                                        </select>
+                                        <button type="button" wire:click="generateBroadcastDraft"
+                                            wire:loading.attr="disabled"
+                                            wire:target="generateBroadcastDraft"
+                                            class="inline-flex items-center gap-1 rounded-md bg-amber-500 text-white shadow-sm hover:bg-amber-600 px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                                            <span wire:loading.remove wire:target="generateBroadcastDraft">Rairdraf</span>
+                                            <span wire:loading wire:target="generateBroadcastDraft">Merangkai...</span>
+                                        </button>
+                                    </div>
+                                    <p class="text-[10px] text-muted-foreground mt-1 leading-snug">
+                                        AI memakai kunci &amp; model bagian <b>Broadcast</b> di atas, plus daftar unit &amp; harga asli. Tetap periksa stok &amp; harga sebelum dikirim.
+                                    </p>
                                 </div>
 
                                 <div>

@@ -224,7 +224,11 @@ async function connectToWhatsApp() {
                             text: cleanText
                         }, {
                             headers: { 'X-API-KEY': API_KEY },
-                            timeout: 60000
+                            // Assistant data internal boleh dua giliran AI (jawaban
+                            // pertama + giliran ulang dengan data tambahan), jadi
+                            // timeout di sini harus lebih besar dari total timeout
+                            // AI di sisi Laravel.
+                            timeout: 95000
                         });
 
                         if (res.data && res.data.reply) {

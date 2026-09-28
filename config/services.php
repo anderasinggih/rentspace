@@ -38,7 +38,12 @@ return [
         'token' => env('ADMIN_SHORTCUT_TOKEN'),
     ],
     'gemini' => [
+        // Jaring pengaman terakhir. Sumber utama tiap fitur ada di tabel
+        // `settings` (chatbot_api_key / report_api_key / broadcast_api_key);
+        // key di sini hanya dipakai kalau semuanya kosong.
         'key' => env('GEMINI_API_KEY'),
+        'report_key' => env('GEMINI_REPORT_API_KEY'),
+        'broadcast_key' => env('GEMINI_BROADCAST_API_KEY'),
     ],
     'whatsapp' => [
         'url' => env('WHATSAPP_BOT_URL', 'http://localhost:3001'),

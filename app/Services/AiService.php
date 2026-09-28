@@ -14,8 +14,11 @@ class AiService
 
     public function __construct()
     {
-        // Only use API Key from Database Settings
-        $this->apiKey = trim(\App\Models\Setting::getVal('chatbot_api_key') ?? '');
+        // Chat web ikut memakai kunci & model fitur "jawab customer" supaya
+        // tidak perlu diisi dua kali di Pengaturan.
+        $this->apiKey = GeminiAIService::apiKeyFor('customer') ?? '';
+        $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/'
+            . GeminiAIService::modelFor('customer') . ':generateContent';
     }
 
     /**
