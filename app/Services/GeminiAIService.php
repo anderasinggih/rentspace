@@ -50,10 +50,13 @@ class GeminiAIService
         'broadcast' => 'broadcast_model',
     ];
 
-    private const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
+    private const DEFAULT_MODEL = 'gemini-3.8-flash';
 
     /** Model lama yang sudah tidak ada di katalog API Google. */
     private const LEGACY_MODELS = [
+        'gemini-3.5-flash-lite',
+        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash',
         'gemini-2.0-flash-lite',
         'gemini-1.5-flash-8b',
         'gemini-1.5-flash',

@@ -1622,11 +1622,9 @@
                                         <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Model AI</label>
                                         <select wire:model.live="{{ $f['modelProp'] }}"
                                             class="w-full rounded-md border border-input bg-background px-2 py-1.5 text-[11px] shadow-sm font-medium">
-                                            <option value="gemini-3.5-flash-lite">Flash Lite — Paling Hemat</option>
-                                            <option value="gemini-2.5-flash-lite">2.5 Flash Lite</option>
-                                            <option value="gemini-2.5-flash">2.5 Flash</option>
-                                            <option value="gemini-3.5-flash">3.5 Flash</option>
-                                            <option value="gemini-2.5-pro">2.5 Pro — Paling Cerdas</option>
+                                            <option value="gemini-3.8-flash">Gemini 3.8 Flash (Direkomendasikan)</option>
+                                            <option value="gemini-flash-latest">Gemini Flash Latest</option>
+                                            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                                         </select>
                                     </div>
 

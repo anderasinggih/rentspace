@@ -63,7 +63,7 @@ const isAck = (text) => {
 const GREETING_WORDS = new Set([
     'halo', 'hai', 'hi', 'hello', 'hey', 'permisi', 'pagi', 'siang', 'sore',
     'malam', 'salam', 'assalamualaikum', 'waalaikumsalam', 'selamat', 'datang',
-    'mohon', 'maaf', 'admin', 'min', 'kak', 'kakak', 'bang', 'mas', 'bro',
+    'mohon', 'maaf', 'kak', 'kakak', 'bang', 'mas', 'bro',
 ]);
 
 const isGreetingOnly = (text) => {

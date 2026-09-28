@@ -706,11 +706,6 @@ class WhatsAppWebhookController extends Controller
             }
         }
 
-        if (!$targets) {
-            Log::warning('Permintaan bantuan customer tidak diteruskan: grup notifikasi atau nomor admin belum diisi.');
-            return;
-        }
-
         $timeStr = now()->translatedFormat('d M Y H:i');
         $cleanPhone = preg_replace('/[^0-9]/', '', (string) $customerPhone);
         if (str_starts_with($cleanPhone, '0')) {
@@ -723,21 +718,36 @@ class WhatsAppWebhookController extends Controller
             ? "• *Nomor WA*: {$customerPhone}\n• *Link Chat*: https://wa.me/{$waLinkPhone}\n"
             : "";
 
-        $noticeMsg = "📩 *CHAT MASUK DARI CUSTOMER*\n" .
+        $last4 = strlen($cleanPhone) >= 4 ? substr($cleanPhone, -4) : $cleanPhone;
+        $simpleGroupMsg = "{$message} ({$customerName} {$last4})";
+
+        $fullAdminNotice = "🚨 *CUSTOMER MINTA DIBANTU ADMIN*\n" .
             "------------------------------------\n" .
             "• *Nama*: {$customerName}\n" .
             $phoneInfo .
             "• *Pesan*: \"{$message}\"\n" .
             "• *Waktu*: {$timeStr} WIB\n\n" .
-            "💡 _Klik link chat di atas atau buka WA toko jika ingin membalas manual._";
+            "💡 _Buka WhatsApp atau klik link di atas untuk membalas._";
 
         try {
             $waService = app(\App\Services\WhatsAppService::class);
-            foreach ($targets as $target) {
-                $waService->sendMessage($target, $noticeMsg);
+
+            // 1. Kirim format simpel ke Grup Notifikasi (jika ada)
+            if ($notifyGroupId !== '') {
+                $waService->sendMessage($notifyGroupId, $simpleGroupMsg);
+            }
+
+            // 2. Kirim ke nomor WA pribadi Admin HANYA jika customer minta dibantu admin
+            if ($reason === 'minta dibantu admin' && !empty($rawTargets)) {
+                foreach ($rawTargets as $target) {
+                    $targetNum = preg_replace('/[^0-9]/', '', $target);
+                    if ($targetNum !== '') {
+                        $waService->sendMessage($targetNum, $fullAdminNotice);
+                    }
+                }
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Gagal forward chat ke admin: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Gagal forward chat: ' . $e->getMessage());
         }
     }
 
