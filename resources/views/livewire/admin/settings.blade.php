@@ -1670,11 +1670,12 @@
 
                     <!-- Grid Form Konfigurasi AI -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div>
+                        <div class="sm:col-span-2 lg:col-span-1">
                             <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Nomor WA Admin Lain (Forward)</label>
-                            <input type="text" wire:model="admin_wa_secondary" 
-                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
-                                placeholder="08123456789">
+                            <textarea wire:model="admin_wa_secondary" rows="2"
+                                class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="08123456789&#10;08987654321"></textarea>
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block">Bisa multiple nomor (pisahkan dengan koma atau enter). Setiap chat otomatis diforward ke sini.</span>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">ID Grup WA Admin (Setting/Broadcast)</label>

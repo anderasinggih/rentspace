@@ -44,6 +44,31 @@ let botUser = null;
 // sebelumnya". Jadi satu chat = satu giliran AI pada satu waktu.
 const chatQueues = new Map(); // jid -> { running, pending: [] }
 
+// Human Takeover: jika admin mengetik/membalas manual dari HP di nomor customer,
+// bot diam selama jeda dinamis (5 menit sejak chat terakhir admin).
+// Jeda reset tiap kali admin kirim chat baru.
+const humanTakeoverMap = new Map(); // jid -> timestampMs
+const HUMAN_TAKEOVER_TIMEOUT_MS = 5 * 60 * 1000; // 5 menit
+
+// Track ID pesan yang dikirim oleh bot sendiri agar tidak dianggap sebagai chat manual admin
+const botSentMsgIds = new Set();
+function markBotSent(msgId) {
+    if (!msgId) return;
+    botSentMsgIds.add(msgId);
+    if (botSentMsgIds.size > 2000) {
+        const first = botSentMsgIds.values().next().value;
+        botSentMsgIds.delete(first);
+    }
+}
+
+function isHumanHandling(jid) {
+    const until = humanTakeoverMap.get(jid);
+    if (!until) return false;
+    if (Date.now() < until) return true;
+    humanTakeoverMap.delete(jid);
+    return false;
+}
+
 // "Sedang mengetik" di WhatsApp punya masa berlaku sendiri, jadi harus
 // disegarkan berkala selama menunggu maupun selama AI berpikir. Jeda quiet
 // period-nya sendiri sudah diatur di lib/chat-humanizer.js.
@@ -95,7 +120,15 @@ async function deliverChatText(jid, text, { guard = null, onStale = null } = {})
             if (onStale) onStale();
             return { delivered, stale: true };
         }
-        await sock.sendMessage(jid, { text: chunks[i] });
+        if (isHumanHandling(jid)) {
+            console.log(`[RentSpace WA Bot] Pengiriman bubble AI dibatalkan untuk ${jid}: Admin sudah membalas di HP.`);
+            if (onStale) onStale();
+            return { delivered, stale: true };
+        }
+        const sentResult = await sock.sendMessage(jid, { text: chunks[i] });
+        if (sentResult?.key?.id) {
+            markBotSent(sentResult.key.id);
+        }
         delivered = true;
     }
 
@@ -200,16 +233,51 @@ async function connectToWhatsApp() {
         if (type !== 'notify') return;
 
         for (const msg of messages) {
-            if (!msg.message || msg.key.fromMe) continue;
+            if (!msg.message) continue;
 
             const sender = msg.key.remoteJid;
             const text = msg.message.conversation ||
                          msg.message.extendedTextMessage?.text ||
                          msg.message.imageMessage?.caption ||
                          '';
-
             const trimmedText = text.trim();
             const lowerText = trimmedText.toLowerCase();
+
+            // 1. Deteksi Chat Keluar dari HP Admin (Human Takeover)
+            if (msg.key.fromMe) {
+                // Abaikan jika pesan ini dikirim oleh bot sendiri
+                const msgId = msg.key.id;
+                if (botSentMsgIds.has(msgId)) {
+                    continue;
+                }
+
+                // Jika admin mengirim pesan di chat personal customer (bukan grup)
+                if (sender && !sender.endsWith('@g.us')) {
+                    // Cek perintah manual admin di chat tersebut
+                    if (lowerText === '!bot' || lowerText === '!on' || lowerText === '!unmute') {
+                        humanTakeoverMap.delete(sender);
+                        console.log(`[RentSpace WA Bot] 🤖 Bot diaktifkan kembali untuk ${sender} oleh admin.`);
+                        continue;
+                    }
+                    if (lowerText === '!off' || lowerText === '!stop' || lowerText === '!mute') {
+                        // Mute 24 jam (manual mute)
+                        humanTakeoverMap.set(sender, Date.now() + 24 * 60 * 60 * 1000);
+                        console.log(`[RentSpace WA Bot] 🔇 Bot dimatikan manual untuk ${sender} selama 24 jam.`);
+                        continue;
+                    }
+
+                    // Admin mengetik chat normal: set takeover 5 menit sejak pesan ini
+                    humanTakeoverMap.set(sender, Date.now() + HUMAN_TAKEOVER_TIMEOUT_MS);
+                    console.log(`[RentSpace WA Bot] 👤 Admin membalas di HP untuk ${sender}. Bot OFF selama 5 menit.`);
+
+                    // Jika bot sedang punya antrean pending untuk customer ini, batalkan
+                    const queueState = chatQueues.get(sender);
+                    if (queueState) {
+                        queueState.pending = [];
+                    }
+                }
+                continue;
+            }
 
             // 0. Perintah universal !getid / /getid (Untuk cek ID User atau ID Grup WA)
             if (lowerText === '!getid' || lowerText === '/getid') {
@@ -317,6 +385,17 @@ async function connectToWhatsApp() {
             if (!text.trim()) continue;
 
             console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (${isGroup ? 'Group: ' + sender : 'Phone: ' + (actualPhone || 'LID: ' + senderNumber)}): "${text}"`);
+
+            // 1. Forward otomatis chat customer ke HP Admin (Multi Admin) by system (0 token AI)
+            if (!isGroup) {
+                forwardToAdmin(sender, actualPhone || senderNumber, pushName, text.trim(), 'chat customer masuk');
+            }
+
+            // 2. Cek apakah admin sedang handle chat customer ini (Human Takeover 5 menit)
+            if (!isGroup && isHumanHandling(sender)) {
+                console.log(`[RentSpace WA Bot] ⏸️ Bot diam untuk ${pushName} (${sender}): Admin sedang menangani chat ini di HP.`);
+                continue;
+            }
 
             enqueueCustomerMessage(sender, senderNumber, actualPhone, pushName, text.trim(), msg);
         }
@@ -427,7 +506,14 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
             console.log(`[RentSpace WA Bot] Jawaban dibuang (sudah ada pertanyaan baru): "${String(content?.text || '').slice(0, 80)}"`);
             return false;
         }
-        await sock.sendMessage(sender, content);
+        if (isHumanHandling(sender)) {
+            console.log(`[RentSpace WA Bot] Jawaban dibatalkan (admin mulai handle di HP): "${String(content?.text || '').slice(0, 80)}"`);
+            return false;
+        }
+        const sent = await sock.sendMessage(sender, content);
+        if (sent?.key?.id) {
+            markBotSent(sent.key.id);
+        }
         return true;
     };
 

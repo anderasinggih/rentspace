@@ -669,8 +669,23 @@ class WhatsAppWebhookController extends Controller
     private function notifySecondaryAdmin(string $customerName, ?string $customerPhone, string $message, string $reason = 'minta dibantu admin'): void
     {
         $targets = [];
-        foreach (['admin_wa_secondary', 'admin_wa'] as $settingKey) {
-            $number = preg_replace('/[^0-9]/', '', (string) \App\Models\Setting::getVal($settingKey, ''));
+        $rawTargets = [];
+
+        // Ambil admin_wa_secondary (bisa multiple dipisah koma/enter/spasi/titik-koma)
+        $secondarySetting = (string) \App\Models\Setting::getVal('admin_wa_secondary', '');
+        if ($secondarySetting !== '') {
+            $split = preg_split('/[\r\n,;|\s]+/', $secondarySetting, -1, PREG_SPLIT_NO_EMPTY);
+            $rawTargets = array_merge($rawTargets, $split);
+        }
+
+        // Ambil admin_wa utama
+        $mainWa = (string) \App\Models\Setting::getVal('admin_wa', '');
+        if ($mainWa !== '') {
+            $rawTargets[] = $mainWa;
+        }
+
+        foreach ($rawTargets as $raw) {
+            $number = preg_replace('/[^0-9]/', '', $raw);
             if ($number !== '' && !in_array($number, $targets, true)) {
                 $targets[] = $number;
             }
@@ -682,21 +697,24 @@ class WhatsAppWebhookController extends Controller
         }
 
         $timeStr = now()->translatedFormat('d M Y H:i');
-        $phoneInfo = !empty($customerPhone) && !str_starts_with($customerPhone, '375') && strlen($customerPhone) <= 15
-            ? "• *Nomor WA*: {$customerPhone}\n"
+        $cleanPhone = preg_replace('/[^0-9]/', '', (string) $customerPhone);
+        if (str_starts_with($cleanPhone, '0')) {
+            $waLinkPhone = '62' . substr($cleanPhone, 1);
+        } else {
+            $waLinkPhone = $cleanPhone;
+        }
+
+        $phoneInfo = !empty($cleanPhone) && !str_starts_with($cleanPhone, '375') && strlen($cleanPhone) <= 15
+            ? "• *Nomor WA*: {$customerPhone}\n• *Link Chat*: https://wa.me/{$waLinkPhone}\n"
             : "";
 
-        $noticeMsg = "🚨 *NOTIFIKASI PERMINTAAN BANTUAN CUSTOMER* 🚨\n" .
+        $noticeMsg = "📩 *CHAT MASUK DARI CUSTOMER*\n" .
             "------------------------------------\n" .
-            "Halo Admin, ada customer di WhatsApp Bot yang perlu ditangani langsung:\n\n" .
             "• *Nama*: {$customerName}\n" .
             $phoneInfo .
-            "• *Waktu*: {$timeStr} WIB\n" .
-            "• *Alasan*: {$reason}\n" .
-            "• *Pesan*: \"{$message}\"\n\n" .
-            "📱 *MOHON SEGERA DIBALAS DI CHAT INI*\n" .
-            "Buka chat customer ini di WhatsApp (nomornya ada di atas, atau chatnya ada di HP toko) lalu balas sendiri ya.\n\n" .
-            "_Pesan otomatis dari Bot Rent Space Purwokerto_";
+            "• *Pesan*: \"{$message}\"\n" .
+            "• *Waktu*: {$timeStr} WIB\n\n" .
+            "💡 _Klik link chat di atas atau buka WA toko jika ingin membalas manual._";
 
         try {
             $waService = app(\App\Services\WhatsAppService::class);
