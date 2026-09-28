@@ -28,7 +28,12 @@ class WhatsAppWebhookController extends Controller
 
         // Jika ada request forward ke admin lain (Customer butuh bantuan admin)
         if ($action === 'forward_admin') {
-            $this->notifySecondaryAdmin($name, $phone, $text);
+            $this->notifySecondaryAdmin(
+                $name,
+                $phone,
+                $text,
+                (string) $request->input('reason', 'minta dibantu admin')
+            );
             return response()->json(['status' => true, 'message' => 'Admin notified']);
         }
 
@@ -143,9 +148,28 @@ class WhatsAppWebhookController extends Controller
         $isAiActive = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         if ($isAiActive && !empty($text)) {
             $senderJid = $request->input('sender_jid', $phone);
-            $aiReply = \App\Services\GeminiAIService::reply($text, $name, $senderJid, $phone);
-            if (!empty($aiReply)) {
-                return response()->json(['status' => true, 'reply' => $aiReply]);
+            $result = \App\Services\GeminiAIService::customerReply($text, $name, $senderJid, $phone);
+
+            // Chat di luar topik sewa: tidak dijawab AI, cuma diarahkan ke admin.
+            // Bot tetap sempat membalas (supaya customer tidak merasa dibohongi),
+            // lalu meneruskan pesan ini ke admin.
+            if ($result['handoff']) {
+                Log::info('Chat customer di luar topik sewa, diteruskan ke admin.', [
+                    'nama' => $name,
+                    'no_wa' => $phone,
+                    'alasan' => $result['reason'],
+                ]);
+
+                return response()->json([
+                    'status' => true,
+                    'reply' => null,
+                    'handoff' => true,
+                    'handoff_reason' => $result['reason'],
+                ]);
+            }
+
+            if (!empty($result['reply'])) {
+                return response()->json(['status' => true, 'reply' => $result['reply']]);
             }
         }
 
@@ -637,40 +661,50 @@ class WhatsAppWebhookController extends Controller
     }
 
     /**
-     * Kirim notifikasi / forward permintaan bantuan customer ke WhatsApp Admin Sekunder
+     * Kirim notifikasi / forward permintaan bantuan customer ke WhatsApp Admin
+     *
+     * Dikirim ke nomor admin sekunder (kalau diisi) dan ke WA admin utama, supaya
+     * tetap ada yang tahu walau salah satu nomornya tidak aktif.
      */
-    private function notifySecondaryAdmin(string $customerName, ?string $customerPhone, string $message): void
+    private function notifySecondaryAdmin(string $customerName, ?string $customerPhone, string $message, string $reason = 'minta dibantu admin'): void
     {
-        $secondaryAdmin = \App\Models\Setting::getVal('admin_wa_secondary');
-        if (empty($secondaryAdmin)) {
-            return;
+        $targets = [];
+        foreach (['admin_wa_secondary', 'admin_wa'] as $settingKey) {
+            $number = preg_replace('/[^0-9]/', '', (string) \App\Models\Setting::getVal($settingKey, ''));
+            if ($number !== '' && !in_array($number, $targets, true)) {
+                $targets[] = $number;
+            }
         }
 
-        $cleanSecondary = preg_replace('/[^0-9]/', '', $secondaryAdmin);
-        if (empty($cleanSecondary)) {
+        if (!$targets) {
+            Log::warning('Permintaan bantuan customer tidak diteruskan: nomor admin belum diisi.');
             return;
         }
 
         $timeStr = now()->translatedFormat('d M Y H:i');
-        $phoneInfo = !empty($customerPhone) && !str_starts_with($customerPhone, '375') && strlen($customerPhone) <= 15 
-            ? "• *Nomor WA*: {$customerPhone}\n" 
+        $phoneInfo = !empty($customerPhone) && !str_starts_with($customerPhone, '375') && strlen($customerPhone) <= 15
+            ? "• *Nomor WA*: {$customerPhone}\n"
             : "";
 
         $noticeMsg = "🚨 *NOTIFIKASI PERMINTAAN BANTUAN CUSTOMER* 🚨\n" .
             "------------------------------------\n" .
-            "Halo Admin, ada customer di WhatsApp Bot yang minta dihubungkan dengan Admin:\n\n" .
+            "Halo Admin, ada customer di WhatsApp Bot yang perlu ditangani langsung:\n\n" .
             "• *Nama*: {$customerName}\n" .
             $phoneInfo .
             "• *Waktu*: {$timeStr} WIB\n" .
+            "• *Alasan*: {$reason}\n" .
             "• *Pesan*: \"{$message}\"\n\n" .
-            "📱 *MOHON SEGERA BUKA HP TOKO / HP RENT SPACE*\n" .
-            "Silakan buka WhatsApp di HP toko untuk segera membalas chat customer ini ya! 🙏\n\n" .
+            "📱 *MOHON SEGERA DIBALAS DI CHAT INI*\n" .
+            "Buka chat customer ini di WhatsApp (nomornya ada di atas, atau chatnya ada di HP toko) lalu balas sendiri ya.\n\n" .
             "_Pesan otomatis dari Bot Rent Space Purwokerto_";
 
         try {
-            app(\App\Services\WhatsAppService::class)->sendMessage($cleanSecondary, $noticeMsg);
+            $waService = app(\App\Services\WhatsAppService::class);
+            foreach ($targets as $target) {
+                $waService->sendMessage($target, $noticeMsg);
+            }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Gagal forward chat ke admin sekunder: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Gagal forward chat ke admin: ' . $e->getMessage());
         }
     }
 

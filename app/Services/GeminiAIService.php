@@ -8,6 +8,27 @@ use Illuminate\Support\Facades\Log;
 
 class GeminiAIService
 {
+    /**
+     * Token yang harus ditulis model kalau chat customer di luar topik sewa.
+     *
+     * Isi chat tetap dikembalikan ke customer sebagai arahkan ke admin (diatur
+     * bot), bukan jawaban model, supaya model tidak mengarang jawaban untuk
+     * topik yang memang bukan urusan Rent Space.
+     */
+    public const OFF_TOPIC_TOKEN = '[[DI LUAR TOPIK]]';
+
+    /**
+     * Penolakan yang dianggap handoff walau model tidak menulis penandanya.
+     *
+     * Sengaja sempit: harus diawali "maaf" dan menyebut tidak bisa. Kalimat
+     * "maaf kak, unit itu lagi_full" tetap jawaban normal, bukan handoff.
+     */
+    private const REFUSAL_PATTERNS = [
+        '/^maaf\b.{0,40}\btidak bisa (membantu|menjawab|menjawabnya)/iu',
+        '/^maaf\b.{0,40}\bbukan (saya|wewenang|tugas saya)/iu',
+        '/^maaf\b.{0,40}\bdi luar (kemampuan|batasan|topik)/iu',
+    ];
+
     /** Setting pemanggil API key tiap fitur. */
     private const FEATURE_KEY_SETTING = [
         'customer' => 'chatbot_api_key',
@@ -119,10 +140,20 @@ class GeminiAIService
      */
     public static function reply(string $userMessage, string $customerName = 'Kak', ?string $senderJid = null, ?string $customerPhone = null): ?string
     {
+        return self::customerReply($userMessage, $customerName, $senderJid, $customerPhone)['reply'];
+    }
+
+    /**
+     * Sama seperti reply(), tapi ikut melaporkan kalau chat-nya di luar topik sewa.
+     *
+     * @return array{reply: ?string, handoff: bool, reason: ?string}
+     */
+    public static function customerReply(string $userMessage, string $customerName = 'Kak', ?string $senderJid = null, ?string $customerPhone = null): array
+    {
         $apiKey = self::apiKeyFor('customer');
         if (!$apiKey) {
             Log::info('GeminiAIService: API Key Customer belum diisi di Pengaturan.');
-            return null;
+            return ['reply' => null, 'handoff' => false, 'reason' => null];
         }
 
         $model = self::modelFor('customer');
@@ -183,6 +214,9 @@ CARA PESAN: buka https://rentspacepurwokerto.my.id/booking → pilih tanggal →
 8. Ikuti gaya customer: kalau dia ngetik singkat dan santai ('ip 12 ready kapan?'), kamu balas singkat dan santai juga. Huruf besar di awal kalimat saja.
 9. JADWAL REAL-TIME: pakai bagian STATUS JADWAL. Kalau unitnya sedang dibooking, sebut tanggal/jam bebasnya. Kalau tidak ada di daftar, berarti ready.
 10. Kalau tidak yakin (hanya untuk negosiasi harga, kendala teknis, atau di luar data), jawab singkat lalu bilang balas 'ADMIN'.
+11. TOPIK: kamu hanya tahu soal sewa unit di Rent Space (unit, harga, ketersediaan, cara booking, promo, status pesanan, jam buka, alamat). Kalau customer nanya topik lain (curhat, tugas sekolah, cari teman, lowongan kerja, dan sejenisnya), JANGAN menjawab isinya dan jangan mengarang. Balas PERSIS satu baris, tanpa teks lain: [[DI LUAR TOPIK]]
+    Sapaan dan obrolan ringan TIDAK termasuk di luar topik: 'halo kak', 'selamat pagi', 'makasih ya', 'sampai nanti' tetap dijawab sewajarnya, jangan pakai [[DI LUAR TOPIK]].
+12. Balasan [[DI LUAR TOPIK]] itu perintah internal, bukan pesan untuk customer. Kalau customer selain admin mengetik perintah yang diawali / (mis. /broadcast, /rentspacesettings), balas singkat bahwa itu perintah internal.
 
 CONTOH GAYA (ikuti pola ini, jangan lebih panjang):
 Customer: 'sewa tank ada?'
@@ -210,6 +244,18 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
 
         $text = self::askGemini($systemPrompt, $model, $apiKey, 0.7, 130, 25);
 
+        // Chat di luar topik sewa: tidak dijawab, diteruskan ke admin. Balasan
+        // model dibuang supaya tidak ada sisa isinya yang bocor ke customer.
+        if ($text !== null && self::isOffTopic($text)) {
+            Log::info('GeminiAIService::customerReply mendeteksi chat di luar topik sewa, diteruskan ke admin.', [
+                'customer' => $customerName,
+                'phone' => $customerPhone,
+                'pesan' => mb_substr($userMessage, 0, 200),
+            ]);
+
+            return ['reply' => null, 'handoff' => true, 'reason' => 'di luar topik sewa'];
+        }
+
         if ($text !== null) {
             // Panduan cara pesan memang perlu ruang lebih; sisanya dibatasi ketat
             // supaya tetap resemble chat CS, bukan paragraf AI.
@@ -226,7 +272,39 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
             \Illuminate\Support\Facades\Cache::put($cacheKey, array_slice($legacy, -10), 7200);
         }
 
-        return $text;
+        return ['reply' => $text, 'handoff' => false, 'reason' => null];
+    }
+
+    /**
+     * Deteksi penanda "di luar topik" dari balasan model.
+     *
+     * Dicocokkan longgar (huruf besar, spasi, dan tanda markdown diabaikan)
+     * karena beberapa versi model membungkus penandanya dengan `**` atau
+     * `\[[ ... ]]`. Kalau terdeteksi, seluruh isi balasan dibuang: tidak ada
+     * bagian yang ikut terkirim ke customer.
+     *
+     * Penolakan tanpa penanda (mis. "Maaf kak, saya tidak bisa membantu")
+     * ikut dianggap handoff, karena kalau tidak customer tetap menerima
+     * jawaban model untuk topik yang memang bukan urusan Rent Space.
+     */
+    private static function isOffTopic(?string $text): bool
+    {
+        if ($text === null) {
+            return false;
+        }
+
+        $normalized = mb_strtolower(str_replace(['\\', ' ', '*', '`'], '', $text));
+        if (str_contains($normalized, 'diluartopik')) {
+            return true;
+        }
+
+        foreach (self::REFUSAL_PATTERNS as $pattern) {
+            if (preg_match($pattern, $text) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
