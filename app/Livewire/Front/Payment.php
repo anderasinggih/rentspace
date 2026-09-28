@@ -133,6 +133,9 @@ class Payment extends Component
                         'status' => 'paid',
                         'paid_at' => now(),
                     ]);
+                    try {
+                        app(\App\Services\WhatsAppService::class)->sendPaymentSuccessNotification($this->rental);
+                    } catch (\Exception $e) { }
                     return $this->redirect(route('public.success', $this->rental->booking_code), navigate: true);
                 }
 
@@ -219,6 +222,11 @@ class Payment extends Component
             'transaction_details' => [
                 'order_id' => $uniqueOrderId,
                 'gross_amount' => (int) $newGrandTotal,
+            ],
+            'callbacks' => [
+                'finish' => route('public.success', $this->rental->booking_code),
+                'unfinish' => route('public.payment', $this->rental->booking_code),
+                'error' => route('public.payment', $this->rental->booking_code),
             ],
             'customer_details' => [
                 'first_name' => $this->rental->nama,

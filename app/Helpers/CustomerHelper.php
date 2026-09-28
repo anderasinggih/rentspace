@@ -40,9 +40,9 @@ class CustomerHelper
         return null; // Already Legend
     }
 
-    public static function getLtv($nik)
+    public static function getLtv($no_wa)
     {
-        return Rental::where('nik', $nik)->sum('grand_total');
+        return Rental::where('no_wa', $no_wa)->sum('grand_total');
     }
 
     public static function formatWa($number)

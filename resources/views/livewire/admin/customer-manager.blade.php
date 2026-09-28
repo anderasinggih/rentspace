@@ -71,7 +71,7 @@
                                 <span class="text-xs font-medium text-muted-foreground mr-0.5">Rp</span>{{ number_format($c->ltv, 0, ',', '.') }}
                             </td>
                             <td class="p-4 align-middle text-right whitespace-nowrap">
-                                <button wire:click="selectCustomer('{{ $c->nik }}')" 
+                                <button wire:click="selectCustomer('{{ $c->no_wa }}')" 
                                     class="h-8 px-3 rounded-md bg-background border border-input text-[10px] font-bold hover:bg-accent hover:text-accent-foreground transition-all shadow-sm">
                                     Details
                                 </button>
@@ -129,7 +129,7 @@
 
     <!-- Customer Detail Dialog (Modal with Shadcn style) -->
     <!-- Customer Detail Modal (Pure Shadcn Style) -->
-    @if($selectedNik)
+    @if($selectedNoWa)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
             <div class="w-full max-w-2xl rounded-lg border bg-card text-card-foreground shadow-lg animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
                 
@@ -146,7 +146,7 @@
                                     {{ $tier->label }}
                                 </span>
                                 <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase bg-muted/50 text-muted-foreground">
-                                    NIK: {{ $customerDetails->first()->nik }}
+                                    WA: {{ $customerDetails->first()->no_wa }}
                                 </span>
                             </div>
                         </div>
@@ -184,10 +184,6 @@
                             <div class="bg-card p-4 space-y-1">
                                 <p class="text-[10px] font-medium text-muted-foreground uppercase">Nama Lengkap</p>
                                 <p class="text-sm font-semibold">{{ $customerInsights['nama'] }}</p>
-                            </div>
-                            <div class="bg-card p-4 space-y-1">
-                                <p class="text-[10px] font-medium text-muted-foreground uppercase">Nomor NIK</p>
-                                <p class="text-sm font-semibold">{{ $customerInsights['nik'] }}</p>
                             </div>
                             <div class="bg-card p-4 space-y-1">
                                 <p class="text-[10px] font-medium text-muted-foreground uppercase">WhatsApp</p>

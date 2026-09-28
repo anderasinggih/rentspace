@@ -73,6 +73,11 @@ class MidtransWebhookController extends Controller
                             route('admin.monitoring')
                         );
                     } catch (\Exception $e) { }
+
+                    // --- NOTIFIKASI WHATSAPP KE CUSTOMER (PEMBAYARAN LUNAS) ---
+                    try {
+                        app(\App\Services\WhatsAppService::class)->sendPaymentSuccessNotification($rental);
+                    } catch (\Exception $e) { }
                 }
             } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
                 $rental->update(['status' => 'cancelled']);

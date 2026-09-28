@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::table('rentals', function (Blueprint $table) {
             $table->index(['waktu_mulai', 'waktu_selesai', 'status']);
-            $table->index('nik');
         });
     }
 
@@ -24,7 +23,6 @@ return new class extends Migration
     {
         Schema::table('rentals', function (Blueprint $table) {
             $table->dropIndex(['waktu_mulai', 'waktu_selesai', 'status']);
-            $table->dropIndex(['nik']);
         });
     }
 };

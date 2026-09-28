@@ -15,7 +15,6 @@ return new class extends Migration
         Schema::create('affiliator_profiles', function (Blueprint $col) {
             $col->id();
             $col->foreignId('user_id')->constrained()->onDelete('cascade');
-            $col->string('nik')->unique();
             $col->string('no_hp');
             $col->text('alamat');
             $col->string('bank_name');

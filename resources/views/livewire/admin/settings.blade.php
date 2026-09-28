@@ -45,6 +45,12 @@
                 {{ $activeTab === 'database' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
             </button>
+            <button wire:click="$set('activeTab', 'whatsapp')"
+                title="WhatsApp Bot"
+                class="flex-1 inline-flex items-center justify-center rounded-lg py-2 text-sm font-medium transition-all
+                {{ $activeTab === 'whatsapp' ? 'bg-emerald-500 text-white shadow-sm' : 'text-muted-foreground hover:text-emerald-500 hover:bg-muted/50' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </button>
         </div>
     </div>
 
@@ -833,8 +839,8 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"/><circle cx="17" cy="7" r="5"/></svg>
                                     </div>
                                     <div>
-                                        <h3 class="text-sm font-bold text-foreground">AI Chatbot (Gemini Flash)</h3>
-                                        <p class="text-[10px] text-muted-foreground/80 lowercase">Aktifkan asisten pintar untuk melayani pelanggan 24/7.</p>
+                                        <h3 class="text-sm font-bold text-foreground">AI Chatbot</h3>
+                                        <p class="text-[10px] text-muted-foreground/80 lowercase">Asisten pintar untuk melayani pelanggan 24/7.</p>
                                     </div>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
@@ -843,19 +849,17 @@
                                 </label>
                             </div>
 
-                            <div class="space-y-2 {{ !$is_chatbot_active ? 'opacity-40 pointer-events-none' : '' }} transition-all">
-                                <label class="block text-xs font-bold uppercase text-muted-foreground tracking-wider">Gemini API Key</label>
-                                <div class="relative">
-                                    <input type="password" wire:model.live="chatbot_api_key" 
-                                        class="w-full rounded-md border border-input bg-background pl-3 pr-24 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono"
-                                        placeholder="••••••••••••••••">
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                        <span class="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                                            Ending: {{ substr($chatbot_api_key, -5) ?: 'N/A' }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                            {{-- Input API key sengaja TIDAK diulang di sini. Dulu ada salinan
+                                 yang terikat ke properti yang sama persis dengan Tab WhatsApp,
+                                 jadi perubahan di satu tab bisa ketimpa diam-diam dari tab
+                                 lain. Semua kunci & model AI sekarang hanya diatur sekali
+                                 di Tab WhatsApp. --}}
+                            <a href="{{ route('admin.settings', ['tab' => 'whatsapp']) }}"
+                                wire:navigate
+                                class="flex items-center justify-between gap-2 w-full rounded-lg border border-border bg-background hover:bg-muted px-3 py-2 text-xs font-bold text-foreground transition-colors">
+                                <span>Kelola Kunci API &amp; Model AI</span>
+                                <span class="text-[10px] font-normal text-muted-foreground">3 fitur terpisah (Customer · Laporan · Broadcast) →</span>
+                            </a>
                         </div>
 
                         <!-- OneSignal Push Notification Integration -->
@@ -1507,6 +1511,581 @@
                                 <span wire:loading wire:target="importData">Memproses...</span>
                             </button>
                         </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if($activeTab === 'whatsapp')
+            <div class="space-y-6">
+                <!-- Header Status & Link QR -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border/80 gap-3">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            WhatsApp Gateway & AI Chatbot
+                        </h2>
+                        <p class="text-xs text-muted-foreground mt-0.5">Kelola koneksi bot, auto-reply Google Gemini, serta siaran broadcast promosi.</p>
+                    </div>
+                    <div>
+                        <a href="{{ route('admin.whatsapp-qr') }}" target="_blank"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>
+                            Layar Scan QR Bot
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Bagian 1: Pengaturan AI Chatbot (Google Gemini) -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                            <h3 class="text-sm font-bold text-foreground">AI Chatbot Auto-Reply</h3>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" wire:model="is_chatbot_active" class="sr-only peer">
+                            <div class="w-10 h-5 bg-zinc-700/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-transparent after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Kunci API & Model AI, dipisah per fitur -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-start justify-between gap-3">
+                            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                                Kunci API & Model AI
+                            </h4>
+                            <p class="text-[10px] text-muted-foreground leading-relaxed text-right">
+                                Tiap fitur punya kunci sendiri supaya kuota tidak saling makan.<br>
+                                Kosongkan = <b>otomatis pakai kunci Customer</b>.
+                            </p>
+                        </div>
+
+                        @php
+                            // Class ditulis utuh (bukan dirakit dari nama warna) karena
+                            // Tailwind v4 di proyek ini hanya memindai blade & js.
+                            $aiFeatures = [
+                                [
+                                    'id' => 'customer',
+                                    'title' => 'Jawab Customer',
+                                    'desc' => 'Auto-reply chat WA masuk. Paling banyak dipakai, jadi paling cepat kena limit.',
+                                    'keyProp' => 'chatbot_api_key',
+                                    'modelProp' => 'chatbot_model',
+                                    'chipOwn' => 'text-emerald-600 bg-emerald-500/10',
+                                    'chipOn' => 'text-emerald-600',
+                                ],
+                                [
+                                    'id' => 'report',
+                                    'title' => 'Laporan Grup Tim',
+                                    'desc' => 'Jawab pertanyaan internal di grup report: jadwal, keterlambatan, denda, omset, riwayat.',
+                                    'keyProp' => 'report_api_key',
+                                    'modelProp' => 'report_model',
+                                    'chipOwn' => 'text-purple-600 bg-purple-500/10',
+                                    'chipOn' => 'text-purple-600',
+                                ],
+                                [
+                                    'id' => 'broadcast',
+                                    'title' => 'Broadcast',
+                                    'desc' => 'Menyusun draf pesan promosi dari brief singkat. Tidak mengirim pesan sendiri.',
+                                    'keyProp' => 'broadcast_api_key',
+                                    'modelProp' => 'broadcast_model',
+                                    'chipOwn' => 'text-amber-600 bg-amber-500/10',
+                                    'chipOn' => 'text-amber-600',
+                                ],
+                            ];
+                        @endphp
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                            @foreach($aiFeatures as $f)
+                                @php
+                                    $keyValue = (string) ($this->{$f['keyProp']} ?? '');
+                                    $test = $ai_key_test[$f['id']] ?? null;
+                                    // Hasil tes hanya relevan kalau kunci yang di kolom
+                                    // masih sama dengan yang benar-benar diuji; kalau
+                                    // admin sudah mengedit berkali-kali, jangan tampilkan
+                                    // centang lama seolah-olah kunci baru ikut teruji.
+                                    $testIsCurrent = $test && trim($keyValue) === trim((string) \App\Services\GeminiAIService::apiKeyFor($f['id']));
+                                @endphp
+                                <div wire:key="ai-feature-{{ $f['id'] }}" class="rounded-lg border border-border/70 bg-muted/20 p-2.5 space-y-2">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-[11px] font-bold text-foreground leading-tight">{{ $f['title'] }}</span>
+                                        @if(trim($keyValue) !== '')
+                                            <span class="shrink-0 text-[9px] font-bold {{ $f['chipOwn'] }} px-1.5 py-0.5 rounded">Kunci Sendiri</span>
+                                        @else
+                                            <span class="shrink-0 text-[9px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Pakai Kunci Customer</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-[10px] text-muted-foreground leading-snug">{{ $f['desc'] }}</p>
+
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Model AI</label>
+                                        <select wire:model.live="{{ $f['modelProp'] }}"
+                                            class="w-full rounded-md border border-input bg-background px-2 py-1.5 text-[11px] shadow-sm font-medium">
+                                            <option value="gemini-3.5-flash-lite">Flash Lite — Paling Hemat</option>
+                                            <option value="gemini-2.5-flash-lite">2.5 Flash Lite</option>
+                                            <option value="gemini-2.5-flash">2.5 Flash</option>
+                                            <option value="gemini-3.5-flash">3.5 Flash</option>
+                                            <option value="gemini-2.5-pro">2.5 Pro — Paling Cerdas</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">API Key</label>
+                                        <div class="relative">
+                                            <input type="password" wire:model.blur="{{ $f['keyProp'] }}"
+                                                class="w-full rounded-md border border-input bg-background px-2 py-1.5 pr-16 text-[11px] shadow-sm font-mono"
+                                                placeholder="AIzaSy...">
+                                            <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 pointer-events-none">
+                                                <span class="text-[9px] font-bold {{ trim($keyValue) ? $f['chipOn'] : 'text-muted-foreground' }}">
+                                                    {{ trim($keyValue) ? '✓ Ada' : 'Kosong' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5">
+                                        <button type="button" wire:click="testAiKey('{{ $f['id'] }}')"
+                                            wire:loading.attr="disabled"
+                                            wire:target="testAiKey('{{ $f['id'] }}')"
+                                            class="inline-flex items-center justify-center gap-1 rounded border border-border bg-background hover:bg-muted px-2 py-1 text-[10px] font-bold transition-colors disabled:opacity-50">
+                                            <span wire:loading.remove wire:target="testAiKey('{{ $f['id'] }}')">Tes Kunci</span>
+                                            <span wire:loading wire:target="testAiKey('{{ $f['id'] }}')">Menguji...</span>
+                                        </button>
+                                        @if($testIsCurrent)
+                                            <span class="text-[10px] font-bold {{ $test['ok'] ? 'text-emerald-600' : 'text-red-500' }} leading-tight truncate"
+                                                title="{{ $test['message'] }}">
+                                                {{ $test['ok'] ? '✓ Valid' : '✗ Gagal' }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    @if($testIsCurrent && ! $test['ok'])
+                                        <p class="text-[10px] text-red-500 leading-snug break-words">{{ $test['message'] }}</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Grid Form Konfigurasi AI -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Nomor WA Admin Lain (Forward)</label>
+                            <input type="text" wire:model="admin_wa_secondary" 
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="08123456789">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">ID Grup WA Admin (Setting/Broadcast)</label>
+                            <input type="text" wire:model="admin_wa_group_id" 
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="120363xxxxxx@g.us">
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block">Ketik <code>!getid</code> di grup WA untuk dapat ID</span>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">ID Grup WA Report (Tim Internal)</label>
+                            <input type="text" wire:model="admin_report_group_id" 
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="120363xxxxxx@g.us">
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block">AI hanya merespons di grup ini jika di-tag (<code>@mention</code>). Akses penuh data monitoring.</span>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Batas Data AI Grup Report (karakter)</label>
+                            <input type="number" min="0" step="5000" wire:model="chatbot_report_data_limit"
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="0">
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block"><code>0</code> = <b>tanpa batas</b>: semua transaksi, unit, dan riwayat ikut dimuat. Isi angka kalau mau AI di grup report dibatasi (mis. <code>30000</code>).</span>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Plafon Token Input / Menit</label>
+                            <input type="number" min="1000" step="10000" wire:model="chatbot_tpm_limit"
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="300000">
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block">Anti <code>429</code>: di atas 75% plafon, konteks AI otomatis dipangkas.</span>
+                        </div>
+                    </div>
+
+                    <!-- Kelola Memori / Pengetahuan Khusus AI -->
+                    <div class="pt-3 border-t border-border/60 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                Memori Khusus AI (Knowledge Base)
+                            </h4>
+                            <span class="text-[10px] text-muted-foreground">Bisa tambah via WA: <code>/rentspacesettings add Kunci = Nilai</code></span>
+                        </div>
+
+                        <!-- List Memori -->
+                        <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                            @forelse($chatbot_custom_knowledge as $index => $item)
+                                <div class="flex items-start justify-between gap-2 p-2 rounded-lg bg-muted/40 border border-border/60 text-xs">
+                                    <div class="flex-1 min-w-0">
+                                        <span class="font-bold text-purple-600 dark:text-purple-400">#{{ $index + 1 }}. {{ $item['key'] ?? 'Aturan' }}:</span>
+                                        <p class="text-muted-foreground break-words mt-0.5">{{ $item['value'] ?? '' }}</p>
+                                    </div>
+                                    @if(auth()->user()->role === 'admin')
+                                        <button type="button" wire:click="removeKnowledge({{ $index }})" 
+                                            wire:confirm="Hapus memori ini?"
+                                            class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Hapus">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><line x1="10" x2="10" y1="11" x2="17"/><line x1="14" x2="14" y1="11" x2="17"/></svg>
+                                        </button>
+                                    @endif
+                                </div>
+                            @empty
+                                <div class="p-2.5 text-center rounded-lg border border-dashed border-border/80 text-xs text-muted-foreground">
+                                    Belum ada memori khusus tersimpan.
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <!-- Form Tambah Memori -->
+                        @if(auth()->user()->role === 'admin')
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+                                <div class="sm:col-span-4">
+                                    <input type="text" wire:model="new_knowledge_key" 
+                                        class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm"
+                                        placeholder="Kunci (Misal: Lokasi / Jam Store)">
+                                    @error('new_knowledge_key') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="sm:col-span-6">
+                                    <input type="text" wire:model="new_knowledge_value" 
+                                        class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm"
+                                        placeholder="Nilai (Misal: Buka 08:00 - 22:00, selebihnya toko close)">
+                                    @error('new_knowledge_value') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <button type="button" wire:click="addKnowledge"
+                                        class="w-full inline-flex items-center justify-center rounded-md bg-purple-600 text-white shadow-sm hover:bg-purple-700 h-8 px-3 text-xs font-bold transition-colors">
+                                        + Tambah
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pt-1 flex flex-wrap items-center gap-3">
+                                <button type="button" wire:click="saveGeneralSettings"
+                                    wire:loading.attr="disabled"
+                                    wire:target="saveGeneralSettings"
+                                    class="inline-flex items-center justify-center rounded-md bg-purple-600 text-white shadow-sm hover:bg-purple-700 px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
+                                    <span wire:loading.remove wire:target="saveGeneralSettings">Simpan Pengaturan AI</span>
+                                    <span wire:loading wire:target="saveGeneralSettings">Menyimpan...</span>
+                                </button>
+
+                                @if($aiSettingsMessage)
+                                    <span class="text-[11px] font-bold {{ $aiSettingsMessage['ok'] ? 'text-emerald-600' : 'text-red-500' }}">
+                                        {{ $aiSettingsMessage['ok'] ? '✓' : '✗' }} {{ $aiSettingsMessage['text'] }}
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Bagian 2: User Groups & Broadcast -->
+                <div class="pt-6 border-t border-border/80 space-y-5">
+                    <div>
+                        <h3 class="text-base font-bold text-foreground flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+                            WhatsApp Broadcast & User Groups
+                        </h3>
+                        <p class="text-xs text-muted-foreground mt-0.5">Kelola daftar kontak audiens, tag customer database, dan kirim pesan promosi massal.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <!-- Kolom Kiri: Kelola User Groups (lg:col-span-7) -->
+                        <div class="lg:col-span-7 space-y-4">
+                            <!-- List User Group -->
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">
+                                        Daftar User Group ({{ count($broadcast_groups) }})
+                                    </h4>
+                                    <span class="text-[10px] text-muted-foreground">Ketik <code>/broadcast groups</code> di WA</span>
+                                </div>
+
+                                <div class="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                                    @forelse($broadcast_groups as $idx => $grp)
+                                        <div class="flex items-center justify-between p-2.5 rounded-lg {{ $editing_group_index === $idx ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-muted/30 border-border/70' }} border text-xs transition-colors">
+                                            <div class="flex-1 min-w-0 pr-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-foreground truncate">{{ $grp['name'] }}</span>
+                                                    <span class="text-[10px] bg-emerald-500/15 text-emerald-600 px-2 py-0.5 rounded-full font-bold shrink-0">
+                                                        {{ $grp['count'] ?? count($grp['numbers'] ?? []) }} Kontak
+                                                    </span>
+                                                </div>
+                                                <div class="text-[10px] text-muted-foreground mt-0.5 truncate font-mono">
+                                                    {{ implode(', ', array_slice($grp['numbers'] ?? [], 0, 4)) }}{{ count($grp['numbers'] ?? []) > 4 ? '...' : '' }}
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-1 shrink-0">
+                                                <button type="button" wire:click="editBroadcastGroup({{ $idx }})" 
+                                                    class="px-2 py-1 text-[11px] font-bold rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Edit">
+                                                    Edit
+                                                </button>
+                                                <button type="button" wire:click="removeBroadcastGroup({{ $idx }})" 
+                                                    wire:confirm="Hapus grup broadcast ini?"
+                                                    class="text-red-500 hover:text-red-700 p-1 rounded" title="Hapus">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><line x1="10" x2="10" y1="11" x2="17"/><line x1="14" x2="14" y1="11" x2="17"/></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="p-3 text-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
+                                            Belum ada grup. Buat grup di bawah atau impor otomatis dari data rental.
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            <!-- Form Buat / Edit Grup -->
+                            <div class="space-y-3 pt-2 border-t border-border/60">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-foreground uppercase tracking-wide">
+                                        {{ $editing_group_index !== null ? 'Edit User Group' : 'Buat User Group Baru' }}
+                                    </span>
+                                    @if($editing_group_index !== null)
+                                        <button type="button" wire:click="cancelEditBroadcastGroup" class="text-[10px] text-muted-foreground hover:underline">
+                                            Batal Edit
+                                        </button>
+                                    @endif
+                                </div>
+
+                                <div>
+                                    <input type="text" wire:model="new_group_name" placeholder="Nama Grup (Misal: VIP Customer / Pelanggan iPhone 13)"
+                                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm font-medium">
+                                    @error('new_group_name') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Tagging Customer dari Database -->
+                                <div class="space-y-1.5">
+                                    <label class="block text-[11px] font-bold text-foreground">
+                                        Panggil / Tag Kontak Customer Database:
+                                    </label>
+                                    <div class="relative">
+                                        <input type="text" wire:model.live.debounce.250ms="customer_search_query" 
+                                            placeholder="Ketik nama customer atau nomor WA untuk mencari..."
+                                            class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm">
+                                        
+                                        @if(!empty($searchCustomers))
+                                            <div class="absolute left-0 right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-xl z-20 max-h-44 overflow-y-auto divide-y divide-border">
+                                                @foreach($searchCustomers as $c)
+                                                    <div wire:click="tagCustomerToGroup('{{ $c['phone'] }}', '{{ addslashes($c['nama']) }}')"
+                                                        class="p-2 text-xs flex items-center justify-between hover:bg-muted/50 cursor-pointer">
+                                                        <div>
+                                                            <span class="font-bold text-foreground">{{ $c['nama'] }}</span>
+                                                            <span class="text-muted-foreground ml-1 font-mono">({{ $c['phone'] }})</span>
+                                                        </div>
+                                                        <span class="text-[10px] text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
+                                                            + Tag
+                                                        </span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    @if(!empty($selected_customer_tags))
+                                        <div class="flex flex-wrap gap-1 pt-1">
+                                            @foreach($selected_customer_tags as $tag)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-medium border border-emerald-500/20">
+                                                    <span>{{ $tag['name'] }}</span>
+                                                    <span class="font-mono text-muted-foreground">({{ $tag['phone'] }})</span>
+                                                    <button type="button" wire:click="removeCustomerTag('{{ $tag['phone'] }}')" class="hover:text-red-500 font-bold ml-0.5">×</button>
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <!-- Textarea Input Nomor Kontak -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block text-[11px] font-bold text-foreground">Daftar Nomor WhatsApp</label>
+                                        <span class="text-[10px] text-muted-foreground font-mono">08xxx / 628xxx (baris baru/koma)</span>
+                                    </div>
+                                    <textarea wire:model="new_group_numbers" rows="4" 
+                                        placeholder="0881082411878&#10;081234567890&#10;085712345678"
+                                        class="w-full rounded-md border border-input bg-background p-2.5 text-xs shadow-sm font-mono resize-y"></textarea>
+                                    @error('new_group_numbers') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <button type="button" wire:click="saveBroadcastGroup"
+                                        class="inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 h-8 px-4 text-xs font-bold transition-colors">
+                                        {{ $editing_group_index !== null ? 'Simpan Perubahan' : 'Simpan User Group' }}
+                                    </button>
+                                    @if($editing_group_index !== null)
+                                        <button type="button" wire:click="cancelEditBroadcastGroup"
+                                            class="inline-flex items-center justify-center rounded-md bg-muted text-muted-foreground border border-border h-8 px-3 text-xs font-medium">
+                                            Batal
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Impor Cepat dari Database -->
+                            <div class="pt-3 border-t border-border/60 space-y-2">
+                                <span class="text-[11px] font-bold uppercase tracking-wide text-foreground">
+                                    Impor Massal Otomatis dari Database Rental
+                                </span>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <select wire:model="import_filter_unit_id" class="w-full rounded border border-input bg-background px-2 py-1.5 text-xs">
+                                        <option value="">-- Semua Unit --</option>
+                                        @foreach($unitsList as $u)
+                                            <option value="{{ $u->id }}">{{ $u->nama_lengkap ?: $u->seri }}</option>
+                                        @endforeach
+                                    </select>
+                                    <select wire:model="import_filter_status" class="w-full rounded border border-input bg-background px-2 py-1.5 text-xs">
+                                        <option value="">-- Semua Status --</option>
+                                        <option value="completed">Sewa Selesai</option>
+                                        <option value="renting">Sedang Menyewa</option>
+                                        <option value="paid">Lunas / Terbayar</option>
+                                    </select>
+                                </div>
+                                <button type="button" wire:click="importCustomersToGroup"
+                                    class="w-full inline-flex items-center justify-center rounded-md bg-muted hover:bg-muted/80 text-foreground border border-border h-8 px-3 text-xs font-bold transition-colors">
+                                    Tarik & Buat Grup dari Database
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Kolom Kanan: Template Shortcut & Form Kirim Broadcast (lg:col-span-5) -->
+                        <div class="lg:col-span-5 space-y-4">
+                            <!-- Shortcut Template Pesan -->
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-bold text-foreground uppercase tracking-wider">
+                                        Template Pesan (Shortcuts)
+                                    </h4>
+                                    <span class="text-[10px] text-muted-foreground">Ketik <code>/broadcast shortcuts</code></span>
+                                </div>
+
+                                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                                    @forelse($broadcast_shortcuts as $sidx => $sc)
+                                        <div class="flex items-start justify-between p-2 rounded-lg bg-muted/30 border border-border/70 text-xs">
+                                            <div class="flex-1 cursor-pointer min-w-0" wire:click="applyShortcutToMessage('{{ $sc['code'] }}')" title="Klik untuk pasang ke pesan">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-primary font-mono">/{{ $sc['code'] }}</span>
+                                                    <span class="text-foreground font-medium truncate">({{ $sc['title'] }})</span>
+                                                    <span class="text-[10px] text-muted-foreground underline shrink-0">Pasang ↗</span>
+                                                </div>
+                                                <p class="text-muted-foreground mt-0.5 line-clamp-1 text-[11px]">{{ $sc['message'] }}</p>
+                                            </div>
+                                            <button type="button" wire:click="removeBroadcastShortcut({{ $sidx }})" 
+                                                wire:confirm="Hapus shortcut template ini?"
+                                                class="text-red-500 hover:text-red-700 p-0.5 ml-1 shrink-0" title="Hapus">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><line x1="10" x2="10" y1="11" x2="17"/><line x1="14" x2="14" y1="11" x2="17"/></svg>
+                                            </button>
+                                        </div>
+                                    @empty
+                                        <div class="p-2 text-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
+                                            Belum ada template.
+                                        </div>
+                                    @endforelse
+                                </div>
+
+                                <!-- Form Tambah Shortcut Baru -->
+                                <div class="pt-2 border-t border-border/60 space-y-1.5">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" wire:model="new_shortcut_code" placeholder="Kode (/promo_mei)"
+                                            class="rounded border border-input bg-background px-2.5 py-1.5 text-xs font-mono">
+                                        <input type="text" wire:model="new_shortcut_title" placeholder="Judul Template"
+                                            class="rounded border border-input bg-background px-2.5 py-1.5 text-xs">
+                                    </div>
+                                    <textarea wire:model="new_shortcut_message" rows="2" placeholder="Isi pesan template..."
+                                        class="w-full rounded border border-input bg-background px-2.5 py-1.5 text-xs"></textarea>
+                                    <button type="button" wire:click="addBroadcastShortcut"
+                                        class="w-full inline-flex items-center justify-center rounded bg-muted hover:bg-muted/80 text-foreground border border-border h-7 text-xs font-bold transition-colors">
+                                        + Tambah Template
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Form Eksekusi Kirim Broadcast -->
+                            <div class="space-y-3 pt-3 border-t border-border/60">
+                                <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                    Kirim Siaran Broadcast
+                                </h4>
+
+                                <div>
+                                    <label class="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Target User Group</label>
+                                    <select wire:model="active_broadcast_group" 
+                                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm font-medium">
+                                        <option value="">-- Pilih Grup Penerima --</option>
+                                        @foreach($broadcast_groups as $grp)
+                                            <option value="{{ $grp['id'] }}">{{ $grp['name'] }} ({{ $grp['count'] ?? count($grp['numbers'] ?? []) }} Nomor)</option>
+                                        @endforeach
+                                    </select>
+                                    @error('active_broadcast_group') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block text-[11px] font-bold text-muted-foreground uppercase">Rakit Pesan dengan AI</label>
+                                        <span class="text-[10px] text-muted-foreground">Isi draf, belum dikirim</span>
+                                    </div>
+                                    <textarea wire:model="broadcast_ai_brief" rows="2"
+                                        placeholder="Contoh: promo iPhone 13 diskon 20% buat weekend ini, remind unit ada"
+                                        class="w-full rounded-md border border-input bg-background p-2.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary resize-y"></textarea>
+                                    @error('broadcast_ai_brief') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+
+                                    <div class="flex items-center gap-1.5 mt-1.5">
+                                        <select wire:model="broadcast_ai_tone"
+                                            class="rounded border border-input bg-background px-2 py-1 text-[11px] font-medium">
+                                            <option value="promosi">Gaya Promosi</option>
+                                            <option value="info">Pengumuman</option>
+                                            <option value="santai">Santai / CS</option>
+                                        </select>
+                                        <button type="button" wire:click="generateBroadcastDraft"
+                                            wire:loading.attr="disabled"
+                                            wire:target="generateBroadcastDraft"
+                                            class="inline-flex items-center gap-1 rounded-md bg-amber-500 text-white shadow-sm hover:bg-amber-600 px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                                            <span wire:loading.remove wire:target="generateBroadcastDraft">Rairdraf</span>
+                                            <span wire:loading wire:target="generateBroadcastDraft">Merangkai...</span>
+                                        </button>
+                                    </div>
+                                    <p class="text-[10px] text-muted-foreground mt-1 leading-snug">
+                                        AI memakai kunci &amp; model bagian <b>Broadcast</b> di atas, plus daftar unit &amp; harga asli. Tetap periksa stok &amp; harga sebelum dikirim.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block text-[11px] font-bold text-muted-foreground uppercase">Isi Pesan Siaran</label>
+                                        <span class="text-[10px] text-muted-foreground">Klik template di atas untuk isi otomatis</span>
+                                    </div>
+                                    <textarea wire:model="active_broadcast_message" rows="5" 
+                                        placeholder="Tulis pesan promosi atau pengumuman yang ingin dikirimkan..."
+                                        class="w-full rounded-md border border-input bg-background p-2.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:ring-primary font-sans resize-y"></textarea>
+                                    @error('active_broadcast_message') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-[11px] text-muted-foreground">Mode Pengiriman:</span>
+                                    <select wire:model="broadcast_delay_mode" class="rounded border border-input bg-background px-2 py-1 text-xs font-medium">
+                                        <option value="safe">Aman (Jeda 2-4 detik per nomor)</option>
+                                        <option value="normal">Cepat (Jeda 1-2 detik per nomor)</option>
+                                    </select>
+                                </div>
+
+                                @if(auth()->user()->role === 'admin')
+                                    <button type="button" wire:click="sendBroadcast"
+                                        wire:confirm="Yakin ingin mengirim broadcast WhatsApp ini ke semua nomor di grup yang dipilih?"
+                                        class="w-full inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white shadow hover:bg-emerald-700 h-9 px-4 text-xs font-bold transition-all active:scale-[0.99]"
+                                        wire:loading.attr="disabled">
+                                        <span wire:loading.remove wire:target="sendBroadcast" class="flex items-center gap-1.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                            Kirim Broadcast Sekarang
+                                        </span>
+                                        <span wire:loading wire:target="sendBroadcast" class="flex items-center gap-1.5">
+                                            <svg class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Sedang Mengirim...
+                                        </span>
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

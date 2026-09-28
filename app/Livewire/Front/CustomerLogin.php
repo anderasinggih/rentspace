@@ -9,16 +9,20 @@ use Livewire\Attributes\Title;
 #[Title('Masuk - RENT SPACE')]
 class CustomerLogin extends Component
 {
-    public string $identifier = '';
+    public string $no_wa = '';
+    public string $email = '';
     public bool $remember = false;
 
     protected $rules = [
-        'identifier' => 'required|string|min:8',
+        'no_wa' => 'required|string|min:8',
+        'email' => 'required|email',
     ];
 
     protected $messages = [
-        'identifier.required' => 'NIK atau Nomor WhatsApp wajib diisi.',
-        'identifier.min'      => 'Input minimal 8 karakter.',
+        'no_wa.required' => 'Nomor WhatsApp wajib diisi.',
+        'no_wa.min'      => 'Nomor WhatsApp minimal 8 karakter.',
+        'email.required' => 'Email wajib diisi.',
+        'email.email'    => 'Format email tidak valid.',
     ];
 
     public function mount()
@@ -33,13 +37,18 @@ class CustomerLogin extends Component
     {
         $this->validate();
 
-        // Check if any rental exists with this identifier matching either NIK or No. WA
-        $customer = Rental::where('nik', $this->identifier)
-            ->orWhere('no_wa', $this->identifier)
+        $formattedWa = \App\Helpers\CustomerHelper::formatWa($this->no_wa);
+
+        // Check if any rental exists with this WA AND Email
+        $customer = Rental::where(function($q) use ($formattedWa) {
+                $q->where('no_wa', $this->no_wa)
+                  ->orWhere('no_wa', $formattedWa);
+            })
+            ->where('email', strtolower(trim($this->email)))
             ->first();
 
         if (!$customer) {
-            $this->addError('identifier', 'Data tidak ditemukan. Pastikan NIK atau Nomor WA sesuai dengan yang didaftarkan saat booking.');
+            $this->addError('no_wa', 'Data tidak ditemukan. Pastikan Nomor WA dan Email sesuai dengan yang didaftarkan saat booking.');
             return;
         }
 
@@ -47,7 +56,6 @@ class CustomerLogin extends Component
         $duration = $this->remember ? 24 : 6;
         
         session()->put('customer_session', [
-            'nik'        => $customer->nik,
             'no_wa'      => $customer->no_wa,
             'nama'       => $customer->nama,
             'logged_in_at' => now()->toISOString(),

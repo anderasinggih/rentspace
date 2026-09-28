@@ -9,4 +9,5 @@ Artisan::command('inspire', function () {
 
 use Illuminate\Support\Facades\Schedule;
 Schedule::command('app:cleanup-location-logs')->daily();
+Schedule::command('app:prune-ai-memory')->dailyAt('04:30');
 Schedule::command('app:monthly-report-reminder')->lastDayOfMonth('23:00');

@@ -1,3 +1,5 @@
+
+
 <div class="min-h-screen bg-background pt-0 px-4 flex flex-col items-center justify-start" @if($rental->status === 'pending') wire:poll.15s="refreshStatus" @endif>
     <div id="invoice-content" class="w-full max-w-md mx-auto bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
 

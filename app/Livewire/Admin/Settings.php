@@ -84,6 +84,49 @@ class Settings extends Component
 
     public $is_chatbot_active = true;
     public $chatbot_api_key = '';
+    public $chatbot_model = 'gemini-3.5-flash-lite';
+    public $chatbot_tpm_limit = '300000';
+    public $chatbot_report_data_limit = '0';
+
+    // API key & model dipisah per fitur supaya kuota tiap fitur bisa diatur
+    // dan diamankan terpisah (lihat GeminiAIService::apiKeyFor).
+    public $report_api_key = '';
+    public $report_model = 'gemini-3.5-flash-lite';
+    public $broadcast_api_key = '';
+    public $broadcast_model = 'gemini-3.5-flash-lite';
+    public $ai_key_test = [];   // hasil tombol "Tes" per fitur
+    public $testing_ai_feature = null;
+    public $aiSettingsMessage = null; // ['ok' => bool, 'text' => string] — hanya tampil di tab WhatsApp
+
+    public $admin_wa_secondary = '';
+    public $admin_wa_group_id = '';
+    public $admin_report_group_id = '';
+    public $chatbot_custom_knowledge = [];
+    public $new_knowledge_key = '';
+    public $new_knowledge_value = '';
+
+    // WhatsApp Broadcast Properties
+    // WhatsApp Broadcast Properties
+    public $broadcast_groups = [];
+    public $broadcast_shortcuts = [];
+    public $new_group_name = '';
+    public $new_group_numbers = '';
+    public $editing_group_index = null; // null jika mode tambah baru, index jika edit
+    public $editing_group_id = null;
+    public $customer_search_query = ''; // pencarian customer untuk ngetag 1 per 1
+    public $selected_customer_tags = []; // array of ['phone' => '...', 'name' => '...']
+    public $new_shortcut_code = '';
+    public $new_shortcut_title = '';
+    public $new_shortcut_message = '';
+    public $active_broadcast_group = '';
+    public $active_broadcast_message = '';
+    public $is_sending_broadcast = false;
+    public $broadcast_delay_mode = 'safe'; // 'safe' (2-4s random delay + pause) or 'normal' (1-2s)
+    public $import_filter_unit_id = '';
+    public $import_filter_status = '';
+    public $broadcast_ai_brief = '';
+    public $broadcast_ai_tone = 'promosi';
+    public $is_generating_broadcast = false;
 
     public $onesignal_app_id = '';
     public $onesignal_rest_api_key = '';
@@ -149,6 +192,39 @@ class Settings extends Component
         // Load Chatbot Settings
         $this->is_chatbot_active = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
+        $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
+        $this->chatbot_tpm_limit = (string) \App\Models\Setting::getVal('chatbot_tpm_limit', '300000');
+        $this->chatbot_report_data_limit = (string) \App\Models\Setting::getVal('chatbot_report_data_limit', '0');
+
+        // Key & model laporan & broadcast. Kosong = otomatis pakai key customer,
+        // jadi instalasi lama yang hanya punya satu key tidak ikut rusak.
+        $this->report_api_key = (string) \App\Models\Setting::getVal('report_api_key', '');
+        $this->report_model = (string) \App\Models\Setting::getVal('report_model', 'gemini-3.5-flash-lite');
+        $this->broadcast_api_key = (string) \App\Models\Setting::getVal('broadcast_api_key', '');
+        $this->broadcast_model = (string) \App\Models\Setting::getVal('broadcast_model', 'gemini-3.5-flash-lite');
+        $this->ai_key_test = [];
+        $this->admin_wa_secondary = \App\Models\Setting::getVal('admin_wa_secondary', '');
+        $this->admin_wa_group_id = \App\Models\Setting::getVal('admin_wa_group_id', '');
+        $this->admin_report_group_id = \App\Models\Setting::getVal('admin_report_group_id', '');
+        $rawKnowledge = \App\Models\Setting::getVal('chatbot_custom_knowledge', '[]');
+        $this->chatbot_custom_knowledge = json_decode($rawKnowledge, true) ?: [];
+
+        // Load Broadcast Settings
+        $rawGroups = \App\Models\Setting::getVal('wa_broadcast_groups', '[]');
+        $this->broadcast_groups = json_decode($rawGroups, true) ?: [];
+        $rawShortcuts = \App\Models\Setting::getVal('wa_broadcast_shortcuts', '[]');
+        $this->broadcast_shortcuts = json_decode($rawShortcuts, true) ?: [
+            [
+                'code' => 'promo_weekend',
+                'title' => 'Promo Weekend',
+                'message' => "Halo Kak! 🎉\nWeekend ini ada promo spesial sewa iPhone di Rent Space Purwokerto.\nBooking sekarang sebelum unit habis: https://rentspacepurwokerto.my.id/booking"
+            ],
+            [
+                'code' => 'info_unit_baru',
+                'title' => 'Ready Unit Baru',
+                'message' => "Halo Kak! ✨\nKabar gembira, unit baru sudah ready di Rent Space Purwokerto.\nCek katalog & reservasi langsung di: https://rentspacepurwokerto.my.id/booking"
+            ]
+        ];
 
         // Load OneSignal Settings
         $this->onesignal_app_id = \App\Models\Setting::getVal('onesignal_app_id', '');
@@ -327,8 +403,9 @@ class Settings extends Component
             'home_description' => 'required',
             'late_tolerance_minutes' => 'required|numeric|min:0',
             'admin_wa' => 'required',
-            'admin_address' => 'required'
+            'admin_address' => 'required',
         ]);
+        $this->validateAiFeatureSettings();
 
         \App\Models\Setting::updateOrCreate(['key' => 'home_title'], ['value' => $this->home_title]);
         \App\Models\Setting::updateOrCreate(['key' => 'home_description'], ['value' => $this->home_description]);
@@ -354,7 +431,17 @@ class Settings extends Component
 
         // Save Chatbot Settings
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
-        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => $this->chatbot_api_key]);
+        $this->persistAiFeatureSettings();
+        $this->ai_key_test = [];
+        $this->aiSettingsMessage = ['ok' => true, 'text' => 'Pengaturan AI tersimpan (kunci & model per fitur).'];
+
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_tpm_limit'], ['value' => (string) max(1000, (int) $this->chatbot_tpm_limit)]);
+        // 0 = tanpa batas: grup report boleh memuat semua data tanpa dipotong.
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_report_data_limit'], ['value' => (string) max(0, (int) $this->chatbot_report_data_limit)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_secondary'], ['value' => trim($this->admin_wa_secondary)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_wa_group_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_report_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_report_group_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_custom_knowledge'], ['value' => json_encode(array_values($this->chatbot_custom_knowledge))]);
 
         // Save OneSignal Settings
         \App\Models\Setting::updateOrCreate(['key' => 'onesignal_app_id'], ['value' => trim($this->onesignal_app_id)]);
@@ -362,42 +449,162 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'onesignal_safari_web_id'], ['value' => trim($this->onesignal_safari_web_id)]);
 
 
-        // Physically update .env file
+        // Cerminkan kunci AI ke .env sebagai jaring pengaman kalau database
+        // nanti tidak terbaca. Yang penting di sini DB, bukan .env.
+        $this->syncGeminiKeysToEnv([
+            'GEMINI_API_KEY' => $this->chatbot_api_key,
+            'GEMINI_REPORT_API_KEY' => $this->report_api_key,
+            'GEMINI_BROADCAST_API_KEY' => $this->broadcast_api_key,
+        ]);
+
+        session()->flash('general_message', 'Pengaturan AI & Umum berhasil disimpan.');
+    }
+
+    /**
+     * Aturan validasi untuk enam field kunci/model AI per fitur.
+     *
+     * Dipisah dari `saveGeneralSettings` supaya tombol "Tes Kunci" bisa
+     * validating & menyimpan hanya bagian AI, tanpa ikut mensyaratkan field
+     * umum yang tidak ada hubungannya (mis. `home_title`).
+     */
+    private function validateAiFeatureSettings(): void
+    {
+        $this->validate([
+            'chatbot_api_key' => 'nullable|string|max:200',
+            'report_api_key' => 'nullable|string|max:200',
+            'broadcast_api_key' => 'nullable|string|max:200',
+            'chatbot_model' => 'nullable|string',
+            'report_model' => 'nullable|string',
+            'broadcast_model' => 'nullable|string',
+        ], [
+            'chatbot_api_key.max' => 'API Key Customer kelewat panjang (maksimal 200 karakter).',
+            'report_api_key.max' => 'API Key Laporan kelewat panjang (maksimal 200 karakter).',
+            'broadcast_api_key.max' => 'API Key Broadcast kelewat panjang (maksimal 200 karakter).',
+        ]);
+    }
+
+    /** Tulis kunci + model ketiga fitur ke tabel settings. */
+    private function persistAiFeatureSettings(): void
+    {
+        $default = 'gemini-3.5-flash-lite';
+
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => trim((string) $this->chatbot_api_key)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: $default]);
+        \App\Models\Setting::updateOrCreate(['key' => 'report_api_key'], ['value' => trim((string) $this->report_api_key)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'report_model'], ['value' => $this->report_model ?: $default]);
+        \App\Models\Setting::updateOrCreate(['key' => 'broadcast_api_key'], ['value' => trim((string) $this->broadcast_api_key)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'broadcast_model'], ['value' => $this->broadcast_model ?: $default]);
+    }
+
+    /**
+     * Tulis kunci AI ke .env tanpa mengubah baris yang sama dua kali.
+     *
+     * Versi lama memakai `str_contains($env, "KEY=")` lalu `preg_replace("/^KEY=/m")`.
+     * Dua hal salah di situ: (1) pengecekan menemukan baris yang sudah dikomentari
+     * (`#GEMINI_API_KEY=...`) tapi regex-nya tidak, jadi hasilnya kunci aktif baru
+     * ditambahkan di bawah dan kunci lama tetap ada — env jadi punya duplikat; dan
+     * (2) nilai kosong untuk fitur yang sengaja dikosongkan ikut menimpa baris yang
+     * ada, padahal "kosong" di Pengaturan berarti "pakai key customer".
+     *
+     * Jadi sekarang satu baris saja yang disobek: yang sudah ada ditulis ulang,
+     * yang belum ada ditambahkan, dan nilai kosong berarti "kosongkan".
+     */
+    private function syncGeminiKeysToEnv(array $values): void
+    {
         try {
             $envPath = base_path('.env');
-            if (file_exists($envPath)) {
-                $envContent = file_get_contents($envPath);
-                $key = 'GEMINI_API_KEY';
-                $newValue = $this->chatbot_api_key;
-
-                if (str_contains($envContent, "{$key}=")) {
-                    // Replace existing
-                    $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$newValue}", $envContent);
-                } else {
-                    // Append new
-                    $envContent .= "\n{$key}={$newValue}\n";
-                }
-
-                // Update other Keys in .env if needed (keeping existing ones)
-                $keys = [
-                    // Add other env keys here if necessary
-                ];
-
-                foreach ($keys as $k => $v) {
-                    if (str_contains($envContent, "{$k}=")) {
-                        $envContent = preg_replace("/^{$k}=.*/m", "{$k}={$v}", $envContent);
-                    } else {
-                        $envContent .= "\n{$k}={$v}\n";
-                    }
-                }
-
-                file_put_contents($envPath, $envContent);
+            if (! is_writable($envPath)) {
+                return;
             }
-        } catch (\Exception $e) {
-            // Log or ignore if permission denied
+
+            $envContent = file_get_contents($envPath);
+            if ($envContent === false) {
+                return;
+            }
+
+            $appended = [];
+            foreach ($values as $key => $value) {
+                $value = trim((string) $value);
+
+                if (preg_match("/^{$key}=.*$/m", $envContent)) {
+                    $envContent = preg_replace("/^{$key}=.*$/m", "{$key}={$value}", $envContent, 1);
+                } else {
+                    $appended[] = "{$key}={$value}";
+                }
+            }
+
+            if ($appended !== []) {
+                $envContent = rtrim($envContent, "\n") . "\n\n# Ditulis dari menu Pengaturan (AI per fitur)\n" . implode("\n", $appended) . "\n";
+            }
+
+            file_put_contents($envPath, $envContent);
+        } catch (\Throwable $e) {
+            // .env hanya cadangan; kegagalan menulis tidak boleh menggagalkan simpan.
+            \Illuminate\Support\Facades\Log::warning('Gagal menulis kunci AI ke .env: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Uji kunci API satu fitur dengan satu panggilan sangat kecil ke modelnya.
+     *
+     * Kunci & model fitur itu ditulis ke database dulu supaya yang dites benar
+     * yang akan dipakai — kalau tidak, tombol "Tes" selalu menguji kunci lama
+     * di database padahal admin sudah mengetik yang baru, dan tampilannya berbohong.
+     */
+    public function testAiKey(string $feature)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        if (! in_array($feature, ['customer', 'report', 'broadcast'], true)) return;
+
+        $this->validateAiFeatureSettings();
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
+        }
+        $this->persistAiFeatureSettings();
+
+        $this->testing_ai_feature = $feature;
+        $result = \App\Services\GeminiAIService::testKey($feature);
+        $this->testing_ai_feature = null;
+
+        $this->ai_key_test = [$feature => $result];
+        $this->aiSettingsMessage = $result['ok']
+            ? ['ok' => true, 'text' => 'Kunci & model ' . ucfirst(\App\Services\GeminiAIService::featureLabel($feature)) . ' tersimpan dan valid.']
+            : ['ok' => false, 'text' => $result['message']];
+    }
+
+    /**
+     * Susun draf pesan broadcast dari brief yang diketik admin.
+     *
+     * Hasilnya hanya mengisi kolom pesan — belum dikirim. Admin tetap wajib baca
+     * dan ubah dulu, karena AI boleh salah menyebut stok atau promo.
+     */
+    public function generateBroadcastDraft()
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        $this->validate([
+            'broadcast_ai_brief' => 'required|string|max:1000',
+        ], [
+            'broadcast_ai_brief.required' => 'Tulis dulu singkatannya, mis. "promo iPhone 13 diskon weekend ini".',
+        ]);
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
         }
 
-        session()->flash('general_message', 'Pengaturan Umum berhasil disimpan & .env diperbarui.');
+        $this->is_generating_broadcast = true;
+        try {
+            $draft = \App\Services\GeminiAIService::draftBroadcast($this->broadcast_ai_brief, $this->broadcast_ai_tone);
+        } finally {
+            $this->is_generating_broadcast = false;
+        }
+
+        if ($draft === null) {
+            $this->aiSettingsMessage = ['ok' => false, 'text' => 'Gagal menyusun draf broadcast. Cek API Key & Model bagian Broadcast di atas.'];
+            return;
+        }
+
+        $this->active_broadcast_message = $draft;
+        $this->aiSettingsMessage = ['ok' => true, 'text' => 'Draf dibuat dari brief. Tinjau & ubah dulu sebelum dikirim.'];
     }
 
     public function updatedIsMaintenance($value)
@@ -425,6 +632,346 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'is_greeting_active'], ['value' => $this->is_greeting_active ? '1' : '0']);
 
         session()->flash('greeting_message', 'Sapaan Beranda berhasil diperbarui!');
+    }
+
+    public function addKnowledge()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->validate([
+            'new_knowledge_key' => 'required',
+            'new_knowledge_value' => 'required',
+        ], [
+            'new_knowledge_key.required' => 'Topik/Kata kunci wajib diisi.',
+            'new_knowledge_value.required' => 'Jawaban/Aturan wajib diisi.',
+        ]);
+
+        $this->chatbot_custom_knowledge[] = [
+            'key' => trim($this->new_knowledge_key),
+            'value' => trim($this->new_knowledge_value),
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'chatbot_custom_knowledge'],
+            ['value' => json_encode(array_values($this->chatbot_custom_knowledge))]
+        );
+
+        $this->reset(['new_knowledge_key', 'new_knowledge_value']);
+        session()->flash('general_message', 'Memori pengetahuan AI berhasil ditambahkan.');
+    }
+
+    public function removeKnowledge($index)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        unset($this->chatbot_custom_knowledge[$index]);
+        $this->chatbot_custom_knowledge = array_values($this->chatbot_custom_knowledge);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'chatbot_custom_knowledge'],
+            ['value' => json_encode($this->chatbot_custom_knowledge)]
+        );
+
+        session()->flash('general_message', 'Memori pengetahuan AI berhasil dihapus.');
+    }
+
+    // WhatsApp Broadcast Group & Shortcut Methods
+    public function editBroadcastGroup($index)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        if (!isset($this->broadcast_groups[$index])) return;
+
+        $grp = $this->broadcast_groups[$index];
+        $this->editing_group_index = $index;
+        $this->editing_group_id = $grp['id'] ?? null;
+        $this->new_group_name = $grp['name'] ?? '';
+        $this->new_group_numbers = implode("\n", $grp['numbers'] ?? []);
+        $this->selected_customer_tags = [];
+    }
+
+    public function cancelEditBroadcastGroup()
+    {
+        $this->reset(['editing_group_index', 'editing_group_id', 'new_group_name', 'new_group_numbers', 'selected_customer_tags', 'customer_search_query']);
+    }
+
+    public function tagCustomerToGroup(string $phone, string $name)
+    {
+        $clean = preg_replace('/[^0-9]/', '', $phone);
+        if (empty($clean)) return;
+
+        // Cek jika nomor sudah ada di input
+        $existing = preg_split('/[\r\n,]+/', $this->new_group_numbers);
+        $existing = array_map(fn($n) => preg_replace('/[^0-9]/', '', trim($n)), $existing);
+        $existing = array_filter($existing);
+
+        if (!in_array($clean, $existing)) {
+            $existing[] = $clean;
+            $this->new_group_numbers = implode("\n", $existing);
+        }
+
+        // Tambah ke selected_customer_tags untuk visual badge jika belum ada
+        $alreadyTagged = false;
+        foreach ($this->selected_customer_tags as $tag) {
+            if ($tag['phone'] === $clean) {
+                $alreadyTagged = true;
+                break;
+            }
+        }
+        if (!$alreadyTagged) {
+            $this->selected_customer_tags[] = [
+                'phone' => $clean,
+                'name' => $name ?: 'Pelanggan',
+            ];
+        }
+
+        $this->customer_search_query = '';
+    }
+
+    public function removeCustomerTag(string $phone)
+    {
+        $this->selected_customer_tags = array_values(array_filter($this->selected_customer_tags, fn($t) => $t['phone'] !== $phone));
+        
+        $existing = preg_split('/[\r\n,]+/', $this->new_group_numbers);
+        $existing = array_map(fn($n) => preg_replace('/[^0-9]/', '', trim($n)), $existing);
+        $existing = array_filter($existing, fn($n) => $n !== $phone && !empty($n));
+        $this->new_group_numbers = implode("\n", $existing);
+    }
+
+    public function saveBroadcastGroup()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->validate([
+            'new_group_name' => 'required',
+            'new_group_numbers' => 'required',
+        ], [
+            'new_group_name.required' => 'Nama group pelanggan wajib diisi.',
+            'new_group_numbers.required' => 'Nomor WhatsApp wajib diisi (pisahkan koma atau baris baru).',
+        ]);
+
+        // Parse numbers
+        $rawLines = preg_split('/[\r\n,]+/', $this->new_group_numbers);
+        $cleanNumbers = [];
+        foreach ($rawLines as $num) {
+            $c = preg_replace('/[^0-9]/', '', trim($num));
+            if (!empty($c) && strlen($c) >= 9) {
+                $cleanNumbers[] = $c;
+            }
+        }
+        $cleanNumbers = array_values(array_unique($cleanNumbers));
+
+        if ($this->editing_group_index !== null && isset($this->broadcast_groups[$this->editing_group_index])) {
+            // Mode Update
+            $this->broadcast_groups[$this->editing_group_index]['name'] = trim($this->new_group_name);
+            $this->broadcast_groups[$this->editing_group_index]['numbers'] = $cleanNumbers;
+            $this->broadcast_groups[$this->editing_group_index]['count'] = count($cleanNumbers);
+            $this->broadcast_groups[$this->editing_group_index]['updated_at'] = now()->toDateTimeString();
+            $actionMsg = 'Grup broadcast WhatsApp berhasil diperbarui.';
+        } else {
+            // Mode Tambah Baru
+            $this->broadcast_groups[] = [
+                'id' => uniqid('grp_'),
+                'name' => trim($this->new_group_name),
+                'numbers' => $cleanNumbers,
+                'count' => count($cleanNumbers),
+                'created_at' => now()->toDateTimeString(),
+            ];
+            $actionMsg = 'Grup broadcast WhatsApp berhasil dibuat.';
+        }
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_groups'],
+            ['value' => json_encode(array_values($this->broadcast_groups))]
+        );
+
+        $this->cancelEditBroadcastGroup();
+        session()->flash('general_message', $actionMsg);
+    }
+
+    public function addBroadcastGroup()
+    {
+        $this->saveBroadcastGroup();
+    }
+
+    public function importCustomersToGroup()
+    {
+        if (auth()->user()->role !== 'admin') return;
+
+        $query = \App\Models\Rental::whereNotNull('no_wa')->where('no_wa', '!=', '');
+
+        $filterLabel = 'Semua Pelanggan';
+
+        if (!empty($this->import_filter_unit_id)) {
+            $unit = \App\Models\Unit::find($this->import_filter_unit_id);
+            if ($unit) {
+                $query->whereHas('units', function ($q) use ($unit) {
+                    $q->where('units.id', $unit->id);
+                });
+                $filterLabel = 'Pelanggan ' . ($unit->nama_lengkap ?: $unit->seri);
+            }
+        }
+
+        if (!empty($this->import_filter_status)) {
+            $query->where('status', $this->import_filter_status);
+            $filterLabel .= ' (' . ucfirst($this->import_filter_status) . ')';
+        }
+
+        $numbers = $query->pluck('no_wa')
+            ->map(fn($n) => preg_replace('/[^0-9]/', '', $n))
+            ->filter(fn($n) => strlen($n) >= 9)
+            ->unique()
+            ->values()
+            ->toArray();
+
+        if (empty($numbers)) {
+            session()->flash('broadcast_error', 'Tidak ada data kontak nomor WhatsApp yang cocok dengan filter yang dipilih.');
+            return;
+        }
+
+        $this->broadcast_groups[] = [
+            'id' => uniqid('grp_'),
+            'name' => $filterLabel . ' (' . count($numbers) . ' kontak)',
+            'numbers' => $numbers,
+            'count' => count($numbers),
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_groups'],
+            ['value' => json_encode(array_values($this->broadcast_groups))]
+        );
+
+        session()->flash('general_message', "Berhasil membuat grup \"{$filterLabel}\" dengan " . count($numbers) . " kontak dari database.");
+    }
+
+    public function removeBroadcastGroup($index)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        unset($this->broadcast_groups[$index]);
+        $this->broadcast_groups = array_values($this->broadcast_groups);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_groups'],
+            ['value' => json_encode($this->broadcast_groups)]
+        );
+
+        session()->flash('general_message', 'Grup broadcast berhasil dihapus.');
+    }
+
+    public function addBroadcastShortcut()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->validate([
+            'new_shortcut_code' => 'required|alpha_dash',
+            'new_shortcut_title' => 'required',
+            'new_shortcut_message' => 'required',
+        ]);
+
+        $this->broadcast_shortcuts[] = [
+            'code' => trim($this->new_shortcut_code),
+            'title' => trim($this->new_shortcut_title),
+            'message' => trim($this->new_shortcut_message),
+        ];
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_shortcuts'],
+            ['value' => json_encode(array_values($this->broadcast_shortcuts))]
+        );
+
+        $this->reset(['new_shortcut_code', 'new_shortcut_title', 'new_shortcut_message']);
+        session()->flash('general_message', 'Shortcut pesan broadcast berhasil ditambahkan.');
+    }
+
+    public function removeBroadcastShortcut($index)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        unset($this->broadcast_shortcuts[$index]);
+        $this->broadcast_shortcuts = array_values($this->broadcast_shortcuts);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_broadcast_shortcuts'],
+            ['value' => json_encode($this->broadcast_shortcuts)]
+        );
+
+        session()->flash('general_message', 'Shortcut pesan broadcast dihapus.');
+    }
+
+    public function applyShortcutToMessage($code)
+    {
+        foreach ($this->broadcast_shortcuts as $sc) {
+            if ($sc['code'] === $code) {
+                $this->active_broadcast_message = $sc['message'];
+                break;
+            }
+        }
+    }
+
+    public function sendBroadcast()
+    {
+        if (auth()->user()->role !== 'admin') return;
+        $this->validate([
+            'active_broadcast_group' => 'required',
+            'active_broadcast_message' => 'required',
+        ], [
+            'active_broadcast_group.required' => 'Pilih grup tujuan broadcast.',
+            'active_broadcast_message.required' => 'Isi pesan broadcast tidak boleh kosong.',
+        ]);
+
+        // Temukan nomor-nomor di group
+        $selectedNumbers = [];
+        $groupName = '';
+        foreach ($this->broadcast_groups as $grp) {
+            if ($grp['id'] === $this->active_broadcast_group) {
+                $selectedNumbers = $grp['numbers'] ?? [];
+                $groupName = $grp['name'] ?? 'Grup';
+                break;
+            }
+        }
+
+        if (empty($selectedNumbers)) {
+            session()->flash('broadcast_error', 'Grup yang dipilih tidak memiliki kontak nomor WhatsApp.');
+            return;
+        }
+
+        $waService = app(\App\Services\WhatsAppService::class);
+        $successCount = 0;
+        $failCount = 0;
+        $total = count($selectedNumbers);
+
+        // Variasi salam anti-spam identik
+        $greetings = ['Halo Kak! 😊', 'Halo Kak,', 'Hai Kak! ✨', 'Halo Kak, salam dari Rent Space!'];
+
+        foreach ($selectedNumbers as $i => $phone) {
+            $msgToSend = $this->active_broadcast_message;
+            if (str_starts_with($msgToSend, 'Halo Kak')) {
+                $greeting = $greetings[array_rand($greetings)];
+                $msgToSend = preg_replace('/^Halo Kak(!|,\s*|\s*)/', $greeting . ' ', $msgToSend);
+            }
+
+            $res = $waService->sendMessage($phone, $msgToSend);
+            if ($res) {
+                $successCount++;
+            } else {
+                $failCount++;
+            }
+
+            // ANTI-BANNED PROTECTION:
+            // Jeda dinamis acak menyerupai manusia agar tidak terdeteksi bot spam oleh WhatsApp
+            if ($this->broadcast_delay_mode === 'safe') {
+                $sleepUs = rand(2000000, 4000000); // 2.0 s/d 4.0 detik per pesan
+                usleep($sleepUs);
+
+                // Istirahat ekstra 5 detik setiap kelipatan 10 pesan
+                if (($i + 1) % 10 === 0 && ($i + 1) < $total) {
+                    sleep(5);
+                }
+            } else {
+                // Normal mode
+                $sleepUs = rand(1000000, 2000000); // 1.0 s/d 2.0 detik
+                usleep($sleepUs);
+            }
+        }
+
+        session()->flash('general_message', "✅ Broadcast ke {$groupName} selesai: {$successCount} sukses, {$failCount} gagal.");
+        $this->reset(['active_broadcast_message', 'active_broadcast_group']);
     }
 
     public function addFaq()
@@ -674,10 +1221,37 @@ class Settings extends Component
             ->orderBy('sent_at', 'desc')
             ->paginate(10, ['*'], 'customerMailPage');
 
+        $unitsList = \App\Models\Unit::orderBy('seri')->get();
+
+        // Cari data pelanggan untuk ditag 1 per 1 ke grup
+        $searchCustomers = [];
+        if (!empty(trim($this->customer_search_query))) {
+            $q = trim($this->customer_search_query);
+            $searchCustomers = \App\Models\Rental::whereNotNull('no_wa')
+                ->where('no_wa', '!=', '')
+                ->where(function ($sub) use ($q) {
+                    $sub->where('nama', 'like', "%{$q}%")
+                        ->orWhere('no_wa', 'like', "%{$q}%");
+                })
+                ->select('nama', 'no_wa')
+                ->distinct()
+                ->limit(8)
+                ->get()
+                ->map(fn($r) => [
+                    'nama' => $r->nama,
+                    'phone' => preg_replace('/[^0-9]/', '', $r->no_wa),
+                ])
+                ->unique('phone')
+                ->values()
+                ->toArray();
+        }
+
         return view('livewire.admin.settings', [
             'users' => $usersQuery->paginate($this->perPage, ['*'], 'userPage'),
             'adminMailLogs' => $adminMailLogs,
-            'customerMailLogs' => $customerMailLogs
+            'customerMailLogs' => $customerMailLogs,
+            'unitsList' => $unitsList,
+            'searchCustomers' => $searchCustomers,
         ])->layout('layouts.admin');
     }
 }

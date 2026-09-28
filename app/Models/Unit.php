@@ -17,6 +17,13 @@ class Unit extends Model
 
     protected $guarded = ['id'];
 
+    public function getNamaLengkapAttribute(): string
+    {
+        $details = array_filter([$this->warna, $this->memori]);
+        $detailStr = !empty($details) ? ' (' . implode(' - ', $details) . ')' : '';
+        return ($this->seri ?: 'Unit') . $detailStr;
+    }
+
     public function rentals()
     {
         return $this->belongsToMany(Rental::class, 'rental_items')->withPivot('price_snapshot')->withTimestamps();

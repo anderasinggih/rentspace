@@ -337,10 +337,6 @@
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-bold text-muted-foreground uppercase opacity-70">NIK (No. KTP)</label>
-                                        <input type="text" wire:model="nik" disabled class="w-full h-9 px-3 rounded-md border border-input bg-muted/50 text-muted-foreground text-sm outline-none cursor-not-allowed" placeholder="NIK">
-                                    </div>
-                                    <div class="space-y-1">
                                         <label class="text-[10px] font-bold text-muted-foreground uppercase opacity-70">WhatsApp / No. HP</label>
                                         <input type="text" wire:model="no_hp" class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:ring-1 focus:ring-primary outline-none" placeholder="08xxxxxxxxxx">
                                         @error('no_hp') <span class="text-[10px] text-red-500">{{ $message }}</span> @enderror
