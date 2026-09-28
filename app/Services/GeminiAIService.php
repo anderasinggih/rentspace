@@ -68,37 +68,195 @@ class GeminiAIService
     ];
 
     /**
-     * API key untuk sebuah fitur, beserta urutan cadangannya.
+     * Berapa slot kunci AI yang bisa diisi per fitur.
      *
-     * Tiap fitur punya key sendiri supaya kuota yang dipakai customer (paling
-     * rame, paling gampang kena 429) tidak ikut tersedot oleh query laporan
-     * tim atau percobaan draf broadcast. Urutan: key fitur di DB -> key fitur
-     * di .env -> key customer (DB lalu .env). Karena itu instalasi lama yang
-     * baru punya satu key tetap jalan tanpa perlu diisi ulang.
+     * Slot 1 memakai nama setting lama (`chatbot_api_key`), slot 2-4 memakai
+     * sufiks `_2`, `_3`, `_4`. Karena itu instalasi lama yang cuma punya satu
+     * kunci tetap jalan tanpa diisi ulang.
      */
-    public static function apiKeyFor(string $feature): ?string
+    public const KEY_POOL_SIZE = 4;
+
+    /**
+     * Berapa lama kunci yang kena 429 disingkirkan sebelum dicoba lagi.
+     *
+     * Jendela rate limit Gemini（TPM) berputar 60 detik, jadi 90 detik cukup
+     * untuk menyebutnya pulih. Kalau yang habis ternyata kuota harian (RPD),
+     * cooldown ini hanya menahan sebentar lalu dicoba lagi — hasilnya tetap
+     * pesan "kuota habis" ke admin, bukan jawaban basi ke customer.
+     */
+    private const KEY_COOLDOWN_SECONDS = 90;
+
+    /**
+     * Seluruh kunci milik sebuah fitur, urut dari slot 1.
+     *
+     * Google menghitung rate limit per PROJECT, bukan per API key: empat kunci
+     * dari satu project berbagi kuota yang sama. Jadi pool ini baru menambah
+     * kuota kalau admin mengisinya dari project berbeda, dan urutannya hanya
+     * saja dipakai sebagai cadangan/failover.
+     *
+     * Urutan cadangan tetap sama seperti versi satu-kunci: slot fitur di DB ->
+     * kunci fitur di .env -> kunci customer (DB lalu .env).
+     *
+     * @return string[]
+     */
+    public static function apiKeysFor(string $feature): array
     {
         $settingKey = self::FEATURE_KEY_SETTING[$feature] ?? 'chatbot_api_key';
         $configPath = self::FEATURE_CONFIG_KEY[$feature] ?? 'services.gemini.key';
 
-        $key = trim((string) Setting::getVal($settingKey, ''));
-        if ($key !== '') {
-            return $key;
-        }
-
-        $key = trim((string) (config($configPath) ?: ''));
-        if ($key !== '') {
-            return $key;
-        }
-
-        if ($settingKey !== 'chatbot_api_key') {
-            $fallback = trim((string) Setting::getVal('chatbot_api_key', ''));
-            if ($fallback !== '') {
-                return $fallback;
+        $keys = [];
+        for ($slot = 1; $slot <= self::KEY_POOL_SIZE; $slot++) {
+            $name = $slot === 1 ? $settingKey : "{$settingKey}_{$slot}";
+            $key = trim((string) Setting::getVal($name, ''));
+            if ($key !== '') {
+                $keys[] = $key;
             }
         }
 
-        return trim((string) (config('services.gemini.key') ?: '')) ?: null;
+        if (! $keys) {
+            $key = trim((string) (config($configPath) ?: ''));
+            if ($key !== '') {
+                $keys[] = $key;
+            }
+        }
+
+        if (! $keys && $settingKey !== 'chatbot_api_key') {
+            $key = trim((string) Setting::getVal('chatbot_api_key', ''));
+            if ($key !== '') {
+                $keys[] = $key;
+            }
+        }
+
+        if (! $keys) {
+            $key = trim((string) (config('services.gemini.key') ?: ''));
+            if ($key !== '') {
+                $keys[] = $key;
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    /** Kunci utama sebuah fitur, yaitu slot 1. */
+    public static function apiKeyFor(string $feature): ?string
+    {
+        return self::apiKeysFor($feature)[0] ?? null;
+    }
+
+    /**
+     * Nama slot kunci sebuah fitur — sama untuk setting DB dan properti Livewire.
+     *
+     * Satu metode dipakai untuk keduanya supaya tidak pernah bisa melenceng:
+     * kalau nama setting dan nama properti berbeda, slot yang disimpan tidak
+     * sama dengan slot yang dibaca, dan gejalanya "kunci mysteriously kosong".
+     */
+    public static function keySlotName(string $feature, int $slot): string
+    {
+        $base = self::FEATURE_KEY_SETTING[$feature] ?? 'chatbot_api_key';
+
+        return $slot <= 1 ? $base : "{$base}_{$slot}";
+    }
+
+    /**
+     * Susun pool kunci dengan rotasi giliran, lalu sisihkan yang sedang cooldown.
+     *
+     * Rotasi disimpan di cache, bukan di memori statis, karena tiap request
+     * web punya proses PHP sendiri. Kalau cache tidak bisa dipakai, urutan
+     * dikembalikan apa adanya — bot tetap jalan, hanya gilirannya statis.
+     *
+     * @param  string[]  $keys
+     * @return string[]
+     */
+    private static function usableKeysFor(string $feature, array $keys): array
+    {
+        if ($keys === []) {
+            return [];
+        }
+
+        $ordered = $keys;
+        if (count($keys) > 1) {
+            $cursorName = 'ai_key_cursor_' . $feature;
+            $start = 0;
+            try {
+                $start = (int) (\Illuminate\Support\Facades\Cache::get($cursorName, 0));
+                \Illuminate\Support\Facades\Cache::put($cursorName, $start + 1, \Illuminate\Support\Carbon::now()->addDays(2));
+            } catch (\Throwable $e) {
+                Log::warning('GeminiAIService: rotasi kunci tidak aktif (' . $e->getMessage() . ')');
+                $start = 0;
+            }
+
+            $total = count($keys);
+            $start = (($start % $total) + $total) % $total;
+            $ordered = array_merge(array_slice($keys, $start), array_slice($keys, 0, $start));
+        }
+
+        $usable = [];
+        $cooling = [];
+        foreach ($ordered as $key) {
+            if (self::isCoolingDown($feature, $key)) {
+                $cooling[] = $key;
+            } else {
+                $usable[] = $key;
+            }
+        }
+
+        // Semua kunci sedang cooldown: jangan diam, pakai yang cooldown
+        // paling lama. Mending 429 daripada customer dapat balasan kosong.
+        if ($usable === [] && $cooling !== []) {
+            return [$cooling[0]];
+        }
+
+        return $usable;
+    }
+
+    /** Cache key penanda cooldown sebuah kunci. */
+    private static function cooldownCacheKey(string $feature, string $apiKey): string
+    {
+        return 'ai_key_cool_' . $feature . '_' . substr(md5($apiKey), 0, 12);
+    }
+
+    private static function isCoolingDown(string $feature, string $apiKey): bool
+    {
+        try {
+            return \Illuminate\Support\Facades\Cache::has(self::cooldownCacheKey($feature, $apiKey));
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    private static function markCooldown(string $feature, string $apiKey): void
+    {
+        try {
+            \Illuminate\Support\Facades\Cache::put(
+                self::cooldownCacheKey($feature, $apiKey),
+                1,
+                \Illuminate\Support\Carbon::now()->addSeconds(self::KEY_COOLDOWN_SECONDS)
+            );
+        } catch (\Throwable $e) {
+            Log::warning('GeminiAIService: gagal menandai cooldown kunci (' . $e->getMessage() . ')');
+        }
+    }
+
+    /**
+     * Ringkasan kesehatan pool kunci, untuk ditampilkan di Pengaturan.
+     *
+     * @return array{total:int, usable:int, cooling:array<int, int>}
+     */
+    public static function keyPoolStatus(string $feature): array
+    {
+        $keys = self::apiKeysFor($feature);
+        $cooling = [];
+        $usable = 0;
+
+        foreach ($keys as $index => $key) {
+            if (self::isCoolingDown($feature, $key)) {
+                $cooling[] = $index + 1;
+            } else {
+                $usable++;
+            }
+        }
+
+        return ['total' => count($keys), 'usable' => $usable, 'cooling' => $cooling];
     }
 
     /**
@@ -246,7 +404,7 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
             $inputTokens = AiMemoryService::estimateTokens($systemPrompt);
         }
 
-        $text = self::askGemini($systemPrompt, $model, $apiKey, 0.7, 130, 25);
+        $text = self::askGemini('customer', $systemPrompt, $model, 0.7, 130, 25);
 
         // Chat di luar topik sewa: tidak dijawab, diteruskan ke admin. Balasan
         // model dibuang supaya tidak ada sisa isinya yang bocor ke customer.
@@ -653,7 +811,7 @@ Jawab sebagai asisten data internal:";
             $inputTokens = AiMemoryService::estimateTokens($systemPrompt);
         }
 
-        $text = self::askGemini($systemPrompt, $model, $apiKey, 0.2, 900, 45);
+        $text = self::askGemini('report', $systemPrompt, $model, 0.2, 900, 45);
 
         // Jaring pengaman: kalau jawaban pertama malah menyuruh tim memakai kata
         // kunci, kirim giliran kedua dengan bagian data yang tadi tidak kebudget.
@@ -664,7 +822,7 @@ Jawab sebagai asisten data internal:";
                 . "JAWAB ULANG pertanyaan tim di atas memakai data ini juga. Jangan minta kata kunci, jangan bilang ada data yang tidak dimuat.";
 
             Log::info('GeminiAIService::replyInternal: jawaban pertama menyuruh pakai kata kunci, mencoba lagi dengan data tambahan.');
-            $retry = self::askGemini($retryPrompt, $model, $apiKey, 0.2, 900, 30);
+            $retry = self::askGemini('report', $retryPrompt, $model, 0.2, 900, 30);
             if ($retry !== null) {
                 $text = $retry;
             }
@@ -739,7 +897,7 @@ Jawab sebagai asisten data internal:";
         $inputTokens = AiMemoryService::estimateTokens($prompt);
         AiMemoryService::consumeTokenBudget('wa_broadcast', $inputTokens);
 
-        $text = self::askGemini($prompt, $model, $apiKey, 0.8, 400, 30);
+        $text = self::askGemini('broadcast', $prompt, $model, 0.8, 400, 30);
         if ($text === null) {
             return null;
         }
@@ -823,19 +981,83 @@ Jawab sebagai asisten data internal:";
      */
     public static function testKey(string $feature): array
     {
-        $apiKey = self::apiKeyFor($feature);
-        if (!$apiKey) {
-            return ['ok' => false, 'message' => 'API Key belum diisi untuk fitur ini.'];
+        return self::testKeySlot($feature, 1);
+    }
+
+    /**
+     * Tes satu slot kunci tertentu, bukan sekadar slot 1.
+     *
+     * Penting untuk pool: kalau hanya slot 1 yang dites, admin tidak pernah tahu
+     * bahwa slot 3 berisi kunci project yang sudah mati. Slot yang dites boleh
+     * yang sedang cooldown — justru itu yang ingin dicek.
+     */
+    public static function testKeySlot(string $feature, int $slot = 1): array
+    {
+        $slot = max(1, min(self::KEY_POOL_SIZE, $slot));
+        $apiKey = trim((string) Setting::getVal(self::keySlotName($feature, $slot), ''));
+        if ($apiKey === '' && $slot === 1) {
+            $apiKey = (string) (self::apiKeyFor($feature) ?: '');
+        }
+
+        if ($apiKey === '') {
+            return ['ok' => false, 'message' => "Kunci slot {$slot} masih kosong."];
         }
 
         $model = self::modelFor($feature);
-        $text = self::askGemini('Balas dengan satu kata: SIAP', $model, $apiKey, 0.1, 16, 20);
+        $text = self::probeKey($apiKey, $model);
 
         if ($text === null) {
             return ['ok' => false, 'message' => 'Gagal: ' . (self::$lastError ?: 'tidak diketahui')];
         }
 
-        return ['ok' => true, 'message' => "Kunci valid, model {$model} merespons (HTTP OK)."];
+        return ['ok' => true, 'message' => "Kunci slot {$slot} valid, model {$model} merespons (HTTP OK)."];
+    }
+
+    /**
+     * Satu panggilan kecil ke satu kunci tertentu, tanpa failover.
+     *
+     * Sengaja tidak memakai askGemini(): tes harus isolating kunci yang diklik,
+     * bukan diam-diam pindah ke kunci lain lalu dilaporkan "valid".
+     */
+    private static function probeKey(string $apiKey, string $model): ?string
+    {
+        self::$lastError = null;
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(20)->post(
+                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
+                [
+                    'contents' => [
+                        ['role' => 'user', 'parts' => [['text' => 'Balas dengan satu kata: SIAP']]],
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.1,
+                        'maxOutputTokens' => 16,
+                        'thinkingConfig' => [
+                            'thinkingBudget' => 0,
+                        ],
+                    ],
+                ]
+            );
+
+            if ($response && $response->successful()) {
+                $candidates = $response->json('candidates');
+                if (! empty($candidates[0]['content']['parts'][0]['text'])) {
+                    return trim($candidates[0]['content']['parts'][0]['text']);
+                }
+
+                self::$lastError = 'jawaban kosong dari model ' . $model;
+
+                return null;
+            }
+
+            $status = $response?->status() ?? 0;
+            self::$lastError = 'HTTP ' . $status . ' — ' . self::readApiError((string) $response?->body());
+        } catch (\Throwable $e) {
+            self::$lastError = $e->getMessage();
+        }
+
+        return null;
     }
 
     /**
@@ -1627,49 +1849,108 @@ Jawab sebagai asisten data internal:";
     /** Alasan panggilan Gemini terakhir yang gagal, untuk pesan fallback. */
     private static ?string $lastError = null;
 
+    /** Alasan kegagalan panggilan terakhir, untuk service lain & pesan fallback. */
+    public static function lastError(): ?string
+    {
+        return self::$lastError;
+    }
+
     /**
-     * Panggil Gemini sekali dan kembalikan teks bersih (null bila gagal).
+     * Kirim payload ke Gemini dengan failover antar-kunci, kembalikan respons sukses.
+     *
+     * Ini primitif bersama: dipakai bot WhatsApp (askGemini) dan juga chat web
+     * (AiService) karena keduanya memakai pool kunci "customer" yang sama. Kalau
+     * hanya satu yang punya failover, kuota habis di jalur pertama tetap membuat
+     * jalur kedua gagal even though masih ada kunci yang sehat.
+     *
+     * Kalau satu kunci kena 429, kunci itu langsung disingkirkan sebentar lalu
+     * dicoba lagi dengan kunci berikutnya di pool yang sama — dalam permintaan
+     * yang sama. Menunggu pergantian menit seperti rotasi jam dinding justru
+     * bikin customer kehilangan jawaban: selama kunci yang salah masih jadi
+     * giliran, semua chat di menit itu tetap gagal.
+     *
+     * Error selain 429 (kunci salah ketik, model tidak ada) tidak dicoba ke
+     * kunci lain karena penyebabnya bukan kuota: kunci yang ditolak akan ditolak
+     * juga di project lain.
      */
-    private static function askGemini(string $prompt, string $model, string $apiKey, float $temperature, int $maxTokens, int $timeout): ?string
+    public static function callWithFailover(string $feature, string $model, array $payload, int $timeout): ?\Illuminate\Http\Client\Response
     {
         self::$lastError = null;
 
-        try {
-            $response = \Illuminate\Support\Facades\Http::timeout($timeout)->post(
-                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
-                [
-                    'contents' => [
-                        ['role' => 'user', 'parts' => [['text' => $prompt]]],
-                    ],
-                    'generationConfig' => [
-                        'temperature' => $temperature,
-                        'maxOutputTokens' => $maxTokens,
-                        'thinkingConfig' => [
-                            'thinkingBudget' => 0,
-                        ],
-                    ],
-                ]
-            );
+        $keys = self::usableKeysFor($feature, self::apiKeysFor($feature));
+        if ($keys === []) {
+            self::$lastError = 'API key ' . self::featureLabel($feature) . ' belum diisi';
+            return null;
+        }
 
-            if ($response && $response->successful()) {
-                $candidates = $response->json('candidates');
-                if (! empty($candidates[0]['content']['parts'][0]['text'])) {
-                    return self::formatForWhatsApp(trim($candidates[0]['content']['parts'][0]['text']));
+        $exhausted = [];
+
+        foreach ($keys as $apiKey) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::timeout($timeout)->post(
+                    "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
+                    $payload
+                );
+
+                if ($response && $response->successful()) {
+                    return $response;
                 }
-                self::$lastError = 'jawaban kosong dari model ' . $model;
-                Log::warning('GeminiAIService: jawaban kosong dari model ' . $model);
-            } else {
+
                 $status = $response?->status() ?? 0;
                 $body = (string) $response?->body();
                 self::$lastError = 'HTTP ' . $status . ' dari model ' . $model . ' — ' . self::readApiError($body);
                 Log::warning('GeminiAIService gagal: HTTP ' . $status . ' | model ' . $model . ' | ' . mb_substr($body, 0, 400));
+
+                if ($status === 429) {
+                    self::markCooldown($feature, $apiKey);
+                    $exhausted[] = $apiKey;
+                    continue;
+                }
+
+                return null;
+            } catch (\Throwable $e) {
+                self::$lastError = $e->getMessage();
+                Log::error('GeminiAIService Exception: ' . $e->getMessage());
+                return null;
             }
-        } catch (\Throwable $e) {
-            self::$lastError = $e->getMessage();
-            Log::error('GeminiAIService Exception: ' . $e->getMessage());
+        }
+
+        if ($exhausted !== []) {
+            self::$lastError = 'Semua ' . count($exhausted) . ' kunci API kena rate limit (429).';
+            Log::error('GeminiAIService: pool kunci ' . $feature . ' habis, ' . count($exhausted) . ' kunci kena 429.');
         }
 
         return null;
+    }
+
+    /** Panggil Gemini dan kembalikan teks bersih (null bila gagal). */
+    private static function askGemini(string $feature, string $prompt, string $model, float $temperature, int $maxTokens, int $timeout): ?string
+    {
+        $response = self::callWithFailover($feature, $model, [
+            'contents' => [
+                ['role' => 'user', 'parts' => [['text' => $prompt]]],
+            ],
+            'generationConfig' => [
+                'temperature' => $temperature,
+                'maxOutputTokens' => $maxTokens,
+                'thinkingConfig' => [
+                    'thinkingBudget' => 0,
+                ],
+            ],
+        ], $timeout);
+
+        if ($response === null) {
+            return null;
+        }
+
+        $candidates = $response->json('candidates');
+        if (empty($candidates[0]['content']['parts'][0]['text'])) {
+            self::$lastError = 'jawaban kosong dari model ' . $model;
+            Log::warning('GeminiAIService: jawaban kosong dari model ' . $model);
+            return null;
+        }
+
+        return self::formatForWhatsApp(trim($candidates[0]['content']['parts'][0]['text']));
     }
 
     /**
@@ -1706,7 +1987,7 @@ Jawab sebagai asisten data internal:";
         if (str_contains($reason, 'API_KEY_INVALID') || str_contains($reason, 'API key not valid')) {
             $hint = "Kunci API AI ({$label}) tidak valid. Buka *Web Admin -> Pengaturan -> Tab WhatsApp*, isi *API Key {$label}* yang benar lalu simpan.";
         } elseif (str_contains($reason, '429') || str_contains($reason, 'RESOURCE_EXHAUSTED')) {
-            $hint = "Kuota API AI ({$label}) habis / kena rate limit. Tunggu sebentar, atau pisahkan ke kunci API sendiri di *Web Admin -> Pengaturan -> Tab WhatsApp*.";
+            $hint = "Semua kunci API AI ({$label}) kena rate limit. Tunggu sebentar, atau isi slot kunci 2-4 di *Web Admin -> Pengaturan -> Tab WhatsApp* (wajib dari project Google yang berbeda, karena kuota dihitung per project, bukan per kunci).";
         } elseif (str_contains($reason, '404') || str_contains($reason, 'NOT_FOUND')) {
             $hint = "Model AI ({$label}) yang dipilih tidak tersedia. Ganti modelnya di *Web Admin -> Pengaturan -> Tab WhatsApp* (kosongkan dulu supaya kembali ke default).";
         } elseif (stripos($reason, 'timed out') !== false || stripos($reason, 'cURL error 28') !== false) {

@@ -88,6 +88,12 @@ class Settings extends Component
     public $chatbot_tpm_limit = '300000';
     public $chatbot_report_data_limit = '0';
 
+    // Slot 2-4 untuk failover. Google menghitung kuota per project, jadi
+    // slot tambahan ini hanya membantu kalau kuncinya dibuat di project berbeda.
+    public $chatbot_api_key_2 = '';
+    public $chatbot_api_key_3 = '';
+    public $chatbot_api_key_4 = '';
+
     // API key & model dipisah per fitur supaya kuota tiap fitur bisa diatur
     // dan diamankan terpisah (lihat GeminiAIService::apiKeyFor).
     public $report_api_key = '';
@@ -95,6 +101,7 @@ class Settings extends Component
     public $broadcast_api_key = '';
     public $broadcast_model = 'gemini-3.5-flash-lite';
     public $ai_key_test = [];   // hasil tombol "Tes" per fitur
+    public $ai_key_test_slot = []; // hasil tes per slot kunci: "customer_3" => hasil
     public $testing_ai_feature = null;
     public $aiSettingsMessage = null; // ['ok' => bool, 'text' => string] — hanya tampil di tab WhatsApp
 
@@ -197,6 +204,14 @@ class Settings extends Component
         $this->chatbot_tpm_limit = (string) \App\Models\Setting::getVal('chatbot_tpm_limit', '300000');
         $this->chatbot_report_data_limit = (string) \App\Models\Setting::getVal('chatbot_report_data_limit', '0');
 
+        for ($slot = 2; $slot <= \App\Services\GeminiAIService::KEY_POOL_SIZE; $slot++) {
+            $prop = \App\Services\GeminiAIService::keySlotName('customer', $slot);
+            $this->{$prop} = (string) \App\Models\Setting::getVal(
+                \App\Services\GeminiAIService::keySlotName('customer', $slot),
+                ''
+            );
+        }
+
         // Key & model laporan & broadcast. Kosong = otomatis pakai key customer,
         // jadi instalasi lama yang hanya punya satu key tidak ikut rusak.
         $this->report_api_key = (string) \App\Models\Setting::getVal('report_api_key', '');
@@ -204,6 +219,7 @@ class Settings extends Component
         $this->broadcast_api_key = (string) \App\Models\Setting::getVal('broadcast_api_key', '');
         $this->broadcast_model = (string) \App\Models\Setting::getVal('broadcast_model', 'gemini-3.5-flash-lite');
         $this->ai_key_test = [];
+        $this->ai_key_test_slot = [];
         $this->admin_wa_secondary = \App\Models\Setting::getVal('admin_wa_secondary', '');
         $this->admin_wa_group_id = \App\Models\Setting::getVal('admin_wa_group_id', '');
         $this->admin_report_group_id = \App\Models\Setting::getVal('admin_report_group_id', '');
@@ -435,6 +451,7 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
         $this->persistAiFeatureSettings();
         $this->ai_key_test = [];
+        $this->ai_key_test_slot = [];
         $this->aiSettingsMessage = ['ok' => true, 'text' => 'Pengaturan AI tersimpan (kunci & model per fitur).'];
 
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_tpm_limit'], ['value' => (string) max(1000, (int) $this->chatbot_tpm_limit)]);
@@ -472,18 +489,31 @@ class Settings extends Component
      */
     private function validateAiFeatureSettings(): void
     {
-        $this->validate([
+        $rules = [
             'chatbot_api_key' => 'nullable|string|max:200',
             'report_api_key' => 'nullable|string|max:200',
             'broadcast_api_key' => 'nullable|string|max:200',
             'chatbot_model' => 'nullable|string',
             'report_model' => 'nullable|string',
             'broadcast_model' => 'nullable|string',
-        ], [
+        ];
+
+        for ($slot = 2; $slot <= \App\Services\GeminiAIService::KEY_POOL_SIZE; $slot++) {
+            $rules[\App\Services\GeminiAIService::keySlotName('customer', $slot)] = 'nullable|string|max:200';
+        }
+
+        $messages = [
             'chatbot_api_key.max' => 'API Key Customer kelewat panjang (maksimal 200 karakter).',
             'report_api_key.max' => 'API Key Laporan kelewat panjang (maksimal 200 karakter).',
             'broadcast_api_key.max' => 'API Key Broadcast kelewat panjang (maksimal 200 karakter).',
-        ]);
+        ];
+
+        for ($slot = 2; $slot <= \App\Services\GeminiAIService::KEY_POOL_SIZE; $slot++) {
+            $prop = \App\Services\GeminiAIService::keySlotName('customer', $slot);
+            $messages["{$prop}.max"] = "API Key Customer slot {$slot} kelewat panjang (maksimal 200 karakter).";
+        }
+
+        $this->validate($rules, $messages);
     }
 
     /** Tulis kunci + model ketiga fitur ke tabel settings. */
@@ -492,6 +522,15 @@ class Settings extends Component
         $default = 'gemini-3.5-flash-lite';
 
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => trim((string) $this->chatbot_api_key)]);
+
+        for ($slot = 2; $slot <= \App\Services\GeminiAIService::KEY_POOL_SIZE; $slot++) {
+            $prop = \App\Services\GeminiAIService::keySlotName('customer', $slot);
+            \App\Models\Setting::updateOrCreate(
+                ['key' => \App\Services\GeminiAIService::keySlotName('customer', $slot)],
+                ['value' => trim((string) $this->{$prop})]
+            );
+        }
+
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: $default]);
         \App\Models\Setting::updateOrCreate(['key' => 'report_api_key'], ['value' => trim((string) $this->report_api_key)]);
         \App\Models\Setting::updateOrCreate(['key' => 'report_model'], ['value' => $this->report_model ?: $default]);
@@ -570,9 +609,38 @@ class Settings extends Component
         $this->testing_ai_feature = null;
 
         $this->ai_key_test = [$feature => $result];
+        $this->ai_key_test_slot = [];
         $this->aiSettingsMessage = $result['ok']
             ? ['ok' => true, 'text' => 'Kunci & model ' . ucfirst(\App\Services\GeminiAIService::featureLabel($feature)) . ' tersimpan dan valid.']
             : ['ok' => false, 'text' => $result['message']];
+    }
+
+    /**
+     * Tes satu slot kunci tertentu dari pool customer.
+     *
+     * Slot 2-4 tidak punya tombol Tes sendiri kalau dirangkai jadi satu, padahal
+     * justru slot itulah yang paling sering mati diam-diam (project-nya kehabisan
+     * kuota harian). Tes per slot supaya kelihatan sehat atau merah dari awal.
+     */
+    public function testAiKeySlot(string $feature, int $slot)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        if (! in_array($feature, ['customer', 'report', 'broadcast'], true)) return;
+
+        $max = \App\Services\GeminiAIService::KEY_POOL_SIZE;
+        $slot = max(1, min($max, $slot));
+
+        $this->validateAiFeatureSettings();
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
+        }
+        $this->persistAiFeatureSettings();
+
+        $this->testing_ai_feature = "{$feature}_{$slot}";
+        $result = \App\Services\GeminiAIService::testKeySlot($feature, $slot);
+        $this->testing_ai_feature = null;
+
+        $this->ai_key_test_slot = ["{$feature}_{$slot}" => $result];
     }
 
     /**

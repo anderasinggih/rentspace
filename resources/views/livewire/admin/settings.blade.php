@@ -1574,6 +1574,10 @@
                                     'modelProp' => 'chatbot_model',
                                     'chipOwn' => 'text-emerald-600 bg-emerald-500/10',
                                     'chipOn' => 'text-emerald-600',
+                                    // Pool 4 slot + failover: kuncinya wajib dari
+                                    // project Google berbeda, karena kuota dihitung
+                                    // per project bukan per kunci.
+                                    'poolSize' => \App\Services\GeminiAIService::KEY_POOL_SIZE,
                                 ],
                                 [
                                     'id' => 'report',
@@ -1583,6 +1587,7 @@
                                     'modelProp' => 'report_model',
                                     'chipOwn' => 'text-purple-600 bg-purple-500/10',
                                     'chipOn' => 'text-purple-600',
+                                    'poolSize' => 1,
                                 ],
                                 [
                                     'id' => 'broadcast',
@@ -1592,6 +1597,7 @@
                                     'modelProp' => 'broadcast_model',
                                     'chipOwn' => 'text-amber-600 bg-amber-500/10',
                                     'chipOn' => 'text-amber-600',
+                                    'poolSize' => 1,
                                 ],
                             ];
                         @endphp
@@ -1606,12 +1612,32 @@
                                     // admin sudah mengedit berkali-kali, jangan tampilkan
                                     // centang lama seolah-olah kunci baru ikut teruji.
                                     $testIsCurrent = $test && trim($keyValue) === trim((string) \App\Services\GeminiAIService::apiKeyFor($f['id']));
+
+                                    // Semua slot kunci fitur ini, untuk render input per slot.
+                                    $keySlots = [];
+                                    for ($s = 1; $s <= $f['poolSize']; $s++) {
+                                        $prop = $s === 1
+                                            ? $f['keyProp']
+                                            : \App\Services\GeminiAIService::keySlotName($f['id'], $s);
+                                        $keySlots[$s] = [
+                                            'prop' => $prop,
+                                            'value' => (string) ($this->{$prop} ?? ''),
+                                        ];
+                                    }
+                                    $filledSlots = count(array_filter($keySlots, fn ($k) => trim($k['value']) !== ''));
+
+                                    // Status cooldown hanya bermakna kalau memang ada pool.
+                                    $pool = $f['poolSize'] > 1
+                                        ? \App\Services\GeminiAIService::keyPoolStatus($f['id'])
+                                        : null;
                                 @endphp
                                 <div wire:key="ai-feature-{{ $f['id'] }}" class="rounded-lg border border-border/70 bg-muted/20 p-2.5 space-y-2">
                                     <div class="flex items-center justify-between gap-2">
                                         <span class="text-[11px] font-bold text-foreground leading-tight">{{ $f['title'] }}</span>
-                                        @if(trim($keyValue) !== '')
-                                            <span class="shrink-0 text-[9px] font-bold {{ $f['chipOwn'] }} px-1.5 py-0.5 rounded">Kunci Sendiri</span>
+                                        @if($filledSlots > 0)
+                                            <span class="shrink-0 text-[9px] font-bold {{ $f['chipOwn'] }} px-1.5 py-0.5 rounded">
+                                                {{ $f['poolSize'] > 1 ? $filledSlots . '/' . $f['poolSize'] . ' Kunci' : 'Kunci Sendiri' }}
+                                            </span>
                                         @else
                                             <span class="shrink-0 text-[9px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Pakai Kunci Customer</span>
                                         @endif
@@ -1632,37 +1658,86 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">API Key</label>
-                                        <div class="relative">
-                                            <input type="password" wire:model.blur="{{ $f['keyProp'] }}"
-                                                class="w-full rounded-md border border-input bg-background px-2 py-1.5 pr-16 text-[11px] shadow-sm font-mono"
-                                                placeholder="AIzaSy...">
-                                            <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 pointer-events-none">
-                                                <span class="text-[9px] font-bold {{ trim($keyValue) ? $f['chipOn'] : 'text-muted-foreground' }}">
-                                                    {{ trim($keyValue) ? '✓ Ada' : 'Kosong' }}
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
+                                                {{ $f['poolSize'] > 1 ? 'API Key (Failover)' : 'API Key' }}
+                                            </label>
+                                            @if($pool)
+                                                <span class="text-[9px] font-bold {{ $pool['usable'] > 0 ? 'text-emerald-600' : 'text-red-500' }}"
+                                                    wire:key="pool-{{ $f['id'] }}">
+                                                    {{ $pool['usable'] }}/{{ $pool['total'] }} siap
                                                 </span>
-                                            </div>
+                                            @endif
                                         </div>
-                                    </div>
 
-                                    <div class="flex items-center gap-1.5">
-                                        <button type="button" wire:click="testAiKey('{{ $f['id'] }}')"
-                                            wire:loading.attr="disabled"
-                                            wire:target="testAiKey('{{ $f['id'] }}')"
-                                            class="inline-flex items-center justify-center gap-1 rounded border border-border bg-background hover:bg-muted px-2 py-1 text-[10px] font-bold transition-colors disabled:opacity-50">
-                                            <span wire:loading.remove wire:target="testAiKey('{{ $f['id'] }}')">Tes Kunci</span>
-                                            <span wire:loading wire:target="testAiKey('{{ $f['id'] }}')">Menguji...</span>
-                                        </button>
-                                        @if($testIsCurrent)
-                                            <span class="text-[10px] font-bold {{ $test['ok'] ? 'text-emerald-600' : 'text-red-500' }} leading-tight truncate"
-                                                title="{{ $test['message'] }}">
-                                                {{ $test['ok'] ? '✓ Valid' : '✗ Gagal' }}
-                                            </span>
+                                        <div class="space-y-1.5">
+                                            @foreach($keySlots as $slot => $slotData)
+                                                @php
+                                                    $isCooling = $pool && in_array($slot, $pool['cooling'], true);
+                                                    $slotTest = $ai_key_test_slot["{$f['id']}_{$slot}"] ?? null;
+                                                    $slotTestIsCurrent = $slotTest
+                                                        && trim($slotData['value']) === trim((string) \App\Models\Setting::getVal(\App\Services\GeminiAIService::keySlotName($f['id'], $slot), ''));
+                                                @endphp
+                                                <div wire:key="ai-slot-{{ $f['id'] }}-{{ $slot }}" class="flex items-center gap-1.5">
+                                                    <div class="relative flex-1">
+                                                        <input type="password" wire:model.blur="{{ $slotData['prop'] }}"
+                                                            class="w-full rounded-md border bg-background px-2 py-1.5 pr-14 text-[11px] shadow-sm font-mono {{ $isCooling ? 'border-red-400/70' : 'border-input' }}"
+                                                            placeholder="{{ $slot > 1 ? 'Kunci cadangan ' . $slot . ' (project lain)' : 'AIzaSy...' }}">
+                                                        <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 pointer-events-none">
+                                                            <span class="text-[9px] font-bold {{ $isCooling ? 'text-red-500' : (trim($slotData['value']) ? $f['chipOn'] : 'text-muted-foreground') }}">
+                                                                {{ $isCooling ? '⏳ 429' : (trim($slotData['value']) ? '✓ Ada' : 'Kosong') }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    @if($f['poolSize'] > 1)
+                                                        <button type="button" wire:click="testAiKeySlot('{{ $f['id'] }}', {{ $slot }})"
+                                                            wire:loading.attr="disabled"
+                                                            wire:target="testAiKeySlot('{{ $f['id'] }}', {{ $slot }})"
+                                                            title="Tes kunci slot {{ $slot }} saja"
+                                                            class="shrink-0 inline-flex items-center justify-center rounded border border-border bg-background hover:bg-muted px-1.5 py-1 text-[9px] font-bold transition-colors disabled:opacity-50">
+                                                            <span wire:loading.remove wire:target="testAiKeySlot('{{ $f['id'] }}', {{ $slot }})">T{{ $slot }}</span>
+                                                            <span wire:loading wire:target="testAiKeySlot('{{ $f['id'] }}', {{ $slot }})">…</span>
+                                                        </button>
+                                                    @endif
+                                                </div>
+
+                                                @if($slotTestIsCurrent)
+                                                    <p class="text-[9px] leading-snug break-words {{ $slotTest['ok'] ? 'text-emerald-600' : 'text-red-500' }}">
+                                                        {{ $slotTest['ok'] ? '✓' : '✗' }} {{ $slotTest['message'] }}
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        </div>
+
+                                        @if($f['poolSize'] > 1)
+                                            <p class="text-[9px] text-muted-foreground leading-snug mt-1.5">
+                                                Bot pakai slot mana saja secara bergiliran. Kalau satu kena 429, slot itu ditahan sebentar
+                                                dan langsung dicoba ke slot berikutnya. <b>Wajib beda project Google</b> — kuota dihitung per project.
+                                            </p>
                                         @endif
                                     </div>
 
-                                    @if($testIsCurrent && ! $test['ok'])
-                                        <p class="text-[10px] text-red-500 leading-snug break-words">{{ $test['message'] }}</p>
+                                    @if($f['poolSize'] === 1)
+                                        <div class="flex items-center gap-1.5">
+                                            <button type="button" wire:click="testAiKey('{{ $f['id'] }}')"
+                                                wire:loading.attr="disabled"
+                                                wire:target="testAiKey('{{ $f['id'] }}')"
+                                                class="inline-flex items-center justify-center gap-1 rounded border border-border bg-background hover:bg-muted px-2 py-1 text-[10px] font-bold transition-colors disabled:opacity-50">
+                                                <span wire:loading.remove wire:target="testAiKey('{{ $f['id'] }}')">Tes Kunci</span>
+                                                <span wire:loading wire:target="testAiKey('{{ $f['id'] }}')">Menguji...</span>
+                                            </button>
+                                            @if($testIsCurrent)
+                                                <span class="text-[10px] font-bold {{ $test['ok'] ? 'text-emerald-600' : 'text-red-500' }} leading-tight truncate"
+                                                    title="{{ $test['message'] }}">
+                                                    {{ $test['ok'] ? '✓ Valid' : '✗ Gagal' }}
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        @if($testIsCurrent && ! $test['ok'])
+                                            <p class="text-[10px] text-red-500 leading-snug break-words">{{ $test['message'] }}</p>
+                                        @endif
                                     @endif
                                 </div>
                             @endforeach
