@@ -671,28 +671,43 @@ class WhatsAppWebhookController extends Controller
         $targets = [];
         $rawTargets = [];
 
-        // Ambil admin_wa_secondary (bisa multiple dipisah koma/enter/spasi/titik-koma)
+        // 1. Cek apakah ada Grup Khusus Notifikasi (admin_notify_group_id)
+        $notifyGroupId = \App\Models\Setting::sanitizeJid(\App\Models\Setting::getVal('admin_notify_group_id', ''));
+        if ($notifyGroupId !== '') {
+            $targets[] = $notifyGroupId;
+        }
+
+        // 2. Ambil admin_wa_secondary (bisa multiple dipisah koma/enter/spasi/titik-koma)
         $secondarySetting = (string) \App\Models\Setting::getVal('admin_wa_secondary', '');
         if ($secondarySetting !== '') {
             $split = preg_split('/[\r\n,;|\s]+/', $secondarySetting, -1, PREG_SPLIT_NO_EMPTY);
             $rawTargets = array_merge($rawTargets, $split);
         }
 
-        // Ambil admin_wa utama
-        $mainWa = (string) \App\Models\Setting::getVal('admin_wa', '');
-        if ($mainWa !== '') {
-            $rawTargets[] = $mainWa;
+        // 3. Ambil admin_wa utama jika belum ada grup notifikasi
+        if ($notifyGroupId === '') {
+            $mainWa = (string) \App\Models\Setting::getVal('admin_wa', '');
+            if ($mainWa !== '') {
+                $rawTargets[] = $mainWa;
+            }
         }
 
         foreach ($rawTargets as $raw) {
-            $number = preg_replace('/[^0-9]/', '', $raw);
+            $rawTrimmed = trim($raw);
+            if (str_ends_with($rawTrimmed, '@g.us')) {
+                if (!in_array($rawTrimmed, $targets, true)) {
+                    $targets[] = $rawTrimmed;
+                }
+                continue;
+            }
+            $number = preg_replace('/[^0-9]/', '', $rawTrimmed);
             if ($number !== '' && !in_array($number, $targets, true)) {
                 $targets[] = $number;
             }
         }
 
         if (!$targets) {
-            Log::warning('Permintaan bantuan customer tidak diteruskan: nomor admin belum diisi.');
+            Log::warning('Permintaan bantuan customer tidak diteruskan: grup notifikasi atau nomor admin belum diisi.');
             return;
         }
 

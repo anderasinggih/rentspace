@@ -1685,6 +1685,13 @@
                             <span class="text-[10px] text-muted-foreground mt-0.5 block">Ketik <code>!getid</code> di grup WA untuk dapat ID</span>
                         </div>
                         <div>
+                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">ID Grup WA Notifikasi (Forward Chat)</label>
+                            <input type="text" wire:model="admin_notify_group_id" 
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="120363xxxxxx@g.us">
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block">Semua chat masuk customer akan otomatis diforward ke grup ini.</span>
+                        </div>
+                        <div>
                             <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">ID Grup WA Report (Tim Internal)</label>
                             <input type="text" wire:model="admin_report_group_id" 
                                 class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"

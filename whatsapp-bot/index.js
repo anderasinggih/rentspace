@@ -167,6 +167,9 @@ const authMiddleware = (req, res, next) => {
 };
 
 const formatToJid = (phone) => {
+    if (typeof phone === 'string' && (phone.endsWith('@g.us') || phone.endsWith('@s.whatsapp.net'))) {
+        return phone;
+    }
     let clean = phone.replace(/[^0-9]/g, '');
     if (clean.startsWith('0')) {
         clean = '62' + clean.slice(1);
