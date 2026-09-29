@@ -1790,6 +1790,77 @@
                         </div>
                     </div>
 
+                    <!-- Notifikasi Tim ke Grup WA (tanpa AI) -->
+                    <div class="pt-3 border-t border-border/60 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                                Notifikasi Tim (Tanpa AI)
+                            </h4>
+                            <span class="text-[10px] text-muted-foreground">Template statis, dikirim ke grup di atas</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            @foreach([
+                                ['prop' => 'notif_group_booking', 'label' => 'Pesanan baru masuk', 'desc' => 'Tiap ada booking baru dari customer.'],
+                                ['prop' => 'notif_group_status', 'label' => 'Perubahan status', 'desc' => 'Validasi bayar, serah terima, selesai, dan pembatalan.'],
+                                ['prop' => 'notif_group_reminder', 'label' => 'Pengingat ambil & kembali unit', 'desc' => 'H-1 pengambilan, H-1 pengembalian, plus alert kalau telat.'],
+                            ] as $nf)
+                                <div class="flex items-start justify-between gap-3 p-2.5 rounded-lg border border-border/60 bg-muted/20">
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-foreground">{{ $nf['label'] }}</p>
+                                        <p class="text-[10px] text-muted-foreground leading-snug mt-0.5">{{ $nf['desc'] }}</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                        <input type="checkbox" wire:model="{{ $nf['prop'] }}" class="sr-only peer">
+                                        <div class="w-10 h-5 bg-zinc-700/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-transparent after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Ingat Ambil (menit)</label>
+                                <input type="number" min="5" step="5" wire:model="notif_staff_pickup_minutes"
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Ingat Kembali (menit)</label>
+                                <input type="number" min="5" step="5" wire:model="notif_staff_return_minutes"
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Alert Telat (menit)</label>
+                                <input type="number" min="5" step="5" wire:model="notif_staff_late_minutes"
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono">
+                                <span class="text-[10px] text-muted-foreground mt-0.5 block">Nilai <code>60</code> = 1 jam sebelum jadwal.</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3 pt-1">
+                            <button type="button" wire:click="saveGeneralSettings"
+                                wire:loading.attr="disabled"
+                                wire:target="saveGeneralSettings"
+                                class="inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
+                                <span wire:loading.remove wire:target="saveGeneralSettings">Simpan Notifikasi Tim</span>
+                                <span wire:loading wire:target="saveGeneralSettings">Menyimpan...</span>
+                            </button>
+                            <button type="button" wire:click="testStaffNotif"
+                                wire:loading.attr="disabled"
+                                wire:target="testStaffNotif"
+                                class="inline-flex items-center justify-center rounded-md border border-emerald-600 text-emerald-700 hover:bg-emerald-50 px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
+                                <span wire:loading.remove wire:target="testStaffNotif">Kirim Contoh</span>
+                                <span wire:loading wire:target="testStaffNotif">Mengirim...</span>
+                            </button>
+                            @if($staffNotifMessage)
+                                <span class="text-[11px] font-bold {{ $staffNotifMessage['ok'] ? 'text-emerald-600' : 'text-red-500' }}">
+                                    {{ $staffNotifMessage['ok'] ? '✓' : '✗' }} {{ $staffNotifMessage['text'] }}
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+
                     <!-- Kelola Memori / Pengetahuan Khusus AI -->
                     <div class="pt-3 border-t border-border/60 space-y-2.5">
                         <div class="flex items-center justify-between">

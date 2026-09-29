@@ -29,18 +29,14 @@
             class="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-6">
             <form wire:submit.prevent="submit" class="space-y-8 pb-[180px] sm:pb-0">
 
-                <!-- Progress Bar -->
-                <div class="mb-8 border-b border-border pb-4">
-                    <div class="flex items-center justify-center text-sm font-bold text-primary mb-3 px-1">
-                        <span x-show="step === 1">1. Pilih Unit & Jadwal</span>
-                        <span x-show="step === 2">2. Isi Data & Promo</span>
-                        <span x-show="step === 3">3. Konfirmasi Pesanan</span>
-                        <span x-show="step === 4">4. Proses Pembayaran</span>
-                    </div>
-                    <div class="h-2 bg-muted rounded-full overflow-hidden">
-                        <div class="h-full bg-primary transition-all duration-500 rounded-full" 
-                            x-bind:style="'width: ' + ((step / 4) * 100) + '%'"></div>
-                    </div>
+                <!-- Progress Steps DaisyUI -->
+                <div class="mb-8 border-b border-border pb-6">
+                    <ul class="steps steps-horizontal w-full text-xs">
+                        <li class="step font-semibold transition-colors duration-300 {{ $step >= 1 ? 'step-primary' : '' }}">Jadwal & Unit</li>
+                        <li class="step font-semibold transition-colors duration-300 {{ $step >= 2 ? 'step-primary' : '' }}">Data Diri</li>
+                        <li class="step font-semibold transition-colors duration-300 {{ $step >= 3 ? 'step-primary' : '' }}">Konfirmasi</li>
+                        <li class="step font-semibold transition-colors duration-300 {{ $step >= 4 ? 'step-primary' : '' }}">Pembayaran</li>
+                    </ul>
                 </div>
 
                 <!-- STEP 1: Jadwal & Unit -->
@@ -67,7 +63,7 @@
                                 <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengambilan</label>
                                 <input type="date" value="{{ $tanggal_mulai }}"
                                     x-on:input="$wire.set('tanggal_mulai', $event.target.value)"
-                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
+                                    class="input input-bordered w-full h-11 text-sm font-semibold">
                                 @error('waktu_mulai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
                             </div>
 
@@ -76,7 +72,7 @@
                                 <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengembalian</label>
                                 <input type="date" value="{{ $tanggal_selesai }}"
                                     x-on:input="$wire.set('tanggal_selesai', $event.target.value)"
-                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
+                                    class="input input-bordered w-full h-11 text-sm font-semibold">
                                 @error('waktu_selesai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
                             </div>
 
@@ -84,7 +80,7 @@
                             <div>
                                 <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Jam Pengambilan dan Pengembalian</label>
                                 <select wire:model.live="jam_mulai"
-                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 outline-none text-foreground">
+                                    class="select select-bordered w-full h-11 text-sm font-semibold">
                                     @for($h = 0; $h < 24; $h++)
                                         @php $formattedHour = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00'; @endphp
                                         <option value="{{ $formattedHour }}">{{ $formattedHour }}</option>
@@ -379,14 +375,14 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <!-- WhatsApp -->
                         <div>
-                            <label class="text-sm font-medium leading-none">Nomor WhatsApp / Telepon</label>
+                            <label class="text-sm font-semibold leading-none">Nomor WhatsApp / Telepon</label>
                             <input type="text" wire:model.live.debounce.500ms="no_wa" inputmode="numeric"
                                 id="no_wa_input"
                                 x-ref="waInput"
                                 x-on:keydown.enter.prevent="$refs.emailInput.focus()"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                                 maxlength="15"
-                                class="mt-2 flex h-10 w-full border border-input bg-transparent rounded-md px-3 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring z-10"
+                                class="mt-2 input input-bordered w-full h-11 text-sm font-semibold"
                                 placeholder="08XXXXXXXXXX">
                             @error('no_wa') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
                             @if($nikFoundMessage)
@@ -405,20 +401,20 @@
 
                         <!-- Email -->
                         <div>
-                            <label class="text-sm font-medium leading-none">Alamat Email (Untuk Terima Invoice)</label>
+                            <label class="text-sm font-semibold leading-none">Alamat Email (Untuk Terima Invoice)</label>
                             <input type="email" wire:model.live.debounce.500ms="email"
                                 id="email_input"
                                 x-ref="emailInput"
                                 x-on:keydown.enter.prevent="$refs.namaInput.focus()"
                                 maxlength="50"
-                                class="mt-2 flex h-10 w-full rounded-md border {{ $errors->has('email') ? 'border-red-500 bg-rose-500/10' : 'border-input bg-transparent' }} px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                class="mt-2 input input-bordered w-full h-11 text-sm font-semibold {{ $errors->has('email') ? 'input-error' : '' }}"
                                 placeholder="nama@email.com">
                             @error('email') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Nama -->
                         <div>
-                            <label class="text-sm font-medium leading-none">Nama Lengkap Sesuai KTP</label>
+                            <label class="text-sm font-semibold leading-none">Nama Lengkap Sesuai KTP</label>
                             <input type="text" wire:model="nama"
                                 id="nama_input"
                                 x-ref="namaInput"
@@ -426,20 +422,20 @@
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
                                 maxlength="50"
-                                class="mt-2 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                class="mt-2 input input-bordered w-full h-11 text-sm font-semibold"
                                 placeholder="SESUAI KTP">
                             @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Alamat -->
                         <div class="sm:col-span-2">
-                            <label class="text-sm font-medium leading-none">Alamat Domisili lengkap</label>
+                            <label class="text-sm font-semibold leading-none">Alamat Domisili Lengkap</label>
                             <textarea wire:model="alamat" rows="3"
                                 x-ref="alamatInput"
                                 x-on:input="$event.target.value = $event.target.value.toUpperCase()"
                                 style="text-transform: uppercase;"
                                 maxlength="150"
-                                class="mt-2 flex w-full rounded-md border border-input bg-transparent px-3 py-2 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                class="mt-2 textarea textarea-bordered w-full text-sm font-semibold"
                                 placeholder="CONTOH: JL. RAYA NO. 123..."></textarea>
                             @error('alamat') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
@@ -458,12 +454,12 @@
                         <label class="text-sm font-medium leading-none mb-2 block text-foreground">Punya Kode Promo atau Referral? <span class="text-xs text-muted-foreground">(Opsional)</span></label>
                         <div class="flex gap-2">
                             <input type="text" wire:model="promo_code_input" 
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring uppercase text-sm font-bold placeholder:font-normal placeholder:text-[11px] placeholder:tracking-normal"
+                                class="input input-bordered flex-1 h-11 uppercase text-sm font-bold placeholder:font-normal placeholder:text-xs"
                                 placeholder="MISAL: PROMO10 atau AN565">
                             <button type="button" wire:click="checkCode" 
-                                class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 text-sm font-bold shadow-sm transition-colors shrink-0">
-                                <span wire:loading.remove wire:target="checkCode">Apply</span>
-                                <span wire:loading wire:target="checkCode">...</span>
+                                class="btn btn-neutral h-11 px-5 text-sm font-bold shrink-0">
+                                <span wire:loading.remove wire:target="checkCode">Gunakan</span>
+                                <span wire:loading wire:target="checkCode" class="loading loading-spinner loading-xs"></span>
                             </button>
                         </div>
                         @error('promo_code_input') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
@@ -647,35 +643,37 @@
                         <li>{{ trim($line) }}</li>
                         @endforeach
                     </ul>
-                    <label class="flex items-start gap-3 cursor-pointer mt-1">
+                    <label class="flex items-start gap-3 cursor-pointer mt-2">
                         <input type="checkbox" wire:model="agree" id="agree_terms"
-                            class="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-primary focus:ring-primary">
+                            class="checkbox checkbox-primary checkbox-sm mt-0.5 shrink-0">
                         <span class="text-xs font-medium text-foreground">Saya telah membaca dan
                             <strong>menyetujui</strong> seluruh syarat & ketentuan penyewaan di atas.</span>
                     </label>
-                    @error('agree') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    @error('agree') <p class="text-xs text-red-500 mt-1 font-semibold">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- General Error Message -->
                 @if($errors->any())
-                    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs font-bold text-center animate-in fade-in slide-in-from-top-1 duration-300">
-                        <p>Ups! Ada data yang belum sesuai:</p>
-                        <ul class="mt-2 list-none space-y-1 opacity-80">
-                            @foreach ($errors->all() as $error)
-                                <li>• {{ $error }}</li>
-                            @endforeach
-                        </ul>
-                        <p class="mt-3 text-[10px] uppercase tracking-widest opacity-60">Mohon perbaiki data pada langkah sebelumnya.</p>
+                    <div class="alert alert-error text-xs shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <div>
+                            <span class="font-bold block">Ups! Ada data yang belum sesuai:</span>
+                            <ul class="mt-1 list-disc list-inside space-y-0.5">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
                     </div>
                 @endif
 
                 <button type="submit" wire:loading.attr="disabled"
-                    class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-8.5 font-bold text-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all">
+                    class="btn btn-neutral btn-lg w-full font-bold text-base shadow-md disabled:opacity-60">
                     <span wire:loading.remove wire:target="submit">Sewa & Lanjut Pembayaran</span>
-                    <div wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
-                        <span class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
-                        <span>Memproses...</span>
-                    </div>
+                    <span wire:loading wire:target="submit" class="flex items-center gap-2">
+                        <span class="loading loading-spinner loading-sm"></span>
+                        <span>Memproses Pesanan...</span>
+                    </span>
                 </button>
             
                 </div> <!-- END STEP 3 -->
@@ -806,13 +804,13 @@
 
             <!-- Desktop Navigation Buttons -->
             <div x-cloak x-show="step < 3" class="hidden sm:flex justify-end mt-6 gap-3 border-t border-border pt-6">
-                <button type="button" x-show="step === 2" @click="step = 1" class="px-6 py-2 border border-border rounded-lg font-bold text-muted-foreground hover:bg-muted text-sm transition-colors">Kembali</button>
-                <button type="button" @click="nextStep()" class="bg-primary text-primary-foreground font-bold px-8 py-2 rounded-lg shadow text-sm hover:bg-primary/90 transition-colors">Lanjut</button>
+                <button type="button" x-show="step === 2" @click="step = 1" class="btn btn-outline btn-sm font-bold">Kembali</button>
+                <button type="button" @click="nextStep()" class="btn btn-neutral btn-sm font-bold px-8 shadow-sm">Lanjut</button>
             </div>
 
             <!-- Step 3 Desktop Back Button -->
             <div x-cloak x-show="step === 3" class="mt-4 flex justify-between">
-                <button type="button" @click="step = 2" class="px-6 py-2 border border-border rounded-lg font-bold text-muted-foreground hover:bg-muted text-sm transition-colors">Kembali Perbaiki Data</button>
+                <button type="button" @click="step = 2" class="btn btn-outline btn-sm font-bold">Kembali Perbaiki Data</button>
             </div>
         </div>
     </div>

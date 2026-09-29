@@ -14,7 +14,7 @@
             </div>
             <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
                 <button wire:click="exportCsv"
-                    class="inline-flex items-center gap-2 justify-center rounded-md bg-secondary text-secondary-foreground shadow hover:bg-secondary/80 h-9 px-4 text-sm font-semibold transition-colors">
+                    class="btn btn-outline btn-sm shadow-sm gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -38,7 +38,7 @@
                         </svg>
                     </div>
                     <input type="text" wire:model.live.debounce.300ms="search"
-                        class="block w-full h-9 pl-10 pr-10 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        class="input input-bordered input-sm w-full pl-10 pr-10 text-sm"
                         placeholder="Cari nama, invoice, atau WA...">
                     
                     @if($search)
@@ -55,17 +55,17 @@
                     <div class="w-full sm:w-auto">
                         <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Mulai</label>
                         <input type="date" wire:model.live="dateStart"
-                            class="h-9 w-full sm:w-[140px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            class="input input-bordered input-sm w-full sm:w-[140px] text-xs font-semibold">
                     </div>
                     <div class="w-full sm:w-auto">
                         <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Hingga</label>
                         <input type="date" wire:model.live="dateEnd"
-                            class="h-9 w-full sm:w-[140px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            class="input input-bordered input-sm w-full sm:w-[140px] text-xs font-semibold">
                     </div>
                     <div class="w-full sm:w-auto">
                         <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Status</label>
                         <select wire:model.live="filterStatus"
-                            class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            class="select select-bordered select-sm w-full sm:w-[150px] text-xs font-semibold">
                             <option value="">Semua</option>
                             <option value="pending">Pending (Auto)</option>
                             <option value="pending_confirmation">Verifikasi (Manual)</option>

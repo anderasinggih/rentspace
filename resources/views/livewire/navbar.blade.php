@@ -104,13 +104,13 @@
 
             <!-- CTA Button -->
             <a href="{{ route('public.booking') }}" wire:navigate
-                class="hidden sm:inline-flex items-center justify-center rounded-full bg-foreground text-background text-xs font-semibold px-5 py-2 hover:bg-foreground/90 transition-all shadow-sm shrink-0">
+                class="btn btn-sm btn-neutral rounded-full px-5 text-xs shadow-sm hidden sm:inline-flex shrink-0">
                 Sewa Sekarang
             </a>
 
             <!-- Mobile Hamburger -->
             <button @click="publicMenuOpen = !publicMenuOpen"
-                class="md:hidden p-2 rounded-full hover:bg-muted text-foreground transition-colors focus:outline-none">
+                class="btn btn-ghost btn-circle btn-sm md:hidden text-foreground">
                 <svg x-show="!publicMenuOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round">

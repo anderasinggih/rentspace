@@ -10,28 +10,28 @@
                 @if(auth()->user()->role === 'admin')
                     @if($activeTab === 'units')
                         <button type="button" wire:key="btn-add-unit" wire:click="create" wire:loading.attr="disabled"
-                            class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                            Add Unit
+                            class="btn btn-neutral btn-sm shadow-sm">
+                            + Tambah Unit
                         </button>
                     @else
                         <button type="button" wire:key="btn-add-cat" wire:click="createCat" wire:loading.attr="disabled"
-                            class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                            Add Category
+                            class="btn btn-neutral btn-sm shadow-sm">
+                            + Tambah Kategori
                         </button>
                     @endif
                 @endif
             </div>
         </div>
         
-        <!-- Pills Switcher -->
+        <!-- Pills Switcher (DaisyUI Tabs) -->
         <div class="mt-6 flex justify-start">
-            <div class="flex w-full sm:w-auto p-1 bg-muted/60 rounded-lg border border-border/50 backdrop-blur-sm">
+            <div class="tabs tabs-box">
                 <button wire:click="setTab('units')"
-                    class="flex-1 sm:flex-none px-4 py-1.5 text-[13px] transition-all duration-200 rounded-md {{ $activeTab === 'units' ? 'bg-background text-foreground shadow-sm ring-1 ring-border/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40' }}">
+                    class="tab text-sm font-semibold {{ $activeTab === 'units' ? 'tab-active' : '' }}">
                     Unit
                 </button>
                 <button wire:click="setTab('categories')"
-                    class="flex-1 sm:flex-none px-4 py-1.5 text-[13px] transition-all duration-200 rounded-md {{ $activeTab === 'categories' ? 'bg-background text-foreground shadow-sm ring-1 ring-border/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40' }}">
+                    class="tab text-sm font-semibold {{ $activeTab === 'categories' ? 'tab-active' : '' }}">
                     Kategori
                 </button>
             </div>
@@ -53,20 +53,20 @@
                             </svg>
                         </div>
                         <input type="text" wire:model.live.debounce.300ms="search"
-                            class="block w-full h-9 pl-10 pr-3 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            class="input input-bordered input-sm w-full pl-10 text-sm"
                             placeholder="Cari seri, IMEI, warna...">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 w-full sm:flex sm:gap-2 sm:w-auto mt-2 sm:mt-0">
                         <select wire:model.live="filterKategori"
-                            class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            class="select select-bordered select-sm w-full sm:w-[150px] text-xs font-semibold">
                             <option value="">Semua Kategori</option>
                             @foreach($all_categories as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
                         </select>
                         <select wire:model.live="filterStatus"
-                            class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            class="select select-bordered select-sm w-full sm:w-[150px] text-xs font-semibold">
                             <option value="">Semua Status</option>
                             <option value="active">🟢 Aktif</option>
                             <option value="rented">🟡 Sedang Disewa</option>
