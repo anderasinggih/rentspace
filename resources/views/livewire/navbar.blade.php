@@ -15,12 +15,12 @@
     }
 }" class="sticky z-50 mx-auto px-4 w-full max-w-6xl mb-8" style="top: calc(1rem + env(safe-area-inset-top, 0px));">
     <nav
-        class="flex items-center justify-between w-full h-14 border border-border/80 bg-background/80 backdrop-blur-md shadow-sm rounded-full px-5 transition-all duration-300">
+        class="flex items-center justify-between w-full h-16 border border-border/80 bg-background/80 backdrop-blur-md shadow-sm rounded-full px-5 sm:px-6 transition-all duration-300">
         <!-- Left Side: Logo & Links -->
         <div class="flex items-center">
             <!-- Logo Box -->
             <a href="/" wire:navigate
-                class="font-black tracking-tight text-white flex items-center mr-6 shrink-0 transition-opacity hover:opacity-85 text-base">
+                class="font-black tracking-tight text-white flex items-center mr-6 shrink-0 transition-opacity hover:opacity-85 text-base sm:text-lg">
                 <span>RENTSPACE</span>
             </a>
 
