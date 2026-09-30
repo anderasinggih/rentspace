@@ -339,8 +339,9 @@
             </div>
 
             <!-- More Toggle (Desktop Dropdown) -->
-            <div class="relative">
+            <div class="relative" @click.outside="adminMenuOpen = false">
                 <button @click="adminMenuOpen = !adminMenuOpen"
+                    type="button"
                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
                     :class="adminMenuOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -348,7 +349,94 @@
                     </svg>
                     <span>More</span>
                 </button>
+
+                <!-- Desktop Dropdown Popover (Muncul ke atas dock) -->
+                <div x-show="adminMenuOpen"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                     x-cloak
+                     class="hidden sm:block absolute bottom-[calc(100%+14px)] right-0 w-64 apple-floating-glass rounded-2xl border border-border/80 shadow-2xl overflow-hidden p-2 z-50">
+                    
+                    <!-- Header: User info & Dark mode toggle -->
+                    <div class="flex items-center justify-between px-2.5 py-2 border-b border-border/40 mb-1.5">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <div class="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                                <span class="text-xs font-bold text-primary">
+                                    {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
+                                </span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold truncate">{{ auth()->user()->name ?? 'User' }}</p>
+                                <p class="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{{ auth()->user()->role ?? 'Admin' }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Theme Toggle Button -->
+                        <button @click="toggleTheme()" 
+                                type="button"
+                                class="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition"
+                                title="Toggle Theme">
+                            <template x-if="!darkMode">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                            </template>
+                            <template x-if="darkMode">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                            </template>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Items -->
+                    <div class="space-y-0.5">
+                        <a href="{{ route('admin.notes') }}" wire:navigate @click="adminMenuOpen = false"
+                            class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl transition text-xs font-semibold {{ request()->routeIs('admin.notes') ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground' }}">
+                            <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.notes') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="17" x2="12" y2="22"/>
+                                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
+                                </svg>
+                            </div>
+                            <span class="flex-1">Notes (Pinned)</span>
+                            <span class="text-xs text-muted-foreground/40">›</span>
+                        </a>
+
+                        @if(auth()->user()->role === 'admin')
+                            <a href="{{ route('admin.affiliate') }}" wire:navigate @click="adminMenuOpen = false"
+                                class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl transition text-xs font-semibold {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground' }}">
+                                <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.affiliate') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+                                </div>
+                                <span class="flex-1">Affiliate</span>
+                                <span class="text-xs text-muted-foreground/40">›</span>
+                            </a>
+                        @endif
+
+                        <a href="/" wire:navigate @click="adminMenuOpen = false"
+                            class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-muted text-foreground transition text-xs font-semibold">
+                            <div class="h-6 w-6 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                                <span class="text-xs">↗</span>
+                            </div>
+                            <span class="flex-1">Web Publik</span>
+                            <span class="text-xs text-muted-foreground/40">›</span>
+                        </a>
+                    </div>
+
+                    <!-- Footer: Logout -->
+                    <div class="pt-1.5 mt-1.5 border-t border-border/40">
+                        <button wire:click="logout"
+                            class="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl bg-destructive/10 hover:bg-destructive/15 text-destructive transition text-xs font-bold">
+                            <div class="h-6 w-6 rounded-lg bg-destructive/15 flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                            </div>
+                            <span>Keluar</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </nav>
     </div>
+
 </div>
