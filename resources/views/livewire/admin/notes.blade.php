@@ -82,25 +82,25 @@
         @forelse($notes as $note)
             <div class="relative rounded-2xl border border-border/80 bg-card p-4 shadow-xs transition-all duration-200 hover:border-primary/40 {{ $note->is_pinned ? 'ring-1 ring-primary/20' : 'opacity-85' }}">
                 
-                <!-- Card Header -->
-                <div class="flex items-start justify-between gap-3 mb-2.5">
-                    <div class="flex items-center gap-2 min-w-0">
+                <!-- Card Header (Responsive on Mobile) -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 pb-2.5 border-b border-border/40">
+                    <div class="flex items-center gap-2.5 min-w-0">
                         <!-- Avatar / Icon -->
                         <div class="h-8 w-8 rounded-full {{ $note->is_pinned ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground' }} flex items-center justify-center font-bold text-xs shrink-0">
                             {{ strtoupper(substr($note->sender_name ?: ($note->sender_phone ?: 'W'), 0, 1)) }}
                         </div>
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-semibold text-xs text-foreground truncate">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="font-bold text-xs text-foreground truncate max-w-[140px] sm:max-w-[200px]">
                                     {{ $note->sender_name ?: 'Anggota Grup' }}
                                 </span>
-                                @if($note->sender_phone)
+                                @if($note->sender_phone && !str_contains($note->sender_phone, '@g.us'))
                                     <span class="text-[10px] text-muted-foreground font-mono">
                                         ({{ $note->sender_phone }})
                                     </span>
                                 @endif
                             </div>
-                            <div class="flex items-center gap-2 text-[10px] text-muted-foreground">
+                            <div class="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5 flex-wrap">
                                 <span>{{ $note->created_at->format('d M Y, H:i') }}</span>
                                 @if($note->pinned_at)
                                     <span>&bull;</span>
@@ -110,8 +110,8 @@
                         </div>
                     </div>
 
-                    <!-- Pin Badge & Actions -->
-                    <div class="flex items-center gap-1.5 shrink-0">
+                    <!-- Pin Badge & Actions Toolbar -->
+                    <div class="flex items-center justify-between sm:justify-end gap-2 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-border/30 shrink-0">
                         @if($note->is_pinned)
                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
                                 <span>📌 Pinned</span>
@@ -122,29 +122,31 @@
                             </span>
                         @endif
 
-                        <button wire:click="togglePin({{ $note->id }})" 
-                            title="{{ $note->is_pinned ? 'Tandai sebagai tidak di-pin' : 'Tandai sebagai di-pin' }}"
-                            class="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition">
-                            @if($note->is_pinned)
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-primary">
-                                    <path d="M12 17v5"/>
-                                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
-                                </svg>
-                            @else
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="17" x2="12" y2="22"/>
-                                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
-                                </svg>
-                            @endif
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button wire:click="togglePin({{ $note->id }})" 
+                                title="{{ $note->is_pinned ? 'Tandai sebagai unpin' : 'Tandai sebagai pin' }}"
+                                class="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition">
+                                @if($note->is_pinned)
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-primary">
+                                        <path d="M12 17v5"/>
+                                        <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
+                                    </svg>
+                                @else
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="17" x2="12" y2="22"/>
+                                        <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
+                                    </svg>
+                                @endif
+                            </button>
 
-                        <button wire:click="deleteNote({{ $note->id }})" wire:confirm="Hapus catatan ini dari daftar web?"
-                            title="Hapus"
-                            class="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                            </svg>
-                        </button>
+                            <button wire:click="deleteNote({{ $note->id }})" wire:confirm="Hapus catatan ini dari daftar web?"
+                                title="Hapus"
+                                class="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
