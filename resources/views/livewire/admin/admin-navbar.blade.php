@@ -22,8 +22,8 @@
         window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: newTheme } }));
     }
 }" 
-class="fixed bottom-0 left-0 right-0 z-50 pointer-events-none flex flex-col items-center justify-end px-2 sm:px-3 pb-1 sm:pb-3 transition-all duration-300"
-style="padding-bottom: max(0.25rem, env(safe-area-inset-bottom, 0px));">
+class="fixed bottom-0 left-0 right-0 z-50 pointer-events-none flex flex-col items-center justify-end px-2 sm:px-3 pb-0 sm:pb-3 transition-all duration-300"
+style="padding-bottom: env(safe-area-inset-bottom, 0px);">
 
     <!-- Mobile Drawer / Popover More Menu (Transparent Blur Glass) -->
     <div x-show="adminMenuOpen" 
