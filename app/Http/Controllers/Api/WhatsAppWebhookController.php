@@ -37,6 +37,41 @@ class WhatsAppWebhookController extends Controller
             return response()->json(['status' => true, 'message' => 'Admin notified']);
         }
 
+        // Sinkronisasi Pesan Pinned dari Grup WhatsApp Tim
+        if ($action === 'sync_pinned_message') {
+            $messageId = $request->input('message_id');
+            $groupJid = Setting::sanitizeJid($request->input('group_jid', ''));
+            $isPinned = (bool) $request->input('is_pinned', true);
+            $messageText = trim((string) $request->input('text', ''));
+            $senderPhone = $request->input('sender_phone');
+            $senderName = $request->input('sender_name');
+
+            if ($messageId) {
+                if ($isPinned) {
+                    \App\Models\PinnedReport::updateOrCreate(
+                        ['message_id' => $messageId],
+                        [
+                            'group_jid' => $groupJid,
+                            'sender_phone' => $senderPhone,
+                            'sender_name' => $senderName,
+                            'message_text' => $messageText,
+                            'is_pinned' => true,
+                            'pinned_at' => now(),
+                        ]
+                    );
+                    Log::info("PinnedReport: Pesan {$messageId} berhasil di-PIN.", ['sender' => $senderName]);
+                } else {
+                    $existing = \App\Models\PinnedReport::where('message_id', $messageId)->first();
+                    if ($existing) {
+                        $existing->update(['is_pinned' => false]);
+                        Log::info("PinnedReport: Pesan {$messageId} di-UNPIN.");
+                    }
+                }
+            }
+
+            return response()->json(['status' => true, 'message' => 'Pinned message synced']);
+        }
+
         // Jika request dari grup report internal (bot di-tag di grup report)
         if ($action === 'report_group_query') {
             $senderJid = $request->input('sender_jid', '');

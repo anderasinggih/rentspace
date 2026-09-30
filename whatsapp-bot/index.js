@@ -76,6 +76,39 @@ function getSavedContactName(jid, phone) {
     return contact?.name || contact?.notify || contact?.verifiedName || null;
 }
 
+// Cache pesan terkini untuk resolve pesan yang di-PIN di grup
+// Map: messageId -> { text, senderPhone, senderName, groupJid, timestamp }
+const messageCache = new Map();
+function cacheGroupMessage(msgId, data) {
+    if (!msgId) return;
+    messageCache.set(msgId, data);
+    if (messageCache.size > 1000) {
+        const first = messageCache.keys().next().value;
+        messageCache.delete(first);
+    }
+}
+
+async function syncPinnedMessage({ messageId, groupJid, isPinned, text = '', senderPhone = '', senderName = '' }) {
+    if (!messageId) return;
+    try {
+        console.log(`[RentSpace WA Bot] 📌 Syncing PIN status: msgId=${messageId}, isPinned=${isPinned}, text="${text.substring(0, 30)}..."`);
+        await axios.post(LARAVEL_WEBHOOK_URL, {
+            action: 'sync_pinned_message',
+            message_id: messageId,
+            group_jid: groupJid,
+            is_pinned: isPinned,
+            text: text,
+            sender_phone: senderPhone,
+            sender_name: senderName
+        }, {
+            headers: { 'X-API-KEY': API_KEY },
+            timeout: 10000
+        });
+    } catch (err) {
+        console.error('[RentSpace WA Bot] Gagal sync pinned message:', err.message);
+    }
+}
+
 // Track ID pesan yang dikirim oleh bot sendiri agar tidak dianggap sebagai chat manual admin
 const botSentMsgIds = new Set();
 function markBotSent(msgId) {
@@ -353,9 +386,41 @@ async function connectToWhatsApp() {
             const senderNumber = actualPhone || sender.replace('@s.whatsapp.net', '').replace('@lid', '');
             const pushName = msg.pushName || 'Kak';
 
-            // Jika dari Grup WhatsApp (@g.us), hanya proses perintah admin khusus
-            // ATAU jika dari grup report internal dan bot di-tag (@mention)
+            // Deteksi Event PinInChat bawaan WhatsApp
+            const pinInChat = msg.message?.pinInChatMessage;
+            if (pinInChat) {
+                const targetKey = pinInChat.key;
+                const pinType = pinInChat.type; // 1 = PIN_FOR_ALL, 2 = UNPIN_FOR_ALL
+                const isPinned = pinType === 1 || pinType === 'PIN_FOR_ALL';
+                const targetMsgId = targetKey?.id;
+                const groupJid = sender;
+
+                console.log(`[RentSpace WA Bot] 📌 Deteksi pinInChatMessage: targetId=${targetMsgId}, type=${pinType}, group=${groupJid}`);
+
+                const cached = messageCache.get(targetMsgId);
+                await syncPinnedMessage({
+                    messageId: targetMsgId,
+                    groupJid: groupJid,
+                    isPinned: isPinned,
+                    text: cached?.text || '',
+                    senderPhone: cached?.senderPhone || '',
+                    senderName: cached?.senderName || ''
+                });
+                continue;
+            }
+
+            // Jika pesan berada di dalam grup, simpan ke cache agar bisa di-resolve saat di-PIN
             const isGroup = sender.endsWith('@g.us');
+            if (isGroup && trimmedText) {
+                cacheGroupMessage(msg.key.id, {
+                    text: trimmedText,
+                    senderPhone: senderNumber,
+                    senderName: pushName,
+                    groupJid: sender,
+                    timestamp: msg.messageTimestamp
+                });
+            }
+
             if (isGroup) {
                 const isAdminCommand = lowerText.startsWith('/rentspacesettings') || lowerText.startsWith('/broadcast');
                 // Perintah memori AI tidak perlu @mention (dipetakan ke grup report di sisi Laravel)
@@ -386,6 +451,35 @@ async function connectToWhatsApp() {
                     && mentionedJids.some((jid) => botIds.includes(stripJid(jid)));
 
                 console.log(`[RentSpace WA Bot] Grup pesan: isAdminCmd=${isAdminCommand}, isMemoryCmd=${isMemoryCommand}, isMentioned=${isBotMentioned}, botIds=${JSON.stringify(botIds)}, mentions=${JSON.stringify(mentionedJids)}`);
+
+                // Perintah cepat di grup: reply pesan dengan !pin untuk langsung pin ke Web Notes
+                const isPinCmd = lowerText === '!pin' || lowerText === '/pin';
+                const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+                const quotedStanzaId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
+                const quotedParticipant = msg.message?.extendedTextMessage?.contextInfo?.participant;
+
+                if (isPinCmd && quotedStanzaId) {
+                    const quotedText = quotedMsg?.conversation
+                        || quotedMsg?.extendedTextMessage?.text
+                        || quotedMsg?.imageMessage?.caption
+                        || '';
+                    const quotedPhone = (quotedParticipant || '').replace(/[^0-9]/g, '');
+                    const quotedSavedName = getSavedContactName(quotedParticipant, quotedPhone);
+
+                    await syncPinnedMessage({
+                        messageId: quotedStanzaId,
+                        groupJid: sender,
+                        isPinned: true,
+                        text: quotedText,
+                        senderPhone: quotedPhone,
+                        senderName: quotedSavedName || pushName
+                    });
+
+                    await sock.sendMessage(sender, {
+                        text: `📌 *Pesan berhasil di-PIN ke Web Admin Rent Space!*\nBisa dilihat di menu *More -> Notes*.`
+                    }, { quoted: msg });
+                    continue;
+                }
 
                 if (!isAdminCommand && !isBotMentioned && !isMemoryCommand) {
                     continue; // abaikan pesan di grup yang tidak di-tag dan bukan perintah admin
