@@ -63,17 +63,6 @@
         applyTheme();
         // Re-apply after Livewire 3 attribute morphs the HTML tag
         document.addEventListener('livewire:navigated', applyTheme);
-
-        document.addEventListener('alpine:init', () => {
-            if (window.Alpine && !Alpine.store('chat')) {
-                Alpine.store('chat', {
-                    isOpen: false,
-                    open() { this.isOpen = true },
-                    close() { this.isOpen = false },
-                    toggle() { this.isOpen = !this.isOpen }
-                });
-            }
-        });
     </script>
 
     <style>
@@ -280,21 +269,6 @@
     @unless($hideFooter ?? false)
     <x-front.footer />
     @endunless
-
-    @if(\App\Models\Setting::getVal('is_chatbot_active', '1') == '1')
-        <livewire:front.chat-ai />
-    @endif
-
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.store('chat', {
-                isOpen: false,
-                open() { this.isOpen = true },
-                close() { this.isOpen = false },
-                toggle() { this.isOpen = !this.isOpen }
-            })
-        })
-    </script>
 
     @php 
         $osAppId = \App\Models\Setting::getVal('onesignal_app_id');

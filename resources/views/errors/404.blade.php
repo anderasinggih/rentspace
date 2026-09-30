@@ -33,8 +33,15 @@
             </a>
         </div>
 
+        @php
+            $adminWa = \App\Models\Setting::getVal('admin_wa', '6281229509087');
+            $adminWaClean = preg_replace('/[^0-9]/', '', $adminWa);
+            if (str_starts_with($adminWaClean, '0')) {
+                $adminWaClean = '62' . substr($adminWaClean, 1);
+            }
+        @endphp
         <p class="mt-12 text-xs text-muted-foreground">
-            Butuh bantuan? <button @click="$store.chat?.open()" class="font-bold text-primary hover:underline">Tanya CS AI</button>
+            Butuh bantuan? <a href="https://wa.me/{{ $adminWaClean }}?text={{ urlencode('Halo kak, saya butuh bantuan rental iPhone.') }}" target="_blank" class="font-bold text-primary hover:underline">Hubungi WhatsApp</a>
         </p>
     </div>
 @endcomponent
