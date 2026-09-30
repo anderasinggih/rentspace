@@ -117,56 +117,75 @@
     <livewire:admin.admin-navbar />
     <livewire:admin.command-palette />
 
-    <!-- Center Floating Elegant Apple-Style Spinner (DailyPhone style) -->
+    <!-- Center Floating Elegant Apple-Style Spinner (DailyPhone style PageLoader) -->
     <div id="admin-global-loader"
-         class="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center transition-all duration-200 opacity-0 scale-95"
+         class="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center transition-opacity duration-200 opacity-0"
          style="display: none;">
-        <div class="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-card/90 dark:bg-[#1c1c1e]/90 backdrop-blur-xl border border-border/80 shadow-2xl text-foreground font-medium text-xs tracking-tight pointer-events-auto">
-            <!-- iOS / Apple HIG style spinner -->
-            <svg class="animate-spin h-3.5 w-3.5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3.5"></circle>
+        <!-- Very subtle page dim during active load ala DailyPhone -->
+        <div class="absolute inset-0 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]"></div>
+
+        <!-- Centered loading pill -->
+        <div class="relative flex items-center gap-2.5 px-4 py-2 rounded-full bg-card/90 dark:bg-[#1c1c1e]/90 backdrop-blur-2xl border border-border/70 shadow-2xl text-foreground font-medium text-xs tracking-tight pointer-events-auto">
+            <svg class="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
                 <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span class="text-[11px] font-semibold tracking-normal text-foreground/90">Memuat...</span>
+            <span class="text-xs font-semibold text-foreground">Loading…</span>
         </div>
     </div>
 
-    <!-- Livewire Request / Navigate Global Loading Listener -->
+    <!-- Livewire Request / Navigate Global Loading Listener (DailyPhone pattern) -->
     <script>
         (function() {
             let loader = document.getElementById('admin-global-loader');
             let timer = null;
+            let activeRequests = 0;
 
             function showLoader() {
+                activeRequests++;
                 if (!loader) loader = document.getElementById('admin-global-loader');
                 if (!loader) return;
-                // Jeda 120ms agar jika request instan tidak flicker
-                timer = setTimeout(() => {
-                    loader.style.display = 'flex';
-                    requestAnimationFrame(() => {
-                        loader.classList.remove('opacity-0', 'scale-95');
-                        loader.classList.add('opacity-100', 'scale-100');
-                    });
-                }, 120);
+                
+                // Muncul cepat (80ms) agar transisi navigasi tidak terasa freeze
+                if (!timer) {
+                    timer = setTimeout(() => {
+                        loader.style.display = 'flex';
+                        requestAnimationFrame(() => {
+                            loader.classList.remove('opacity-0');
+                            loader.classList.add('opacity-100');
+                        });
+                    }, 80);
+                }
             }
 
             function hideLoader() {
-                if (timer) clearTimeout(timer);
+                activeRequests = Math.max(0, activeRequests - 1);
+                if (activeRequests > 0) return;
+
+                if (timer) {
+                    clearTimeout(timer);
+                    timer = null;
+                }
                 if (!loader) loader = document.getElementById('admin-global-loader');
                 if (!loader) return;
-                loader.classList.remove('opacity-100', 'scale-100');
-                loader.classList.add('opacity-0', 'scale-95');
+
+                loader.classList.remove('opacity-100');
+                loader.classList.add('opacity-0');
                 setTimeout(() => {
-                    if (loader.classList.contains('opacity-0')) {
+                    if (activeRequests === 0 && loader.classList.contains('opacity-0')) {
                         loader.style.display = 'none';
                     }
                 }, 200);
             }
 
-            // Hook ke event Livewire 3
+            // Hook ke event Livewire SPA navigation
             document.addEventListener('livewire:navigating', showLoader);
-            document.addEventListener('livewire:navigated', hideLoader);
+            document.addEventListener('livewire:navigated', () => {
+                activeRequests = 0;
+                hideLoader();
+            });
 
+            // Hook ke event Livewire commit (klik tombol / action / filter)
             document.addEventListener('livewire:init', () => {
                 if (window.Livewire && Livewire.hook) {
                     Livewire.hook('commit', ({ succeed, fail }) => {
@@ -179,7 +198,9 @@
         })();
     </script>
 
-    <main class="flex-1 w-full max-w-7xl mx-auto pt-4 sm:pt-6 pb-24 sm:pb-28 px-4 sm:px-6 lg:px-8">
+    <!-- Main Content with Dynamic Island / Notch safe area padding on mobile -->
+    <main class="flex-1 w-full max-w-7xl mx-auto pb-24 sm:pb-28 px-4 sm:px-6 lg:px-8"
+          style="padding-top: max(1.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));">
         {{ $slot }}
     </main>
 
