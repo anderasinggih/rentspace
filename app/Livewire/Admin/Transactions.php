@@ -66,6 +66,21 @@ class Transactions extends Component
     public $lateDurationText = '';
     public $isOverdue = false;
 
+    // Quick Extend Properties
+    public $isExtendingTrx = false;
+    public $extendTrxId = null;
+    public $extendPreset = '24'; // '12', '24', '48', 'custom'
+    public $extendHours = 24;
+    public $extendCurrentSelesai = '';
+    public $extendNewSelesai = '';
+    public $extendBiayaSewa = 0;
+    public $extendDendaTelat = 0;
+    public $extendDiskon = 0;
+    public $extendTotalTagihan = 0;
+    public $extendCatatan = '';
+    public $extendUnitsRateInfo = [];
+    public $extendWaUrl = '';
+
     // Inspect Modal
     public $inspectTrxId = null;
     public $inspectTrx = null;
@@ -300,6 +315,247 @@ class Transactions extends Component
         }
     }
 
+    // ==========================================
+    // QUICK EXTEND (PERPANJANG SEWA)
+    // ==========================================
+    public function openExtendModal($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+
+        $trx = Rental::with('units')->findOrFail($id);
+        $this->extendTrxId = $trx->id;
+        $this->isExtendingTrx = true;
+        $this->extendPreset = '24';
+        $this->extendHours = 24;
+        $this->extendCurrentSelesai = $trx->waktu_selesai->format('Y-m-d\TH:i');
+        $this->extendCatatan = '';
+        $this->extendDiskon = 0;
+        $this->extendWaUrl = '';
+
+        // Auto calculate late fine jika saat klik extend, waktu selesai sudah terlewat
+        $currentEnd = \Carbon\Carbon::parse($trx->waktu_selesai);
+        $tolerance = (int) \App\Models\Setting::getVal('late_tolerance_minutes', 60);
+        if (now() > $currentEnd->copy()->addMinutes($tolerance)) {
+            $hoursLate = ceil(now()->diffInMinutes($currentEnd) / 60);
+            $totalHourlyRate = 0;
+            foreach ($trx->units as $u) {
+                $totalHourlyRate += ($u->harga_per_jam ?: round($u->harga_per_hari / 24));
+            }
+            $this->extendDendaTelat = $hoursLate * $totalHourlyRate;
+        } else {
+            $this->extendDendaTelat = 0;
+        }
+
+        // Simpan info rate unit untuk panduan admin di modal
+        $this->extendUnitsRateInfo = [];
+        foreach ($trx->units as $u) {
+            $this->extendUnitsRateInfo[] = [
+                'seri' => $u->seri,
+                'per_hari' => $u->harga_per_hari,
+                'per_jam' => $u->harga_per_jam,
+            ];
+        }
+
+        $this->recalculateExtendCalculation();
+    }
+
+    public function updatedExtendPreset($val)
+    {
+        if ($val === 'custom') {
+            // Keep current extendNewSelesai or preset default
+            $this->recalculateExtendCalculation();
+            return;
+        }
+
+        $this->extendHours = (int) $val;
+        $currentEnd = \Carbon\Carbon::parse($this->extendCurrentSelesai);
+        $this->extendNewSelesai = $currentEnd->copy()->addHours($this->extendHours)->format('Y-m-d\TH:i');
+        $this->recalculateExtendCalculation();
+    }
+
+    public function updatedExtendHours()
+    {
+        if ($this->extendPreset !== 'custom') {
+            $currentEnd = \Carbon\Carbon::parse($this->extendCurrentSelesai);
+            $this->extendNewSelesai = $currentEnd->copy()->addHours((int)$this->extendHours)->format('Y-m-d\TH:i');
+        }
+        $this->recalculateExtendCalculation();
+    }
+
+    public function updatedExtendNewSelesai($val)
+    {
+        if ($this->extendPreset === 'custom' && $val) {
+            try {
+                $currentEnd = \Carbon\Carbon::parse($this->extendCurrentSelesai);
+                $newEnd = \Carbon\Carbon::parse($val);
+                if ($newEnd > $currentEnd) {
+                    $this->extendHours = max(1, $currentEnd->diffInHours($newEnd));
+                }
+            } catch (\Exception $e) {}
+        }
+        $this->recalculateExtendCalculation();
+    }
+
+    public function updatedExtendBiayaSewa()
+    {
+        $this->recalculateExtendGrandTotal();
+    }
+
+    public function updatedExtendDendaTelat()
+    {
+        $this->recalculateExtendGrandTotal();
+    }
+
+    public function updatedExtendDiskon()
+    {
+        $this->recalculateExtendGrandTotal();
+    }
+
+    public function recalculateExtendCalculation()
+    {
+        if (!$this->extendTrxId) return;
+
+        $trx = Rental::with('units')->find($this->extendTrxId);
+        if (!$trx) return;
+
+        $currentEnd = \Carbon\Carbon::parse($this->extendCurrentSelesai);
+        if ($this->extendPreset !== 'custom') {
+            $this->extendNewSelesai = $currentEnd->copy()->addHours((int)$this->extendHours)->format('Y-m-d\TH:i');
+        }
+
+        // Kalkulasi tarif sewa otomatis berdasarkan durasi perpanjangan
+        $hours = (int) $this->extendHours;
+        $days = floor($hours / 24);
+        $remHours = $hours % 24;
+
+        $computedCost = 0;
+        foreach ($trx->units as $u) {
+            $computedCost += ($days * $u->harga_per_hari) + ($remHours * ($u->harga_per_jam ?: round($u->harga_per_hari / 24)));
+        }
+
+        $this->extendBiayaSewa = $computedCost;
+        $this->recalculateExtendGrandTotal();
+    }
+
+    public function recalculateExtendGrandTotal()
+    {
+        $biaya = (float) ($this->extendBiayaSewa ?: 0);
+        $denda = (float) ($this->extendDendaTelat ?: 0);
+        $diskon = (float) ($this->extendDiskon ?: 0);
+
+        $this->extendTotalTagihan = max(0, $biaya + $denda - $diskon);
+    }
+
+    public function closeExtendModal()
+    {
+        $this->isExtendingTrx = false;
+        $this->extendTrxId = null;
+        $this->extendWaUrl = '';
+    }
+
+    public function saveExtend($andSendWa = false)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+
+        $this->validate([
+            'extendNewSelesai' => 'required',
+            'extendBiayaSewa' => 'required|numeric|min:0',
+            'extendDendaTelat' => 'nullable|numeric|min:0',
+            'extendDiskon' => 'nullable|numeric|min:0',
+        ]);
+
+        $trx = Rental::with('units')->findOrFail($this->extendTrxId);
+
+        $currentEnd = \Carbon\Carbon::parse($trx->waktu_selesai);
+        $newEnd = \Carbon\Carbon::parse($this->extendNewSelesai);
+
+        if ($newEnd <= $currentEnd) {
+            $this->addError('extendNewSelesai', 'Waktu perpanjangan baru harus setelah jadwal selesai sebelumnya.');
+            return;
+        }
+
+        $biayaSewa = (float) $this->extendBiayaSewa;
+        $dendaTelat = (float) ($this->extendDendaTelat ?: 0);
+        $diskon = (float) ($this->extendDiskon ?: 0);
+        $selisihTagihan = $biayaSewa + $dendaTelat - $diskon;
+
+        $before = [
+            'waktu_selesai' => $trx->waktu_selesai->format('Y-m-d H:i:s'),
+            'subtotal_harga' => $trx->subtotal_harga,
+            'denda' => $trx->denda,
+            'potongan_diskon' => $trx->potongan_diskon,
+            'grand_total' => $trx->grand_total,
+        ];
+
+        // Update rental: perpanjang waktu selesai dan tambahkan komponen biaya
+        $newSubtotal = $trx->subtotal_harga + $biayaSewa;
+        $newDenda = $trx->denda + $dendaTelat;
+        $newDiskon = $trx->potongan_diskon + $diskon;
+        $newGrandTotal = $trx->grand_total + $selisihTagihan;
+
+        $trx->update([
+            'waktu_selesai' => $newEnd,
+            'subtotal_harga' => $newSubtotal,
+            'denda' => $newDenda,
+            'potongan_diskon' => $newDiskon,
+            'grand_total' => $newGrandTotal,
+        ]);
+
+        $after = [
+            'waktu_selesai' => $newEnd->format('Y-m-d H:i:s'),
+            'subtotal_harga' => $newSubtotal,
+            'denda' => $newDenda,
+            'potongan_diskon' => $newDiskon,
+            'grand_total' => $newGrandTotal,
+            'perpanjangan_biaya' => $biayaSewa,
+            'perpanjangan_denda' => $dendaTelat,
+            'perpanjangan_diskon' => $diskon,
+            'catatan' => $this->extendCatatan,
+        ];
+
+        $unitNames = $trx->units->pluck('seri')->implode(', ') ?: ($trx->unit->seri ?? 'Unit');
+        $rentalLabel = $trx->nama ? "{$trx->nama} ({$trx->booking_code})" : $trx->booking_code;
+        $logDesc = "Perpanjang sewa {$rentalLabel} (+{$this->extendHours} jam s/d {$newEnd->format('d/m/Y H:i')}) tagihan baru: Rp" . number_format($selisihTagihan, 0, ',', '.');
+        if ($dendaTelat > 0) {
+            $logDesc .= " (termasuk denda telat Rp" . number_format($dendaTelat, 0, ',', '.') . ")";
+        }
+        if ($diskon > 0) {
+            $logDesc .= " (diskon Rp" . number_format($diskon, 0, ',', '.') . ")";
+        }
+        $this->logActivity('extend_rental', $trx, $logDesc, $before, $after);
+
+        // Siapkan Template Pesan WhatsApp
+        $waMessage = "Halo Kak *" . ($trx->nama ?: 'Kak') . "*,\n";
+        $waMessage .= "Perpanjangan sewa untuk unit *" . $unitNames . "* (" . $trx->booking_code . ") telah berhasil diproses! ⚡\n\n";
+        $waMessage .= "📅 *Jadwal Selesai Baru:*\n" . $newEnd->format('d M Y, H:i') . " WIB\n\n";
+        $waMessage .= "💰 *Rincian Biaya Tambahan:*\n";
+        $waMessage .= "• Biaya Sewa Tambahan: Rp " . number_format($biayaSewa, 0, ',', '.') . "\n";
+        if ($dendaTelat > 0) {
+            $waMessage .= "• Denda Keterlambatan: Rp " . number_format($dendaTelat, 0, ',', '.') . "\n";
+        }
+        if ($diskon > 0) {
+            $waMessage .= "• Potongan Diskon: -Rp " . number_format($diskon, 0, ',', '.') . "\n";
+        }
+        $waMessage .= "-----------------------------\n";
+        $waMessage .= "*Total Tagihan Perpanjangan: Rp " . number_format($selisihTagihan, 0, ',', '.') . "*\n\n";
+        if ($this->extendCatatan) {
+            $waMessage .= "📝 *Catatan:* " . $this->extendCatatan . "\n\n";
+        }
+        $waMessage .= "Lihat detail invoice: " . route('public.success', $trx->booking_code) . "\n\n";
+        $waMessage .= "Silakan lakukan pembayaran sesuai nominal di atas. Terima kasih telah mempercayakan sewa di Rent Space! 🙏✨";
+
+        $waNumber = \App\Helpers\CustomerHelper::formatWa($trx->no_wa);
+        $waUrl = "https://wa.me/" . $waNumber . "?text=" . rawurlencode($waMessage);
+
+        session()->flash('message', "Sewa {$trx->booking_code} berhasil diperpanjang s/d {$newEnd->format('d/m/Y H:i')}.");
+
+        if ($andSendWa && $waNumber) {
+            $this->dispatch('open-url', url: $waUrl);
+        }
+
+        $this->closeExtendModal();
+    }
+
     private function calculateAffiliateCommission($rental)
     {
         if ($rental->affiliator_id) {
@@ -345,6 +601,9 @@ class Transactions extends Component
         }
         if ($this->completingTrxId == $id) {
             $this->closeDendaModal();
+        }
+        if ($this->extendTrxId == $id) {
+            $this->closeExtendModal();
         }
 
         // Use where()->delete() instead of findOrFail()->delete()

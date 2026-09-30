@@ -311,6 +311,14 @@
                                                                                                                                                                                                                                                                 $isLate = (\Carbon\Carbon::parse($trx->waktu_selesai)->addMinutes($tolerance) < now());
                                                                                                                                                                                                                                                             @endphp
                                                                                                                                                                                                                                                             @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                                                                                                                                                                                                                                                {{-- Tombol Cepat Perpanjang --}}
+                                                                                                                                                                                                                                                                <button wire:click.stop="openExtendModal({{ $trx->id }})"
+                                                                                                                                                                                                                                                                    wire:loading.attr="disabled"
+                                                                                                                                                                                                                                                                    wire:target="openExtendModal({{ $trx->id }})"
+                                                                                                                                                                                                                                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 transition-all active:scale-95 shadow-sm shadow-amber-500/5 mr-1.5">
+                                                                                                                                                                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                                                                                                                                                                                                                                                    <span>Perpanjang</span>
+                                                                                                                                                                                                                                                                </button>
                                                                                                                                                                                                                                                                 <x-ui.button wire:click.stop="openDendaModal({{ $trx->id }})"
                                                                                                                                                                                                                                                                     wire:loading.attr="disabled"
                                                                                                                                                                                                                                                                     wire:target="openDendaModal({{ $trx->id }})" :variant="$isLate ? 'destructive' : 'default'" size="sm" class="gap-1.5 shadow-lg">
@@ -457,7 +465,8 @@
                                                                                                                                                                                                                                                                                                                                          @elseif($inspectTrx->status === "paid")
                                                                                                                                                                                                                                                                                                                                              <x-ui.button wire:click="handover({{ $inspectTrx->id }})" wire:confirm="Validasi ambil unit?" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Validasi Ambil</x-ui.button>
                                                                                                                                                                                                                                                                                                                                          @elseif($inspectTrx->status === "renting")
-                                                                                                                                                                                                                                                                                                                                             <x-ui.button wire:click="openDendaModal({{ $inspectTrx->id }})" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Validasi Pengembalian</x-ui.button>
+                                                                                                                                                                                                                                                                                                                                             <button wire:click="openExtendModal({{ $inspectTrx->id }})" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-sm shadow-amber-500/20"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Perpanjang Sewa</button>
+                                                                                                                                                                                                                                                <x-ui.button wire:click="openDendaModal({{ $inspectTrx->id }})" variant="primary" size="sm" class="px-8 shadow-lg shadow-primary/20">Validasi Pengembalian</x-ui.button>
                                                                                                                                                                                                                                                                                                                                          @endif
                                                                                                                                                                                                                                                                                                                                         <x-ui.button wire:click="editTrx({{ $inspectTrx->id }})" variant="outline" size="sm">Edit Transaksi</x-ui.button>
 
@@ -683,6 +692,199 @@
             </div>
         @endif
 
+        
+        <!-- Quick Extend Modal (Perpanjang Sewa) -->
+        @if($isExtendingTrx)
+            @php
+                $currTrx = \App\Models\Rental::with('units')->find($extendTrxId);
+            @endphp
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                <div class="bg-background rounded-2xl shadow-2xl w-full max-w-lg border border-border flex flex-col max-h-[92vh] overflow-hidden">
+                    
+                    {{-- Header --}}
+                    <div class="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                        <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-foreground flex items-center gap-2">
+                                    Perpanjang Masa Sewa
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono font-semibold">
+                                        {{ $currTrx?->booking_code }}
+                                    </span>
+                                </h3>
+                                <p class="text-xs text-muted-foreground mt-0.5">
+                                    {{ $currTrx?->nama }} &bull; {{ $currTrx?->units->pluck('seri')->implode(', ') }}
+                                </p>
+                            </div>
+                        </div>
+                        <button wire:click="closeExtendModal" class="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {{-- Body --}}
+                    <div class="p-5 overflow-y-auto space-y-5 text-xs">
+                        
+                        {{-- Quick Presets --}}
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Pilihan Durasi Cepat</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button type="button" wire:click="$set('extendPreset', '12')"
+                                    class="py-2.5 px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 {{ $extendPreset === '12' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
+                                    <span>+12 Jam</span>
+                                    <span class="text-[9px] font-normal opacity-80">Setengah Hari</span>
+                                </button>
+                                <button type="button" wire:click="$set('extendPreset', '24')"
+                                    class="py-2.5 px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 {{ $extendPreset === '24' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
+                                    <span>+24 Jam</span>
+                                    <span class="text-[9px] font-normal opacity-80">1 Hari Penuh</span>
+                                </button>
+                                <button type="button" wire:click="$set('extendPreset', '48')"
+                                    class="py-2.5 px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 {{ $extendPreset === '48' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
+                                    <span>+2 Hari</span>
+                                    <span class="text-[9px] font-normal opacity-80">48 Jam</span>
+                                </button>
+                                <button type="button" wire:click="$set('extendPreset', 'custom')"
+                                    class="py-2.5 px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 {{ $extendPreset === 'custom' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
+                                    <span>Custom</span>
+                                    <span class="text-[9px] font-normal opacity-80">Pilih Waktu</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Perbandingan Waktu Lama vs Baru --}}
+                        <div class="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-muted/40 border border-border">
+                            <div>
+                                <span class="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Jadwal Selesai Sebelumnya</span>
+                                <div class="font-mono font-semibold text-foreground text-xs">
+                                    {{ \Carbon\Carbon::parse($extendCurrentSelesai)->format('d M Y, H:i') }} WIB
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase block mb-1">Jadwal Selesai Baru (+{{ $extendHours }} jam)</span>
+                                <div class="font-mono font-bold text-amber-600 dark:text-amber-400 text-xs">
+                                    {{ $extendNewSelesai ? \Carbon\Carbon::parse($extendNewSelesai)->format('d M Y, H:i') . ' WIB' : '-' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Input Custom DateTime Picker jika preset Custom --}}
+                        @if($extendPreset === 'custom')
+                            <div class="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-2">
+                                <label class="block text-[11px] font-bold uppercase text-amber-600 dark:text-amber-400">Pilih Tanggal & Jam Selesai Baru</label>
+                                <input type="datetime-local" wire:model.live="extendNewSelesai"
+                                    class="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-amber-500 outline-none">
+                                @error('extendNewSelesai')
+                                    <span class="text-[11px] text-red-500 font-medium block">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        @endif
+
+                        {{-- Form Penyesuaian Biaya (Sewa Tambahan, Denda Telat, Diskon) --}}
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Kalkulasi Tagihan Tambahan</label>
+                                <span class="text-[10px] text-muted-foreground italic">Dapat disesuaikan manual</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-foreground mb-1">Biaya Sewa Tambahan</label>
+                                    <div class="relative">
+                                        <span class="absolute left-2.5 top-2.5 text-xs text-muted-foreground">Rp</span>
+                                        <input type="number" wire:model.live.debounce.300ms="extendBiayaSewa" min="0" step="1000"
+                                            class="w-full h-9 pl-8 pr-2.5 rounded-lg border border-input bg-background text-xs font-semibold focus:ring-1 focus:ring-amber-500 outline-none">
+                                    </div>
+                                    <span class="text-[9px] text-muted-foreground block mt-1 leading-tight">Tarif sewa +{{ $extendHours }} jam</span>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[10px] font-bold text-rose-600 dark:text-rose-400 mb-1">Denda Telat Bayar</label>
+                                    <div class="relative">
+                                        <span class="absolute left-2.5 top-2.5 text-xs text-rose-500">Rp</span>
+                                        <input type="number" wire:model.live.debounce.300ms="extendDendaTelat" min="0" step="1000"
+                                            class="w-full h-9 pl-8 pr-2.5 rounded-lg border border-rose-300 dark:border-rose-900 bg-rose-500/5 text-xs font-semibold text-rose-600 dark:text-rose-400 focus:ring-1 focus:ring-rose-500 outline-none">
+                                    </div>
+                                    <span class="text-[9px] text-rose-500 block mt-1 leading-tight">Denda jika telat minta extend</span>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">Diskon Tambahan</label>
+                                    <div class="relative">
+                                        <span class="absolute left-2.5 top-2.5 text-xs text-emerald-500">Rp</span>
+                                        <input type="number" wire:model.live.debounce.300ms="extendDiskon" min="0" step="1000"
+                                            class="w-full h-9 pl-8 pr-2.5 rounded-lg border border-emerald-300 dark:border-emerald-900 bg-emerald-500/5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 focus:ring-1 focus:ring-emerald-500 outline-none">
+                                    </div>
+                                    <span class="text-[9px] text-emerald-500 block mt-1 leading-tight">Potongan harga (opsional)</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-muted-foreground mb-1">Catatan Perpanjangan (Opsional)</label>
+                                <input type="text" wire:model="extendCatatan"
+                                    placeholder="Contoh: Perpanjang 1 hari karena acara outdoor, denda telat dikompromikan..."
+                                    class="w-full h-9 px-3 rounded-lg border border-input bg-background text-xs focus:ring-1 focus:ring-amber-500 outline-none">
+                            </div>
+                        </div>
+
+                        {{-- Total Tagihan Tambahan Card --}}
+                        <div class="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 block">Total Tagihan Perpanjangan</span>
+                                    <span class="text-[11px] text-muted-foreground">Kekurangan biaya yang harus dibayar customer</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
+                                        Rp {{ number_format($extendTotalTagihan, 0, ',', '.') }}
+                                    </div>
+                                    <span class="text-[9px] text-muted-foreground">
+                                        (Rp {{ number_format($extendBiayaSewa, 0, ',', '.') }} + Rp {{ number_format($extendDendaTelat, 0, ',', '.') }} - Rp {{ number_format($extendDiskon, 0, ',', '.') }})
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {{-- Footer --}}
+                    <div class="p-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 bg-muted/20">
+                        <x-ui.button wire:click="closeExtendModal" variant="outline" size="sm" class="w-full sm:w-auto rounded-xl">
+                            Batal
+                        </x-ui.button>
+                        
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            {{-- Simpan Saja --}}
+                            <x-ui.button wire:click="saveExtend(false)"
+                                wire:loading.attr="disabled"
+                                wire:target="saveExtend"
+                                variant="outline" size="sm" class="rounded-xl flex-1 sm:flex-initial">
+                                Simpan Saja
+                            </x-ui.button>
+
+                            {{-- Simpan & Kirim Tagihan ke WA --}}
+                            <button type="button" wire:click="saveExtend(true)"
+                                wire:loading.attr="disabled"
+                                wire:target="saveExtend"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all active:scale-95 flex-1 sm:flex-initial">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <span>Simpan & Kirim WA</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        @endif
+
         <!-- Edit Transaction Modal -->
         @if($isEditingTrx)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
@@ -849,4 +1051,12 @@
             </div>
         @endif
     </div>
+
+<script>
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('open-url', (event) => {
+            if (event.url) window.open(event.url, '_blank');
+        });
+    });
+</script>
 </div>
