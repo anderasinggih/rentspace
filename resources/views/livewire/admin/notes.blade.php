@@ -148,9 +148,9 @@
                     </div>
                 </div>
 
-                <!-- Message Body -->
-                <div class="bg-background/60 rounded-xl p-3 border border-border/50 text-xs sm:text-sm text-foreground whitespace-pre-wrap leading-relaxed font-sans selection:bg-primary/20">
-                    {{ $note->message_text }}
+                <!-- Message Body with WhatsApp Formatting (*bold*, _italic_, ~strike~, code) -->
+                <div class="bg-background/60 rounded-xl p-3 border border-border/50 text-xs sm:text-sm text-foreground leading-relaxed font-sans selection:bg-primary/20">
+                    {!! $note->formatted_text !!}
                 </div>
             </div>
         @empty
