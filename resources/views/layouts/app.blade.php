@@ -39,6 +39,14 @@
 
     @livewireStyles
     <script>
+        // Otomatis redirect ke /admin jika dibuka dari PWA (Standalone Mode)
+        (function() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            if (isStandalone && window.location.pathname === '/') {
+                window.location.replace('/admin');
+            }
+        })();
+
         function applyTheme() {
             // Default adalah dark mode ala Apple HIG Developer
             if (localStorage.theme === 'light') {
