@@ -32,9 +32,7 @@
     <meta name="apple-mobile-web-app-title" content="RENT SPACE">
     <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
 
-    @if($appId = \App\Models\Setting::getVal('onesignal_app_id'))
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
-    @endif
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @livewireStyles
@@ -279,30 +277,37 @@
     <!-- OneSignal Integration -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
-            await OneSignal.init({
-                appId: "{{ $osAppId }}",
-                @if($osSafariId) safari_web_id: "{{ $osSafariId }}", @endif
-                allowLocalhostAsSecureContext: true,
-            });
+        if (!window._oneSignalInitialized) {
+            window._oneSignalInitialized = true;
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            OneSignalDeferred.push(async function(OneSignal) {
+                try {
+                    await OneSignal.init({
+                        appId: "{{ $osAppId }}",
+                        @if($osSafariId) safari_web_id: "{{ $osSafariId }}", @endif
+                        allowLocalhostAsSecureContext: true,
+                    });
 
-            setTimeout(async () => {
-                const permission = OneSignal.Notifications.permission;
-                if (permission === 'default') {
-                    await OneSignal.showSlidedownPrompt();
+                    setTimeout(async () => {
+                        const permission = OneSignal.Notifications.permission;
+                        if (permission === 'default') {
+                            await OneSignal.showSlidedownPrompt();
+                        }
+
+                        @auth
+                            await OneSignal.login("{{ auth()->id() }}");
+                            await OneSignal.User.addTag("role", "{{ auth()->user()->role }}");
+                        @else
+                            if (OneSignal.User.externalId) {
+                                await OneSignal.logout();
+                            }
+                        @endauth
+                    }, 2000);
+                } catch (e) {
+                    // Suppress duplicate init warnings
                 }
-
-                @auth
-                    await OneSignal.login("{{ auth()->id() }}");
-                    await OneSignal.User.addTag("role", "{{ auth()->user()->role }}");
-                @else
-                    if (OneSignal.User.externalId) {
-                        await OneSignal.logout();
-                    }
-                @endauth
-            }, 2000);
-        });
+            });
+        }
     </script>
     @endif
 
