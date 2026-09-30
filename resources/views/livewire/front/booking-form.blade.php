@@ -1,4 +1,4 @@
-<div class="pt-8 pb-96 sm:pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
+<div class="pt-6 pb-20 sm:pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
 <style>
     /* Fix iOS Safari Scroll Lock and Height Constraints */
     html, body {
@@ -27,7 +27,7 @@
 
         <div x-data="bookingForm()" 
             class="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-6">
-            <form wire:submit.prevent="submit" class="space-y-8 pb-[180px] sm:pb-0">
+            <form wire:submit.prevent="submit" class="space-y-8 pb-6 sm:pb-0">
 
                 <!-- Progress Bar -->
                 <div class="mb-8 border-b border-border pb-4">
@@ -44,13 +44,17 @@
                 </div>
 
                 <!-- STEP 1: Jadwal & Unit -->
-                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-32 sm:pb-8 font-sans">
-                    <!-- 1. Jadwal Sewa -->
-                    <div>
-                        <div class="flex items-center justify-between gap-4 mb-4">
-                            <h2 class="text-xl font-bold tracking-tight text-foreground">1. Jadwal Peminjaman</h2>
+                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-8 sm:pb-6 font-sans">
+                <!-- 1. Pilihan Unit Tersedia -->
+                <div class="space-y-6">
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-center justify-between gap-4 mb-1">
+                            <div>
+                                <h2 class="text-xl font-bold tracking-tight text-foreground">1. Pilih Unit</h2>
+                                <p class="text-xs text-muted-foreground mt-0.5">Pilih satu atau beberapa unit yang ingin Anda sewa.</p>
+                            </div>
                             <a href="{{ route('public.timeline') }}" wire:navigate
-                                class="inline-flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 h-9 px-3.5 text-[11px] font-bold shadow-sm transition-colors border border-primary/20">
+                                class="inline-flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 h-9 px-3.5 text-[11px] font-bold shadow-sm transition-colors border border-primary/20 shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5">
                                     <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
@@ -58,111 +62,9 @@
                                     <line x1="8" x2="8" y1="2" y2="6" />
                                     <line x1="3" x2="21" y1="10" y2="10" />
                                 </svg>
-                                Jadwal
+                                Cek Jadwal Unit
                             </a>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-                            <!-- Tanggal Pengambilan -->
-                            <div>
-                                <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengambilan</label>
-                                <input type="date" value="{{ $tanggal_mulai }}"
-                                    x-on:input="$wire.set('tanggal_mulai', $event.target.value)"
-                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
-                                @error('waktu_mulai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
-                            </div>
-
-                            <!-- Tanggal Pengembalian -->
-                            <div>
-                                <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengembalian</label>
-                                <input type="date" value="{{ $tanggal_selesai }}"
-                                    x-on:input="$wire.set('tanggal_selesai', $event.target.value)"
-                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
-                                @error('waktu_selesai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
-                            </div>
-
-                            <!-- Jam Pengambilan dan Pengembalian -->
-                            <div>
-                                <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Jam Pengambilan dan Pengembalian</label>
-                                <select wire:model.live="jam_mulai"
-                                    class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 outline-none text-foreground">
-                                    @for($h = 0; $h < 24; $h++)
-                                        @php $formattedHour = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00'; @endphp
-                                        <option value="{{ $formattedHour }}">{{ $formattedHour }}</option>
-                                    @endfor
-                                </select>
-                            </div>
-                        </div>
-
-                        @if($tanggal_mulai && $tanggal_selesai && $jam_mulai)
-                            <div class="mt-4 p-3 rounded-xl bg-primary/[0.04] border border-primary/10 text-xs text-muted-foreground flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                                <span>
-                                    Unit diambil pada <strong>{{ \Carbon\Carbon::parse($tanggal_mulai)->translatedFormat('d M Y') }}</strong> jam <strong>{{ $jam_mulai }}</strong>, dan dikembalikan pada <strong>{{ \Carbon\Carbon::parse($tanggal_selesai)->translatedFormat('d M Y') }}</strong> jam <strong>{{ $jam_mulai }}</strong>.
-                                </span>
-                            </div>
-                        @endif
-                    </div>
-
-                <!-- 2. Pilihan Unit -->
-                <div class="space-y-6">
-                    <div class="flex flex-col gap-4">
-                        {{-- SMART MEMBER CHECK --}}
-                        <div class="mb-8 p-4 sm:p-5 rounded-2xl border transition-all duration-500 overflow-hidden relative group {{ $member_checked ? 'bg-emerald-500/[0.03] border-emerald-500/20 shadow-sm' : 'bg-primary/[0.03] border-primary/20 shadow-sm' }}">
-                            {{-- Background Glow --}}
-                            <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full blur-3xl opacity-20 pointer-events-none {{ $member_checked ? 'bg-emerald-500' : 'bg-primary' }}"></div>
-                            
-                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
-                                <div class="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
-                                    <div class="hidden sm:flex h-12 w-12 rounded-2xl items-center justify-center border transition-all duration-500 {{ $member_checked ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-primary/10 border-primary/20 text-primary' }}">
-                                        @if($member_checked)
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                        @else
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                        @endif
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                            <p class="text-sm font-black text-foreground">{{ $member_checked ? ($nama ?: 'Member Terverifikasi') : 'Punya Member?' }}</p>
-                                            @if($member_checked && $this->tier)
-                                                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter {{ $this->tier->color }} badge-shine shadow-sm shrink-0">
-                                                    {{ $this->tier->label }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                        <p class="text-[10px] text-muted-foreground mt-0.5 text-center sm:text-left">
-                                            {{ $member_checked ? 'Promo spesial member Anda sudah aktif di katalog.' : 'Nikmati promo spesial khusus member dengan cek Nomor WhatsApp.' }}
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                <div class="w-full sm:w-auto">
-                                    @if(!$member_checked)
-                                        <div class="flex flex-col gap-1">
-                                            <div class="flex items-center gap-2">
-                                                <div class="relative flex-1 sm:w-48">
-                                                    <input type="text" wire:model.defer="no_wa" placeholder="Masukkan WhatsApp..." maxlength="15"
-                                                        oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                                        class="w-full h-10 px-3 py-2 text-xs border border-border rounded-lg bg-background focus:ring-1 focus:ring-primary outline-none transition-all shadow-sm">
-                                                </div>
-                                                <button type="button" wire:click="checkMember" wire:loading.attr="disabled"
-                                                    class="px-5 h-10 bg-primary text-primary-foreground text-xs font-bold rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 shrink-0">
-                                                    <span wire:loading.remove wire:target="checkMember">Cek</span>
-                                                    <div wire:loading wire:target="checkMember" class="w-3 h-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
-                                                </button>
-                                            </div>
-                                            @error('no_wa') <p class="text-[10px] text-red-500 font-bold ml-1 animate-in fade-in slide-in-from-top-1 duration-300">{{ $message }}</p> @enderror
-                                        </div>
-                                    @else
-                                        <button type="button" wire:click="$set('member_checked', false); $set('no_wa', ''); $set('nikFoundMessage', null); $set('isNikVerified', false); calculatePrice();"
-                                            class="w-full sm:w-auto h-10 px-4 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors">
-                                            Ganti Akun
-                                        </button>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        <h2 class="text-xl font-bold tracking-tight mb-2 text-foreground">2. Pilih Unit Tersedia</h2>
                         
                         @if($waktu_mulai && $waktu_selesai)
                         <!-- Filter & Search Bar -->
@@ -191,8 +93,6 @@
                                     class="block w-full pl-9 pr-3 py-2 text-xs border border-border rounded-lg bg-background focus:ring-1 focus:ring-primary outline-none transition-all shadow-sm">
                             </div>
                         </div>
-
-
 
                         {{-- RESULT LIST --}}
                         <div class="space-y-4 relative">
@@ -278,68 +178,113 @@
                             </div>
                             @endif
                         </div>
-
-                        {{-- KERANJANG SEWA (Desktop Only) --}}
-                        <div x-show="selectedIds.length > 0" class="hidden sm:block mt-8 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div class="flex items-center gap-2 mb-4 px-1">
-                                <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
-                                <h3 class="text-sm font-bold text-foreground">Unit Terpilih (<span x-text="selectedIds.length"></span>)</h3>
-                            </div>
-                            
-                            <div class="bg-muted/30 border border-border rounded-2xl overflow-hidden shadow-sm">
-                                <div class="grid grid-cols-2 gap-3 p-3">
-                                    <template x-for="id in selectedIds" :key="id">
-                                        <div class="flex items-center justify-between p-3.5 bg-background border border-border/50 rounded-xl hover:border-primary/50 transition-all group">
-                                            <div class="flex items-center gap-3">
-                                                <div class="flex flex-col">
-                                                    <p class="text-sm font-bold text-foreground leading-tight" x-text="unitPrices[id]?.seri || 'Unit #' + id"></p>
-                                                    <p class="text-[10px] text-muted-foreground mt-0.5" x-text="(unitPrices[id]?.warna || '') + ' • ' + (unitPrices[id]?.memori || '')"></p>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center gap-4">
-                                                <div class="text-right">
-                                                    <p class="text-xs font-black text-primary">
-                                                        Rp <span x-text="new Intl.NumberFormat('id-ID').format((duration.days * (unitPrices[id]?.day || 0)) + (duration.hours * (unitPrices[id]?.hour || 0)))"></span>
-                                                    </p>
-                                                    <p class="text-[9px] text-muted-foreground leading-none mt-0.5">Estimasi Subtotal</p>
-                                                </div>
-                                                <button type="button" @click="selectedIds = selectedIds.filter(x => x != id)"
-                                                    class="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
-                                
-                                {{-- Subtotal Footer --}}
-                                <div class="bg-primary/5 p-4 border-t border-primary/10 flex justify-between items-center px-6">
-                                    <div class="flex flex-col">
-                                        <span class="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">Total Estimasi Harga</span>
-                                        <span class="text-[9px] text-muted-foreground mt-1">*Harga final akan dihitung otomatis termasuk promo</span>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="text-lg font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal)"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
                         @else
                         <div class="p-6 bg-muted/30 border border-border border-dashed rounded-2xl text-muted-foreground text-xs text-center flex flex-col items-center gap-3">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-40 text-primary"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                            Pilih jadwal sewa terlebih dahulu untuk melihat unit yang tersedia.
+                            Memuat daftar unit yang tersedia...
                         </div>
                         @endif
                     </div>
                 </div>
 
-                
+                <!-- 2. Jadwal Sewa -->
+                <div class="pt-4 border-t border-border/80">
+                    <div class="mb-4">
+                        <h2 class="text-xl font-bold tracking-tight text-foreground">2. Tentukan Tanggal & Jam</h2>
+                        <p class="text-xs text-muted-foreground mt-0.5">Toko melayani pengambilan & pengembalian unit pukul 10:00 - 22:00 WIB.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                        <!-- Tanggal Pengambilan -->
+                        <div>
+                            <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengambilan</label>
+                            <input type="date" wire:model.live="tanggal_mulai"
+                                x-on:change="waktuMulai = $event.target.value + 'T' + ($wire.jam_mulai || '12:00')"
+                                class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
+                            @error('waktu_mulai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Tanggal Pengembalian -->
+                        <div>
+                            <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengembalian</label>
+                            <input type="date" wire:model.live="tanggal_selesai"
+                                x-on:change="waktuSelesai = $event.target.value + 'T' + ($wire.jam_mulai || '12:00')"
+                                class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
+                            @error('waktu_selesai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Jam Pengambilan dan Pengembalian -->
+                        <div>
+                            <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Jam Pengambilan & Pengembalian</label>
+                            <select wire:model.live="jam_mulai"
+                                class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 outline-none text-foreground">
+                                @for($h = 10; $h <= 22; $h++)
+                                    @php $formattedHour = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00'; @endphp
+                                    <option value="{{ $formattedHour }}">{{ $formattedHour }} WIB</option>
+                                @endfor
+                            </select>
+                        </div>
+                    </div>
+
+                    @if($tanggal_mulai && $tanggal_selesai && $jam_mulai)
+                        <div class="mt-4 p-3 rounded-xl bg-primary/[0.04] border border-primary/10 text-xs text-muted-foreground flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                            <span>
+                                Ambil pada <strong>{{ \Carbon\Carbon::parse($tanggal_mulai)->translatedFormat('d M Y') }}</strong> jam <strong>{{ $jam_mulai }} WIB</strong>, kembali pada <strong>{{ \Carbon\Carbon::parse($tanggal_selesai)->translatedFormat('d M Y') }}</strong> jam <strong>{{ $jam_mulai }} WIB</strong>.
+                            </span>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- KERANJANG SEWA (Desktop Only) --}}
+                <div x-show="selectedIds.length > 0" class="hidden sm:block mt-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div class="flex items-center gap-2 mb-4 px-1">
+                        <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
+                        <h3 class="text-sm font-bold text-foreground">Unit Terpilih (<span x-text="selectedIds.length"></span>)</h3>
+                    </div>
+                    
+                    <div class="bg-muted/30 border border-border rounded-2xl overflow-hidden shadow-sm">
+                        <div class="grid grid-cols-2 gap-3 p-3">
+                            <template x-for="id in selectedIds" :key="id">
+                                <div class="flex items-center justify-between p-3.5 bg-background border border-border/50 rounded-xl hover:border-primary/50 transition-all group">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex flex-col">
+                                            <p class="text-sm font-bold text-foreground leading-tight" x-text="unitPrices[id]?.seri || 'Unit #' + id"></p>
+                                            <p class="text-[10px] text-muted-foreground mt-0.5" x-text="(unitPrices[id]?.warna || '') + ' • ' + (unitPrices[id]?.memori || '')"></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <div class="text-right">
+                                            <p class="text-xs font-black text-primary">
+                                                Rp <span x-text="new Intl.NumberFormat('id-ID').format((duration.days * (unitPrices[id]?.day || 0)) + (duration.hours * (unitPrices[id]?.hour || 0)))"></span>
+                                            </p>
+                                            <p class="text-[9px] text-muted-foreground leading-none mt-0.5">Estimasi Subtotal</p>
+                                        </div>
+                                        <button type="button" @click="selectedIds = selectedIds.filter(x => x != id)"
+                                            class="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        {{-- Subtotal Footer --}}
+                        <div class="bg-primary/5 p-4 border-t border-primary/10 flex justify-between items-center px-6">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">Total Estimasi Harga</span>
+                                <span class="text-[9px] text-muted-foreground mt-1">*Harga final akan dihitung otomatis termasuk promo</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal)"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 </div> <!-- END STEP 1 -->
 
                 <!-- STEP 2: Data Diri & Promo -->
-                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-96 sm:pb-8 font-sans">
+                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-8 sm:pb-6 font-sans">
 <!-- 5. Data Diri -->
                 <div>
                     <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">{{ (!empty($selected_unit_ids) && $waktu_mulai &&
@@ -566,13 +511,10 @@
 
 
 
-                <!-- Spacer to force mobile scrolling past the fixed bottom calculation bar -->
-                <div class="h-96 sm:hidden"></div>
-                
                 </div> <!-- END STEP 2 -->
-
-                <!-- STEP 3: Tagihan & TNC -->
-                <div x-show="step === 3" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-32 sm:pb-8">
+ 
+                 <!-- STEP 3: Tagihan & TNC -->
+                 <div x-show="step === 3" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-8 sm:pb-6">
 @if(!empty($selected_unit_ids) && $waktu_mulai && $waktu_selesai)
                 <div class="bg-primary/5 rounded-xl p-6 border border-primary/20 relative overflow-hidden">
                     <!-- Price Loader Overlay -->
@@ -669,20 +611,27 @@
                     </div>
                 @endif
 
-                <button type="submit" wire:loading.attr="disabled"
-                    class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-8.5 font-bold text-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all">
-                    <span wire:loading.remove wire:target="submit">Sewa & Lanjut Pembayaran</span>
-                    <div wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
-                        <span class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
-                        <span>Memproses...</span>
-                    </div>
-                </button>
+                <div class="flex flex-col sm:flex-row items-center gap-3 pt-4">
+                    <button type="button" @click="step = 2; window.scrollTo({top: 0, behavior: 'smooth'})"
+                        class="w-full sm:w-auto order-2 sm:order-1 inline-flex items-center justify-center rounded-full border border-border bg-card px-6 h-11 text-xs sm:text-sm font-semibold text-muted-foreground hover:bg-muted active:scale-95 transition-all">
+                        ← Kembali Perbaiki Data
+                    </button>
+
+                    <button type="submit" wire:loading.attr="disabled"
+                        class="w-full flex-1 order-1 sm:order-2 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 sm:h-12 px-8 font-bold text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 transition-all">
+                        <span wire:loading.remove wire:target="submit">Sewa & Lanjut Pembayaran</span>
+                        <div wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
+                            <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
+                            <span>Memproses...</span>
+                        </div>
+                    </button>
+                </div>
             
                 </div> <!-- END STEP 3 -->
             </form>
 
     <!-- Sticky Summary & Navigation Bar (Mobile) -->
-    <div x-cloak x-show="step < 3 && selectedIds.length > 0 && subtotal > 0 && !keyboardOpen" 
+    <div x-cloak x-show="step < 3 && selectedIds.length > 0" 
         wire:key="sticky-booking-summary"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="translate-y-full"
@@ -804,21 +753,36 @@
         </div>
     </div>
 
-            <!-- Desktop Navigation Buttons -->
-            <div x-cloak x-show="step < 3" class="hidden sm:flex justify-end mt-6 gap-3 border-t border-border pt-6">
-                <button type="button" x-show="step === 2" @click="step = 1" class="px-6 py-2 border border-border rounded-lg font-bold text-muted-foreground hover:bg-muted text-sm transition-colors">Kembali</button>
-                <button type="button" @click="nextStep()" class="bg-primary text-primary-foreground font-bold px-8 py-2 rounded-lg shadow text-sm hover:bg-primary/90 transition-colors">Lanjut</button>
-            </div>
-
-            <!-- Step 3 Desktop Back Button -->
-            <div x-cloak x-show="step === 3" class="mt-4 flex justify-between">
-                <button type="button" @click="step = 2" class="px-6 py-2 border border-border rounded-lg font-bold text-muted-foreground hover:bg-muted text-sm transition-colors">Kembali Perbaiki Data</button>
+            <!-- Desktop Navigation Buttons & Calculation Bar -->
+            <div x-cloak x-show="step < 3" class="hidden sm:flex items-center justify-between mt-6 gap-4 border-t border-border pt-6">
+                <div>
+                    <template x-if="selectedIds.length > 0">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-muted-foreground font-semibold">
+                                Estimasi (<span class="font-bold text-foreground" x-text="selectedIds.length"></span> unit):
+                            </span>
+                            <span class="text-base font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - (potonganDiskon || 0)))"></span>
+                            <template x-if="potonganDiskon > 0">
+                                <span class="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-bold text-green-600 dark:text-green-400">
+                                    -Rp<span x-text="new Intl.NumberFormat('id-ID').format(potonganDiskon)"></span>
+                                </span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button" x-show="step === 2" @click="step = 1; window.scrollTo({top: 0, behavior: 'smooth'})" 
+                        class="px-6 h-10 border border-border rounded-full font-bold text-muted-foreground hover:bg-muted text-xs sm:text-sm transition-all active:scale-95">
+                        ← Kembali
+                    </button>
+                    <button type="button" @click="nextStep()" 
+                        class="bg-primary text-primary-foreground font-bold px-8 h-10 rounded-full shadow hover:bg-primary/90 text-xs sm:text-sm transition-all active:scale-95">
+                        Lanjut →
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Giant empty spacer container to force body height and scrolling on mobile -->
-    <div x-show="step < 3" class="h-[160px] w-full block sm:hidden"></div>
 </div>
 
 @script
@@ -911,7 +875,23 @@
         },
 
         get subtotal() {
-            return Number(this.subtotalBackend) || 0;
+            const backend = Number(this.subtotalBackend) || 0;
+            if (backend > 0) return backend;
+            
+            // Fallback kalkulasi instan di sisi client jika backend sedang loading
+            if (this.selectedIds && this.selectedIds.length > 0 && this.unitPrices) {
+                const dur = this.duration;
+                const days = dur.days > 0 ? dur.days : (dur.hours === 0 ? 1 : 0);
+                let clientTotal = 0;
+                for (const id of this.selectedIds) {
+                    const price = this.unitPrices[id];
+                    if (price) {
+                        clientTotal += (days * (price.day || 0)) + (dur.hours * (price.hour || 0));
+                    }
+                }
+                if (clientTotal > 0) return clientTotal;
+            }
+            return backend;
         },
 
         init() {

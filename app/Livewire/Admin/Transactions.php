@@ -55,6 +55,8 @@ class Transactions extends Component
     public $edit_waktu_mulai, $edit_waktu_selesai;
     public $edit_subtotal, $edit_diskon, $edit_denda, $edit_denda_kerusakan;
     public $edit_status, $edit_metode_pembayaran, $edit_catatan_kerusakan;
+    public $edit_unit_ids = [];
+    public $allUnitsList = [];
 
     public $completingTrxId = null;
     public $dendaAmount = 0;
@@ -432,13 +434,38 @@ class Transactions extends Component
         $this->edit_catatan_kerusakan = $trx->catatan_kerusakan;
         $this->edit_status = $trx->status;
         $this->edit_metode_pembayaran = strtolower($trx->metode_pembayaran);
+        $this->edit_unit_ids = $trx->units->pluck('id')->toArray();
+        $this->allUnitsList = \App\Models\Unit::orderBy('seri')->get();
         $this->isEditingTrx = true;
+    }
+
+    public function recalculateEditSubtotal()
+    {
+        if (empty($this->edit_unit_ids) || !$this->edit_waktu_mulai || !$this->edit_waktu_selesai) {
+            return;
+        }
+
+        try {
+            $start = \Carbon\Carbon::parse($this->edit_waktu_mulai);
+            $end = \Carbon\Carbon::parse($this->edit_waktu_selesai);
+            $diffInHours = max(1, $start->diffInHours($end));
+            $days = floor($diffInHours / 24);
+            $remainingHours = $diffInHours % 24;
+
+            $selectedUnits = \App\Models\Unit::whereIn('id', $this->edit_unit_ids)->get();
+            $newSubtotal = 0;
+            foreach ($selectedUnits as $u) {
+                $newSubtotal += ($days * $u->harga_per_hari) + ($remainingHours * $u->harga_per_jam);
+            }
+            $this->edit_subtotal = $newSubtotal;
+        } catch (\Exception $e) {}
     }
 
     public function closeEditModal()
     {
         $this->isEditingTrx = false;
         $this->editTrxId = null;
+        $this->edit_unit_ids = [];
     }
 
     public function updateTrx()
@@ -488,6 +515,15 @@ class Transactions extends Component
             'status' => $this->edit_status,
             'metode_pembayaran' => strtolower($this->edit_metode_pembayaran),
         ]);
+
+        if (!empty($this->edit_unit_ids)) {
+            $syncData = [];
+            $units = \App\Models\Unit::whereIn('id', $this->edit_unit_ids)->get();
+            foreach ($units as $u) {
+                $syncData[$u->id] = ['price_snapshot' => $u->harga_per_hari];
+            }
+            $trx->units()->sync($syncData);
+        }
 
         $after = [
             'nama' => strtoupper($this->edit_nama),

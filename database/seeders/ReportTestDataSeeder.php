@@ -98,6 +98,18 @@ class ReportTestDataSeeder extends Seeder
                 'status' => 'completed', 'total' => 150000,
                 'handed_over' => $now->copy()->subDays(25)->setTime(14, 30),
             ],
+            // Dibayar bulan ini, tapi sewa-nya mulai bulan lalu. Baris inilah yang
+            // membuat omset "versi dashboard web" (paid_at) beda dari omset
+            // "tanggal mulai sewa" — tanpa itu, selisihnya di web tidak punya
+            // penjelasan nyata dan AI mengarang alasannya.
+            [
+                'unit' => 0, 'nama' => 'Lestari Ningrum', 'no_wa' => '081200000006',
+                'mulai' => $now->copy()->subDays(31)->setTime(9, 0),
+                'selesai' => $now->copy()->subDays(29)->setTime(17, 0),
+                'status' => 'completed', 'total' => 100000,
+                'handed_over' => $now->copy()->subDays(29)->setTime(17, 30),
+                'paid_at' => $now->copy()->subDays(26)->setTime(20, 0),
+            ],
         ];
 
         foreach ($rows as $spec) {
@@ -116,6 +128,8 @@ class ReportTestDataSeeder extends Seeder
                 'catatan_kerusakan' => $spec['catatan_kerusakan'] ?? null,
                 'handed_over_at' => $spec['handed_over'] ?? null,
                 'completed_at' => $spec['status'] === 'completed' ? $spec['handed_over'] ?? null : null,
+                // Mayoritas dibayar saat mulai sewa; sisanya punya tanggal bayar sendiri.
+                'paid_at' => $spec['paid_at'] ?? $spec['mulai'],
             ]);
 
             DB::table('rental_items')->insert([
@@ -127,6 +141,6 @@ class ReportTestDataSeeder extends Seeder
             ]);
         }
 
-        $this->command?->info('Data uji grup report siap: 4 unit (1 non-aktif), 5 transaksi.');
+        $this->command?->info('Data uji grup report siap: 4 unit (1 non-aktif), 6 transaksi.');
     }
 }

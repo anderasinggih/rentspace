@@ -84,23 +84,50 @@ class Settings extends Component
 
     public $is_chatbot_active = true;
     public $chatbot_api_key = '';
-    public $chatbot_model = 'gemini-3.5-flash-lite';
+    public $chatbot_model = \App\Services\GeminiAIService::DEFAULT_MODEL;
     public $chatbot_tpm_limit = '300000';
     public $chatbot_report_data_limit = '0';
+
+    // Slot 2-4 untuk failover. Google menghitung kuota per project, jadi
+    // slot tambahan ini hanya membantu kalau kuncinya dibuat di project berbeda.
+    public $chatbot_api_key_2 = '';
+    public $chatbot_api_key_3 = '';
+    public $chatbot_api_key_4 = '';
 
     // API key & model dipisah per fitur supaya kuota tiap fitur bisa diatur
     // dan diamankan terpisah (lihat GeminiAIService::apiKeyFor).
     public $report_api_key = '';
-    public $report_model = 'gemini-3.5-flash-lite';
+    public $report_model = \App\Services\GeminiAIService::DEFAULT_MODEL;
     public $broadcast_api_key = '';
-    public $broadcast_model = 'gemini-3.5-flash-lite';
+    public $broadcast_model = \App\Services\GeminiAIService::DEFAULT_MODEL;
     public $ai_key_test = [];   // hasil tombol "Tes" per fitur
+    public $ai_key_test_slot = []; // hasil tes per slot kunci: "customer_3" => hasil
     public $testing_ai_feature = null;
     public $aiSettingsMessage = null; // ['ok' => bool, 'text' => string] — hanya tampil di tab WhatsApp
 
     public $admin_wa_secondary = '';
     public $admin_wa_group_id = '';
     public $admin_report_group_id = '';
+    public $admin_notify_group_id = '';
+
+    // Notifikasi tim ke grup WA (template statis, tanpa AI)
+    public $notif_group_booking = true;
+    public $notif_group_status = true;
+    public $notif_group_reminder = true;
+    public $notif_staff_pickup_minutes = 60;
+    public $notif_staff_return_minutes = 60;
+    public $notif_staff_late_minutes = 30;
+    public $staffNotifMessage = null; // ['ok' => bool, 'text' => string] — hasil tombol "Kirim Contoh"
+
+    // Instagram Story (Graph API). Token disimpan di tabel settings supaya bisa
+    // diganti dari panel admin tanpa edit .env, mengikuti pola setting lain.
+    public $ig_user_id = '';
+    public $ig_access_token = '';
+    public $ig_graph_version = 'v21.0';
+    public $ig_story_caption_template = '';
+    public $ig_story_overlay_template = '';
+    public $ig_story_theme = '#0f172a';
+    public $igStoryMessage = null; // ['ok' => bool, 'text' => string] — hasil tombol "Tes Koneksi"
     public $chatbot_custom_knowledge = [];
     public $new_knowledge_key = '';
     public $new_knowledge_value = '';
@@ -192,20 +219,36 @@ class Settings extends Component
         // Load Chatbot Settings
         $this->is_chatbot_active = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         $this->chatbot_api_key = \App\Models\Setting::getVal('chatbot_api_key', config('services.gemini.key') ?: '');
-        $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', 'gemini-3.5-flash-lite');
+        $this->chatbot_model = \App\Models\Setting::getVal('chatbot_model', \App\Services\GeminiAIService::DEFAULT_MODEL);
         $this->chatbot_tpm_limit = (string) \App\Models\Setting::getVal('chatbot_tpm_limit', '300000');
         $this->chatbot_report_data_limit = (string) \App\Models\Setting::getVal('chatbot_report_data_limit', '0');
+
+        for ($slot = 2; $slot <= \App\Services\GeminiAIService::KEY_POOL_SIZE; $slot++) {
+            $prop = \App\Services\GeminiAIService::keySlotName('customer', $slot);
+            $this->{$prop} = (string) \App\Models\Setting::getVal(
+                \App\Services\GeminiAIService::keySlotName('customer', $slot),
+                ''
+            );
+        }
 
         // Key & model laporan & broadcast. Kosong = otomatis pakai key customer,
         // jadi instalasi lama yang hanya punya satu key tidak ikut rusak.
         $this->report_api_key = (string) \App\Models\Setting::getVal('report_api_key', '');
-        $this->report_model = (string) \App\Models\Setting::getVal('report_model', 'gemini-3.5-flash-lite');
+        $this->report_model = (string) \App\Models\Setting::getVal('report_model', \App\Services\GeminiAIService::DEFAULT_MODEL);
         $this->broadcast_api_key = (string) \App\Models\Setting::getVal('broadcast_api_key', '');
-        $this->broadcast_model = (string) \App\Models\Setting::getVal('broadcast_model', 'gemini-3.5-flash-lite');
+        $this->broadcast_model = (string) \App\Models\Setting::getVal('broadcast_model', \App\Services\GeminiAIService::DEFAULT_MODEL);
         $this->ai_key_test = [];
+        $this->ai_key_test_slot = [];
         $this->admin_wa_secondary = \App\Models\Setting::getVal('admin_wa_secondary', '');
         $this->admin_wa_group_id = \App\Models\Setting::getVal('admin_wa_group_id', '');
         $this->admin_report_group_id = \App\Models\Setting::getVal('admin_report_group_id', '');
+        $this->admin_notify_group_id = \App\Models\Setting::getVal('admin_notify_group_id', '');
+        $this->notif_group_booking = \App\Models\Setting::getVal('notif_group_booking', '1') == '1';
+        $this->notif_group_status = \App\Models\Setting::getVal('notif_group_status', '1') == '1';
+        $this->notif_group_reminder = \App\Models\Setting::getVal('notif_group_reminder', '1') == '1';
+        $this->notif_staff_pickup_minutes = \App\Models\Setting::getVal('notif_staff_pickup_minutes', '60');
+        $this->notif_staff_return_minutes = \App\Models\Setting::getVal('notif_staff_return_minutes', '60');
+        $this->notif_staff_late_minutes = \App\Models\Setting::getVal('notif_staff_late_minutes', '30');
         $rawKnowledge = \App\Models\Setting::getVal('chatbot_custom_knowledge', '[]');
         $this->chatbot_custom_knowledge = json_decode($rawKnowledge, true) ?: [];
 
@@ -230,6 +273,15 @@ class Settings extends Component
         $this->onesignal_app_id = \App\Models\Setting::getVal('onesignal_app_id', '');
         $this->onesignal_rest_api_key = \App\Models\Setting::getVal('onesignal_rest_api_key', '');
         $this->onesignal_safari_web_id = \App\Models\Setting::getVal('onesignal_safari_web_id', '');
+
+        // Load Instagram Story Settings
+        $this->ig_user_id = (string) \App\Models\Setting::getVal('ig_user_id', '');
+        $this->ig_access_token = (string) \App\Models\Setting::getVal('ig_access_token', '');
+        $this->ig_graph_version = (string) \App\Models\Setting::getVal('ig_graph_version', 'v21.0');
+        $composer = new \App\Services\InstagramStoryComposer(new \App\Models\Unit());
+        $this->ig_story_caption_template = (string) \App\Models\Setting::getVal('ig_story_caption_template', $composer->defaultCaptionTemplate());
+        $this->ig_story_overlay_template = (string) \App\Models\Setting::getVal('ig_story_overlay_template', $composer->defaultOverlayTemplate());
+        $this->ig_story_theme = (string) \App\Models\Setting::getVal('ig_story_theme', '#0f172a');
     }
 
     // Removed loadUsers() to use paginate in render()
@@ -433,6 +485,7 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'is_chatbot_active'], ['value' => $this->is_chatbot_active ? '1' : '0']);
         $this->persistAiFeatureSettings();
         $this->ai_key_test = [];
+        $this->ai_key_test_slot = [];
         $this->aiSettingsMessage = ['ok' => true, 'text' => 'Pengaturan AI tersimpan (kunci & model per fitur).'];
 
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_tpm_limit'], ['value' => (string) max(1000, (int) $this->chatbot_tpm_limit)]);
@@ -441,6 +494,13 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_secondary'], ['value' => trim($this->admin_wa_secondary)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_wa_group_id)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_report_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_report_group_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'admin_notify_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_notify_group_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_group_booking'], ['value' => $this->notif_group_booking ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_group_status'], ['value' => $this->notif_group_status ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_group_reminder'], ['value' => $this->notif_group_reminder ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_staff_pickup_minutes'], ['value' => max(5, (int) $this->notif_staff_pickup_minutes)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_staff_return_minutes'], ['value' => max(5, (int) $this->notif_staff_return_minutes)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_staff_late_minutes'], ['value' => max(5, (int) $this->notif_staff_late_minutes)]);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_custom_knowledge'], ['value' => json_encode(array_values($this->chatbot_custom_knowledge))]);
 
         // Save OneSignal Settings
@@ -461,6 +521,108 @@ class Settings extends Component
     }
 
     /**
+     * Kirim satu pesan contoh ke grup notifikasi.
+     *
+     * Cara paling murah buat memastikan grup benar-benar terhubung dan bot
+     * sedang online, tanpa harus menunggu ada pesanan sungguhan.
+     */
+    public function testStaffNotif()
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) {
+            return;
+        }
+
+        $targets = \App\Services\NotifService::targets();
+        if (empty($targets)) {
+            $this->staffNotifMessage = ['ok' => false, 'text' => 'Belum ada target. Isi ID Grup WA Notifikasi atau nomor WA admin.'];
+            return;
+        }
+
+        $unit = \App\Models\Unit::where('is_active', true)->first();
+        $rental = new \App\Models\Rental([
+            'nama' => 'Contoh Customer',
+            'no_wa' => \App\Models\Setting::getVal('admin_wa', '6280000000000'),
+            'waktu_mulai' => now()->addHour(),
+            'waktu_selesai' => now()->addHours(3),
+            'grand_total' => 150000,
+            'status' => 'paid',
+        ]);
+        $rental->booking_code = 'CONTOH';
+        $rental->setRelation('units', $unit ? collect([$unit]) : collect());
+
+        $ok = \App\Services\NotifService::reminderPickup($rental, 60);
+
+        $this->staffNotifMessage = $ok
+            ? ['ok' => true, 'text' => 'Pesan contoh terkirim ke grup.']
+            : ['ok' => false, 'text' => 'Gagal kirim. Cek status koneksi bot WA.'];
+    }
+
+    /**
+     * Simpan pengaturan Instagram Story.
+     *
+     * Token tidak pernah ditampilkan penuh di input: yang tampil hanya penanda
+     * "sudah tersimpan" supaya admin tidak perlu menyalin ulang string panjang
+     * setiap kali mau ganti template.
+     */
+    public function saveInstagramSettings()
+    {
+        if (auth()->user()->role !== 'admin') {
+            return;
+        }
+
+        $this->validate([
+            'ig_user_id' => 'nullable|regex:/^\d{5,25}$/',
+            'ig_access_token' => 'nullable|min:20',
+            'ig_graph_version' => 'required|regex:/^v\d{1,2}\.\d{1,3}$/',
+            'ig_story_caption_template' => 'nullable|max:2200',
+            'ig_story_overlay_template' => 'nullable|max:500',
+            'ig_story_theme' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+        ], [
+            'ig_user_id.regex' => 'IG User ID harus berupa angka.',
+            'ig_access_token.min' => 'Token Instagram minimal 20 karakter.',
+            'ig_graph_version.regex' => 'Format versi harus seperti v21.0.',
+            'ig_story_theme.regex' => 'Warna tema harus format hex, contoh #0f172a.',
+        ]);
+
+        $S = fn(string $key, $value) => \App\Models\Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+
+        $S('ig_user_id', trim((string) $this->ig_user_id));
+        $S('ig_graph_version', trim((string) $this->ig_graph_version));
+        $S('ig_story_caption_template', (string) $this->ig_story_caption_template);
+        $S('ig_story_overlay_template', (string) $this->ig_story_overlay_template);
+        $S('ig_story_theme', trim((string) $this->ig_story_theme));
+
+        // Input token kosong = pertahankan token lama, bukan hapus.
+        if (trim((string) $this->ig_access_token) !== '') {
+            $S('ig_access_token', trim((string) $this->ig_access_token));
+        }
+        $this->ig_access_token = '';
+
+        $this->igStoryMessage = ['ok' => true, 'text' => 'Pengaturan Instagram Story tersimpan.'];
+    }
+
+    /**
+     * Tes koneksi Graph API. Memakai nilai di form (bukan yang tersimpan) supaya
+     * admin bisa paste token baru lalu langsung tes tanpa menyimpan dulu.
+     */
+    public function testInstagramConnection()
+    {
+        if (auth()->user()->role !== 'admin') {
+            return;
+        }
+
+        // Simpan dulu supaya InstagramService membaca nilai terbaru.
+        $this->saveInstagramSettings();
+
+        $result = \App\Services\InstagramService::testConnection();
+
+        $this->igStoryMessage = [
+            'ok' => (bool) $result['ok'],
+            'text' => (string) $result['message'],
+        ];
+    }
+
+    /**
      * Aturan validasi untuk enam field kunci/model AI per fitur.
      *
      * Dipisah dari `saveGeneralSettings` supaya tombol "Tes Kunci" bisa
@@ -469,26 +631,48 @@ class Settings extends Component
      */
     private function validateAiFeatureSettings(): void
     {
-        $this->validate([
+        $rules = [
             'chatbot_api_key' => 'nullable|string|max:200',
             'report_api_key' => 'nullable|string|max:200',
             'broadcast_api_key' => 'nullable|string|max:200',
             'chatbot_model' => 'nullable|string',
             'report_model' => 'nullable|string',
             'broadcast_model' => 'nullable|string',
-        ], [
+        ];
+
+        for ($slot = 2; $slot <= \App\Services\GeminiAIService::KEY_POOL_SIZE; $slot++) {
+            $rules[\App\Services\GeminiAIService::keySlotName('customer', $slot)] = 'nullable|string|max:200';
+        }
+
+        $messages = [
             'chatbot_api_key.max' => 'API Key Customer kelewat panjang (maksimal 200 karakter).',
             'report_api_key.max' => 'API Key Laporan kelewat panjang (maksimal 200 karakter).',
             'broadcast_api_key.max' => 'API Key Broadcast kelewat panjang (maksimal 200 karakter).',
-        ]);
+        ];
+
+        for ($slot = 2; $slot <= \App\Services\GeminiAIService::KEY_POOL_SIZE; $slot++) {
+            $prop = \App\Services\GeminiAIService::keySlotName('customer', $slot);
+            $messages["{$prop}.max"] = "API Key Customer slot {$slot} kelewat panjang (maksimal 200 karakter).";
+        }
+
+        $this->validate($rules, $messages);
     }
 
     /** Tulis kunci + model ketiga fitur ke tabel settings. */
     private function persistAiFeatureSettings(): void
     {
-        $default = 'gemini-3.5-flash-lite';
+        $default = \App\Services\GeminiAIService::DEFAULT_MODEL;
 
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => trim((string) $this->chatbot_api_key)]);
+
+        for ($slot = 2; $slot <= \App\Services\GeminiAIService::KEY_POOL_SIZE; $slot++) {
+            $prop = \App\Services\GeminiAIService::keySlotName('customer', $slot);
+            \App\Models\Setting::updateOrCreate(
+                ['key' => \App\Services\GeminiAIService::keySlotName('customer', $slot)],
+                ['value' => trim((string) $this->{$prop})]
+            );
+        }
+
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_model'], ['value' => $this->chatbot_model ?: $default]);
         \App\Models\Setting::updateOrCreate(['key' => 'report_api_key'], ['value' => trim((string) $this->report_api_key)]);
         \App\Models\Setting::updateOrCreate(['key' => 'report_model'], ['value' => $this->report_model ?: $default]);
@@ -567,9 +751,38 @@ class Settings extends Component
         $this->testing_ai_feature = null;
 
         $this->ai_key_test = [$feature => $result];
+        $this->ai_key_test_slot = [];
         $this->aiSettingsMessage = $result['ok']
             ? ['ok' => true, 'text' => 'Kunci & model ' . ucfirst(\App\Services\GeminiAIService::featureLabel($feature)) . ' tersimpan dan valid.']
             : ['ok' => false, 'text' => $result['message']];
+    }
+
+    /**
+     * Tes satu slot kunci tertentu dari pool customer.
+     *
+     * Slot 2-4 tidak punya tombol Tes sendiri kalau dirangkai jadi satu, padahal
+     * justru slot itulah yang paling sering mati diam-diam (project-nya kehabisan
+     * kuota harian). Tes per slot supaya kelihatan sehat atau merah dari awal.
+     */
+    public function testAiKeySlot(string $feature, int $slot)
+    {
+        if (auth()->user()->role !== 'admin') return;
+        if (! in_array($feature, ['customer', 'report', 'broadcast'], true)) return;
+
+        $max = \App\Services\GeminiAIService::KEY_POOL_SIZE;
+        $slot = max(1, min($max, $slot));
+
+        $this->validateAiFeatureSettings();
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
+        }
+        $this->persistAiFeatureSettings();
+
+        $this->testing_ai_feature = "{$feature}_{$slot}";
+        $result = \App\Services\GeminiAIService::testKeySlot($feature, $slot);
+        $this->testing_ai_feature = null;
+
+        $this->ai_key_test_slot = ["{$feature}_{$slot}" => $result];
     }
 
     /**

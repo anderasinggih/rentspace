@@ -5,20 +5,19 @@ namespace App\Services;
 use App\Models\Unit;
 use App\Models\Rental;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Http;
 
 class AiService
 {
     protected $apiKey;
-    protected $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
+    protected $model;
 
     public function __construct()
     {
         // Chat web ikut memakai kunci & model fitur "jawab customer" supaya
-        // tidak perlu diisi dua kali di Pengaturan.
+        // tidak perlu diisi dua kali di Pengaturan. URL-nya dibangun di dalam
+        // GeminiAIService::callWithFailover karena di sana juga ada failover.
         $this->apiKey = GeminiAIService::apiKeyFor('customer') ?? '';
-        $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/'
-            . GeminiAIService::modelFor('customer') . ':generateContent';
+        $this->model = GeminiAIService::modelFor('customer');
     }
 
     /**
@@ -123,7 +122,12 @@ class AiService
         ];
 
         try {
-            $response = Http::post($this->baseUrl . '?key=' . $this->apiKey, [
+            // Failover: kalau kunci utama kena 429, GeminiAIService pindah ke slot
+            // kunci berikutnya. Chat web dan bot WhatsApp memakai pool "customer"
+            // yang sama, jadi keduanya harus punya penanganan yang sama juga —
+            // kalau hanya bot yang failover, kuota habis di bot tetap bikin chat
+            // web gagal padahal masih ada kunci yang sehat.
+            $response = GeminiAIService::callWithFailover('customer', $this->model, [
                 'system_instruction' => [
                     'parts' => [['text' => $systemPrompt]]
                 ],
@@ -140,14 +144,16 @@ class AiService
                     ['category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold' => 'BLOCK_NONE'],
                     ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => 'BLOCK_NONE'],
                 ]
-            ]);
+            ], 30);
 
-            if ($response->successful()) {
+            if ($response !== null) {
                 $data = $response->json();
                 return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Maaf Kak, saat ini saya sedang sedikit bingung. Bisa tanya lagi?";
             }
 
-            if ($response->status() === 429) {
+            // Dicocokkan kedua bentuk pesan supaya tidak salah branch kalau
+            // badan error Google kebetulan memuat angka 429 di dalam teks.
+            if (preg_match('/HTTP 429|kena rate limit/', (string) GeminiAIService::lastError())) {
                 return "Aduh Kak, maaf banget. Saat ini kuota chat saya lagi penuh nih. 🙏\n\nBiar cepet, Kakak bisa langsung tanya ke Admin lewat WhatsApp ya! [CHAT_WA]";
             }
 

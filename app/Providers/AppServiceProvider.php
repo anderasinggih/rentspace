@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \App\Models\Rental::observe(\App\Observers\RentalObserver::class);
+
         // Fix for shared hosting where public folder is htdocs or root
         if (app()->environment('production')) {
             $this->app->bind('path.public', function () {

@@ -1,9 +1,16 @@
 <div class="max-w-full overflow-x-hidden relative">
-    <div class="mb-6 flex flex-col gap-4">
-        <div class="flex items-center justify-between">
+    <div class="mb-4 flex flex-col gap-3">
+        <div class="flex items-center justify-end">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-foreground">System Settings</h1>
-                <p class="mt-1 text-sm text-muted-foreground">Configure all website settings</p>
+                <a href="{{ route('admin.scan') }}" wire:navigate
+                    class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-foreground/5 hover:bg-foreground/10 text-foreground border border-border/80 transition-all duration-200 active:scale-95 shadow-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                        <rect width="7" height="7" x="7" y="7" rx="1" /><path d="M10 17h.01" /><path d="M17 10h.01" /><path d="M17 17h.01" />
+                    </svg>
+                    <span>Scan QR</span>
+                </a>
             </div>
         </div>
 
@@ -50,6 +57,12 @@
                 class="flex-1 inline-flex items-center justify-center rounded-lg py-2 text-sm font-medium transition-all
                 {{ $activeTab === 'whatsapp' ? 'bg-emerald-500 text-white shadow-sm' : 'text-muted-foreground hover:text-emerald-500 hover:bg-muted/50' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </button>
+            <button wire:click="$set('activeTab', 'instagram')"
+                title="Instagram Story"
+                class="flex-1 inline-flex items-center justify-center rounded-lg py-2 text-sm font-medium transition-all
+                {{ $activeTab === 'instagram' ? 'bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-600 text-white shadow-sm' : 'text-muted-foreground hover:bg-muted/50' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
             </button>
         </div>
     </div>
@@ -1574,6 +1587,10 @@
                                     'modelProp' => 'chatbot_model',
                                     'chipOwn' => 'text-emerald-600 bg-emerald-500/10',
                                     'chipOn' => 'text-emerald-600',
+                                    // Pool 4 slot + failover: kuncinya wajib dari
+                                    // project Google berbeda, karena kuota dihitung
+                                    // per project bukan per kunci.
+                                    'poolSize' => \App\Services\GeminiAIService::KEY_POOL_SIZE,
                                 ],
                                 [
                                     'id' => 'report',
@@ -1583,6 +1600,7 @@
                                     'modelProp' => 'report_model',
                                     'chipOwn' => 'text-purple-600 bg-purple-500/10',
                                     'chipOn' => 'text-purple-600',
+                                    'poolSize' => 1,
                                 ],
                                 [
                                     'id' => 'broadcast',
@@ -1592,6 +1610,7 @@
                                     'modelProp' => 'broadcast_model',
                                     'chipOwn' => 'text-amber-600 bg-amber-500/10',
                                     'chipOn' => 'text-amber-600',
+                                    'poolSize' => 1,
                                 ],
                             ];
                         @endphp
@@ -1606,12 +1625,32 @@
                                     // admin sudah mengedit berkali-kali, jangan tampilkan
                                     // centang lama seolah-olah kunci baru ikut teruji.
                                     $testIsCurrent = $test && trim($keyValue) === trim((string) \App\Services\GeminiAIService::apiKeyFor($f['id']));
+
+                                    // Semua slot kunci fitur ini, untuk render input per slot.
+                                    $keySlots = [];
+                                    for ($s = 1; $s <= $f['poolSize']; $s++) {
+                                        $prop = $s === 1
+                                            ? $f['keyProp']
+                                            : \App\Services\GeminiAIService::keySlotName($f['id'], $s);
+                                        $keySlots[$s] = [
+                                            'prop' => $prop,
+                                            'value' => (string) ($this->{$prop} ?? ''),
+                                        ];
+                                    }
+                                    $filledSlots = count(array_filter($keySlots, fn ($k) => trim($k['value']) !== ''));
+
+                                    // Status cooldown hanya bermakna kalau memang ada pool.
+                                    $pool = $f['poolSize'] > 1
+                                        ? \App\Services\GeminiAIService::keyPoolStatus($f['id'])
+                                        : null;
                                 @endphp
                                 <div wire:key="ai-feature-{{ $f['id'] }}" class="rounded-lg border border-border/70 bg-muted/20 p-2.5 space-y-2">
                                     <div class="flex items-center justify-between gap-2">
                                         <span class="text-[11px] font-bold text-foreground leading-tight">{{ $f['title'] }}</span>
-                                        @if(trim($keyValue) !== '')
-                                            <span class="shrink-0 text-[9px] font-bold {{ $f['chipOwn'] }} px-1.5 py-0.5 rounded">Kunci Sendiri</span>
+                                        @if($filledSlots > 0)
+                                            <span class="shrink-0 text-[9px] font-bold {{ $f['chipOwn'] }} px-1.5 py-0.5 rounded">
+                                                {{ $f['poolSize'] > 1 ? $filledSlots . '/' . $f['poolSize'] . ' Kunci' : 'Kunci Sendiri' }}
+                                            </span>
                                         @else
                                             <span class="shrink-0 text-[9px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Pakai Kunci Customer</span>
                                         @endif
@@ -1622,46 +1661,96 @@
                                         <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Model AI</label>
                                         <select wire:model.live="{{ $f['modelProp'] }}"
                                             class="w-full rounded-md border border-input bg-background px-2 py-1.5 text-[11px] shadow-sm font-medium">
-                                            <option value="gemini-3.5-flash-lite">Flash Lite — Paling Hemat</option>
-                                            <option value="gemini-2.5-flash-lite">2.5 Flash Lite</option>
-                                            <option value="gemini-2.5-flash">2.5 Flash</option>
-                                            <option value="gemini-3.5-flash">3.5 Flash</option>
-                                            <option value="gemini-2.5-pro">2.5 Pro — Paling Cerdas</option>
+                                            <option value="gemini-3.6-flash">Gemini 3.6 Flash (Recommended)</option>
+                                            <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
+                                            <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite (Fast)</option>
+                                            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                            <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                                            <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
                                         </select>
                                     </div>
 
                                     <div>
-                                        <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">API Key</label>
-                                        <div class="relative">
-                                            <input type="password" wire:model.blur="{{ $f['keyProp'] }}"
-                                                class="w-full rounded-md border border-input bg-background px-2 py-1.5 pr-16 text-[11px] shadow-sm font-mono"
-                                                placeholder="AIzaSy...">
-                                            <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 pointer-events-none">
-                                                <span class="text-[9px] font-bold {{ trim($keyValue) ? $f['chipOn'] : 'text-muted-foreground' }}">
-                                                    {{ trim($keyValue) ? '✓ Ada' : 'Kosong' }}
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label class="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
+                                                {{ $f['poolSize'] > 1 ? 'API Key (Failover)' : 'API Key' }}
+                                            </label>
+                                            @if($pool)
+                                                <span class="text-[9px] font-bold {{ $pool['usable'] > 0 ? 'text-emerald-600' : 'text-red-500' }}"
+                                                    wire:key="pool-{{ $f['id'] }}">
+                                                    {{ $pool['usable'] }}/{{ $pool['total'] }} siap
                                                 </span>
-                                            </div>
+                                            @endif
                                         </div>
-                                    </div>
 
-                                    <div class="flex items-center gap-1.5">
-                                        <button type="button" wire:click="testAiKey('{{ $f['id'] }}')"
-                                            wire:loading.attr="disabled"
-                                            wire:target="testAiKey('{{ $f['id'] }}')"
-                                            class="inline-flex items-center justify-center gap-1 rounded border border-border bg-background hover:bg-muted px-2 py-1 text-[10px] font-bold transition-colors disabled:opacity-50">
-                                            <span wire:loading.remove wire:target="testAiKey('{{ $f['id'] }}')">Tes Kunci</span>
-                                            <span wire:loading wire:target="testAiKey('{{ $f['id'] }}')">Menguji...</span>
-                                        </button>
-                                        @if($testIsCurrent)
-                                            <span class="text-[10px] font-bold {{ $test['ok'] ? 'text-emerald-600' : 'text-red-500' }} leading-tight truncate"
-                                                title="{{ $test['message'] }}">
-                                                {{ $test['ok'] ? '✓ Valid' : '✗ Gagal' }}
-                                            </span>
+                                        <div class="space-y-1.5">
+                                            @foreach($keySlots as $slot => $slotData)
+                                                @php
+                                                    $isCooling = $pool && in_array($slot, $pool['cooling'], true);
+                                                    $slotTest = $ai_key_test_slot["{$f['id']}_{$slot}"] ?? null;
+                                                    $slotTestIsCurrent = $slotTest
+                                                        && trim($slotData['value']) === trim((string) \App\Models\Setting::getVal(\App\Services\GeminiAIService::keySlotName($f['id'], $slot), ''));
+                                                @endphp
+                                                <div wire:key="ai-slot-{{ $f['id'] }}-{{ $slot }}" class="flex items-center gap-1.5">
+                                                    <div class="relative flex-1">
+                                                        <input type="password" wire:model.blur="{{ $slotData['prop'] }}"
+                                                            class="w-full rounded-md border bg-background px-2 py-1.5 pr-14 text-[11px] shadow-sm font-mono {{ $isCooling ? 'border-red-400/70' : 'border-input' }}"
+                                                            placeholder="{{ $slot > 1 ? 'Kunci cadangan ' . $slot . ' (project lain)' : 'AIzaSy...' }}">
+                                                        <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 pointer-events-none">
+                                                            <span class="text-[9px] font-bold {{ $isCooling ? 'text-red-500' : (trim($slotData['value']) ? $f['chipOn'] : 'text-muted-foreground') }}">
+                                                                {{ $isCooling ? '⏳ 429' : (trim($slotData['value']) ? '✓ Ada' : 'Kosong') }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    @if($f['poolSize'] > 1)
+                                                        <button type="button" wire:click="testAiKeySlot('{{ $f['id'] }}', {{ $slot }})"
+                                                            wire:loading.attr="disabled"
+                                                            wire:target="testAiKeySlot('{{ $f['id'] }}', {{ $slot }})"
+                                                            title="Tes kunci slot {{ $slot }} saja"
+                                                            class="shrink-0 inline-flex items-center justify-center rounded border border-border bg-background hover:bg-muted px-1.5 py-1 text-[9px] font-bold transition-colors disabled:opacity-50">
+                                                            <span wire:loading.remove wire:target="testAiKeySlot('{{ $f['id'] }}', {{ $slot }})">T{{ $slot }}</span>
+                                                            <span wire:loading wire:target="testAiKeySlot('{{ $f['id'] }}', {{ $slot }})">…</span>
+                                                        </button>
+                                                    @endif
+                                                </div>
+
+                                                @if($slotTestIsCurrent)
+                                                    <p class="text-[9px] leading-snug break-words {{ $slotTest['ok'] ? 'text-emerald-600' : 'text-red-500' }}">
+                                                        {{ $slotTest['ok'] ? '✓' : '✗' }} {{ $slotTest['message'] }}
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        </div>
+
+                                        @if($f['poolSize'] > 1)
+                                            <p class="text-[9px] text-muted-foreground leading-snug mt-1.5">
+                                                Bot pakai slot mana saja secara bergiliran. Kalau satu kena 429, slot itu ditahan sebentar
+                                                dan langsung dicoba ke slot berikutnya. <b>Wajib beda project Google</b> — kuota dihitung per project.
+                                            </p>
                                         @endif
                                     </div>
 
-                                    @if($testIsCurrent && ! $test['ok'])
-                                        <p class="text-[10px] text-red-500 leading-snug break-words">{{ $test['message'] }}</p>
+                                    @if($f['poolSize'] === 1)
+                                        <div class="flex items-center gap-1.5">
+                                            <button type="button" wire:click="testAiKey('{{ $f['id'] }}')"
+                                                wire:loading.attr="disabled"
+                                                wire:target="testAiKey('{{ $f['id'] }}')"
+                                                class="inline-flex items-center justify-center gap-1 rounded border border-border bg-background hover:bg-muted px-2 py-1 text-[10px] font-bold transition-colors disabled:opacity-50">
+                                                <span wire:loading.remove wire:target="testAiKey('{{ $f['id'] }}')">Tes Kunci</span>
+                                                <span wire:loading wire:target="testAiKey('{{ $f['id'] }}')">Menguji...</span>
+                                            </button>
+                                            @if($testIsCurrent)
+                                                <span class="text-[10px] font-bold {{ $test['ok'] ? 'text-emerald-600' : 'text-red-500' }} leading-tight truncate"
+                                                    title="{{ $test['message'] }}">
+                                                    {{ $test['ok'] ? '✓ Valid' : '✗ Gagal' }}
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        @if($testIsCurrent && ! $test['ok'])
+                                            <p class="text-[10px] text-red-500 leading-snug break-words">{{ $test['message'] }}</p>
+                                        @endif
                                     @endif
                                 </div>
                             @endforeach
@@ -1670,11 +1759,12 @@
 
                     <!-- Grid Form Konfigurasi AI -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div>
+                        <div class="sm:col-span-2 lg:col-span-1">
                             <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Nomor WA Admin Lain (Forward)</label>
-                            <input type="text" wire:model="admin_wa_secondary" 
-                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
-                                placeholder="08123456789">
+                            <textarea wire:model="admin_wa_secondary" rows="2"
+                                class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="08123456789&#10;08987654321"></textarea>
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block">Bisa multiple nomor (pisahkan dengan koma atau enter). Setiap chat otomatis diforward ke sini.</span>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">ID Grup WA Admin (Setting/Broadcast)</label>
@@ -1682,6 +1772,13 @@
                                 class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
                                 placeholder="120363xxxxxx@g.us">
                             <span class="text-[10px] text-muted-foreground mt-0.5 block">Ketik <code>!getid</code> di grup WA untuk dapat ID</span>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">ID Grup WA Notifikasi (Forward Chat)</label>
+                            <input type="text" wire:model="admin_notify_group_id" 
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
+                                placeholder="120363xxxxxx@g.us">
+                            <span class="text-[10px] text-muted-foreground mt-0.5 block">Semua chat masuk customer akan otomatis diforward ke grup ini.</span>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">ID Grup WA Report (Tim Internal)</label>
@@ -1703,6 +1800,77 @@
                                 class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono"
                                 placeholder="300000">
                             <span class="text-[10px] text-muted-foreground mt-0.5 block">Anti <code>429</code>: di atas 75% plafon, konteks AI otomatis dipangkas.</span>
+                        </div>
+                    </div>
+
+                    <!-- Notifikasi Tim ke Grup WA (tanpa AI) -->
+                    <div class="pt-3 border-t border-border/60 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                                Notifikasi Tim (Tanpa AI)
+                            </h4>
+                            <span class="text-[10px] text-muted-foreground">Template statis, dikirim ke grup di atas</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            @foreach([
+                                ['prop' => 'notif_group_booking', 'label' => 'Pesanan baru masuk', 'desc' => 'Tiap ada booking baru dari customer.'],
+                                ['prop' => 'notif_group_status', 'label' => 'Perubahan status', 'desc' => 'Validasi bayar, serah terima, selesai, dan pembatalan.'],
+                                ['prop' => 'notif_group_reminder', 'label' => 'Pengingat ambil & kembali unit', 'desc' => 'H-1 pengambilan, H-1 pengembalian, plus alert kalau telat.'],
+                            ] as $nf)
+                                <div class="flex items-start justify-between gap-3 p-2.5 rounded-lg border border-border/60 bg-muted/20">
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-foreground">{{ $nf['label'] }}</p>
+                                        <p class="text-[10px] text-muted-foreground leading-snug mt-0.5">{{ $nf['desc'] }}</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                        <input type="checkbox" wire:model="{{ $nf['prop'] }}" class="sr-only peer">
+                                        <div class="w-10 h-5 bg-zinc-700/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-transparent after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Ingat Ambil (menit)</label>
+                                <input type="number" min="5" step="5" wire:model="notif_staff_pickup_minutes"
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Ingat Kembali (menit)</label>
+                                <input type="number" min="5" step="5" wire:model="notif_staff_return_minutes"
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Alert Telat (menit)</label>
+                                <input type="number" min="5" step="5" wire:model="notif_staff_late_minutes"
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-mono">
+                                <span class="text-[10px] text-muted-foreground mt-0.5 block">Nilai <code>60</code> = 1 jam sebelum jadwal.</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3 pt-1">
+                            <button type="button" wire:click="saveGeneralSettings"
+                                wire:loading.attr="disabled"
+                                wire:target="saveGeneralSettings"
+                                class="inline-flex items-center justify-center rounded-md bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
+                                <span wire:loading.remove wire:target="saveGeneralSettings">Simpan Notifikasi Tim</span>
+                                <span wire:loading wire:target="saveGeneralSettings">Menyimpan...</span>
+                            </button>
+                            <button type="button" wire:click="testStaffNotif"
+                                wire:loading.attr="disabled"
+                                wire:target="testStaffNotif"
+                                class="inline-flex items-center justify-center rounded-md border border-emerald-600 text-emerald-700 hover:bg-emerald-50 px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
+                                <span wire:loading.remove wire:target="testStaffNotif">Kirim Contoh</span>
+                                <span wire:loading wire:target="testStaffNotif">Mengirim...</span>
+                            </button>
+                            @if($staffNotifMessage)
+                                <span class="text-[11px] font-bold {{ $staffNotifMessage['ok'] ? 'text-emerald-600' : 'text-red-500' }}">
+                                    {{ $staffNotifMessage['ok'] ? '✓' : '✗' }} {{ $staffNotifMessage['text'] }}
+                                </span>
+                            @endif
                         </div>
                     </div>
 
@@ -2088,6 +2256,146 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        @endif
+
+        @if($activeTab === 'instagram')
+            <div class="space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border/80 gap-3">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
+                            <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-600"></span>
+                            Instagram Story
+                        </h2>
+                        <p class="text-xs text-muted-foreground mt-0.5">Koneksi akun Business/Creator + template caption &amp; teks story.</p>
+                    </div>
+                    <a href="{{ route('admin.instagram-story') }}" wire:navigate
+                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-600 text-white transition-opacity hover:opacity-90 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/></svg>
+                        Buka Halaman Story
+                    </a>
+                </div>
+
+                @if($igStoryMessage)
+                    <div class="rounded-lg border px-3 py-2.5 text-xs font-semibold flex items-start gap-2
+                        {{ $igStoryMessage['ok'] ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0">{{ $igStoryMessage['ok'] ? '<path d="M20 6 9 17l-5-5"/>' : '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>' }}</svg>
+                        <span>{{ $igStoryMessage['text'] }}</span>
+                    </div>
+                @endif
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <!-- Kredensial -->
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-600"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/></svg>
+                            Kredensial API
+                        </h3>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">IG User ID</label>
+                            <input type="text" wire:model="ig_user_id" inputmode="numeric" placeholder="17841400000000000"
+                                class="w-full h-9 px-3 text-sm rounded-md border border-input bg-background">
+                            <p class="text-[10px] text-muted-foreground">ID akun IG, bukan username dan bukan ID Facebook Page.</p>
+                            @error('ig_user_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Access Token</label>
+                            <input type="password" wire:model="ig_access_token"
+                                placeholder="{{ \App\Models\Setting::getVal('ig_access_token') ? 'Tersimpan — paste token baru untuk mengganti' : 'EAAG...' }}"
+                                autocomplete="off"
+                                class="w-full h-9 px-3 text-sm rounded-md border border-input bg-background">
+                            <p class="text-[10px] text-muted-foreground">Token bersifat rahasia. Disimpan di tabel settings, tidak ditampilkan kembali. Kosongkan untuk mempertahankan token lama.</p>
+                            @error('ig_access_token') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Versi Graph API</label>
+                            <input type="text" wire:model="ig_graph_version" placeholder="v21.0"
+                                class="w-full h-9 px-3 text-sm rounded-md border border-input bg-background">
+                            @error('ig_graph_version') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Warna Tema</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" wire:model.live="ig_story_theme"
+                                    class="h-9 w-12 rounded-md border border-input bg-background cursor-pointer p-0.5">
+                                <span class="text-xs font-mono text-muted-foreground">{{ $ig_story_theme }}</span>
+                            </div>
+                            @error('ig_story_theme') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Template -->
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                            Template Story
+                        </h3>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Caption (teks di luar gambar)</label>
+                            <textarea wire:model="ig_story_caption_template" rows="5"
+                                class="w-full px-3 py-2 text-sm rounded-md border border-input bg-background font-mono text-xs leading-relaxed"></textarea>
+                            <p class="text-[10px] text-muted-foreground">Maks 2.200 karakter. Instagram memotong di angka itu.</p>
+                            @error('ig_story_caption_template') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Teks di Dalam Gambar</label>
+                            <textarea wire:model="ig_story_overlay_template" rows="4"
+                                class="w-full px-3 py-2 text-sm rounded-md border border-input bg-background font-mono text-xs leading-relaxed"></textarea>
+                            <p class="text-[10px] text-muted-foreground">Ditulis di atas foto. Maksimal 4 baris, sisanya dipotong.</p>
+                            @error('ig_story_overlay_template') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3 space-y-1.5">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-foreground">Placeholder tersedia</p>
+                            <div class="flex flex-wrap gap-1">
+                                @foreach(['{nama}', '{nama_lengkap}', '{kategori}', '{spesifikasi}', '{harga_hari}', '{harga_jam}', '{lokasi}', '{link}', '{ig}', '{tanggal}'] as $ph)
+                                    <button type="button" wire:click="$insert('{{ $ph }}')"
+                                        title="Sisipkan ke caption"
+                                        class="rounded border border-border/70 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground hover:border-pink-500 hover:text-pink-600 transition-colors">{{ $ph }}</button>
+                                @endforeach
+                            </div>
+                            <p class="text-[10px] text-muted-foreground">Klik untuk menyisipkan ke kolom caption. Placeholder yang tidak dikenal dibiarkan apa adanya supaya salah ketik kelihatan.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3.5 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                    <p class="font-bold">Dua syarat yang sering jadi penyebab gagal</p>
+                    <ol class="list-decimal list-inside space-y-0.5 text-[11px] leading-relaxed">
+                        <li>Akun Instagram harus tipe <b>Business</b> atau <b>Creator</b> dan tertaut ke sebuah Facebook Page. Akun personal tidak punya endpoint publish story.</li>
+                        <li><code class="font-mono">APP_URL</code> harus domain HTTPS publik. Instagram mengambil gambar dari internet, jadi file di <code class="font-mono">localhost</code> akan ditolak dengan <i>media fetch error</i>.</li>
+                    </ol>
+                </div>
+
+                @if(auth()->user()->role === 'admin')
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" wire:click="saveInstagramSettings" wire:loading.attr="disabled"
+                            wire:target="saveInstagramSettings"
+                            class="inline-flex items-center gap-1.5 px-4 h-9 text-xs font-bold rounded-lg bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-600 text-white shadow hover:opacity-90 transition-opacity">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            Simpan Pengaturan
+                        </button>
+                        <button type="button" wire:click="testInstagramConnection" wire:loading.attr="disabled"
+                            wire:target="testInstagramConnection, saveInstagramSettings"
+                            class="inline-flex items-center gap-1.5 px-4 h-9 text-xs font-bold rounded-lg border border-border bg-background text-foreground hover:bg-muted/50 transition-colors">
+                            <span wire:loading.remove wire:target="testInstagramConnection, saveInstagramSettings" class="flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                Tes Koneksi
+                            </span>
+                            <span wire:loading wire:target="testInstagramConnection, saveInstagramSettings" class="flex items-center gap-1.5">
+                                <svg class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                Menghubungkan...
+                            </span>
+                        </button>
+                        <p class="text-[10px] text-muted-foreground">Tombol tes menyimpan dulu, lalu memanggil Graph API dengan nilai terbaru.</p>
+                    </div>
+                @endif
             </div>
         @endif
     </div>

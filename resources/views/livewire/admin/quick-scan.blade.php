@@ -70,19 +70,14 @@
         }"
         x-on:livewire:navigating.window="stopScan()">
         
-        <div class="max-w-2xl mx-auto pt-0 space-y-6">
-            <!-- Header (Matched with Unit Manager) -->
-            <div class="flex items-center justify-between">
-                <div class="">
-                    <h1 class="text-2xl font-bold tracking-tight text-foreground">Quick Scanner</h1>
-                    <p class="mt-2 text-sm text-muted-foreground">Scan unit untuk validasi ambil fisik secara instan.</p>
-                </div>
-                @if($scannedUnit)
-                    <button @click="retry()" class="p-2 rounded-lg border hover:bg-muted transition-colors shadow-sm">
+        <div class="max-w-2xl mx-auto pt-0 space-y-4">
+            @if($scannedUnit)
+                <div class="flex items-center justify-end">
+                    <button @click="retry()" class="p-2 rounded-xl border hover:bg-muted transition-colors shadow-xs">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     </button>
-                @endif
-            </div>
+                </div>
+            @endif
 
             <!-- Scanner View (Hides completely when unit scanned) -->
             @if(!$scannedUnit)

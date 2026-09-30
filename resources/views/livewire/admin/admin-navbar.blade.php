@@ -1,247 +1,253 @@
 <div x-data="{ 
     adminMenuOpen: false,
-    darkMode: localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
-        toggleTheme() {
-            this.darkMode = !this.darkMode;
-            const newTheme = this.darkMode ? 'dark' : 'light';
-            if (this.darkMode) {
-                document.documentElement.classList.add('dark');
-                localStorage.theme = 'dark';
-            } else {
-                document.documentElement.classList.remove('dark');
-                localStorage.theme = 'light';
-            }
-            window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: newTheme } }));
+    darkMode: document.documentElement.classList.contains('dark'),
+    init() {
+        this.darkMode = document.documentElement.classList.contains('dark');
+        window.addEventListener('theme-changed', (e) => {
+            this.darkMode = e.detail.theme === 'dark';
+        });
+    },
+    toggleTheme() {
+        this.darkMode = !this.darkMode;
+        const newTheme = this.darkMode ? 'dark' : 'light';
+        if (this.darkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            localStorage.theme = 'dark';
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            localStorage.theme = 'light';
         }
-}" class="sticky top-0 z-[100] w-full">
-    <!-- Main Nav with Separated Blur Layer to prevent nesting conflicts -->
-    <nav class="relative border-b border-white/10 shadow-sm z-50 overflow-visible" style="padding-top: env(safe-area-inset-top, 0px);">
-        <!-- Separate Blur Layer -->
-        <div class="absolute inset-0 bg-background/40 backdrop-blur-md -z-10 pointer-events-none"></div>
+        window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: newTheme } }));
+    }
+}" 
+class="fixed bottom-0 left-0 right-0 z-50 pointer-events-none flex flex-col items-center justify-end px-2 sm:px-3 pb-0 sm:pb-3 transition-all duration-300"
+style="padding-bottom: env(safe-area-inset-bottom, 0px);">
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 text-foreground">
-                <!-- Left side Navigation -->
-                <div class="flex items-center gap-2 lg:gap-4 xl:gap-8">
-                    <!-- Logo -->
-                    <a href="{{ route('admin.dashboard') }}" wire:navigate
-                        class="text-xl font-extrabold tracking-tight text-foreground flex items-center gap-2 mr-2">
-                        RENT<span class="text-primary/80">SPACE</span>
-                    </a>
+    <!-- Mobile Drawer / Popover More Menu (Transparent Blur Glass) -->
+    <div x-show="adminMenuOpen" 
+         @click.away="adminMenuOpen = false"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-4 scale-95" 
+         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+         x-transition:leave="transition ease-in duration-150" 
+         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+         x-transition:leave-end="opacity-0 translate-y-4 scale-95" 
+         x-cloak
+         class="pointer-events-auto w-full max-w-sm mb-2 bg-background/70 dark:bg-[#161617]/70 backdrop-blur-3xl saturate-150 border border-border/60 shadow-2xl rounded-3xl overflow-hidden p-3 z-50">
+        
+        <!-- Drag indicator bar -->
+        <div class="flex justify-center pt-1 pb-2">
+            <div class="w-8 h-1 rounded-full bg-foreground/20"></div>
+        </div>
 
-                    <!-- Desktop Links -->
-                    <div class="hidden md:flex items-center space-x-1 lg:space-x-1.5 xl:space-x-2">
-                        <a href="{{ route('admin.dashboard') }}" wire:navigate
-                            class="px-2 lg:px-3 xl:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 {{ request()->routeIs('admin.dashboard') ? 'bg-white/15 backdrop-blur-md text-primary font-bold shadow-sm' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground hover:backdrop-blur-sm' }}">
-                            Dashboard
-                        </a>
-
-                        <a href="{{ route('admin.monitoring') }}" wire:navigate
-                            class="px-2 lg:px-3 xl:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 {{ request()->routeIs('admin.monitoring') ? 'bg-white/15 backdrop-blur-md text-primary font-bold shadow-sm' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground hover:backdrop-blur-sm' }}">
-                            Monitoring
-                        </a>
-
-                        <a href="{{ route('admin.transactions') }}" wire:navigate
-                            class="px-2 lg:px-3 xl:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 {{ request()->routeIs('admin.transactions') ? 'bg-white/15 backdrop-blur-md text-primary font-bold shadow-sm' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground hover:backdrop-blur-sm' }}">
-                            Transaksi
-                        </a>
-
-                        <!-- Dropdown Database (Unit, Promo, Pelanggan, Affiliate, Settings) -->
-                        <div x-data="{ open: false }" @click.away="open = false" class="relative">
-                            <button @click="open = !open"
-                                class="flex items-center gap-1 px-2 lg:px-3 xl:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 {{ request()->routeIs('admin.units') || request()->routeIs('admin.promo') || request()->routeIs('admin.customers') || request()->routeIs('admin.affiliate') || request()->routeIs('admin.settings') ? 'bg-white/15 backdrop-blur-md text-primary font-bold shadow-sm' : 'text-muted-foreground hover:bg-white/10 hover:text-foreground hover:backdrop-blur-sm' }}">
-                                Database
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                    stroke-linejoin="round" class="transition-transform duration-200"
-                                    :class="open ? 'rotate-180' : ''">
-                                    <path d="m6 9 6 6 6-6" />
-                                </svg>
-                            </button>
-
-                            <!-- Desktop Dropdown with Forced Blur -->
-                            <div x-show="open" x-transition:enter="transition ease-out duration-100"
-                                x-transition:enter-start="opacity-0 scale-95"
-                                x-transition:enter-end="opacity-100 scale-100"
-                                x-transition:leave="transition ease-in duration-75"
-                                x-transition:leave-start="opacity-100 scale-100"
-                                x-transition:leave-end="opacity-0 scale-95"
-                                style="backdrop-filter: blur(25px) !important; -webkit-backdrop-filter: blur(25px) !important;"
-                                class="absolute left-0 mt-2 w-52 rounded-2xl bg-background/70 border border-white/10 shadow-2xl py-2 z-[110] overflow-hidden"
-                                x-cloak>
-                                <div
-                                    class="px-4 py-1.5 text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest">
-                                    Inventory</div>
-                                <a href="{{ route('admin.units') }}" wire:navigate
-                                    class="block px-4 py-2 text-sm transition-colors hover:bg-white/10 {{ request()->routeIs('admin.units') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
-                                    Unit
-                                </a>
-                                <a href="{{ route('admin.promo') }}" wire:navigate
-                                    class="block px-4 py-2 text-sm transition-colors hover:bg-white/10 {{ request()->routeIs('admin.promo') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
-                                    Promo & Diskon
-                                </a>
-
-                                <div class="h-px bg-white/10 my-1.5 mx-3"></div>
-                                <div
-                                    class="px-4 py-1.5 text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest">
-                                    Resources</div>
-
-                                <a href="{{ route('admin.customers') }}" wire:navigate
-                                    class="block px-4 py-2 text-sm transition-colors hover:bg-white/10 {{ request()->routeIs('admin.customers') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
-                                    Pelanggan
-                                </a>
-                                @if(auth()->user()->role === 'admin')
-                                    <a href="{{ route('admin.affiliate') }}" wire:navigate
-                                        class="block px-4 py-2 text-sm transition-colors hover:bg-white/10 {{ request()->routeIs('admin.affiliate') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
-                                        Affiliate
-                                    </a>
-                                    <div class="h-px bg-white/10 my-1.5 mx-3"></div>
-                                    <a href="{{ route('admin.settings') }}" wire:navigate
-                                        class="block px-4 py-2 text-sm transition-colors hover:bg-white/10 {{ request()->routeIs('admin.settings') ? 'text-primary font-bold' : 'text-muted-foreground' }}">
-                                        Pengaturan
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
+        <!-- User & Theme bar -->
+        <div class="flex items-center justify-between px-3 py-2 border-b border-border/40">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                    <span class="text-xs font-bold text-primary">
+                        {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
+                    </span>
                 </div>
-
-                <!-- Right side context -->
-                <div class="flex items-center gap-1 lg:gap-3 xl:gap-5">
-                    <a href="/" wire:navigate
-                        class="hidden xl:inline-flex items-center px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-sm">
-                        Publik ↗
-                    </a> <!-- Quick Scan Button -->
-                    <a href="{{ route('admin.scan') }}" wire:navigate
-                        class="p-2 flex items-center justify-center rounded-xl hover:bg-white/10 text-primary transition-all hover:scale-110 active:scale-95 focus:outline-none {{ request()->routeIs('admin.scan') ? 'bg-white/20 shadow-sm ring-1 ring-white/20' : '' }}"
-                        title="Quick Scan QR">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 7V5a2 2 0 0 1 2-2h2" />
-                            <path d="M17 3h2a2 2 0 0 1 2 2v2" />
-                            <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
-                            <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
-                            <rect width="7" height="7" x="7" y="7" rx="1" />
-                            <path d="M10 17h.01" />
-                            <path d="M17 10h.01" />
-                            <path d="M17 17h.01" />
-                        </svg>
-                    </a>
-
-                    <!-- Dark Mode Toggle Admin -->
-                    <button @click="toggleTheme()"
-                        class="p-2 items-center justify-center rounded-xl hover:bg-white/10 text-muted-foreground transition-all hover:scale-110 active:scale-95 focus:outline-none">
-                        <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-                        </svg>
-                        <svg x-cloak x-show="darkMode" style="display: none;" xmlns="http://www.w3.org/2000/svg"
-                            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="4" />
-                            <path d="M12 2v2" />
-                            <path d="M12 20v2" />
-                            <path d="m4.93 4.93 1.41 1.41" />
-                            <path d="m17.66 17.66 1.41 1.41" />
-                            <path d="M2 12h2" />
-                            <path d="M20 12h2" />
-                            <path d="m6.34 17.66-1.41 1.41" />
-                            <path d="m19.07 4.93-1.41 1.41" />
-                        </svg>
-                    </button>
-
-                    <div class="border-l border-white/10 h-6 mx-2 hidden sm:block"></div>
-
-                    <div class="hidden md:flex items-center gap-1 lg:gap-3">
-                        <span class="hidden lg:block text-sm font-medium text-foreground opacity-80">{{ auth()->user()->name ?? 'Administrator'
-                            }}</span>
-                        <button wire:click="logout"
-                            class="inline-flex items-center justify-center p-2 rounded-xl text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-all hover:scale-110 active:scale-95"
-                            title="Logout">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                <polyline points="16 17 21 12 16 7" />
-                                <line x1="21" x2="9" y1="12" y2="12" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Mobile Hamburger -->
-                    <button @click="adminMenuOpen = !adminMenuOpen"
-                        class="md:hidden p-2 rounded-xl hover:bg-white/10 text-foreground transition-all active:scale-90 focus:outline-none">
-                        <svg x-show="!adminMenuOpen" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="4" x2="20" y1="12" y2="12" />
-                            <line x1="4" x2="20" y1="6" y2="6" />
-                            <line x1="4" x2="20" y1="18" y2="18" />
-                        </svg>
-                        <svg x-show="adminMenuOpen" x-cloak style="display: none;" xmlns="http://www.w3.org/2000/svg"
-                            width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 6 6 18" />
-                            <path d="m6 6 12 12" />
-                        </svg>
-                    </button>
+                <div class="min-w-0">
+                    <p class="text-xs font-semibold text-foreground truncate">{{ auth()->user()->name ?? 'Administrator' }}</p>
+                    <p class="text-[10px] text-muted-foreground capitalize">{{ auth()->user()->role ?? 'Admin' }}</p>
                 </div>
             </div>
+            <button @click="toggleTheme()"
+                type="button"
+                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-foreground/5 hover:bg-foreground/10 text-foreground transition-all">
+                <template x-if="!darkMode">
+                    <div class="flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                        </svg>
+                        <span>Gelap</span>
+                    </div>
+                </template>
+                <template x-if="darkMode">
+                    <div class="flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+                        </svg>
+                        <span>Terang</span>
+                    </div>
+                </template>
+            </button>
         </div>
-    </nav>
 
-    <!-- Mobile Menu Container (Sibling for fixed blur) -->
-    <div x-show="adminMenuOpen" x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 translate-y-[-10px]" x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-[-10px]" x-cloak
-        style="display: none; backdrop-filter: blur(25px) !important; -webkit-backdrop-filter: blur(25px) !important;"
-        class="md:hidden absolute top-[115%] left-0 right-0 p-3 bg-background/70 border border-white/10 border-t-white/20 shadow-2xl rounded-3xl mx-4 overflow-hidden flex flex-col gap-1 z-[110]">
+        <!-- Menu List (Database & System) -->
+        <div class="py-2 space-y-1 max-h-[300px] overflow-y-auto">
+            <div class="text-[9px] font-black uppercase text-muted-foreground/60 px-3 py-1 tracking-wider">Database & Manajemen</div>
+            <a href="{{ route('admin.units') }}" wire:navigate @click="adminMenuOpen = false"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'hover:bg-foreground/5 text-foreground' }}">
+                <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.units') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+                </div>
+                <span class="flex-1">Data Unit</span>
+                <span class="text-xs text-muted-foreground/40">›</span>
+            </a>
 
-        <!-- Shine Overlay -->
-        <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none">
+            <a href="{{ route('admin.promo') }}" wire:navigate @click="adminMenuOpen = false"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'hover:bg-foreground/5 text-foreground' }}">
+                <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.promo') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                </div>
+                <span class="flex-1">Promo & Diskon</span>
+                <span class="text-xs text-muted-foreground/40">›</span>
+            </a>
+
+            <a href="{{ route('admin.instagram-story') }}" wire:navigate @click="adminMenuOpen = false"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition {{ request()->routeIs('admin.instagram-story') ? 'bg-primary/10 text-primary' : 'hover:bg-foreground/5 text-foreground' }}">
+                <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.instagram-story') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+                </div>
+                <span class="flex-1">Instagram Story</span>
+                <span class="text-xs text-muted-foreground/40">›</span>
+            </a>
+
+            @if(auth()->user()->role !== 'staff')
+            <a href="{{ route('admin.customers') }}" wire:navigate @click="adminMenuOpen = false"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary' : 'hover:bg-foreground/5 text-foreground' }}">
+                <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.customers') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <span class="flex-1">Pelanggan</span>
+                <span class="text-xs text-muted-foreground/40">›</span>
+            </a>
+            @endif
+
+            <!-- Activity / Staff Logs in Mobile Drawer -->
+            <a href="{{ route('admin.staff-logs') }}" wire:navigate @click="adminMenuOpen = false"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition {{ request()->routeIs('admin.staff-logs') ? 'bg-primary/10 text-primary' : 'hover:bg-foreground/5 text-foreground' }}">
+                <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.staff-logs') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+                </div>
+                <span class="flex-1">Activity Log</span>
+                <span class="text-xs text-muted-foreground/40">›</span>
+            </a>
+
+            @if(auth()->user()->role === 'admin')
+                <a href="{{ route('admin.affiliate') }}" wire:navigate @click="adminMenuOpen = false"
+                    class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition {{ request()->routeIs('admin.affiliate') ? 'bg-primary/10 text-primary' : 'hover:bg-foreground/5 text-foreground' }}">
+                    <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.affiliate') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+                    </div>
+                    <span class="flex-1">Affiliate</span>
+                    <span class="text-xs text-muted-foreground/40">›</span>
+                </a>
+
+                <a href="{{ route('admin.settings') }}" wire:navigate @click="adminMenuOpen = false"
+                    class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'hover:bg-foreground/5 text-foreground' }}">
+                    <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.settings') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                    <span class="flex-1">Pengaturan</span>
+                    <span class="text-xs text-muted-foreground/40">›</span>
+                </a>
+            @endif
         </div>
 
-        <div class="text-[10px] font-bold uppercase text-muted-foreground px-4 py-2 mt-2 tracking-widest opacity-60">
-            Utama</div>
-        <a href="{{ route('admin.dashboard') }}" wire:navigate
-            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Dashboard</a>
-        <a href="{{ route('admin.monitoring') }}" wire:navigate
-            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.monitoring') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Monitoring</a>
-        <div class="h-px bg-white/10 my-1 mx-4"></div>
-        <a href="{{ route('admin.transactions') }}" wire:navigate
-            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.transactions') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Transaksi</a>
-
-        <div class="h-px bg-white/10 my-1 mx-4"></div>
-        <div class="text-[10px] font-bold uppercase text-muted-foreground px-4 py-2 tracking-widest opacity-60">Database
-            & Sistem</div>
-
-        <a href="{{ route('admin.units') }}" wire:navigate
-            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.units') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Unit</a>
-        <a href="{{ route('admin.promo') }}" wire:navigate
-            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.promo') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Promo
-            & Diskon</a>
-        <a href="{{ route('admin.customers') }}" wire:navigate
-            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.customers') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Pelanggan</a>
-
-        @if(auth()->user()->role === 'admin')
-            <a href="{{ route('admin.affiliate') }}" wire:navigate
-                class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.affiliate') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Affiliate</a>
-            <a href="{{ route('admin.settings') }}" wire:navigate
-                class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.settings') ? 'bg-black/5 dark:bg-white/10 text-primary font-bold' : 'text-foreground hover:bg-black/5 dark:hover:bg-white/5' }}">Pengaturan</a>
-        @endif
-
-        <div class="h-px bg-white/10 my-2 mx-4"></div>
-
-        <div class="flex items-center justify-between px-4 py-2">
-            <span class="text-xs font-semibold opacity-70">{{ auth()->user()->name ?? 'Administrator' }}</span>
+        <!-- Footer link & Logout -->
+        <div class="pt-2 border-t border-border/40 flex items-center justify-between gap-2">
+            <a href="/" wire:navigate
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-foreground/5 hover:bg-foreground/10 text-foreground transition">
+                <span>Web Publik</span>
+                <span class="text-[10px]">↗</span>
+            </a>
             <button wire:click="logout"
-                class="text-xs text-destructive font-bold px-3 py-1.5 rounded-lg hover:bg-destructive/10 transition-colors">Logout</button>
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-destructive/10 hover:bg-destructive/15 text-destructive transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                <span>Keluar</span>
+            </button>
         </div>
-        <a href="/" wire:navigate
-            class="flex items-center justify-center rounded-2xl bg-foreground text-background text-sm font-semibold px-4 py-3.5 hover:bg-foreground/90 active:scale-95 transition-all mt-1">
-            Ke Web Publik
-        </a>
     </div>
+
+    <!-- Floating Liquid Glass Bottom Dock (Apple / DailyPhone Style) -->
+    <nav class="pointer-events-auto mx-auto w-full max-w-[360px] sm:max-w-fit px-1.5 sm:px-3 h-[54px] sm:h-[58px] rounded-full border border-border/60 bg-background/60 dark:bg-[#161617]/70 backdrop-blur-3xl saturate-180 shadow-2xl flex items-center justify-between sm:justify-center gap-0.5 sm:gap-2 transition-all duration-300">
+        
+        <!-- Tab: Dashboard -->
+        <a href="{{ route('admin.dashboard') }}" wire:navigate
+            class="flex-1 sm:flex-initial flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all duration-200 {{ request()->routeIs('admin.dashboard') ? 'bg-primary/10 text-primary shadow-xs' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ request()->routeIs('admin.dashboard') ? '2.2' : '1.8' }}" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
+            </svg>
+            <span class="tracking-tight text-[10px] sm:text-xs">Dashboard</span>
+        </a>
+
+        <!-- Tab: Monitoring -->
+        <a href="{{ route('admin.monitoring') }}" wire:navigate
+            class="flex-1 sm:flex-initial flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all duration-200 {{ request()->routeIs('admin.monitoring') ? 'bg-primary/10 text-primary shadow-xs' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ request()->routeIs('admin.monitoring') ? '2.2' : '1.8' }}" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.48 12H2"/>
+            </svg>
+            <span class="tracking-tight text-[10px] sm:text-xs">Monitoring</span>
+        </a>
+
+        <!-- Tab: Transaksi -->
+        <a href="{{ route('admin.transactions') }}" wire:navigate
+            class="flex-1 sm:flex-initial flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all duration-200 {{ request()->routeIs('admin.transactions') ? 'bg-primary/10 text-primary shadow-xs' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ request()->routeIs('admin.transactions') ? '2.2' : '1.8' }}" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+            </svg>
+            <span class="tracking-tight text-[10px] sm:text-xs">Transaksi</span>
+        </a>
+
+        <!-- Tab: Activity (ala DailyPhone) -->
+        <a href="{{ route('admin.staff-logs') }}" wire:navigate
+            class="flex-1 sm:flex-initial flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all duration-200 {{ request()->routeIs('admin.staff-logs') ? 'bg-primary/10 text-primary shadow-xs' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ request()->routeIs('admin.staff-logs') ? '2.2' : '1.8' }}" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-6M6 20V10M18 20V4"/>
+            </svg>
+            <span class="tracking-tight text-[10px] sm:text-xs">Activity</span>
+        </a>
+
+        <!-- Desktop Direct Links for Database items -->
+        <div class="hidden md:flex items-center gap-1 border-l border-border/40 pl-1.5 ml-0.5">
+            <a href="{{ route('admin.units') }}" wire:navigate
+                class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 {{ request()->routeIs('admin.units') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+                <span>Unit</span>
+            </a>
+
+            <a href="{{ route('admin.instagram-story') }}" wire:navigate
+                class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 {{ request()->routeIs('admin.instagram-story') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+                <span>Story IG</span>
+            </a>
+
+            <a href="{{ route('admin.promo') }}" wire:navigate
+                class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 {{ request()->routeIs('admin.promo') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                <span>Promo</span>
+            </a>
+
+            @if(auth()->user()->role !== 'staff')
+            <a href="{{ route('admin.customers') }}" wire:navigate
+                class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>Pelanggan</span>
+            </a>
+            @endif
+
+            @if(auth()->user()->role === 'admin')
+                <a href="{{ route('admin.settings') }}" wire:navigate
+                    class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 {{ request()->routeIs('admin.settings') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Setting</span>
+                </a>
+            @endif
+        </div>
+
+        <!-- More Toggle (Active on mobile or extra menu) -->
+        <button @click="adminMenuOpen = !adminMenuOpen"
+            class="flex-1 sm:flex-initial flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all duration-200"
+            :class="adminMenuOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+            </svg>
+            <span class="tracking-tight text-[10px] sm:text-xs">More</span>
+        </button>
+    </nav>
 </div>

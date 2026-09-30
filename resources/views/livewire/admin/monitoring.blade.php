@@ -40,13 +40,8 @@
     </style>
 
     <div>
-        {{-- Header & Navigation Switcher --}}
-        <div class="flex items-center justify-between mb-3 sm:mb-6">
-            <div class="sm:flex-auto">
-                <h1 class="text-2xl font-bold  text-foreground">Monitoring</h1>
-                <p class="mt-2 text-sm text-muted-foreground">Monitor and track all orders.</p>
-            </div>
-
+        {{-- Header Switcher --}}
+        <div class="flex items-center justify-end mb-3 sm:mb-5">
             <div class="flex items-center gap-1 bg-muted/40 backdrop-blur-sm border border-border p-1 rounded-xl shadow-sm">
                 <button class="px-4 py-1.5 text-[11px] font-bold bg-background border border-border/50 rounded-lg shadow-sm">Monitor</button>
                 <a href="{{ route('admin.radar') }}" class="px-4 py-1.5 text-[11px] font-semibold hover:bg-muted/60 rounded-lg transition-all opacity-60">Radar</a>
@@ -1297,7 +1292,7 @@
                             <div class="space-y-4 pt-4 border-t border-border/50">
                                 <div class="text-center">
                                     <p class="text-[10px] text-muted-foreground uppercase font-bold mb-1">Total Denda Bayar</p>
-                                    <p class="text-2xl font-black text-primary">Rp {{ number_format((int) $dendaAmount + (int) $dendaKerusakanAmount, 0, ',', '.') }}</p>
+                                    <p class="text-2xl font-black text-foreground">Rp {{ number_format((int) $dendaAmount + (int) $dendaKerusakanAmount, 0, ',', '.') }}</p>
                                     <p class="text-[10px] text-red-500 font-medium mt-1 uppercase italic">* TANPA KODE UNIK</p>
                                 </div>
                                 <div class="flex justify-center">

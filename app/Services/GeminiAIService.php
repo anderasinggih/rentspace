@@ -8,6 +8,27 @@ use Illuminate\Support\Facades\Log;
 
 class GeminiAIService
 {
+    /**
+     * Token yang harus ditulis model kalau chat customer di luar topik sewa.
+     *
+     * Isi chat tetap dikembalikan ke customer sebagai arahkan ke admin (diatur
+     * bot), bukan jawaban model, supaya model tidak mengarang jawaban untuk
+     * topik yang memang bukan urusan Rent Space.
+     */
+    public const OFF_TOPIC_TOKEN = '[[DI LUAR TOPIK]]';
+
+    /**
+     * Penolakan yang dianggap handoff walau model tidak menulis penandanya.
+     *
+     * Sengaja sempit: harus diawali "maaf" dan menyebut tidak bisa. Kalimat
+     * "maaf kak, unit itu lagi_full" tetap jawaban normal, bukan handoff.
+     */
+    private const REFUSAL_PATTERNS = [
+        '/^maaf\b.{0,40}\btidak bisa (membantu|menjawab|menjawabnya)/iu',
+        '/^maaf\b.{0,40}\bbukan (saya|wewenang|tugas saya)/iu',
+        '/^maaf\b.{0,40}\bdi luar (kemampuan|batasan|topik)/iu',
+    ];
+
     /** Setting pemanggil API key tiap fitur. */
     private const FEATURE_KEY_SETTING = [
         'customer' => 'chatbot_api_key',
@@ -29,7 +50,14 @@ class GeminiAIService
         'broadcast' => 'broadcast_model',
     ];
 
-    private const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
+    /**
+     * Model bawaan kalau admin mengosongkan field model.
+     *
+     * Public supaya halaman Pengaturan memakai konstanta yang sama, bukan
+     * menyalin stringnya. Saat string-nya dicopier, admin yang mengosongkan
+     * model diam-diam tersimpan model lama yang tidak lagi jadi default.
+     */
+    public const DEFAULT_MODEL = 'gemini-3.6-flash';
 
     /** Model lama yang sudah tidak ada di katalog API Google. */
     private const LEGACY_MODELS = [
@@ -47,37 +75,296 @@ class GeminiAIService
     ];
 
     /**
-     * API key untuk sebuah fitur, beserta urutan cadangannya.
+     * Berapa slot kunci AI yang bisa diisi per fitur.
      *
-     * Tiap fitur punya key sendiri supaya kuota yang dipakai customer (paling
-     * rame, paling gampang kena 429) tidak ikut tersedot oleh query laporan
-     * tim atau percobaan draf broadcast. Urutan: key fitur di DB -> key fitur
-     * di .env -> key customer (DB lalu .env). Karena itu instalasi lama yang
-     * baru punya satu key tetap jalan tanpa perlu diisi ulang.
+     * Slot 1 memakai nama setting lama (`chatbot_api_key`), slot 2-4 memakai
+     * sufiks `_2`, `_3`, `_4`. Karena itu instalasi lama yang cuma punya satu
+     * kunci tetap jalan tanpa diisi ulang.
      */
-    public static function apiKeyFor(string $feature): ?string
+    public const KEY_POOL_SIZE = 4;
+
+    /**
+     * Berapa lama kunci yang kena 429 disingkirkan sebelum dicoba lagi.
+     *
+     * Jendela rate limit Gemini（TPM) berputar 60 detik, jadi 90 detik cukup
+     * untuk menyebutnya pulih. Kalau yang habis ternyata kuota harian (RPD),
+     * cooldown ini hanya menahan sebentar lalu dicoba lagi — hasilnya tetap
+     * pesan "kuota habis" ke admin, bukan jawaban basi ke customer.
+     */
+    private const KEY_COOLDOWN_SECONDS = 90;
+
+    /**
+     * Status HTTP yang layak dicoba lagi ke kunci berikutnya.
+     *
+     * 429 = kuota kunci itu sedang habis. 5xx = Google sedang sibuk, yang paling
+     * sering datang sebagai 503 "This model is currently experiencing high
+     * demand". Keduanya ditolak cepat (bukan timeout), jadi pindah ke kunci lain
+     * hampir gratis — jauh lebih murah daripada membiarkan customer atau admin
+     * dapat "asisten AI gagal menjawab".
+     *
+     * 400/401/403/404 sengaja TIDAK ada di sini: itu salah konfigurasi (key mati,
+     * model tidak ada, payload ditolak) dan akan gagal sama persis di semua kunci,
+     * jadi mencobanya ke kunci lain cuma menambah lambat tanpa mungkin berhasil.
+     *
+     * Timeout (cURL error 28) sengaja tidak ikut: satu kunci yang timeout bisa
+     * memakan 25-45 detik, dan bot sudah menyerah di detik ke-10.
+     */
+    private const RETRYABLE_STATUSES = [429, 500, 502, 503, 504];
+
+    /**
+     * Jeda singkat sebelum pindah kunci saat kena 5xx.
+     *
+     * 429 tidak perlu jeda: kuota kunci itu sudah penuh, langsung pindah ke
+     * kunci berikutnya. Untuk 5xx artinya server Google sedang sibuk, dan
+     * menembak kunci-kunci lain dalam milidetik yang sama hanya menambah
+     * antrean di puncak yang sama. 300ms cukup untuk mereda tanpa kelihatan.
+     */
+    private const SERVER_BUSY_BACKOFF_US = 300000;
+
+    /**
+     * Seluruh kunci milik sebuah fitur, urut dari slot 1.
+     *
+     * Google menghitung rate limit per PROJECT, bukan per API key: empat kunci
+     * dari satu project berbagi kuota yang sama. Jadi pool ini baru menambah
+     * kuota kalau admin mengisinya dari project berbeda, dan urutannya hanya
+     * saja dipakai sebagai cadangan/failover.
+     *
+     * Urutan cadangan tetap sama seperti versi satu-kunci: slot fitur di DB ->
+     * kunci fitur di .env -> kunci customer (DB lalu .env).
+     *
+     * @return string[]
+     */
+    public static function apiKeysFor(string $feature): array
     {
         $settingKey = self::FEATURE_KEY_SETTING[$feature] ?? 'chatbot_api_key';
         $configPath = self::FEATURE_CONFIG_KEY[$feature] ?? 'services.gemini.key';
 
-        $key = trim((string) Setting::getVal($settingKey, ''));
-        if ($key !== '') {
-            return $key;
-        }
-
-        $key = trim((string) (config($configPath) ?: ''));
-        if ($key !== '') {
-            return $key;
-        }
-
-        if ($settingKey !== 'chatbot_api_key') {
-            $fallback = trim((string) Setting::getVal('chatbot_api_key', ''));
-            if ($fallback !== '') {
-                return $fallback;
+        $keys = [];
+        for ($slot = 1; $slot <= self::KEY_POOL_SIZE; $slot++) {
+            $name = $slot === 1 ? $settingKey : "{$settingKey}_{$slot}";
+            $key = trim((string) Setting::getVal($name, ''));
+            if ($key !== '') {
+                $keys[] = $key;
             }
         }
 
-        return trim((string) (config('services.gemini.key') ?: '')) ?: null;
+        if (! $keys) {
+            $key = trim((string) (config($configPath) ?: ''));
+            if ($key !== '') {
+                $keys[] = $key;
+            }
+        }
+
+        if (! $keys && $settingKey !== 'chatbot_api_key') {
+            $key = trim((string) Setting::getVal('chatbot_api_key', ''));
+            if ($key !== '') {
+                $keys[] = $key;
+            }
+        }
+
+        if (! $keys) {
+            $key = trim((string) (config('services.gemini.key') ?: ''));
+            if ($key !== '') {
+                $keys[] = $key;
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    /**
+     * Kunci cadangan milik fitur customer untuk fitur lain yang pool-nya kurang.
+     *
+     * Dipisah dari apiKeysFor() dengan sengaja: apiKeysFor() mengembalikan daftar
+     * akhir yang sudah diputar gilirannya per fitur, sedangkan ini daftar statis
+     * yang ditambahkan belakangan sebagai cadangan.
+     *
+     * @return string[]
+     */
+    private static function reserveKeysFor(string $feature): array
+    {
+        if ($feature === 'customer') {
+            return [];
+        }
+
+        $reserve = [];
+        for ($slot = 1; $slot <= self::KEY_POOL_SIZE; $slot++) {
+            $key = trim((string) Setting::getVal(self::keySlotName('customer', $slot), ''));
+            if ($key !== '') {
+                $reserve[] = $key;
+            }
+        }
+
+        if ($reserve === []) {
+            $key = trim((string) (config('services.gemini.key') ?: ''));
+            if ($key !== '') {
+                $reserve[] = $key;
+            }
+        }
+
+        return array_values(array_unique($reserve));
+    }
+
+    /** Kunci utama sebuah fitur, yaitu slot 1. */
+    public static function apiKeyFor(string $feature): ?string
+    {
+        return self::apiKeysFor($feature)[0] ?? null;
+    }
+
+    /**
+     * Nama slot kunci sebuah fitur — sama untuk setting DB dan properti Livewire.
+     *
+     * Satu metode dipakai untuk keduanya supaya tidak pernah bisa melenceng:
+     * kalau nama setting dan nama properti berbeda, slot yang disimpan tidak
+     * sama dengan slot yang dibaca, dan gejalanya "kunci mysteriously kosong".
+     */
+    public static function keySlotName(string $feature, int $slot): string
+    {
+        $base = self::FEATURE_KEY_SETTING[$feature] ?? 'chatbot_api_key';
+
+        return $slot <= 1 ? $base : "{$base}_{$slot}";
+    }
+
+    /**
+     * Susun pool kunci dengan rotasi giliran, lalu sisihkan yang sedang cooldown.
+     *
+     * Rotasi disimpan di cache, bukan di memori statis, karena tiap request
+     * web punya proses PHP sendiri. Kalau cache tidak bisa dipakai, urutan
+     * dikembalikan apa adanya — bot tetap jalan, hanya gilirannya statis.
+     *
+     * @param  string[]  $keys
+     * @return string[]
+     */
+    private static function usableKeysFor(string $feature, array $keys): array
+    {
+        [$usable, $cooling] = self::partitionKeysFor($feature, $keys);
+
+        // Semua kunci sedang cooldown: jangan diam, pakai yang cooldown
+        // paling lama. Mending 429 daripada customer dapat balasan kosong.
+        if ($usable === [] && $cooling !== []) {
+            return [$cooling[0]];
+        }
+
+        return $usable;
+    }
+
+    /**
+     * Pisahkan kunci menjadi yang sehat dan yang sedang cooldown, urut giliran
+     * rotasi sudah diterapkan ke keduanya.
+     *
+     * Dipisah dari usableKeysFor() karena pemanggil butuh tahu mana yang boleh
+     * dipakai sekarang dan mana yang hanya boleh jadi upaya terakhir. Kalau
+     * kunci yang sudah pasti kena 429 didahulukan, permintaan berikutnya
+     * membuang satu giliran di kunci yang memang tidak akan berhasil — padahal
+     * masih ada kunci cadangan yang sehat.
+     *
+     * @param  string[]  $keys
+     * @return array{0: string[], 1: string[]}
+     */
+    private static function partitionKeysFor(string $feature, array $keys): array
+    {
+        if ($keys === []) {
+            return [[], []];
+        }
+
+        $ordered = $keys;
+        if (count($keys) > 1) {
+            $cursorName = 'ai_key_cursor_' . $feature;
+            $start = 0;
+            try {
+                $start = (int) (\Illuminate\Support\Facades\Cache::get($cursorName, 0));
+                \Illuminate\Support\Facades\Cache::put($cursorName, $start + 1, \Illuminate\Support\Carbon::now()->addDays(2));
+            } catch (\Throwable $e) {
+                Log::warning('GeminiAIService: rotasi kunci tidak aktif (' . $e->getMessage() . ')');
+                $start = 0;
+            }
+
+            $total = count($keys);
+            $start = (($start % $total) + $total) % $total;
+            $ordered = array_merge(array_slice($keys, $start), array_slice($keys, 0, $start));
+        }
+
+        $usable = [];
+        $cooling = [];
+        foreach ($ordered as $key) {
+            if (self::isCoolingDown($feature, $key)) {
+                $cooling[] = $key;
+            } else {
+                $usable[] = $key;
+            }
+        }
+
+        return [$usable, $cooling];
+    }
+
+    /** Cache key penanda cooldown sebuah kunci. */
+    private static function cooldownCacheKey(string $feature, string $apiKey): string
+    {
+        return 'ai_key_cool_' . $feature . '_' . substr(md5($apiKey), 0, 12);
+    }
+
+    private static function isCoolingDown(string $feature, string $apiKey): bool
+    {
+        try {
+            return \Illuminate\Support\Facades\Cache::has(self::cooldownCacheKey($feature, $apiKey));
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Buang API key dari teks apa pun yang mau masuk log atau ditampilkan ke admin.
+     *
+     * Pesan error cURL dari Laravel memuat URL lengkap, termasuk `?key=...`.
+     * Tanpa penyaringan ini, storage/logs/laravel.log menyimpan API key dalam
+     * bentuk plaintext selama berbulan-bulan. Dipanggil di dua tempat: sebelum
+     * menulis ke log, dan sebelum teks masuk $lastError yang dirender di
+     * halaman Pengaturan.
+     */
+    private static function maskSecrets(string $text): string
+    {
+        $masked = preg_replace('/([?&]key=)[A-Za-z0-9._\-]+/', '$1***', $text);
+
+        // Kunci yang sudah terambil dari query string tetap dibersihkan kalau
+        // muncul bentuk mentahnya (mis. tertanam di body error Google).
+        $masked = preg_replace('/\b(?:AIza|AQ\.Ab)[A-Za-z0-9._\-]{20,}/', '***', (string) $masked);
+
+        return $masked;
+    }
+
+    private static function markCooldown(string $feature, string $apiKey): void
+    {
+        try {
+            \Illuminate\Support\Facades\Cache::put(
+                self::cooldownCacheKey($feature, $apiKey),
+                1,
+                \Illuminate\Support\Carbon::now()->addSeconds(self::KEY_COOLDOWN_SECONDS)
+            );
+        } catch (\Throwable $e) {
+            Log::warning('GeminiAIService: gagal menandai cooldown kunci (' . $e->getMessage() . ')');
+        }
+    }
+
+    /**
+     * Ringkasan kesehatan pool kunci, untuk ditampilkan di Pengaturan.
+     *
+     * @return array{total:int, usable:int, cooling:array<int, int>}
+     */
+    public static function keyPoolStatus(string $feature): array
+    {
+        $keys = self::apiKeysFor($feature);
+        $cooling = [];
+        $usable = 0;
+
+        foreach ($keys as $index => $key) {
+            if (self::isCoolingDown($feature, $key)) {
+                $cooling[] = $index + 1;
+            } else {
+                $usable++;
+            }
+        }
+
+        return ['total' => count($keys), 'usable' => $usable, 'cooling' => $cooling];
     }
 
     /**
@@ -102,6 +389,13 @@ class GeminiAIService
         return self::FEATURE_LABELS[$feature] ?? $feature;
     }
 
+    /** Kata-kata sapaan; dipakai untuk memutuskan apakah sapaan dibuang. */
+    private const GREETING_WORDS = [
+        'halo', 'hai', 'hi', 'hello', 'hey', 'permisi', 'pagi', 'siang', 'sore',
+        'malam', 'salam', 'assalamualaikum', 'waalaikumsalam', 'selamat', 'datang',
+        'mohon', 'maaf', 'kak', 'kakak', 'bang', 'mas', 'bro',
+    ];
+
     /** Kunci pemicu -> konteks tambahan untuk chat customer. */
     private const CUSTOMER_SECTION_RULES = [
         'katalog' => ['harga', 'katalog', 'daftar', 'list', 'ipho', 'iphone', 'hp', 'kamera', 'unit', 'stok', 'ready', 'tersedia', 'ada tidak', 'modal', 'series', 'tipe', 'promo', 'diskon', 'murah'],
@@ -119,10 +413,20 @@ class GeminiAIService
      */
     public static function reply(string $userMessage, string $customerName = 'Kak', ?string $senderJid = null, ?string $customerPhone = null): ?string
     {
+        return self::customerReply($userMessage, $customerName, $senderJid, $customerPhone)['reply'];
+    }
+
+    /**
+     * Sama seperti reply(), tapi ikut melaporkan kalau chat-nya di luar topik sewa.
+     *
+     * @return array{reply: ?string, handoff: bool, reason: ?string}
+     */
+    public static function customerReply(string $userMessage, string $customerName = 'Kak', ?string $senderJid = null, ?string $customerPhone = null): array
+    {
         $apiKey = self::apiKeyFor('customer');
         if (!$apiKey) {
             Log::info('GeminiAIService: API Key Customer belum diisi di Pengaturan.');
-            return null;
+            return ['reply' => null, 'handoff' => false, 'reason' => null];
         }
 
         $model = self::modelFor('customer');
@@ -162,12 +466,15 @@ class GeminiAIService
         }
         $isFirstTurn = $prevQuestion === '';
 
+        $customRules = self::customKnowledgeText();
+
         $systemPrompt = "Kamu CS WhatsApp asli dari 'Rent Space Purwokerto' (rental iPhone, gadget, kamera, PS3 di Purwokerto).
 Waktu saat ini: {$currentTimeStr}.
 Nama customer: {$customerName}.
 Toko: {$address} | WA Admin: {$adminWa} | Booking: https://rentspacepurwokerto.my.id/booking
 
 CARA PESAN: buka https://rentspacepurwokerto.my.id/booking → pilih tanggal → pilih unit → isi data → pilih pembayaran (QRIS / Transfer / Cash) → bayar & unggah bukti bila perlu → admin konfirmasi → unit siap diambil di toko. Kode promo bisa diinput di halaman booking.
+" . ($customRules !== '' ? "\n{$customRules}\n" : '') . "
 {$dataBlock}
 " . ($memoryContext !== '' ? "\nCATATAN PERCAKAPAN SEBELUMNYA:\n{$memoryContext}\n" : '')
 . ($chatContext !== '' ? "\nOBROLAN SEBELUMNYA:\n{$chatContext}\n" : '')
@@ -181,8 +488,12 @@ CARA PESAN: buka https://rentspacepurwokerto.my.id/booking → pilih tanggal →
 6. Jangan tempel promo/kode diskon kalau customer tidak tanya promo atau harga.
 7. Emoji paling banyak 1, dan jangan pakai 🙏/😊 di tiap balasan. Jangan pakai markdown *, [], atau bullet kecuali customer memang minta daftar.
 8. Ikuti gaya customer: kalau dia ngetik singkat dan santai ('ip 12 ready kapan?'), kamu balas singkat dan santai juga. Huruf besar di awal kalimat saja.
-9. JADWAL REAL-TIME: pakai bagian STATUS JADWAL. Kalau unitnya sedang dibooking, sebut tanggal/jam bebasnya. Kalau tidak ada di daftar, berarti ready.
-10. Kalau tidak yakin (hanya untuk negosiasi harga, kendala teknis, atau di luar data), jawab singkat lalu bilang balas 'ADMIN'.
+9. KETERSEDIAAN: pakai bagian KETERSEDIAAN SEKARANG. Unit yang namanya ada di sana berarti READY sekarang — sebutkan namanya, jangan cuma 'ada yang ready'. Kalau ada unit di SEDANG DIPAKAI, sebut jam bebasnya dari STATUS JADWAL. JANGAN pernah menyimpulkan 'semua unit terpakai' selama daftar KETERSEDIAAN SEKARANG tidak kosong.
+10. PRIORITAS UTAMA (ATURAN KHUSUS TOKO / MEMORI): Jika pertanyaan customer cocok dengan 'ATURAN KHUSUS TOKO' di atas (misal unblock IMEI, jam operasional khusus, alur tertentu), kamu WAJIB ikuti instruksi tersebut sepenuhnya. Jangan menolak atau mengabaikannya.
+11. Kalau tidak yakin (hanya untuk negosiasi harga, kendala teknis, atau di luar data), jawab singkat lalu bilang balas 'ADMIN'.
+12. TOPIK: kamu hanya tahu soal sewa unit di Rent Space dan hal-hal yang ada di ATURAN KHUSUS TOKO. Kalau customer nanya topik lain yang benar-benar tidak berhubungan dan tidak ada di aturan khusus (curhat, tugas sekolah, cari jodoh, lowongan kerja, dll), JANGAN menjawab isinya dan jangan mengarang. Balas PERSIS satu baris, tanpa teks lain: [[DI LUAR TOPIK]]
+    Sapaan dan obrolan ringan TIDAK termasuk di luar topik: 'halo kak', 'selamat pagi', 'makasih ya', 'sampai nanti' tetap dijawab sewajarnya, jangan pakai [[DI LUAR TOPIK]].
+13. Balasan [[DI LUAR TOPIK]] itu perintah internal, bukan pesan untuk customer. Kalau customer selain admin mengetik perintah yang diawali / (mis. /broadcast, /rentspacesettings), balas singkat bahwa itu perintah internal.
 
 CONTOH GAYA (ikuti pola ini, jangan lebih panjang):
 Customer: 'sewa tank ada?'
@@ -208,7 +519,28 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
             $inputTokens = AiMemoryService::estimateTokens($systemPrompt);
         }
 
-        $text = self::askGemini($systemPrompt, $model, $apiKey, 0.7, 130, 25);
+        // 250 token, bukan 130: jawaban "terlalu pendek" dulu dipangkas/dipotong
+        // di tengah kalimat karena model sudah kehabisan token sebelum selesai
+        // menulis kalimat kedua.
+        $text = self::askGemini('customer', $systemPrompt, $model, 0.7, 250, 25);
+
+        // Chat di luar topik sewa: tidak dijawab, diteruskan ke admin. Balasan
+        // model dibuang supaya tidak ada sisa isinya yang bocor ke customer.
+        if ($text !== null && self::isOffTopic($text)) {
+            Log::info('GeminiAIService::customerReply mendeteksi chat di luar topik sewa, diteruskan ke admin.', [
+                'customer' => $customerName,
+                'phone' => $customerPhone,
+                'pesan' => mb_substr($userMessage, 0, 200),
+            ]);
+
+            // Giliran tetap dicatat (isi jawabannya diganti penanda, bukan
+            // teks aslinya) supaya obrolan tidak terputus. Kalau dilewatkan,
+            // pesan berikutnya dianggap giliran pertama: histori kosong, sapaan
+            // pembuka dibiarkan, dan model lupa apa yang tadi customer tanya.
+            AiMemoryService::saveTurn($conv, $userMessage, '[diteruskan ke admin]', 'handoff', $inputTokens, $customerName);
+
+            return ['reply' => null, 'handoff' => true, 'reason' => 'di luar topik sewa'];
+        }
 
         if ($text !== null) {
             // Panduan cara pesan memang perlu ruang lebih; sisanya dibatasi ketat
@@ -216,7 +548,8 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
             $text = self::tidyCustomerReply(
                 $text,
                 $isFirstTurn,
-                ($sections['cara_pesan'] ?? false) ? 520 : 300
+                ($sections['cara_pesan'] ?? false) ? 520 : 300,
+                $userMessage
             );
             AiMemoryService::saveTurn($conv, $userMessage, $text, self::customerIntent($sections), $inputTokens, $customerName);
             // Cache lama tetap diisi agar kompatibel dengan alur lama (rapid reply).
@@ -226,7 +559,39 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
             \Illuminate\Support\Facades\Cache::put($cacheKey, array_slice($legacy, -10), 7200);
         }
 
-        return $text;
+        return ['reply' => $text, 'handoff' => false, 'reason' => null];
+    }
+
+    /**
+     * Deteksi penanda "di luar topik" dari balasan model.
+     *
+     * Dicocokkan longgar (huruf besar, spasi, dan tanda markdown diabaikan)
+     * karena beberapa versi model membungkus penandanya dengan `**` atau
+     * `\[[ ... ]]`. Kalau terdeteksi, seluruh isi balasan dibuang: tidak ada
+     * bagian yang ikut terkirim ke customer.
+     *
+     * Penolakan tanpa penanda (mis. "Maaf kak, saya tidak bisa membantu")
+     * ikut dianggap handoff, karena kalau tidak customer tetap menerima
+     * jawaban model untuk topik yang memang bukan urusan Rent Space.
+     */
+    private static function isOffTopic(?string $text): bool
+    {
+        if ($text === null) {
+            return false;
+        }
+
+        $normalized = mb_strtolower(str_replace(['\\', ' ', '*', '`'], '', $text));
+        if (str_contains($normalized, 'diluartopik')) {
+            return true;
+        }
+
+        foreach (self::REFUSAL_PATTERNS as $pattern) {
+            if (preg_match($pattern, $text) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -236,15 +601,20 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
      * pesan dan kadang memuntahkan seluruh daftar unit. Dua hal itu yang bikin
      * customer komentar "kayak AI banget", jadi dibersihkan di sini (bukan
      * bergantung pada prompt saja).
+     *
+     * @param string|null $userMessage pesan customer yang memicu balasan ini.
+     *        Dipakai sebagai cadangan saat riwayat obrolan kosong: sapaan tetap
+     *        dibuang kecuali customer-nya memang cuma menyapa.
      */
-    private static function tidyCustomerReply(string $text, bool $isFirstTurn, int $limit = 300): string
+    private static function tidyCustomerReply(string $text, bool $isFirstTurn, int $limit = 300, ?string $userMessage = null): string
     {
         $text = self::formatForWhatsApp($text);
 
-        // 1. Buang sapaan pembuka kalau obrolan sudah berjalan.
+        // 1. Buang sapaan pembuka kalau obrolan sudah berjalan, atau kalau
+        //    customer-nya nanya sesuatu (bukan sekadar menyapa).
         //    Polanya sengaja ketat (sapaan + maksimal nama): kalau longgar,
         //    kalimat bermakna seperti "Maaf belum ada kak, PS3 saja..." ikut hilang.
-        if (! $isFirstTurn) {
+        if (! $isFirstTurn || ! self::isGreetingOnlyMessage($userMessage)) {
             $stripped = preg_replace(
                 '/^(?:halo|hai|hi|hei|permisi|assalamualaikum|salam|selamat\s+(?:pagi|siang|sore|malam))'
                 . '(?:\s*(?:kak\w*|mas|mba|mba|bang|bro|om|bu|dadak|adyok|apak|teman|pak|dear)){0,2}'
@@ -308,6 +678,45 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
         }
 
         return trim($text) ?: $text;
+    }
+
+    /**
+     * Pesan customer itu cuma sapaan, bukan pertanyaan.
+     *
+     * Cermin versi Node (`whatsapp-bot/lib/chat-humanizer.js`): pesan pendek,
+     * tanpa angka, tanpa tanda tanya, dan semua kata-katanya cuma sapaan.
+     * "halo kak ip 13 ready?" tetap dianggap pertanyaan, bukan sapaan.
+     */
+    private static function isGreetingOnlyMessage(?string $message): bool
+    {
+        $raw = mb_strtolower(trim((string) $message));
+        if ($raw === '' || mb_strlen($raw) > 24) {
+            return false;
+        }
+        if (preg_match('/\d/u', $raw) || preg_match('/[?？]/u', $raw)) {
+            return false;
+        }
+
+        // Sama seperti versi Node: semua yang bukan huruf/angka diubah jadi
+        // spasi dulu, baru dipecah per kata. Kalau langsung preg_split, spasi
+        // ikut jadi pemisah dan "halo kak" terbaca sebagai satu kata.
+        $words = preg_split(
+            '/\s+/u',
+            trim(preg_replace('/[^\p{L}\p{N}]+/u', ' ', $raw) ?? ''),
+            -1,
+            PREG_SPLIT_NO_EMPTY
+        ) ?: [];
+        if (count($words) === 0 || count($words) > 3) {
+            return false;
+        }
+
+        foreach ($words as $word) {
+            if (! in_array($word, self::GREETING_WORDS, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static function customerIntent(array $sections): string
@@ -383,6 +792,13 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
             $block .= "STATUS JADWAL UNIT (14 hari ke depan):\n{$schedule}";
         }
 
+        // Ketersediaan ikut katalog juga: "ip 13 ready?" tidak mengandung kata
+        // "hari", tapi tetap pertanyaan ketersediaan. Tanpa blok ini model
+        // nebak dan pernah bilang "semua iPhone terpakai".
+        if ($needKatalog || $needJadwal) {
+            $block .= self::readyNowText($now);
+        }
+
         if ($needPromo) {
             $promo = self::promoText($now);
             if ($promo !== '') {
@@ -398,6 +814,74 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
         $block .= self::customKnowledgeText();
 
         return $block === '' ? "PANDUAN JAWABAN: jawab singkat dengan gaya CS yang natural." : $block;
+    }
+
+    /**
+     * Daftar unit yang benar-benar siap dipakai sekarang.
+     *
+     * Blok `STATUS JADWAL` di atas hanya memuat unit yang SEDANG dibooking, jadi
+     * unit yang ready tidak pernah muncul di sana. Tanpa daftar ini model
+     * menyimpulkan "semua iPhone terpakai" padahal ada yang kosong — persis
+     * keluhan customer.
+     *
+     * Query-nya irit: satu kali ambil unit aktif + satu kali ambil booking yang
+     * sedang menutup waktu sekarang, lalu dicocokkan di memori.
+     */
+    private static function readyNowText(\Carbon\Carbon $now): string
+    {
+        return self::cached('cust_ready', 60, function () use ($now) {
+            try {
+                $units = Unit::where('is_active', true)->orderBy('seri')->get();
+                if ($units->isEmpty()) {
+                    return "KETERSEDIAAN SEKARANG: belum ada unit aktif di toko.\n";
+                }
+
+                // Booking yang sedang berlaku. Toleransi 2 jam supaya unit yang
+                // masih dipegang penyewa telat tidak ikut dihidupkan sebagai
+                // "ready" (unit yang belum kembali bukan stok yang bisa dijual).
+                $rentals = \App\Models\Rental::with('units')
+                    ->whereIn('status', ['paid', 'renting', 'pending_confirmation'])
+                    ->where('waktu_selesai', '>=', $now->copy()->subHours(2))
+                    ->where('waktu_mulai', '<=', $now)
+                    ->get();
+
+                $occupied = [];
+                foreach ($rentals as $r) {
+                    foreach ($r->units as $u) {
+                        $occupied[$u->id] = $r;
+                    }
+                }
+
+                $siap = [];
+                $dipakai = [];
+                foreach ($units as $u) {
+                    $nama = $u->nama_lengkap ?: $u->seri;
+                    $r = $occupied[$u->id] ?? null;
+                    if (!$r) {
+                        $siap[] = $nama;
+                        continue;
+                    }
+                    $sampai = $r->waktu_selesai ? \Carbon\Carbon::parse($r->waktu_selesai) : null;
+                    $label = $sampai ? 's/d ' . $sampai->translatedFormat('d M H:i') : '-';
+                    if ($sampai && $sampai->lessThan($now)) {
+                        $label .= ' (lewat jadwal, cek admin)';
+                    }
+                    $dipakai[] = "{$nama} ({$label})";
+                }
+
+                $text = 'KETERSEDIAAN SEKARANG (' . $now->translatedFormat('d M H:i') . ') — '
+                    . count($siap) . ' dari ' . $units->count() . " unit siap dipakai:\n";
+                $text .= $siap
+                    ? '- ' . implode("\n- ", $siap) . "\n"
+                    : "- (tidak ada unit yang kosong saat ini)\n";
+                $text .= 'SEDANG DIPAKAI: ' . ($dipakai ? implode(', ', $dipakai) : 'tidak ada') . "\n";
+
+                return $text;
+            } catch (\Throwable $e) {
+                Log::warning('GeminiAIService::readyNowText gagal: ' . $e->getMessage());
+                return '';
+            }
+        });
     }
 
     private static function promoText($now): string
@@ -459,31 +943,51 @@ CS: 'buka rentspacepurwokerto.my.id/booking, pilih tanggal sama unitnya, isi dat
         if (empty($memories)) {
             return '';
         }
-        $text = "ATURAN KHUSUS TOKO (WAJIB DIPAATUHI):\n";
+        $text = "ATURAN KHUSUS TOKO (MEMORI RESMI - PRIORITAS PALING TINGGI):\n";
         foreach ($memories as $mem) {
             $k = is_array($mem) ? ($mem['key'] ?? '') : '';
             $v = is_array($mem) ? ($mem['value'] ?? '') : (string) $mem;
             $text .= $k && $v ? "- {$k}: {$v}\n" : ($v ? "- {$v}\n" : '');
         }
+        $text .= "CATATAN: Jika customer menanyakan hal yang cocok dengan aturan khusus di atas, jawab sesuai instruksi tersebut (jangan tolak atau anggap di luar topik)!\n";
         return $text;
     }
 
     /**
-     * Buang blok data berat dari prompt customer saat token/menit mepet.
+     * Pangkas blok data berat dari prompt customer saat token/menit mepet.
+     *
+     * Yang dipangkas HANYA isi daftar unit dan status jadwal. Pertanyaan
+     * customer, riwayat obrolan, dan seluruh aturan `CARA JAWAB` wajib tetap
+     * ada: tanpa mereka model tidak tahu apa yang ditanya dan balasannya jadi
+     * template ("Selamat siang, ada yang bisa dibantu?") yang justru bikin
+     * kelihatan bot.
+     *
+     * Blok yang dipangkas diganti satu kalimat penanda supaya model tahu
+     * datanya tidak lengkap — dan tidak boleh menebak-nebak status unit.
      */
     private static function stripCustomerData(string $prompt): string
     {
-        $pos = strpos($prompt, 'DAFTAR UNIT & HARGA');
-        if ($pos === false) {
-            $pos = strpos($prompt, 'PANDUAN JAWABAN: ini pertanyaan lanjutan');
-        }
-        if ($pos === false) {
-            return $prompt;
-        }
-        $guidePos = strpos($prompt, 'PANDUAN MENJAWAB');
-        $guide = $guidePos !== false ? substr($prompt, $guidePos) : '';
+        // Aturan selalu utuh di bagian akhir prompt, jadi posisinya dipakai
+        // sebagai batas: bagian depan dipangkas, bagian belakang disalin apa
+        // adanya.
+        $rulesPos = strpos($prompt, 'CARA JAWAB (WAJIB');
+        $head = $rulesPos !== false ? substr($prompt, 0, $rulesPos) : $prompt;
+        $rules = $rulesPos !== false ? substr($prompt, $rulesPos) : '';
 
-        return substr($prompt, 0, $pos) . "KONTEKS KATALOG/JADWAL SEDANG DIKURANGI (pemakaian token tinggi). Kalau pertanyaan butuh data unit/jadwal, jawab sebatas yang kamu tahu lalu arahkan ke https://rentspacepurwokerto.my.id/booking atau balas ADMIN.\n" . $guide;
+        // Isi tiap blok data = deretan baris "- ...". Modifier `m` supaya `^`
+        // nempel di awal tiap baris, bukan cuma di awal string. Header dan
+        // baris lain (aturan toko, pengumuman, riwayat) tidak ikut tersentuh.
+        foreach (['DAFTAR UNIT & HARGA', 'STATUS JADWAL UNIT'] as $header) {
+            $head = preg_replace(
+                '/(' . preg_quote($header, '/') . '[^\n]*\n)(?:^- [^\n]*\n?)+/m',
+                '$1(daftar ini dipangkas demi batas token/menit)\n',
+                $head
+            ) ?? $head;
+        }
+
+        $note = "CATATAN PANGKASAN: daftar unit & status jadwal di atas dipangkas demi batas token/menit, jadi isinya TIDAK lengkap. Jangan menyimpulkan semua unit terpakai. Kalau customer menanyakan unit/jadwal yang tidak kamu lihat di sini, jawab sebatas yang kamu tahu lalu arahkan ke https://rentspacepurwokerto.my.id/booking atau balas ADMIN.\n";
+
+        return $head . $note . ($rules !== '' ? "\n" . $rules : '');
     }
 
     /**
@@ -549,6 +1053,8 @@ ATURAN PENTING (WAJIB DIPAATUHI):
 11. Format WA: pakai *tebal* (satu bintang) dan bullet -. Jangan pakai markdown lain.
 12. Kata \"TERLAMBAT\" atau \"SUDAH MELEBIHI JADWAL\" berarti masalah nyata — wajib disebut di jawaban.
 13. Jawaban internal to the point, tidak perlu basa-basi sapaan.
+14. NOMINAL, BUKAN JUMLAH TRANSAKSI: kalau tim tanya \"berapa\", \"berapa duit\", \"nominalnya berapa\", atau menyebut status+periode (\"yg statusnya completed + paid bulan ini\"), jawaban WAJIB berisi ANGKA RUPIAH untuk status dan periode itu — boleh dijumlahkan sendiri dari rincian per status. JANGAN balas cuma jumlah transaksi (\"176 transaksi\") dan JANGAN menggantinya dengan ringkasan omset yang lain. Kalau status itu memang tidak ada transaksinya, sebutkan angkanya Rp 0.
+15. KALAU ANGKA BEDA DENGAN DASHBOARD WEB: omset punya dua dasar, \"tanggal mulai sewa\" (waktu_mulai, angka bawaan) dan \"tanggal pembayaran\" (paid_at, angka yang sama dengan dashboard web). Jelaskan selisihnya sebagai perbedaan dasar itu. JANGAN mengarang alasan lain seperti \"total 30 hari terakhir\" atau \"statusnya belum completed\".
 
 YANG SUDAH DIPBAHAS (MEMORI TIM):
 " . ($memoryContext !== '' ? $memoryContext . "\n" : "(belum ada obrolan sebelumnya di grup ini)") . "
@@ -570,7 +1076,7 @@ Jawab sebagai asisten data internal:";
             $inputTokens = AiMemoryService::estimateTokens($systemPrompt);
         }
 
-        $text = self::askGemini($systemPrompt, $model, $apiKey, 0.2, 900, 45);
+        $text = self::askGemini('report', $systemPrompt, $model, 0.2, 900, 45);
 
         // Jaring pengaman: kalau jawaban pertama malah menyuruh tim memakai kata
         // kunci, kirim giliran kedua dengan bagian data yang tadi tidak kebudget.
@@ -581,7 +1087,7 @@ Jawab sebagai asisten data internal:";
                 . "JAWAB ULANG pertanyaan tim di atas memakai data ini juga. Jangan minta kata kunci, jangan bilang ada data yang tidak dimuat.";
 
             Log::info('GeminiAIService::replyInternal: jawaban pertama menyuruh pakai kata kunci, mencoba lagi dengan data tambahan.');
-            $retry = self::askGemini($retryPrompt, $model, $apiKey, 0.2, 900, 30);
+            $retry = self::askGemini('report', $retryPrompt, $model, 0.2, 900, 30);
             if ($retry !== null) {
                 $text = $retry;
             }
@@ -656,7 +1162,7 @@ Jawab sebagai asisten data internal:";
         $inputTokens = AiMemoryService::estimateTokens($prompt);
         AiMemoryService::consumeTokenBudget('wa_broadcast', $inputTokens);
 
-        $text = self::askGemini($prompt, $model, $apiKey, 0.8, 400, 30);
+        $text = self::askGemini('broadcast', $prompt, $model, 0.8, 400, 30);
         if ($text === null) {
             return null;
         }
@@ -740,19 +1246,83 @@ Jawab sebagai asisten data internal:";
      */
     public static function testKey(string $feature): array
     {
-        $apiKey = self::apiKeyFor($feature);
-        if (!$apiKey) {
-            return ['ok' => false, 'message' => 'API Key belum diisi untuk fitur ini.'];
+        return self::testKeySlot($feature, 1);
+    }
+
+    /**
+     * Tes satu slot kunci tertentu, bukan sekadar slot 1.
+     *
+     * Penting untuk pool: kalau hanya slot 1 yang dites, admin tidak pernah tahu
+     * bahwa slot 3 berisi kunci project yang sudah mati. Slot yang dites boleh
+     * yang sedang cooldown — justru itu yang ingin dicek.
+     */
+    public static function testKeySlot(string $feature, int $slot = 1): array
+    {
+        $slot = max(1, min(self::KEY_POOL_SIZE, $slot));
+        $apiKey = trim((string) Setting::getVal(self::keySlotName($feature, $slot), ''));
+        if ($apiKey === '' && $slot === 1) {
+            $apiKey = (string) (self::apiKeyFor($feature) ?: '');
+        }
+
+        if ($apiKey === '') {
+            return ['ok' => false, 'message' => "Kunci slot {$slot} masih kosong."];
         }
 
         $model = self::modelFor($feature);
-        $text = self::askGemini('Balas dengan satu kata: SIAP', $model, $apiKey, 0.1, 16, 20);
+        $text = self::probeKey($apiKey, $model);
 
         if ($text === null) {
             return ['ok' => false, 'message' => 'Gagal: ' . (self::$lastError ?: 'tidak diketahui')];
         }
 
-        return ['ok' => true, 'message' => "Kunci valid, model {$model} merespons (HTTP OK)."];
+        return ['ok' => true, 'message' => "Kunci slot {$slot} valid, model {$model} merespons (HTTP OK)."];
+    }
+
+    /**
+     * Satu panggilan kecil ke satu kunci tertentu, tanpa failover.
+     *
+     * Sengaja tidak memakai askGemini(): tes harus isolating kunci yang diklik,
+     * bukan diam-diam pindah ke kunci lain lalu dilaporkan "valid".
+     */
+    private static function probeKey(string $apiKey, string $model): ?string
+    {
+        self::$lastError = null;
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(20)->post(
+                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
+                [
+                    'contents' => [
+                        ['role' => 'user', 'parts' => [['text' => 'Balas dengan satu kata: SIAP']]],
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.1,
+                        'maxOutputTokens' => 16,
+                        'thinkingConfig' => [
+                            'thinkingBudget' => 0,
+                        ],
+                    ],
+                ]
+            );
+
+            if ($response && $response->successful()) {
+                $candidates = $response->json('candidates');
+                if (! empty($candidates[0]['content']['parts'][0]['text'])) {
+                    return trim($candidates[0]['content']['parts'][0]['text']);
+                }
+
+                self::$lastError = 'jawaban kosong dari model ' . $model;
+
+                return null;
+            }
+
+            $status = $response?->status() ?? 0;
+            self::$lastError = 'HTTP ' . $status . ' — ' . self::readApiError((string) $response?->body());
+        } catch (\Throwable $e) {
+            self::$lastError = self::maskSecrets($e->getMessage());
+        }
+
+        return null;
     }
 
     /**
@@ -797,8 +1367,21 @@ Jawab sebagai asisten data internal:";
         'jadwal' => ['hari ini', 'hr ini', 'ambil', 'ngambil', 'pengambilan', 'jadwal', 'datang', 'mampir', 'besok'],
         'cari' => ['transaksi', 'rental', 'booking', 'penyewa', 'cari', 'siapa'],
         'unit' => ['unit', 'iphone', 'ipho', 'ip ', 'hp', 'kamera', 'harga', 'katalog', 'daftar', 'stok', 'ada unit', 'series', 'ready', 'siap', 'inventaris', 'tersedia'],
-        'pendapatan' => ['omset', 'profit', 'pendapatan', 'pemasukan', 'revenue', 'uang masuk', 'berapa total'],
+        'pendapatan' => ['omset', 'profit', 'pendapatan', 'pemasukan', 'revenue', 'uang masuk', 'berapa total', 'duit', 'nominal', 'uangnya', 'berapa rp', 'rp berapa'],
     ];
+
+    /**
+     * Kata status transaksi — dipakai untuk deteksi "duit per status".
+     */
+    private const STATUS_WORDS = [
+        'completed', 'selesai', 'paid', 'bayar', 'renting', 'disewa', 'dibatalkan',
+        'cancelled', 'pending', 'menunggu', 'status',
+    ];
+
+    /**
+     * Kata "minta angka" — disandingkan dengan STATUS_WORDS.
+     */
+    private const ASK_MONEY_WORDS = ['berapa', 'nominal', 'duit', 'jumlah', 'total', 'rp'];
 
     /**
      * Deteksi bagian data yang perlu dimuat untuk sebuah pertanyaan.
@@ -828,6 +1411,13 @@ Jawab sebagai asisten data internal:";
         // Pertanyaan soal orang: cari nama penyewa dari pertanyaan.
         $sections['cari'] = ($sections['cari'] ?? false) || self::detectNameToken($question) !== null;
 
+        // "yg statusnya completed + paid jadi berapa" = pertanyaan uang per status,
+        // walau tidak ada kata "omset". Kalau tidak dikenali di sini, rincian per
+        // status tenggelam di urutan prioritas dan bot hanya bisa balas jumlah transaksi.
+        if (! ($sections['pendapatan'] ?? false) && self::looksLikeStatusMoneyQuestion($q)) {
+            $sections['pendapatan'] = true;
+        }
+
         $primary = 'umum';
         if ($sections) {
             $priority = ['kode', 'terlambat', 'denda', 'kembali', 'jadwal', 'pending', 'cari', 'riwayat', 'aktif', 'unit', 'pendapatan'];
@@ -840,6 +1430,35 @@ Jawab sebagai asisten data internal:";
         }
 
         return ['primary' => $primary, 'sections' => $sections];
+    }
+
+    /**
+     * True kalau pertanyaannya menyebut status transaksi DAN minta angka.
+     *
+     * Dipakai hanya untuk mengurutkan blok data, jadi cukup konservatif: cukup
+     * satu kata status dan satu kata tanya angka.
+     */
+    private static function looksLikeStatusMoneyQuestion(string $q): bool
+    {
+        $hasStatus = false;
+        foreach (self::STATUS_WORDS as $word) {
+            if (str_contains($q, $word)) {
+                $hasStatus = true;
+                break;
+            }
+        }
+
+        if (! $hasStatus) {
+            return false;
+        }
+
+        foreach (self::ASK_MONEY_WORDS as $word) {
+            if (str_contains($q, $word)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1067,6 +1686,120 @@ Jawab sebagai asisten data internal:";
     }
 
     /**
+     * Pecah omset per status untuk satu cakupan query: jumlah transaksi + nominal.
+     *
+     * Tanpa angka per status, pertanyaan "yg statusnya completed + paid berapa?"
+     * tidak punya apa-apa untuk dijawab, jadi AI balas jumlah transaksi lalu
+     * mengulang ringkasan omset. Satu query sudah cukup untuk dua-duanya.
+     *
+     * @param  callable():\Illuminate\Database\Eloquent\Builder  $scope
+     * @return array<string,array{trx:int,rp:int}>  status => ['trx' => n, 'rp' => nominal]
+     */
+    private static function revenueByStatus(callable $scope, array $skip = []): array
+    {
+        $rows = $scope()
+            ->selectRaw('status, COUNT(*) as trx, SUM(COALESCE(grand_total, subtotal_harga, 0)) as rp')
+            ->groupBy('status')
+            ->get();
+
+        $out = [];
+        foreach ($rows as $row) {
+            if (in_array($row->status, $skip, true)) {
+                continue;
+            }
+            $out[$row->status] = ['trx' => (int) $row->trx, 'rp' => (int) $row->rp];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Rincian omset per status: bulan ini, bulan ini versi dashboard web, dan
+     * seumur hidup.
+     *
+     * Ini yang menjawab "yg statusnya completed + paid bulan ini berapa?".
+     * Sebelumnya data ini tidak ada sama sekali, jadi bot tidak punya angka
+     * untuk dijawab — dia balas jumlah transaksi ("176 transaksi") lalu
+     * mengulang ringkasan omset, padahal yang ditanya nominalnya.
+     *
+     * @param  array<string,string>  $statusIndo
+     */
+    private static function statusRevenueText(\Carbon\Carbon $now, array $statusIndo): string
+    {
+        $bulan = $now->translatedFormat('F Y');
+
+        // Status yang dihitung sebagai omset. Status "menunggu" sengaja TIDAK
+        // masuk supaya totalnya sama persis dengan "Omset bulan ini" di ringkasan;
+        // kalau ikut, dua blok jadi beda dan bot melaporkan angka yang salah.
+        $statusOmset = ['paid', 'renting', 'completed'];
+        $statusBelumBayar = ['pending', 'pending_confirmation'];
+
+        // Satu query per cakupan, lalu dipakai untuk total maupun rinciannya.
+        $rekap = function (callable $scope) use ($statusIndo, $statusOmset, $statusBelumBayar) {
+            $rows = self::revenueByStatus($scope, ['cancelled']);
+
+            $total = 0;
+            foreach ($rows as $status => $row) {
+                if (in_array($status, $statusOmset, true)) {
+                    $total += $row['rp'];
+                }
+            }
+
+            return [
+                'total' => 'Rp ' . number_format($total, 0, ',', '.'),
+                'omset' => self::revenueByStatusLine($rows, $statusIndo, $statusOmset),
+                'belumBayar' => self::revenueByStatusLine($rows, $statusIndo, $statusBelumBayar),
+            ];
+        };
+
+        $mulai = $rekap(fn () => \App\Models\Rental::whereYear('waktu_mulai', $now->year)
+            ->whereMonth('waktu_mulai', $now->month));
+
+        $bayar = $rekap(fn () => \App\Models\Rental::whereBetween('paid_at', [
+            $now->copy()->startOfMonth(), $now->copy()->endOfMonth(),
+        ]));
+
+        $semua = $rekap(fn () => \App\Models\Rental::query());
+
+        $text = "Total bulan ini ({$bulan}): dari tanggal mulai sewa {$mulai['total']}"
+            . " | versi dashboard web (dari tanggal pembayaran) {$bayar['total']}\n";
+        $text .= "Bulan ini ({$bulan}) per status, dari tanggal mulai sewa: {$mulai['omset']}\n";
+        $text .= "Bulan ini ({$bulan}) per status, versi dashboard web (dari tanggal pembayaran): {$bayar['omset']}\n";
+        $text .= "Belum dibayar bulan ini ({$bulan}, bukan omset): {$mulai['belumBayar']}\n";
+        $text .= "Semua waktu per status, dari tanggal mulai sewa: {$semua['omset']}\n";
+
+        return $text;
+    }
+
+    /**
+     * Rincian omset per status dalam satu baris: "SELESAI: 12 trs / Rp 5.000.000".
+     *
+     * Status dengan nominal 0 dilewati supaya barisnya tidak rame di prompt.
+     * Urutan status mengikuti $statusIndo supaya konsisten dengan blok lain.
+     * $only membatasi status yang ditampilkan (kosong = semua).
+     *
+     * @param  array<string,array{trx:int,rp:int}>  $byStatus
+     * @param  array<int,string>  $only
+     */
+    private static function revenueByStatusLine(array $byStatus, array $statusIndo, array $only = []): string
+    {
+        $parts = [];
+        foreach ($statusIndo as $status => $label) {
+            if ($only !== [] && ! in_array($status, $only, true)) {
+                continue;
+            }
+
+            $row = $byStatus[$status] ?? null;
+            if ($row === null || $row['rp'] <= 0) {
+                continue;
+            }
+            $parts[] = "{$label}: {$row['trx']} trs / Rp " . number_format($row['rp'], 0, ',', '.');
+        }
+
+        return $parts === [] ? 'belum ada' : implode(' | ', $parts);
+    }
+
+    /**
      * Susun blok data untuk tim: SEMUA bagian data bisnis, tanpa syarat kata kunci.
      *
      * Dulu bagian data hanya dimuat kalau pertanyaan memuat kata kuncinya, jadi
@@ -1111,6 +1844,11 @@ Jawab sebagai asisten data internal:";
             $profitAll = \App\Models\Rental::whereIn('status', ['renting', 'paid', 'completed'])
                 ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(grand_total, subtotal_harga)'));
 
+            // Catatan: angka-angka di sini dihitung dari TANGGAL MULI SEWA.
+            // Dashboard web menghitung dari TANGGAL PEMBAYARAN (paid_at), jadi
+            // angkanya selalu beda sedikit. Kedua angka dimuat di blok OMSET PER
+            // STATUS — kalau tidak, tim membandingkan angka bot dengan angka web
+            // lalu AI mengarang alasan yang ngawur ("total 30 hari terakhir").
             $lines[] = '- Omset hari ini: Rp ' . number_format($profitToday, 0, ',', '.');
             $lines[] = '- Omset bulan ini (' . $now->translatedFormat('F Y') . '): Rp ' . number_format($profitMonth, 0, ',', '.');
             $lines[] = '- Omset total: Rp ' . number_format($profitAll, 0, ',', '.');
@@ -1130,6 +1868,12 @@ Jawab sebagai asisten data internal:";
         };
 
         $add('RINGKASAN & OMSET', 'ringkasan', fn () => $snapshot, 1);
+
+        // Nominal per status. Berdiri sendiri (bukan di dalam ringkasan) supaya
+        // ringkasan tetap ramping, tapi diprioritaskan kalau pertanyaannya
+        // memang soal uang per status.
+        $add('OMSET PER STATUS (nominal tiap status)', 'omset_per_status', fn () => self::statusRevenueText($now, $statusIndo),
+            ($s['pendapatan'] ?? false) ? 1 : 3);
 
         // Kode booking yang disebut = sumber data paling presisi, selalu paling depan.
         $add('DETAIL KODE BOOKING YANG DITANYAKAN', 'kode_' . md5($question), function () use ($question, $statusIndo) {
@@ -1187,10 +1931,12 @@ Jawab sebagai asisten data internal:";
             }
             return $rows->map(function ($r) use ($now, $statusIndo) {
                 $suffix = '';
-                if ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast()) {
+                if ($r->status === 'completed' && $r->completed_at) {
+                    $suffix = ' | Sudah dikembalikan pada: ' . \Carbon\Carbon::parse($r->completed_at)->translatedFormat('d M H:i');
+                } elseif ($r->waktu_selesai && \Carbon\Carbon::parse($r->waktu_selesai)->isPast() && $r->status === 'renting') {
                     $suffix = ' *** SUDAH MELEBIHI JADWAL ' . self::minutesLate($now, $r->waktu_selesai) . ' MENIT ***';
                 } elseif ($r->handed_over_at) {
-                    $suffix = ' | Sudah dikembalikan: ' . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M H:i');
+                    $suffix = ' | Unit sudah diambil customer sejak: ' . \Carbon\Carbon::parse($r->handed_over_at)->translatedFormat('d M H:i');
                 }
                 return self::rentalLine($r, $statusIndo, $suffix);
             })->implode('');
@@ -1273,9 +2019,17 @@ Jawab sebagai asisten data internal:";
             }
 
             // Komposisi status dihitung dari seluruh periode, bukan 30 baris tampil.
+            // Nominal per status ikut dalam satu query yang sama: tanpa itu,
+            // "yang statusnya completed + paid periode ini berapa?" cuma bisa
+            // dijawab pakai jumlah transaksi.
+            $byStatus = self::revenueByStatus($base);
             $summary = [];
-            foreach ($base()->selectRaw('status, COUNT(*) as jml')->groupBy('status')->pluck('jml', 'status') as $st => $n) {
-                $summary[] = ($statusIndo[$st] ?? $st) . ': ' . $n;
+            foreach ($statusIndo as $st => $label) {
+                if (! isset($byStatus[$st])) {
+                    continue;
+                }
+                $row = $byStatus[$st];
+                $summary[] = "{$label}: {$row['trx']} transaksi / Rp " . number_format($row['rp'], 0, ',', '.');
             }
 
             // Daftar nama unik + berapa kali, itu yang paling sering ditanyakan.
@@ -1312,16 +2066,16 @@ Jawab sebagai asisten data internal:";
 
         $add('RIWAYAT PERNAH TERLAMBAT MENGEMBALIKAN (semua waktu)', 'riwayat_telat', function () use ($statusIndo) {
             $rows = \App\Models\Rental::with(['units'])
-                ->whereNotNull('handed_over_at')->whereNotNull('waktu_selesai')
-                ->whereColumn('handed_over_at', '>', 'waktu_selesai')
-                ->orderByDesc('handed_over_at')
+                ->whereNotNull('completed_at')->whereNotNull('waktu_selesai')
+                ->whereColumn('completed_at', '>', 'waktu_selesai')
+                ->orderByDesc('completed_at')
                 ->limit(10)->get();
             return $rows->isEmpty()
                 ? "Belum ada riwayat penyewa yang terlambat mengembalikan unit.\n"
                 : $rows->map(fn ($r) => self::rentalLine(
                     $r,
                     $statusIndo,
-                    ' | Telat: ' . self::minutesLate(\Carbon\Carbon::parse($r->handed_over_at), $r->waktu_selesai) . ' menit'
+                    ' | Telat: ' . self::minutesLate(\Carbon\Carbon::parse($r->completed_at), $r->waktu_selesai) . ' menit'
                 ))->implode('');
         }, ($s['riwayat'] ?? false) || ($s['terlambat'] ?? false) ? 5 : 9);
 
@@ -1542,46 +2296,164 @@ Jawab sebagai asisten data internal:";
     /** Alasan panggilan Gemini terakhir yang gagal, untuk pesan fallback. */
     private static ?string $lastError = null;
 
+    /** Alasan kegagalan panggilan terakhir, untuk service lain & pesan fallback. */
+    public static function lastError(): ?string
+    {
+        return self::$lastError;
+    }
+
     /**
-     * Panggil Gemini sekali dan kembalikan teks bersih (null bila gagal).
+     * Kirim payload ke Gemini dengan failover antar-kunci, kembalikan respons sukses.
+     *
+     * Ini primitif bersama: dipakai bot WhatsApp (askGemini) dan juga chat web
+     * (AiService) karena keduanya memakai pool kunci "customer" yang sama. Kalau
+     * hanya satu yang punya failover, kuota habis di jalur pertama tetap membuat
+     * jalur kedua gagal even though masih ada kunci yang sehat.
+     *
+     * Kalau satu kunci kena 429, kunci itu langsung disingkirkan sebentar lalu
+     * dicoba lagi dengan kunci berikutnya di pool yang sama — dalam permintaan
+     * yang sama. Menunggu pergantian menit seperti rotasi jam dinding justru
+     * bikin customer kehilangan jawaban: selama kunci yang salah masih jadi
+     * giliran, semua chat di menit itu tetap gagal.
+     *
+     * Status di RETRYABLE_STATUSES dipindah ke kunci berikutnya: 429 karena kuota
+     * kunci itu habis, 5xx karena Google sedang sibuk. Keduanya ditolak cepat,
+     * jadi pindah key hampir gratis. Status lain (400/401/403/404) langsung
+     * berhenti: penyebabnya salah konfigurasi, bukan soal kuota, dan akan gagal
+     * sama di project lain.
      */
-    private static function askGemini(string $prompt, string $model, string $apiKey, float $temperature, int $maxTokens, int $timeout): ?string
+    public static function callWithFailover(string $feature, string $model, array $payload, int $timeout): ?\Illuminate\Http\Client\Response
     {
         self::$lastError = null;
 
-        try {
-            $response = \Illuminate\Support\Facades\Http::timeout($timeout)->post(
-                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
-                [
-                    'contents' => [
-                        ['role' => 'user', 'parts' => [['text' => $prompt]]],
-                    ],
-                    'generationConfig' => [
-                        'temperature' => $temperature,
-                        'maxOutputTokens' => $maxTokens,
-                    ],
-                ]
-            );
+        $ownKeys = self::apiKeysFor($feature);
+        if ($ownKeys === []) {
+            self::$lastError = 'API key ' . self::featureLabel($feature) . ' belum diisi';
+            return null;
+        }
 
-            if ($response && $response->successful()) {
-                $candidates = $response->json('candidates');
-                if (! empty($candidates[0]['content']['parts'][0]['text'])) {
-                    return self::formatForWhatsApp(trim($candidates[0]['content']['parts'][0]['text']));
+        // Urutan percobaan:
+        //   1. kunci fitur sendiri yang sehat
+        //   2. kunci customer sebagai cadangan, selama fitur ini bukan customer
+        //   3. kunci fitur sendiri yang sedang cooldown (upaya terakhir)
+        //
+        // Kunci cadangan didahulukan atas kunci yang sedang cooldown karena kita
+        // sudah tahu kunci itu akan kena 429 lagi, sedangkan cadangan belum pernah
+        // dicoba untuk fitur ini. 503 dari Google bersifat sementara dan model-wide,
+        // jadi satu slot fitur yang kebetulan kena tidak boleh membuat seluruh
+        // fitur mati padahal ada kunci sehat yang menganggur.
+        [$ownHealthy, $ownCooling] = self::partitionKeysFor($feature, $ownKeys);
+
+        $keys = $ownHealthy;
+        $ownCount = count($ownHealthy);
+
+        foreach (self::reserveKeysFor($feature) as $reserve) {
+            if (! in_array($reserve, $keys, true) && ! self::isCoolingDown($feature, $reserve)) {
+                $keys[] = $reserve;
+            }
+        }
+
+        $reserveCount = count($keys) - $ownCount;
+
+        if ($keys === []) {
+            $keys = $ownCooling;
+            // Semua kunci fitur cooldown dan tidak ada cadangan sehat: pakai yang
+            // paling lama cooldown. Mending 429 daripada dapat balasan kosong.
+            $keys = $keys === [] ? [] : [$keys[0]];
+        }
+
+        $exhausted = [];
+        $seenStatuses = [];
+
+        foreach ($keys as $apiKey) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::timeout($timeout)->post(
+                    "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
+                    $payload
+                );
+
+                if ($response && $response->successful()) {
+                    return $response;
                 }
-                self::$lastError = 'jawaban kosong dari model ' . $model;
-                Log::warning('GeminiAIService: jawaban kosong dari model ' . $model);
-            } else {
+
                 $status = $response?->status() ?? 0;
                 $body = (string) $response?->body();
                 self::$lastError = 'HTTP ' . $status . ' dari model ' . $model . ' — ' . self::readApiError($body);
-                Log::warning('GeminiAIService gagal: HTTP ' . $status . ' | model ' . $model . ' | ' . mb_substr($body, 0, 400));
+                Log::warning('GeminiAIService gagal: HTTP ' . $status . ' | model ' . $model . ' | ' . mb_substr(self::maskSecrets($body), 0, 400));
+
+                if (in_array($status, self::RETRYABLE_STATUSES, true)) {
+                    self::markCooldown($feature, $apiKey);
+                    $exhausted[] = $apiKey;
+                    $seenStatuses[$status] = ($seenStatuses[$status] ?? 0) + 1;
+
+                    if ($status !== 429) {
+                        usleep(self::SERVER_BUSY_BACKOFF_US);
+                    }
+
+                    continue;
+                }
+
+                return null;
+            } catch (\Throwable $e) {
+                self::$lastError = self::maskSecrets($e->getMessage());
+                Log::error('GeminiAIService Exception: ' . self::maskSecrets($e->getMessage()));
+                return null;
             }
-        } catch (\Throwable $e) {
-            self::$lastError = $e->getMessage();
-            Log::error('GeminiAIService Exception: ' . $e->getMessage());
+        }
+
+        if ($exhausted !== []) {
+            $codes = [];
+            foreach ($seenStatuses as $code => $count) {
+                $codes[] = $code . '×' . $count;
+            }
+
+            $summary = 'HTTP ' . implode(', ', $codes);
+            $isRateLimit = count($seenStatuses) === 1 && isset($seenStatuses[429]);
+            $label = $isRateLimit ? 'kena rate limit' : 'gagal (server sibuk / tidak stabil)';
+
+            self::$lastError = 'Semua ' . count($exhausted) . ' kunci API ' . $label . ' (' . $summary . ').';
+            Log::error('GeminiAIService: pool kunci ' . $feature . ' habis, ' . count($exhausted) . ' kunci ' . $label . ' — ' . $summary . '.');
+
+            if ($reserveCount > 0) {
+                Log::warning(
+                    'GeminiAIService: fitur ' . $feature . ' memakai ' . count($exhausted)
+                    . ' kunci sendiri lalu ' . $reserveCount
+                    . ' kunci cadangan customer, semuanya tetap gagal.'
+                );
+            }
         }
 
         return null;
+    }
+
+    /** Panggil Gemini dan kembalikan teks bersih (null bila gagal). */
+    private static function askGemini(string $feature, string $prompt, string $model, float $temperature, int $maxTokens, int $timeout): ?string
+    {
+        $response = self::callWithFailover($feature, $model, [
+            'contents' => [
+                ['role' => 'user', 'parts' => [['text' => $prompt]]],
+            ],
+            'generationConfig' => [
+                'temperature' => $temperature,
+                'maxOutputTokens' => $maxTokens,
+                'thinkingConfig' => [
+                    'thinkingBudget' => 0,
+                ],
+            ],
+        ], $timeout);
+
+        if ($response === null) {
+            return null;
+        }
+
+        $candidates = $response->json('candidates');
+        if (empty($candidates[0]['content']['parts'][0]['text'])) {
+            self::$lastError = 'jawaban kosong dari model ' . $model;
+            Log::warning('GeminiAIService: jawaban kosong dari model ' . $model);
+            return null;
+        }
+
+        return self::formatForWhatsApp(trim($candidates[0]['content']['parts'][0]['text']));
     }
 
     /**
@@ -1618,7 +2490,7 @@ Jawab sebagai asisten data internal:";
         if (str_contains($reason, 'API_KEY_INVALID') || str_contains($reason, 'API key not valid')) {
             $hint = "Kunci API AI ({$label}) tidak valid. Buka *Web Admin -> Pengaturan -> Tab WhatsApp*, isi *API Key {$label}* yang benar lalu simpan.";
         } elseif (str_contains($reason, '429') || str_contains($reason, 'RESOURCE_EXHAUSTED')) {
-            $hint = "Kuota API AI ({$label}) habis / kena rate limit. Tunggu sebentar, atau pisahkan ke kunci API sendiri di *Web Admin -> Pengaturan -> Tab WhatsApp*.";
+            $hint = "Semua kunci API AI ({$label}) kena rate limit. Tunggu sebentar, atau isi slot kunci 2-4 di *Web Admin -> Pengaturan -> Tab WhatsApp* (wajib dari project Google yang berbeda, karena kuota dihitung per project, bukan per kunci).";
         } elseif (str_contains($reason, '404') || str_contains($reason, 'NOT_FOUND')) {
             $hint = "Model AI ({$label}) yang dipilih tidak tersedia. Ganti modelnya di *Web Admin -> Pengaturan -> Tab WhatsApp* (kosongkan dulu supaya kembali ke default).";
         } elseif (stripos($reason, 'timed out') !== false || stripos($reason, 'cURL error 28') !== false) {

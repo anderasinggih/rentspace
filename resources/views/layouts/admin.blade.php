@@ -5,19 +5,21 @@
     <meta charset="utf-8">
     <script>
         (function() {
-            const theme = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            if (theme) {
-                document.documentElement.classList.add('dark');
-            } else {
+            // Check theme: if explicitly 'light', use light; if 'dark', use dark; otherwise default to dark
+            const isLight = localStorage.theme === 'light' || localStorage.getItem('theme') === 'light';
+            if (isLight) {
                 document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
             }
         })();
         
         function applyTheme() {
-            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
+            const isLight = localStorage.theme === 'light' || localStorage.getItem('theme') === 'light';
+            if (isLight) {
                 document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
             }
         }
         document.addEventListener('livewire:navigated', applyTheme);
@@ -28,6 +30,7 @@
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#09090b">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RENT ADMIN">
@@ -41,7 +44,7 @@
         
         /* Prevent Flash of Light Mode & Transitions */
         .dark { color-scheme: dark; }
-        html.dark body { background-color: #09090b; } /* Same as bg-background in dark mode */
+        :root { color-scheme: light; }
         
         /* Disable transition during page load/navigate to stop blinking */
         .no-transitions * {
@@ -82,25 +85,30 @@
              setTimeout(() => document.documentElement.classList.remove('no-transitions'), 100);
         });
 
-        // Force disable zooming
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
-        
-        document.addEventListener('touchstart', function(event) {
-            if (event.touches.length > 1) {
-                event.preventDefault();
-            }
-        }, { passive: false });
+        // Force disable zooming safely without re-declaration errors
+        (function() {
+            if (window._touchZoomPrevented) return;
+            window._touchZoomPrevented = true;
 
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(event) {
-            let now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
+            document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            });
+            
+            document.addEventListener('touchstart', function(event) {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                }
+            }, { passive: false });
+
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                let now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        })();
     </script>
 </head>
 
@@ -109,7 +117,98 @@
     <livewire:admin.admin-navbar />
     <livewire:admin.command-palette />
 
-    <main class="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <!-- Center Floating Elegant Apple-Style Spinner (DailyPhone style PageLoader) -->
+    <div id="admin-global-loader"
+         class="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center transition-opacity duration-200 opacity-0"
+         style="display: none;">
+        <!-- Very subtle page dim during active load ala DailyPhone -->
+        <div class="absolute inset-0 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]"></div>
+
+        <!-- Centered loading pill -->
+        <div class="relative flex items-center gap-2.5 px-4 py-2 rounded-full bg-card/90 dark:bg-[#1c1c1e]/90 backdrop-blur-2xl border border-border/70 shadow-2xl text-foreground font-medium text-xs tracking-tight pointer-events-auto">
+            <svg class="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-xs font-semibold text-foreground">Loading…</span>
+        </div>
+    </div>
+
+    <!-- Livewire Request / Navigate Global Loading Listener (Instant Feedback ala DailyPhone) -->
+    <script>
+        (function() {
+            let loader = document.getElementById('admin-global-loader');
+            let activeRequests = 0;
+            let showTimestamp = 0;
+
+            function showLoader() {
+                activeRequests++;
+                if (!loader) loader = document.getElementById('admin-global-loader');
+                if (!loader) return;
+                
+                showTimestamp = Date.now();
+                loader.style.display = 'flex';
+                requestAnimationFrame(() => {
+                    loader.classList.remove('opacity-0');
+                    loader.classList.add('opacity-100');
+                });
+            }
+
+            function hideLoader() {
+                activeRequests = Math.max(0, activeRequests - 1);
+                if (activeRequests > 0) return;
+
+                if (!loader) loader = document.getElementById('admin-global-loader');
+                if (!loader) return;
+
+                const elapsed = Date.now() - showTimestamp;
+                const minDisplayTime = 250;
+                const delay = elapsed < minDisplayTime ? (minDisplayTime - elapsed) : 0;
+
+                setTimeout(() => {
+                    if (activeRequests === 0 && loader) {
+                        loader.classList.remove('opacity-100');
+                        loader.classList.add('opacity-0');
+                        setTimeout(() => {
+                            if (activeRequests === 0 && loader.classList.contains('opacity-0')) {
+                                loader.style.display = 'none';
+                            }
+                        }, 200);
+                    }
+                }, delay);
+            }
+
+            // Hook langsung saat link wire:navigate diklik pengguna
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a[wire\\:navigate], a[wire\\:navigate\\.hover]');
+                if (link && link.getAttribute('href') && !link.getAttribute('href').startsWith('#') && !link.getAttribute('target')) {
+                    showLoader();
+                }
+            }, true);
+
+            // Hook ke event Livewire SPA navigation
+            document.addEventListener('livewire:navigating', showLoader);
+            document.addEventListener('livewire:navigated', () => {
+                activeRequests = 0;
+                hideLoader();
+            });
+
+            // Hook ke event Livewire commit (klik tombol / action / filter)
+            document.addEventListener('livewire:init', () => {
+                if (window.Livewire && Livewire.hook) {
+                    Livewire.hook('commit', ({ succeed, fail }) => {
+                        showLoader();
+                        succeed(() => hideLoader());
+                        fail(() => hideLoader());
+                    });
+                }
+            });
+        })();
+    </script>
+
+    <!-- Main Content with Dynamic Island / Notch safe area padding on mobile -->
+    <main class="flex-1 w-full max-w-7xl mx-auto pb-24 sm:pb-28 px-4 sm:px-6 lg:px-8"
+          style="padding-top: max(1.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));">
         {{ $slot }}
     </main>
 
@@ -157,22 +256,12 @@
             printWindow.document.close();
         };
     </script>
+
     <script>
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('[wire\\:click]')) {
-                console.log('👆 Click detected on Livewire element:', e.target.closest('[wire\\:click]'));
-            }
-        });
-    </script>
-    <script>
-        // Register Service Worker for PWA
+        // Register Service Worker for PWA silently
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(reg => {
-                    console.log('📦 PWA Admin Service Worker Registered!', reg.scope);
-                }).catch(err => {
-                    console.log('❌ PWA Service Worker Registration Failed:', err);
-                });
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
             });
         }
     </script>

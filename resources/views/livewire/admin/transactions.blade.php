@@ -6,24 +6,17 @@
         </div>
     @endif
     <div>
-        <div class="sm:flex sm:items-center">
-            <div class="sm:flex-auto">
-                <h1 class="text-2xl font-bold  text-foreground">Transactions & Mutations</h1>
-                <p class="mt-2 text-sm text-muted-foreground">Verify payments via unique codes and manage rental
-                    schedules.</p>
-            </div>
-            <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-                <button wire:click="exportCsv"
-                    class="inline-flex items-center gap-2 justify-center rounded-md bg-secondary text-secondary-foreground shadow hover:bg-secondary/80 h-9 px-4 text-sm font-semibold transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" x2="12" y1="15" y2="3" />
-                    </svg>
-                    Export CSV
-                </button>
-            </div>
+        <div class="flex items-center justify-end mb-4">
+            <button wire:click="exportCsv"
+                class="inline-flex items-center gap-1.5 justify-center rounded-xl bg-secondary/80 hover:bg-secondary text-secondary-foreground shadow-xs h-8 px-3.5 text-xs font-semibold transition-all active:scale-95">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
+                <span>Export CSV</span>
+            </button>
         </div>
 
         <div class="mt-8 flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between">
@@ -210,7 +203,7 @@
                                     number_format($trx->potongan_diskon, 0, ',', '.') }}</span>
                                                                                                                                                                                                                                             </td>
                                                                                                                                                                                                                                             <td
-                                                                                                                                                                                                                                                class="hidden sm:table-cell whitespace-nowrap px-3 py-1.5 text-sm font-bold text-primary leading-none">
+                                                                                                                                                                                                                                                class="hidden sm:table-cell whitespace-nowrap px-3 py-1.5 text-sm font-bold text-foreground leading-none">
                                                                                                                                                                                                                                                 Rp {{ number_format($trx->grand_total, 0, ',', '.') }}<br />
                                                                                                                                                                                                                                                 @php
                                                                                                                                                                                                                                                     $trxCommission = $trx->commissions->sum('amount');
@@ -448,7 +441,7 @@
 
                                                                                                                                                                                                                                                                                                     <div class="pt-3 border-t border-border/50 flex justify-between items-baseline">
                                                                                                                                                                                                                                                                                                         <span class="text-[10px] font-bold text-muted-foreground/60 uppercase">Grand Total</span>
-                                                                                                                                                                                                                                                                                                        <span class="text-lg font-black text-primary">Rp {{ number_format($inspectTrx->grand_total, 0, ',', '.') }}</span>
+                                                                                                                                                                                                                                                                                                        <span class="text-lg font-black text-foreground">Rp {{ number_format($inspectTrx->grand_total, 0, ',', '.') }}</span>
                                                                                                                                                                                                                                                                                                     </div>
                                                                                                                                                                                                                                                                                                 </div>
                                                                                                                                                                                                                                                                                             </div>
@@ -654,7 +647,7 @@
                                                                                                                                                                                             <div class="text-center">
                                                                                                                                                                                                 <p class="text-[10px] text-muted-foreground uppercase font-bold  mb-1">
                                                                                                                                                                                                     Total Denda Bayar</p>
-                                                                                                                                                                                                <p class="text-2xl font-black text-primary">Rp {{ number_format((int) $dendaAmount +
+                                                                                                                                                                                                <p class="text-2xl font-black text-foreground">Rp {{ number_format((int) $dendaAmount +
                                     (int) $dendaKerusakanAmount, 0, ',', '.') }}</p>
                                                                                                                                                                                                 <p class="text-[10px] text-red-500 font-medium mt-1 uppercase italic">* TANPA KODE UNIK
                                                                                                                                                                                                 </p>
@@ -740,17 +733,45 @@
                             <!-- Rental Details -->
                             <div class="space-y-4">
                                 <h4 class="text-xs font-bold uppercase  text-primary">Detail Sewa & Biaya</h4>
+                                
+                                {{-- Unit Selector with Auto Recalculation --}}
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <label class="block text-xs font-medium text-muted-foreground">Pilih Unit Sewa</label>
+                                        <button type="button" wire:click="recalculateEditSubtotal"
+                                            class="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                            Hitung Ulang Harga
+                                        </button>
+                                    </div>
+                                    <div class="max-h-36 overflow-y-auto rounded-lg border border-input p-2 space-y-1.5 bg-muted/10">
+                                        @foreach($allUnitsList as $unit)
+                                            <label class="flex items-center justify-between p-1.5 rounded hover:bg-muted/40 cursor-pointer text-xs transition-colors {{ in_array($unit->id, $edit_unit_ids) ? 'bg-primary/10 font-bold' : '' }}">
+                                                <div class="flex items-center gap-2">
+                                                    <input type="checkbox" wire:model.live="edit_unit_ids" value="{{ $unit->id }}" wire:change="recalculateEditSubtotal"
+                                                        class="rounded border-input text-primary focus:ring-primary h-4 w-4">
+                                                    <span class="text-foreground">{{ $unit->seri }}</span>
+                                                    <span class="text-[10px] text-muted-foreground">({{ $unit->warna ?? '-' }} - {{ $unit->memori ?? '-' }})</span>
+                                                </div>
+                                                <span class="text-[10px] font-mono text-muted-foreground">Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }}/hr</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    @if(empty($edit_unit_ids))
+                                        <span class="text-[10px] text-destructive mt-1 block">Minimal pilih 1 unit.</span>
+                                    @endif
+                                </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-xs font-medium text-muted-foreground mb-1">Waktu
                                             Mulai</label>
-                                        <input type="datetime-local" wire:model="edit_waktu_mulai"
+                                        <input type="datetime-local" wire:model.live="edit_waktu_mulai" wire:change="recalculateEditSubtotal"
                                             class="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary outline-none">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-muted-foreground mb-1">Waktu
                                             Selesai</label>
-                                        <input type="datetime-local" wire:model="edit_waktu_selesai"
+                                        <input type="datetime-local" wire:model.live="edit_waktu_selesai" wire:change="recalculateEditSubtotal"
                                             class="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary outline-none">
                                     </div>
                                 </div>

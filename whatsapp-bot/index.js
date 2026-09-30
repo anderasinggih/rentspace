@@ -15,6 +15,17 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+const {
+    BUBBLES,
+    isAck,
+    isGreetingOnly,
+    mergeBatchText,
+    randomBetween,
+    sleep,
+    splitForChat,
+    waitForQuietPeriod,
+} = require('./lib/chat-humanizer');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -32,28 +43,119 @@ let botUser = null;
 // paralel, jawabannya arrive telat dan terlihat seperti bot "bales pesan
 // sebelumnya". Jadi satu chat = satu giliran AI pada satu waktu.
 const chatQueues = new Map(); // jid -> { running, pending: [] }
-const COALESCE_MS = 1200;    // jeda menunggu pesan beruntun (ketik cepat)
-const PRESENCE_TTL_MS = 20000;
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Human Takeover: jika admin mengetik/membalas manual dari HP di nomor customer,
+// bot diam selama jeda dinamis (5 menit sejak chat terakhir admin).
+// Jeda reset tiap kali admin kirim chat baru.
+const humanTakeoverMap = new Map(); // jid -> timestampMs
+const HUMAN_TAKEOVER_TIMEOUT_MS = 5 * 60 * 1000; // 5 menit
 
-// Sapaan singkat yang bukan pertanyaan baru: jawaban yang sedang jalan tetap dikirim.
-// Dicek per kata (bukan regex utuh) supaya "ok makasih", "terima kasih ya kak",
-// dan emoji doang tetap kena, sementara "kak ip 13 ready?" tetap dianggap pertanyaan.
-const ACK_WORDS = new Set([
-    'ok', 'oke', 'okay', 'sip', 'sipp', 'siap', 'ya', 'iya', 'yes', 'nah', 'good', 'mantap',
-    'mksh', 'makasih', 'terima', 'kasih', 'terimaksih', 'thanks', 'thank', 'you', 'banyak',
-    'ntar', 'tunggu', 'wait', 'haha', 'hihi', 'hehe', 'wkwk', 'betul', 'benar',
-    'kak', 'kakak', 'sih', 'dong', 'dear',
-]);
-const isAck = (text) => {
-    const raw = String(text || '').trim();
-    if (!raw || raw.length > 40) return false;
-    const words = raw.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(/\s+/).filter(Boolean);
-    if (!words.length) return true;   // cuma emoji, mis. "🙏"
-    if (words.length > 5) return false;
-    return words.every((w) => ACK_WORDS.has(w));
-};
+// Track ID pesan yang dikirim oleh bot sendiri agar tidak dianggap sebagai chat manual admin
+const botSentMsgIds = new Set();
+function markBotSent(msgId) {
+    if (!msgId) return;
+    botSentMsgIds.add(msgId);
+    if (botSentMsgIds.size > 2000) {
+        const first = botSentMsgIds.values().next().value;
+        botSentMsgIds.delete(first);
+    }
+}
+
+function isHumanHandling(jid) {
+    const until = humanTakeoverMap.get(jid);
+    if (!until) return false;
+    if (Date.now() < until) return true;
+    humanTakeoverMap.delete(jid);
+    return false;
+}
+
+// "Sedang mengetik" di WhatsApp punya masa berlaku sendiri, jadi harus
+// disegarkan berkala selama menunggu maupun selama AI berpikir. Jeda quiet
+// period-nya sendiri sudah diatur di lib/chat-humanizer.js.
+const PRESENCE_REFRESH_MS = 9000;
+const TYPING_ON_DELAY_MIN_MS = 700;
+const TYPING_ON_DELAY_MAX_MS = 1600;
+
+/**
+ * Tampilkan "sedang mengetik" sampai fungsi yang dikembalikan dipanggil.
+ *
+ * Presence WhatsApp hilang kalau tidak disegarkan, jadi diulang tiap
+ * PRESENCE_REFRESH_MS selama bot masih menunggu atau AI masih berpikir.
+ * Kalau bot lama diam saja, customer tidak tahu pesannya sudah dibaca.
+ */
+function startTyping(jid) {
+    let stopped = false;
+
+    const loop = async () => {
+        while (!stopped) {
+            try {
+                await sock.sendPresenceUpdate('composing', jid, 'text');
+            } catch (_) { /* presence bukan hal kritis */ }
+            if (stopped) break;
+            await sleep(PRESENCE_REFRESH_MS);
+        }
+    };
+    loop().catch((_) => { /* diabaikan */ });
+
+    return () => { stopped = true; };
+}
+
+/**
+ * Kirim balasan chat dengan gaya orang: dipecah beberapa bubble, jeda acak
+ * di antaranya, dan "sedang mengetik" tetap aktif selama jeda.
+ *
+ * Kalau selagi jeda ada pertanyaan baru, sisa pecahan dibuang supaya customer
+ * tidak menerima jawaban yang sudah basi.
+ *
+ * @returns {Promise<{delivered: boolean, stale: boolean}>}
+ */
+async function deliverChatText(jid, text, { guard = null, onStale = null } = {}) {
+    const chunks = splitForChat(text);
+    if (!chunks.length) return { delivered: false, stale: false };
+
+    let delivered = false;
+    for (let i = 0; i < chunks.length; i++) {
+        if (i > 0) await sleep(randomBetween(BUBBLES.gapMinMs, BUBBLES.gapMaxMs));
+        if (guard && !guard()) {
+            if (onStale) onStale();
+            return { delivered, stale: true };
+        }
+        if (isHumanHandling(jid)) {
+            console.log(`[RentSpace WA Bot] Pengiriman bubble AI dibatalkan untuk ${jid}: Admin sudah membalas di HP.`);
+            if (onStale) onStale();
+            return { delivered, stale: true };
+        }
+        const sentResult = await sock.sendMessage(jid, { text: chunks[i] });
+        if (sentResult?.key?.id) {
+            markBotSent(sentResult.key.id);
+        }
+        delivered = true;
+    }
+
+    return { delivered, stale: false };
+}
+
+/**
+ * Teruskan chat customer ke admin (dikirim ke nomor admin sekunder dan WA admin
+ * utama oleh Laravel).
+ */
+async function forwardToAdmin(sender, phone, pushName, text, reason) {
+    try {
+        await axios.post(LARAVEL_WEBHOOK_URL, {
+            action: 'forward_admin',
+            sender_jid: sender,
+            phone: phone,
+            name: pushName,
+            text: text,
+            reason: reason
+        }, {
+            headers: { 'X-API-KEY': API_KEY },
+            timeout: 8000
+        });
+    } catch (err) {
+        console.error('[RentSpace WA Bot] Forward Admin Error:', err.message);
+    }
+}
 
 // Auth middleware for REST API
 const authMiddleware = (req, res, next) => {
@@ -65,6 +167,9 @@ const authMiddleware = (req, res, next) => {
 };
 
 const formatToJid = (phone) => {
+    if (typeof phone === 'string' && (phone.endsWith('@g.us') || phone.endsWith('@s.whatsapp.net'))) {
+        return phone;
+    }
     let clean = phone.replace(/[^0-9]/g, '');
     if (clean.startsWith('0')) {
         clean = '62' + clean.slice(1);
@@ -131,16 +236,51 @@ async function connectToWhatsApp() {
         if (type !== 'notify') return;
 
         for (const msg of messages) {
-            if (!msg.message || msg.key.fromMe) continue;
+            if (!msg.message) continue;
 
             const sender = msg.key.remoteJid;
             const text = msg.message.conversation ||
                          msg.message.extendedTextMessage?.text ||
                          msg.message.imageMessage?.caption ||
                          '';
-
             const trimmedText = text.trim();
             const lowerText = trimmedText.toLowerCase();
+
+            // 1. Deteksi Chat Keluar dari HP Admin (Human Takeover)
+            if (msg.key.fromMe) {
+                // Abaikan jika pesan ini dikirim oleh bot sendiri
+                const msgId = msg.key.id;
+                if (botSentMsgIds.has(msgId)) {
+                    continue;
+                }
+
+                // Jika admin mengirim pesan di chat personal customer (bukan grup)
+                if (sender && !sender.endsWith('@g.us')) {
+                    // Cek perintah manual admin di chat tersebut
+                    if (lowerText === '!bot' || lowerText === '!on' || lowerText === '!unmute') {
+                        humanTakeoverMap.delete(sender);
+                        console.log(`[RentSpace WA Bot] 🤖 Bot diaktifkan kembali untuk ${sender} oleh admin.`);
+                        continue;
+                    }
+                    if (lowerText === '!off' || lowerText === '!stop' || lowerText === '!mute') {
+                        // Mute 24 jam (manual mute)
+                        humanTakeoverMap.set(sender, Date.now() + 24 * 60 * 60 * 1000);
+                        console.log(`[RentSpace WA Bot] 🔇 Bot dimatikan manual untuk ${sender} selama 24 jam.`);
+                        continue;
+                    }
+
+                    // Admin mengetik chat normal: set takeover 5 menit sejak pesan ini
+                    humanTakeoverMap.set(sender, Date.now() + HUMAN_TAKEOVER_TIMEOUT_MS);
+                    console.log(`[RentSpace WA Bot] 👤 Admin membalas di HP untuk ${sender}. Bot OFF selama 5 menit.`);
+
+                    // Jika bot sedang punya antrean pending untuk customer ini, batalkan
+                    const queueState = chatQueues.get(sender);
+                    if (queueState) {
+                        queueState.pending = [];
+                    }
+                }
+                continue;
+            }
 
             // 0. Perintah universal !getid / /getid (Untuk cek ID User atau ID Grup WA)
             if (lowerText === '!getid' || lowerText === '/getid') {
@@ -249,6 +389,17 @@ async function connectToWhatsApp() {
 
             console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (${isGroup ? 'Group: ' + sender : 'Phone: ' + (actualPhone || 'LID: ' + senderNumber)}): "${text}"`);
 
+            // 1. Forward otomatis chat customer ke HP Admin (Multi Admin) by system (0 token AI)
+            if (!isGroup) {
+                forwardToAdmin(sender, actualPhone || senderNumber, pushName, text.trim(), 'chat customer masuk');
+            }
+
+            // 2. Cek apakah admin sedang handle chat customer ini (Human Takeover 5 menit)
+            if (!isGroup && isHumanHandling(sender)) {
+                console.log(`[RentSpace WA Bot] ⏸️ Bot diam untuk ${pushName} (${sender}): Admin sedang menangani chat ini di HP.`);
+                continue;
+            }
+
             enqueueCustomerMessage(sender, senderNumber, actualPhone, pushName, text.trim(), msg);
         }
     });
@@ -259,8 +410,9 @@ async function connectToWhatsApp() {
  *
  * Aturannya:
  * - Satu chat hanya boleh punya satu permintaan AI yang jalan (tidak paralel).
- * - Pesan yang masuk saat AI masih berpikir TIDAK langsung diproses; dia ditunggu
- *   dan digabung dengan pesan beruntun berikutnya.
+ * - Bot tidak langsung menjawab: dia tunggu sampai customer berhenti ngetik
+ *   (quiet period) sambil menampilkan "sedang mengetik", supaya pesan beruntun
+ *   digabung jadi satu pertanyaan dan tidak memicu beberapa balasan.
  * - Kalau ada pertanyaan baru yang menimpa, jawaban untuk pertanyaan lama
  *   dibuang (lihat guard di handleIncomingCustomerMessage). Customers yang sudah
  *   nanya ulang tidak ALU-aluan dapat jawaban basi.
@@ -286,9 +438,22 @@ async function drainCustomerQueue(sender) {
 
     try {
         while (state.pending.length) {
-            // Tunggu dulu: orang yang ngetik cepat sering kirim 2-3 pesan beruntun
-            // ("ip 12" lalu "ready kapan?"). Dijawab satu kali, bukan dua kali.
-            await sleep(COALESCE_MS);
+            // Burst pertama yang isinya pertanyaan sungguhan (bukan cuma "ok")
+            // bikin bot langsung terlihat "sedang mengetik" seperti orang yang
+            // baca pesan lalu mikir sebentar sebelum ngetik balasan.
+            const isCommand = state.pending.some((m) => m.text.startsWith('/'));
+            const hasRealQuestion = state.pending.some((m) => !isAck(m.text));
+
+            let stopTyping = null;
+            if (hasRealQuestion) {
+                await sleep(randomBetween(TYPING_ON_DELAY_MIN_MS, TYPING_ON_DELAY_MAX_MS));
+                if (state.pending.length) stopTyping = startTyping(sender);
+            }
+
+            // Tunggu sampai customer selesai ngetik. Perintah admin tidak
+            // ikut menunggu lama, sudah jelas itu bukan customer yang mengetik.
+            await waitForQuietPeriod(state, { quick: isCommand });
+
             const batch = state.pending.splice(0, state.pending.length);
             const last = batch[batch.length - 1];
 
@@ -301,9 +466,9 @@ async function drainCustomerQueue(sender) {
 
             const merged = mergeBatchText(batch);
 
-            try {
-                await sock.sendPresenceUpdate('composing', sender, PRESENCE_TTL_MS);
-            } catch (_) { /* presence bukan hal kritis */ }
+            // Tetap nampil "sedang mengetik" selama AI berpikir dan selama
+            // jeda antar-bubble, supaya tidak ada selingan kosong yang panjang.
+            if (!stopTyping) stopTyping = startTyping(sender);
 
             try {
                 await handleIncomingCustomerMessage(
@@ -313,6 +478,7 @@ async function drainCustomerQueue(sender) {
                 console.error('[RentSpace WA Bot] Error saat membalas:', err.message);
             }
 
+            if (stopTyping) stopTyping();
             try {
                 await sock.sendPresenceUpdate('paused', sender);
             } catch (_) { /* abaikan */ }
@@ -330,28 +496,6 @@ async function drainCustomerQueue(sender) {
     }
 }
 
-/**
- * Gabung beberapa pesan beruntun jadi satu pertanyaan.
- *
- * Kebanyakan orang yang ngetik cepat mengirim potongan ("ip 12" lalu "yang pro
- * max" lalu "harga berapa?"), jadi lebih baik dirangkai utuh daripada diambil
- * satu. Kalau gabungannya sudah panjang, pakai pesan terakhir yang memang
- * pertanyaannya supaya tidak dijawab dua kali.
- */
-function mergeBatchText(batch) {
-    if (batch.length === 1) return batch[0].text;
-
-    const joined = batch.map((m) => m.text).join(' ');
-    if (joined.length <= 80) return joined;
-
-    for (let i = batch.length - 1; i >= 0; i--) {
-        if (/[?？]\s*$/.test(batch[i].text) || /\b(kapan|berapa|harga|mana|ready|ada|tersedia|boleh|bisa)\b/i.test(batch[i].text)) {
-            return batch[i].text;
-        }
-    }
-    return joined;
-}
-
 // Logic Chatbot Auto-Reply
 async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, pushName, text, rawMsg = null, guard = null) {
     const lower = text.toLowerCase();
@@ -365,8 +509,29 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
             console.log(`[RentSpace WA Bot] Jawaban dibuang (sudah ada pertanyaan baru): "${String(content?.text || '').slice(0, 80)}"`);
             return false;
         }
-        await sock.sendMessage(sender, content);
+        if (isHumanHandling(sender)) {
+            console.log(`[RentSpace WA Bot] Jawaban dibatalkan (admin mulai handle di HP): "${String(content?.text || '').slice(0, 80)}"`);
+            return false;
+        }
+        const sent = await sock.sendMessage(sender, content);
+        if (sent?.key?.id) {
+            markBotSent(sent.key.id);
+        }
         return true;
+    };
+
+    // Balasan isi chat (dari AI), dikirim dengan gaya orang: dipecah jadi
+    // beberapa bubble kalau panjang, dengan jeda acak di antaranya.
+    const sendChatReply = async (replyText) => {
+        const result = await deliverChatText(sender, replyText, {
+            guard,
+            onStale: () => {
+                staleSkipped++;
+                console.log(`[RentSpace WA Bot] Sisa balasan dibuang (sudah ada pertanyaan baru): "${String(replyText || '').slice(0, 80)}"`);
+            },
+        });
+
+        return result.delivered;
     };
 
     // 0. Perintah Khusus Admin: /broadcast send [Grup] from reply (Kirim foto + caption yang di-reply)
@@ -544,7 +709,7 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
     }
 
     // 1. Menu Bantuan / Halo
-    if (['halo', 'hai', 'hi', 'p', 'menu', 'bantuan', 'start', 'info'].includes(lower)) {
+    if (['halo', 'hai', 'hi', 'p', 'menu', 'bantuan', 'start', 'info'].includes(lower) || isGreetingOnly(lower)) {
         const replyMenu = `Halo Kak *${pushName}*! 👋\n` +
             `Selamat datang di WhatsApp Official *Rent Space Purwokerto* 🎮📷\n\n` +
             `Ada yang bisa kami bantu? Silakan balas dengan angka atau kata kunci:\n\n` +
@@ -605,8 +770,17 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
             timeout: 45000
         });
 
+        // Chat di luar topik sewa (curhat, tugas, dll): tidak dijawab AI, cuma
+        // diarahkan ke admin. Balasan model tidak ikut dikirim.
+        if (res.data && res.data.handoff) {
+            const reason = res.data.handoff_reason || 'di luar topik sewa';
+            await sendChatReply('Maaf kak, untuk yang itu aku teruskan ke admin ya. Tunggu sebentar, admin kami akan nge-chat kakak sendiri 🙏');
+            await forwardToAdmin(sender, actualPhone || senderNumber, pushName, text, reason);
+            return;
+        }
+
         if (res.data && res.data.reply) {
-            await send({ text: res.data.reply });
+            await sendChatReply(res.data.reply);
             return;
         }
     } catch (err) {
