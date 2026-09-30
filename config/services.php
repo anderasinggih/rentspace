@@ -49,4 +49,11 @@ return [
         'url' => env('WHATSAPP_BOT_URL', 'http://localhost:3001'),
         'api_key' => env('WHATSAPP_BOT_API_KEY', 'rentspace_secret_wa_token_2026'),
     ],
+    'instagram' => [
+        // Sumber utama tetap tabel `settings` (ig_access_token / ig_user_id)
+        // supaya bisa diisi dari panel admin. Env ini hanya fallback.
+        'access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
+        'user_id' => env('INSTAGRAM_USER_ID'),
+        'graph_version' => env('INSTAGRAM_GRAPH_VERSION', 'v21.0'),
+    ],
 ];

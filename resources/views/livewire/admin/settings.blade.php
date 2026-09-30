@@ -1,9 +1,16 @@
 <div class="max-w-full overflow-x-hidden relative">
-    <div class="mb-6 flex flex-col gap-4">
-        <div class="flex items-center justify-between">
+    <div class="mb-4 flex flex-col gap-3">
+        <div class="flex items-center justify-end">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-foreground">System Settings</h1>
-                <p class="mt-1 text-sm text-muted-foreground">Configure all website settings</p>
+                <a href="{{ route('admin.scan') }}" wire:navigate
+                    class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-foreground/5 hover:bg-foreground/10 text-foreground border border-border/80 transition-all duration-200 active:scale-95 shadow-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                        <rect width="7" height="7" x="7" y="7" rx="1" /><path d="M10 17h.01" /><path d="M17 10h.01" /><path d="M17 17h.01" />
+                    </svg>
+                    <span>Scan QR</span>
+                </a>
             </div>
         </div>
 
@@ -50,6 +57,12 @@
                 class="flex-1 inline-flex items-center justify-center rounded-lg py-2 text-sm font-medium transition-all
                 {{ $activeTab === 'whatsapp' ? 'bg-emerald-500 text-white shadow-sm' : 'text-muted-foreground hover:text-emerald-500 hover:bg-muted/50' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </button>
+            <button wire:click="$set('activeTab', 'instagram')"
+                title="Instagram Story"
+                class="flex-1 inline-flex items-center justify-center rounded-lg py-2 text-sm font-medium transition-all
+                {{ $activeTab === 'instagram' ? 'bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-600 text-white shadow-sm' : 'text-muted-foreground hover:bg-muted/50' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
             </button>
         </div>
     </div>
@@ -2243,6 +2256,146 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        @endif
+
+        @if($activeTab === 'instagram')
+            <div class="space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border/80 gap-3">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
+                            <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-600"></span>
+                            Instagram Story
+                        </h2>
+                        <p class="text-xs text-muted-foreground mt-0.5">Koneksi akun Business/Creator + template caption &amp; teks story.</p>
+                    </div>
+                    <a href="{{ route('admin.instagram-story') }}" wire:navigate
+                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-600 text-white transition-opacity hover:opacity-90 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/></svg>
+                        Buka Halaman Story
+                    </a>
+                </div>
+
+                @if($igStoryMessage)
+                    <div class="rounded-lg border px-3 py-2.5 text-xs font-semibold flex items-start gap-2
+                        {{ $igStoryMessage['ok'] ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0">{{ $igStoryMessage['ok'] ? '<path d="M20 6 9 17l-5-5"/>' : '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>' }}</svg>
+                        <span>{{ $igStoryMessage['text'] }}</span>
+                    </div>
+                @endif
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <!-- Kredensial -->
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-600"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/></svg>
+                            Kredensial API
+                        </h3>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">IG User ID</label>
+                            <input type="text" wire:model="ig_user_id" inputmode="numeric" placeholder="17841400000000000"
+                                class="w-full h-9 px-3 text-sm rounded-md border border-input bg-background">
+                            <p class="text-[10px] text-muted-foreground">ID akun IG, bukan username dan bukan ID Facebook Page.</p>
+                            @error('ig_user_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Access Token</label>
+                            <input type="password" wire:model="ig_access_token"
+                                placeholder="{{ \App\Models\Setting::getVal('ig_access_token') ? 'Tersimpan — paste token baru untuk mengganti' : 'EAAG...' }}"
+                                autocomplete="off"
+                                class="w-full h-9 px-3 text-sm rounded-md border border-input bg-background">
+                            <p class="text-[10px] text-muted-foreground">Token bersifat rahasia. Disimpan di tabel settings, tidak ditampilkan kembali. Kosongkan untuk mempertahankan token lama.</p>
+                            @error('ig_access_token') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Versi Graph API</label>
+                            <input type="text" wire:model="ig_graph_version" placeholder="v21.0"
+                                class="w-full h-9 px-3 text-sm rounded-md border border-input bg-background">
+                            @error('ig_graph_version') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Warna Tema</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" wire:model.live="ig_story_theme"
+                                    class="h-9 w-12 rounded-md border border-input bg-background cursor-pointer p-0.5">
+                                <span class="text-xs font-mono text-muted-foreground">{{ $ig_story_theme }}</span>
+                            </div>
+                            @error('ig_story_theme') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Template -->
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                            Template Story
+                        </h3>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Caption (teks di luar gambar)</label>
+                            <textarea wire:model="ig_story_caption_template" rows="5"
+                                class="w-full px-3 py-2 text-sm rounded-md border border-input bg-background font-mono text-xs leading-relaxed"></textarea>
+                            <p class="text-[10px] text-muted-foreground">Maks 2.200 karakter. Instagram memotong di angka itu.</p>
+                            @error('ig_story_caption_template') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-foreground">Teks di Dalam Gambar</label>
+                            <textarea wire:model="ig_story_overlay_template" rows="4"
+                                class="w-full px-3 py-2 text-sm rounded-md border border-input bg-background font-mono text-xs leading-relaxed"></textarea>
+                            <p class="text-[10px] text-muted-foreground">Ditulis di atas foto. Maksimal 4 baris, sisanya dipotong.</p>
+                            @error('ig_story_overlay_template') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3 space-y-1.5">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-foreground">Placeholder tersedia</p>
+                            <div class="flex flex-wrap gap-1">
+                                @foreach(['{nama}', '{nama_lengkap}', '{kategori}', '{spesifikasi}', '{harga_hari}', '{harga_jam}', '{lokasi}', '{link}', '{ig}', '{tanggal}'] as $ph)
+                                    <button type="button" wire:click="$insert('{{ $ph }}')"
+                                        title="Sisipkan ke caption"
+                                        class="rounded border border-border/70 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground hover:border-pink-500 hover:text-pink-600 transition-colors">{{ $ph }}</button>
+                                @endforeach
+                            </div>
+                            <p class="text-[10px] text-muted-foreground">Klik untuk menyisipkan ke kolom caption. Placeholder yang tidak dikenal dibiarkan apa adanya supaya salah ketik kelihatan.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3.5 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                    <p class="font-bold">Dua syarat yang sering jadi penyebab gagal</p>
+                    <ol class="list-decimal list-inside space-y-0.5 text-[11px] leading-relaxed">
+                        <li>Akun Instagram harus tipe <b>Business</b> atau <b>Creator</b> dan tertaut ke sebuah Facebook Page. Akun personal tidak punya endpoint publish story.</li>
+                        <li><code class="font-mono">APP_URL</code> harus domain HTTPS publik. Instagram mengambil gambar dari internet, jadi file di <code class="font-mono">localhost</code> akan ditolak dengan <i>media fetch error</i>.</li>
+                    </ol>
+                </div>
+
+                @if(auth()->user()->role === 'admin')
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" wire:click="saveInstagramSettings" wire:loading.attr="disabled"
+                            wire:target="saveInstagramSettings"
+                            class="inline-flex items-center gap-1.5 px-4 h-9 text-xs font-bold rounded-lg bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-600 text-white shadow hover:opacity-90 transition-opacity">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            Simpan Pengaturan
+                        </button>
+                        <button type="button" wire:click="testInstagramConnection" wire:loading.attr="disabled"
+                            wire:target="testInstagramConnection, saveInstagramSettings"
+                            class="inline-flex items-center gap-1.5 px-4 h-9 text-xs font-bold rounded-lg border border-border bg-background text-foreground hover:bg-muted/50 transition-colors">
+                            <span wire:loading.remove wire:target="testInstagramConnection, saveInstagramSettings" class="flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                Tes Koneksi
+                            </span>
+                            <span wire:loading wire:target="testInstagramConnection, saveInstagramSettings" class="flex items-center gap-1.5">
+                                <svg class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                Menghubungkan...
+                            </span>
+                        </button>
+                        <p class="text-[10px] text-muted-foreground">Tombol tes menyimpan dulu, lalu memanggil Graph API dengan nilai terbaru.</p>
+                    </div>
+                @endif
             </div>
         @endif
     </div>

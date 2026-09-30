@@ -1,19 +1,13 @@
 <div>
     <div>
-        <div class="sm:flex sm:items-center">
-            <div class="sm:flex-auto">
-                <h1 class="text-2xl font-bold tracking-tight text-foreground">Promo & Pricing Rules</h1>
-                <p class="mt-2 text-sm text-muted-foreground">Manage dynamic discounts, like "35% off for 12 hours" or
-                    "Rent 1 day, free 1 day".</p>
-            </div>
-            <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-                @if(auth()->user()->role === 'admin')
-                <button wire:click="create"
-                    class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
-                    Create Rule
-                </button>
-                @endif
-            </div>
+    <div>
+        <div class="flex items-center justify-end mb-4">
+            @if(auth()->user()->role === 'admin')
+            <button wire:click="create"
+                class="inline-flex items-center justify-center rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-all active:scale-95">
+                + Buat Promo
+            </button>
+            @endif
         </div>
 
         <div class="mt-8 flow-root">
@@ -57,7 +51,7 @@
                                         @endif
                                     </td>
                                     <td class="px-3 py-4 text-sm text-muted-foreground">
-                                        <div class="font-bold text-primary">
+                                        <div class="font-bold text-foreground">
                                             @if($rule->tipe === 'diskon_persen') Diskon {{ $rule->value }}%
                                             @elseif($rule->tipe === 'hari_gratis') Gratis {{ $rule->value }} Hari
                                             @elseif($rule->tipe === 'jam_gratis') Gratis {{ $rule->value }} Jam

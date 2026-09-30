@@ -1,23 +1,25 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="antialiased font-sans" data-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="antialiased font-sans">
 
 <head>
     <meta charset="utf-8">
     <script>
         (function() {
-            const theme = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            if (theme) {
-                document.documentElement.classList.add('dark');
-            } else {
+            // Check theme: if explicitly 'light', use light; if 'dark', use dark; otherwise default to dark
+            const isLight = localStorage.theme === 'light' || localStorage.getItem('theme') === 'light';
+            if (isLight) {
                 document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
             }
         })();
         
         function applyTheme() {
-            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
+            const isLight = localStorage.theme === 'light' || localStorage.getItem('theme') === 'light';
+            if (isLight) {
                 document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
             }
         }
         document.addEventListener('livewire:navigated', applyTheme);
@@ -28,6 +30,7 @@
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#09090b">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RENT ADMIN">
@@ -82,25 +85,30 @@
              setTimeout(() => document.documentElement.classList.remove('no-transitions'), 100);
         });
 
-        // Force disable zooming
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
-        
-        document.addEventListener('touchstart', function(event) {
-            if (event.touches.length > 1) {
-                event.preventDefault();
-            }
-        }, { passive: false });
+        // Force disable zooming safely without re-declaration errors
+        (function() {
+            if (window._touchZoomPrevented) return;
+            window._touchZoomPrevented = true;
 
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(event) {
-            let now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
+            document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            });
+            
+            document.addEventListener('touchstart', function(event) {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                }
+            }, { passive: false });
+
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                let now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        })();
     </script>
 </head>
 
@@ -109,7 +117,69 @@
     <livewire:admin.admin-navbar />
     <livewire:admin.command-palette />
 
-    <main class="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <!-- Center Floating Elegant Apple-Style Spinner (DailyPhone style) -->
+    <div id="admin-global-loader"
+         class="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center transition-all duration-200 opacity-0 scale-95"
+         style="display: none;">
+        <div class="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-card/90 dark:bg-[#1c1c1e]/90 backdrop-blur-xl border border-border/80 shadow-2xl text-foreground font-medium text-xs tracking-tight pointer-events-auto">
+            <!-- iOS / Apple HIG style spinner -->
+            <svg class="animate-spin h-3.5 w-3.5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3.5"></circle>
+                <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-[11px] font-semibold tracking-normal text-foreground/90">Memuat...</span>
+        </div>
+    </div>
+
+    <!-- Livewire Request / Navigate Global Loading Listener -->
+    <script>
+        (function() {
+            let loader = document.getElementById('admin-global-loader');
+            let timer = null;
+
+            function showLoader() {
+                if (!loader) loader = document.getElementById('admin-global-loader');
+                if (!loader) return;
+                // Jeda 120ms agar jika request instan tidak flicker
+                timer = setTimeout(() => {
+                    loader.style.display = 'flex';
+                    requestAnimationFrame(() => {
+                        loader.classList.remove('opacity-0', 'scale-95');
+                        loader.classList.add('opacity-100', 'scale-100');
+                    });
+                }, 120);
+            }
+
+            function hideLoader() {
+                if (timer) clearTimeout(timer);
+                if (!loader) loader = document.getElementById('admin-global-loader');
+                if (!loader) return;
+                loader.classList.remove('opacity-100', 'scale-100');
+                loader.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    if (loader.classList.contains('opacity-0')) {
+                        loader.style.display = 'none';
+                    }
+                }, 200);
+            }
+
+            // Hook ke event Livewire 3
+            document.addEventListener('livewire:navigating', showLoader);
+            document.addEventListener('livewire:navigated', hideLoader);
+
+            document.addEventListener('livewire:init', () => {
+                if (window.Livewire && Livewire.hook) {
+                    Livewire.hook('commit', ({ succeed, fail }) => {
+                        showLoader();
+                        succeed(() => hideLoader());
+                        fail(() => hideLoader());
+                    });
+                }
+            });
+        })();
+    </script>
+
+    <main class="flex-1 w-full max-w-7xl mx-auto pt-4 sm:pt-6 pb-24 sm:pb-28 px-4 sm:px-6 lg:px-8">
         {{ $slot }}
     </main>
 
@@ -157,13 +227,7 @@
             printWindow.document.close();
         };
     </script>
-    <script>
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('[wire\\:click]')) {
-                console.log('👆 Click detected on Livewire element:', e.target.closest('[wire\\:click]'));
-            }
-        });
-    </script>
+
     <script>
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {

@@ -38,22 +38,24 @@
             <p class="mt-4 text-sm text-muted-foreground">Kelola pesanan dan pengaturan akun Anda di sini.</p>
         </div>
 
-        <!-- Tab Switcher (DaisyUI Tabs) -->
-        <div class="mb-6 flex justify-center">
-            <div class="tabs tabs-box bg-base-200/80 p-1 rounded-2xl w-full border border-base-300">
+        <!-- Tab Switcher (Segmented Control) -->
+        <div class="mb-6">
+            <div class="flex bg-muted/60 p-1 rounded-2xl border border-border shadow-inner gap-1 w-full relative">
                 <button wire:click="$set('currentTab', 'pesanan')"
-                    class="tab flex-1 gap-2 font-bold text-xs sm:text-sm h-10 rounded-xl transition-all {{ $currentTab === 'pesanan' ? 'tab-active bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    class="flex-1 flex justify-center items-center gap-2 px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all {{ $currentTab === 'pesanan' ? 'bg-background text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground hover:text-foreground hover:bg-background/50' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                        class="sm:w-[16px] sm:h-[16px]">
                         <rect width="20" height="14" x="2" y="5" rx="2" />
                         <line x1="2" x2="22" y1="10" y2="10" />
                     </svg>
                     Pesanan
                 </button>
                 <button wire:click="$set('currentTab', 'profil')"
-                    class="tab flex-1 gap-2 font-bold text-xs sm:text-sm h-10 rounded-xl transition-all {{ $currentTab === 'profil' ? 'tab-active bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    class="flex-1 flex justify-center items-center gap-2 px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all {{ $currentTab === 'profil' ? 'bg-background text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground hover:text-foreground hover:bg-background/50' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                        class="sm:w-[16px] sm:h-[16px]">
                         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                     </svg>
@@ -65,34 +67,42 @@
         @if($currentTab === 'pesanan')
             <div class="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
                 @if ($orders !== null)
-                    {{-- Compact Summary Stats (DaisyUI Stats) --}}
-                    <div class="stats stats-horizontal shadow-sm border border-base-300 bg-base-100 w-full rounded-2xl">
+                    {{-- Compact Summary Stats --}}
+                    <div class="grid grid-cols-2 gap-3">
                         {{-- Total Pesanan --}}
-                        <div class="stat p-4">
-                            <div class="stat-title text-[11px] font-bold uppercase tracking-wider text-base-content/60">Total Transaksi</div>
-                            <div class="stat-value text-2xl font-black text-base-content">{{ $this->total_orders }}</div>
-                            <div class="stat-desc text-[10px] text-base-content/50">Riwayat rental Anda</div>
+                        <div
+                            class="bg-card rounded-2xl border border-border p-4 shadow-sm group transition-all hover:bg-muted/30">
+                            <span class="text-[10px] font-bold text-muted-foreground/70 block mb-1">Total Transaksi</span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-xl font-black text-foreground">{{ $this->total_orders }}</span>
+                                <span class="text-[10px] font-semibold text-muted-foreground lowercase">Transaksi</span>
+                            </div>
                         </div>
 
                         {{-- Total Billing --}}
-                        <div class="stat p-4">
-                            <div class="stat-title text-[11px] font-bold uppercase tracking-wider text-base-content/60">Total Billing</div>
-                            <div class="stat-value text-2xl font-black text-primary">Rp {{ number_format($this->total_billing, 0, ',', '.') }}</div>
-                            <div class="stat-desc text-[10px] text-base-content/50">Akumulasi sewa</div>
+                        <div
+                            class="bg-card rounded-2xl border border-border p-4 shadow-sm group transition-all hover:bg-muted/30">
+                            <span class="text-[10px] font-bold text-muted-foreground/70 block mb-1">Total Billing</span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-[10px] font-black text-foreground">Rp</span>
+                                <span
+                                    class="text-xl font-black text-foreground">{{ number_format($this->total_billing, 0, ',', '.') }}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex items-baseline justify-between pt-4 pb-2 border-b border-base-300">
+                    <div class="flex items-baseline justify-between pt-4 pb-2 border-b border-border">
                         <div class="flex items-center gap-3">
-                            <h2 class="text-lg font-black text-base-content">Riwayat Pesanan</h2>
+                            <h2 class="text-lg font-bold text-foreground">Riwayat Pesanan</h2>
                             @if($this->active_rentals_count > 0)
-                                <span class="badge badge-success badge-sm gap-1.5 font-bold text-[10px] py-2 px-2.5">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 animate-in fade-in zoom-in duration-300">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                     {{ $this->active_rentals_count }} Aktif
                                 </span>
                             @endif
                         </div>
-                        <span class="text-base-content/60 font-semibold text-xs">({{ $orders->count() }} transaksi)</span>
+                        <span class="text-muted-foreground font-medium text-xs">({{ $orders->count() }} transaksi)</span>
                     </div>
 
                     <div class="space-y-4">
@@ -196,7 +206,7 @@
 
                                         @if($canPay)
                                             <a href="{{ route('public.payment', $order->booking_code) }}" wire:navigate @click.stop
-                                                class="hidden sm:inline-flex btn btn-warning btn-sm gap-1.5 shadow-sm font-bold text-xs shrink-0">
+                                                class="hidden sm:flex items-center gap-1.5 h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-sm shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
                                                     fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                                     stroke-linejoin="round">
@@ -207,7 +217,7 @@
                                             </a>
                                         @elseif($order->status === 'pending' && $isCashLike)
                                             <a href="{{ route('public.success', $order->booking_code) }}" wire:navigate @click.stop
-                                                class="hidden sm:inline-flex btn btn-success btn-sm text-white gap-1.5 shadow-sm font-bold text-xs shrink-0">
+                                                class="hidden sm:flex items-center gap-1.5 h-9 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-sm shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14.5 2 14.5 8 20 8"/></svg>
                                                 Lihat Struk
                                             </a>

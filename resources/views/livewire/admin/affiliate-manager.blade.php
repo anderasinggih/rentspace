@@ -1,25 +1,20 @@
 <div>
-    <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight text-foreground">Affiliate Manager</h1>
-            <p class="mt-2 text-sm text-muted-foreground">Manage all affiliate accounts and payout requests.</p>
-        </div>
-        
-        <div class="flex bg-muted p-1 rounded-xl">
+    <div class="mb-4 flex flex-col md:flex-row md:items-center justify-end gap-3">
+        <div class="flex bg-muted/60 p-1 rounded-xl border border-border/50 backdrop-blur-sm overflow-x-auto no-scrollbar shadow-xs">
             <button wire:click="$set('tab', 'request')" 
-                class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $tab === 'request' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground' }}">
+                class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all {{ $tab === 'request' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground' }}">
                 Permission ({{ \App\Models\AffiliatorProfile::count() }})
             </button>
             <button wire:click="$set('tab', 'account')" 
-                class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $tab === 'account' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground' }}">
+                class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all {{ $tab === 'account' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground' }}">
                 Account
             </button>
             <button wire:click="$set('tab', 'payouts')" 
-                class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $tab === 'payouts' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground' }}">
+                class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all {{ $tab === 'payouts' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground' }}">
                 Payouts ({{ \App\Models\AffiliatePayout::where('status', 'pending')->count() }})
             </button>
             <button wire:click="$set('tab', 'history')" 
-                class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $tab === 'history' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground' }}">
+                class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all {{ $tab === 'history' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground' }}">
                 History
             </button>
         </div>

@@ -1,17 +1,10 @@
-<div class="space-y-8">
-    <!-- Header -->
-    <div class="sm:flex sm:items-center">
-        <div class="sm:flex-auto">
-            <h1 class="text-2xl font-bold text-foreground">Customer Insights</h1>
-            <p class="mt-2 text-sm text-muted-foreground">Monitor customer loyalty, frequency, and lifetime value across all rentals.</p>
-        </div>
-        <div class="mt-4 sm:ml-16 sm:mt-0 flex flex-col md:flex-row items-center gap-4">
-            <div class="relative w-full md:w-80 group">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari pelanggan..." 
-                    class="flex h-9 w-full rounded-md border border-input bg-background px-9 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm">
-            </div>
-            
+<div class="space-y-6">
+    <!-- Top Action Bar -->
+    <div class="flex items-center justify-end">
+        <div class="relative w-full sm:w-80 group">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari nama / nomor pelanggan..." 
+                class="flex h-9 w-full rounded-xl border border-input bg-background/80 px-9 py-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs transition-all">
         </div>
     </div>
 

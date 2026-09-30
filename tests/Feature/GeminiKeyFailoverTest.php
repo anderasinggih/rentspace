@@ -170,6 +170,203 @@ class GeminiKeyFailoverTest extends TestCase
         );
     }
 
+    // ------------------------------------------------------- server busy (5xx)
+
+    /** Body error 503 "high demand" yang bentuknya sama dengan error asli Google. */
+    private function highDemandError(): array
+    {
+        return [
+            'status' => 503,
+            'body' => ['error' => ['message' => 'This model is currently experiencing high demand.']],
+        ];
+    }
+
+    public function test_503_pindah_ke_kunci_berikutnya_dalam_permintaan_sama(): void
+    {
+        $this->fillKeys(3);
+        $this->fakeGemini(fn (string $key) => $key === 'pool-key-1' ? $this->highDemandError() : null);
+
+        $result = $this->reply();
+
+        $this->assertNotNull($result['reply'], 'kunci kedua harus rescuing jawaban');
+        $this->assertSame(['pool-key-1', 'pool-key-2'], $this->seenKeys, 'harus mencoba slot 1 lalu slot 2');
+    }
+
+    /**
+     * 503 berasal dari kapasitas model, bukan dari kunci: kunci lain milik project
+     * berbeda biasanya tetap bisa menjawab. Ini alasan 503 masuk daftar retryable.
+     */
+    public function test_503_di_semua_kunci_tidak_menghasilkan_jawaban_palsu(): void
+    {
+        $this->fillKeys(2);
+        $this->fakeGemini(fn () => $this->highDemandError());
+
+        $result = $this->reply();
+
+        $this->assertNull($result['reply'], 'tidak boleh mengarang jawaban saat semua kunci kena 503');
+        $this->assertStringContainsString('503', (string) GeminiAIService::lastError());
+        $this->assertSame(['pool-key-1', 'pool-key-2'], $this->seenKeys, 'semua kunci di pool harus dicoba');
+    }
+
+    /**
+     * 5xx lain punya alasan yang sama: server sibuk, bukan kunci rusak.
+     *
+     * Dipisah jadi tiga method, bukan satu loop: Http::fake() menumpuk stub
+     * setiap kali dipanggil, jadi dalam satu test method closure iterasi
+     * sebelumnya masih aktif dan yang diuji sebenarnya bukan status yang dimaksud.
+     */
+    public function test_500_dicoba_ke_kunci_berikutnya(): void
+    {
+        $this->assertFiveOhHundredFailsOver(500);
+    }
+
+    public function test_502_dicoba_ke_kunci_berikutnya(): void
+    {
+        $this->assertFiveOhHundredFailsOver(502);
+    }
+
+    public function test_504_dicoba_ke_kunci_berikutnya(): void
+    {
+        $this->assertFiveOhHundredFailsOver(504);
+    }
+
+    private function assertFiveOhHundredFailsOver(int $status): void
+    {
+        $this->fillKeys(2);
+        $this->fakeGemini(fn (string $key) => $key === 'pool-key-1'
+            ? ['status' => $status, 'body' => ['error' => ['message' => 'sibuk']]]
+            : null);
+
+        $result = $this->reply();
+
+        $this->assertNotNull($result['reply'], "HTTP {$status} harus dipindah ke kunci berikutnya");
+        $this->assertSame(['pool-key-1', 'pool-key-2'], $this->seenKeys, "HTTP {$status}: slot 1 lalu slot 2");
+    }
+
+    /** 404 = model tidak ada. Salah konfigurasi, gagal di semua kunci. */
+    public function test_404_tidak_dicoba_ke_kunci_lain(): void
+    {
+        $this->fillKeys(3);
+        $this->fakeGemini(fn () => [
+            'status' => 404,
+            'body' => ['error' => ['message' => 'models/gemini-x is not found']],
+        ]);
+
+        $this->reply();
+
+        $this->assertSame(['pool-key-1'], $this->seenKeys, 'model tidak ada tidak akan hilang di kunci lain');
+    }
+
+    // ------------------------------------------- kunci cadangan lintas fitur
+
+    /**
+     * Laporan grup punya satu slot sendiri, tapi 503 itu sifatnya model-wide: kunci
+     * customer yang sehat harus bisa dipakai, kalau tidak fitur ini mati tiap kali
+     * Google sedang ramai. Ini bug yang bikin "Semua 1 kunci API gagal" padahal
+     * ada 4 kunci yang menganggur.
+     */
+    public function test_laporan_dengan_satu_kunci_pakai_kunci_customer_sebagai_cadangan(): void
+    {
+        $this->fillKeys(3);
+        Setting::updateOrCreate(['key' => 'report_api_key'], ['value' => 'report-key-1']);
+        $this->fakeGemini(fn (string $key) => $key === 'report-key-1' ? $this->highDemandError() : null);
+
+        $result = GeminiAIService::replyInternal('rekap omset hari ini', 'Tim');
+
+        $this->assertNotNull($result, 'kunci customer harus rescuing laporan');
+        $this->assertSame('report-key-1', $this->seenKeys[0], 'kunci laporan sendiri selalu dicoba lebih dulu');
+        $this->assertContains('pool-key-1', $this->seenKeys, 'kunci customer harus dipakai setelahnya');
+    }
+
+    public function test_kunci_laporan_sendiri_selalu_dicoba_lebih_dulu(): void
+    {
+        $this->fillKeys(2);
+        Setting::updateOrCreate(['key' => 'report_api_key'], ['value' => 'report-key-1']);
+        $this->fakeGemini(fn () => null);
+
+        GeminiAIService::replyInternal('rekap omset hari ini', 'Tim');
+
+        $this->assertSame('report-key-1', $this->seenKeys[0], 'slot fitur didahulukan sebelum cadangan customer');
+    }
+
+    /** Cadangan tidak boleh diduplikasi kalau slot fitur dipakai kunci yang sama. */
+    public function test_cadangan_tidak_menggandakan_kunci_yang_sama(): void
+    {
+        Setting::updateOrCreate(['key' => 'chatbot_api_key'], ['value' => 'satu-kunci']);
+        Setting::updateOrCreate(['key' => 'report_api_key'], ['value' => 'satu-kunci']);
+        $this->fakeGemini(fn () => null);
+
+        $r = new \ReflectionMethod(GeminiAIService::class, 'apiKeysFor');
+        $r->setAccessible(true);
+
+        $this->assertSame(['satu-kunci'], $r->invoke(null, 'report'), 'kunci yang sama tidak boleh dihitung dua kali');
+    }
+
+    public function test_customer_tidak_mendapat_kunci_cadangan(): void
+    {
+        $this->fillKeys(2);
+        $this->fakeGemini(fn () => null);
+
+        $r = new \ReflectionMethod(GeminiAIService::class, 'reserveKeysFor');
+        $r->setAccessible(true);
+
+        $this->assertSame([], $r->invoke(null, 'customer'), 'customer adalah pool utama, tidak butuh cadangan dari diri sendiri');
+    }
+
+    /** Kalau kunci laporan kena cooldown, cadangan langsung dipakai tanpa menunggu. */
+    public function test_kunci_laporan_yang_kena_cooldown_dilewati(): void
+    {
+        $this->fillKeys(2);
+        Setting::updateOrCreate(['key' => 'report_api_key'], ['value' => 'report-key-1']);
+        $this->fakeGemini(fn (string $key) => $key === 'report-key-1' ? $this->quotaError() : null);
+
+        // Permintaan pertama: report key kena 429 lalu pindah ke cadangan.
+        $first = GeminiAIService::replyInternal('rekap omset hari ini', 'Tim');
+        $this->assertNotNull($first);
+
+        $this->seenKeys = [];
+        $this->fakeGemini(fn () => null);
+
+        GeminiAIService::replyInternal('rekap omset kemarin', 'Tim');
+
+        $this->assertNotContains('report-key-1', $this->seenKeys, 'kunci yang kena 429 tidak boleh dicoba lagi di permintaan berikutnya');
+    }
+
+    // --------------------------------------------------------- kebocoran kunci
+
+    /**
+     * Pesan error cURL memuat URL lengkap termasuk `?key=...`. Kalau apa adanya
+     * masuk log, API key production tersimpan plaintext di storage/logs.
+     */
+    public function test_api_key_disembunyikan_dari_teks_error(): void
+    {
+        $method = new \ReflectionMethod(GeminiAIService::class, 'maskSecrets');
+        $method->setAccessible(true);
+
+        $withQuery = $method->invoke(null, 'cURL error 28 for https://generativelanguage.googleapis.com/v1beta/models/x:generateContent?key=AIzaSyRAHASILAPATDIAMBIL');
+        $this->assertStringNotContainsString('AIzaSyRAHASILAPATDIAMBIL', $withQuery, 'kunci dari query string harus tersembunyi');
+        $this->assertStringContainsString('key=***', $withQuery, 'parameternya tetap terbaca sebagai key, cuma nilainya disembunyikan');
+
+        $dummyKey = 'AQ.' . 'Ab8RN6JAfajfUn5fhwKVy3oNEr0Jmho1rnDeE8l18_mWGjr6ZA';
+        $raw = $method->invoke(null, 'token gagal: ' . $dummyKey);
+        $this->assertStringNotContainsString($dummyKey, $raw, 'bentuk mentah kunci juga harus tersembunyi');
+    }
+
+    public function test_kunci_asli_tidak_pernah_muncul_di_pesan_error_panel(): void
+    {
+        $this->fillKeys(1);
+        Setting::updateOrCreate(['key' => GeminiAIService::keySlotName('customer', 1)], ['value' => 'AIzaSyKUNCIASLIPANGSANGSANGATPANJANG']);
+        $this->fakeGemini(fn () => $this->highDemandError());
+
+        $this->reply();
+
+        $this->assertStringNotContainsString(
+            'AIzaSyKUNCIASLIPANGSANGSANGATPANJANG',
+            (string) GeminiAIService::lastError(),
+            'pesan yang tampil di Pengaturan tidak boleh membocorkan kunci'
+        );
+    }
+
     public function test_kunci_yang_kena_429_ditahan_lalu_dilewati_di_permintaan_berikutnya(): void
     {
         $this->fillKeys(3);

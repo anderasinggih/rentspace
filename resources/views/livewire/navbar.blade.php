@@ -1,25 +1,27 @@
 <div x-data="{ 
     publicMenuOpen: false,
-    darkMode: localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+    darkMode: localStorage.theme !== 'light' && localStorage.darkMode !== 'false',
     toggleTheme() {
         this.darkMode = !this.darkMode;
         if (this.darkMode) {
             document.documentElement.classList.add('dark');
             localStorage.theme = 'dark';
+            localStorage.setItem('darkMode', 'true');
         } else {
             document.documentElement.classList.remove('dark');
             localStorage.theme = 'light';
+            localStorage.setItem('darkMode', 'false');
         }
     }
-}" class="sticky z-50 mx-auto px-4 w-full max-w-6xl mb-12" style="top: calc(1rem + env(safe-area-inset-top, 0px));">
+}" class="sticky z-50 mx-auto px-4 w-full max-w-6xl mb-8" style="top: calc(1rem + env(safe-area-inset-top, 0px));">
     <nav
-        class="flex items-center justify-between w-full h-14 border border-white/10 border-t-white/30 border-l-white/20 bg-background/10 backdrop-blur-[4px] backdrop-saturate-[150%] shadow-xl shadow-black/5 rounded-full px-4 transition-all duration-700 overflow-hidden">
+        class="flex items-center justify-between w-full h-14 border border-border/80 bg-background/80 backdrop-blur-md shadow-sm rounded-full px-5 transition-all duration-300">
         <!-- Left Side: Logo & Links -->
         <div class="flex items-center">
             <!-- Logo Box -->
             <a href="/" wire:navigate
-                class="font-extrabold tracking-tight text-foreground flex items-center mr-6 shrink-0 transition-transform hover:scale-105">
-                {{ config('app.name', 'rentspace') }}
+                class="font-black tracking-tight text-white flex items-center mr-6 shrink-0 transition-opacity hover:opacity-85 text-base">
+                <span>RENTSPACE</span>
             </a>
 
             <!-- Desktop Navigation Links -->
@@ -104,13 +106,13 @@
 
             <!-- CTA Button -->
             <a href="{{ route('public.booking') }}" wire:navigate
-                class="btn btn-sm btn-neutral rounded-full px-5 text-xs shadow-sm hidden sm:inline-flex shrink-0">
+                class="hidden sm:inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold px-5 py-2 hover:bg-primary/90 transition-all shadow-sm shrink-0">
                 Sewa Sekarang
             </a>
 
             <!-- Mobile Hamburger -->
             <button @click="publicMenuOpen = !publicMenuOpen"
-                class="btn btn-ghost btn-circle btn-sm md:hidden text-foreground">
+                class="md:hidden p-2 rounded-full hover:bg-muted text-foreground transition-colors focus:outline-none">
                 <svg x-show="!publicMenuOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round">

@@ -7,22 +7,23 @@
         }
 
         .liquid-glass {
-            @apply backdrop-blur-xl bg-background shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)];
-            border: 1px solid #cbd5e1;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
 
         .dark .liquid-glass {
-            background: rgba(22, 22, 26, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            box-shadow: none;
         }
 
         .glass-highlight {
-            @apply border-t border-border/40;
+            border-top: 1px solid var(--border);
         }
 
         .dark .glass-highlight {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid var(--border);
         }
 
         .text-stock-label {
@@ -93,7 +94,7 @@
             </div>
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-indigo-600/50">Rp</span>
-                <span class="text-xl font-semibold text-indigo-600 leading-none">
+                <span class="text-xl font-semibold text-foreground leading-none">
                     {{ $periodDiscounts >= 1000 ? round($periodDiscounts / 1000, 1) . 'k' : number_format($periodDiscounts, 0, ',', '.') }}
                 </span>
             </div>
@@ -126,7 +127,7 @@
             </div>
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-amber-600/50">Rp</span>
-                <span class="text-xl font-semibold text-amber-600 leading-none">
+                <span class="text-xl font-semibold text-foreground leading-none">
                     {{ $pendingRevenue >= 1000 ? round($pendingRevenue / 1000, 1) . 'k' : number_format($pendingRevenue, 0, ',', '.') }}
                 </span>
             </div>
@@ -145,7 +146,7 @@
             </div>
             <div class="flex items-baseline gap-0.5">
                 <span class="text-[8px] font-medium text-emerald-600/50">Rp</span>
-                <span class="text-xl font-semibold text-emerald-600 leading-none">
+                <span class="text-xl font-semibold text-foreground leading-none">
                     {{ $unrealizedRevenue >= 1000 ? round($unrealizedRevenue / 1000, 1) . 'k' : number_format($unrealizedRevenue, 0, ',', '.') }}
                 </span>
             </div>
@@ -242,7 +243,7 @@
             </div>
             <div class="p-4 flex flex-col gap-0.5">
                 <span class="text-[9px] font-semibold text-stock-label uppercase">Affiliate Fee</span>
-                <span class="text-lg font-semibold text-stock-down/70">
+                <span class="text-lg font-semibold text-foreground">
                     Rp{{ $periodCommissions >= 1000 ? round($periodCommissions / 1000, 1) . 'k' : number_format($periodCommissions, 0, ',', '.') }}
                 </span>
             </div>
@@ -413,7 +414,7 @@
                                     {{ $tu->unit ? $tu->unit->seri : '---' }}
                                 </td>
                                 <td class="px-4 py-3 text-center text-muted-foreground">{{ $tu->rent_count }}x</td>
-                                <td class="px-4 py-3 text-right font-semibold text-stock-up">
+                                <td class="px-4 py-3 text-right font-semibold text-foreground">
                                     Rp{{ number_format($tu->revenue, 0, ',', '.') }}</td>
                             </tr>
                         @endforeach
@@ -583,7 +584,7 @@
                                         {{ explode(' ', trim($rental->nama))[0] }}
                                     </div>
                                 </td>
-                                <td class="px-4 py-2.5 text-right font-bold text-emerald-600">
+                                <td class="px-4 py-2.5 text-right font-bold text-foreground">
                                     {{ number_format($rental->grand_total / 1000, 0) }}K
                                 </td>
                             </tr>
@@ -887,13 +888,16 @@
                         type: 'heatmap', height: '100%', fontFamily: 'inherit', toolbar: { show: false }, animations: { enabled: true, easing: 'easeinout', speed: 800 },
                         events: {
                             mouseMove: function (ev, ctx, config) {
-                                if (config.seriesIndex !== -1 && config.dataPointIndex !== -1) {
-                                    const v = ctx.w.globals.initialSeries[config.seriesIndex].data[config.dataPointIndex].y;
-                                    const d = ctx.w.globals.initialSeries[config.seriesIndex].data[config.dataPointIndex].d;
-                                    const evV = document.getElementById('hm-dynamic-val');
-                                    const evD = document.getElementById('hm-dynamic-date');
-                                    if (evV) evV.innerText = v + ' Orders';
-                                    if (evD) { evD.innerText = d; evD.style.opacity = '1'; }
+                                if (config && config.seriesIndex >= 0 && config.dataPointIndex >= 0 && ctx && ctx.w && ctx.w.globals && ctx.w.globals.initialSeries) {
+                                    const s = ctx.w.globals.initialSeries[config.seriesIndex];
+                                    if (s && s.data && s.data[config.dataPointIndex]) {
+                                        const v = s.data[config.dataPointIndex].y;
+                                        const d = s.data[config.dataPointIndex].d;
+                                        const evV = document.getElementById('hm-dynamic-val');
+                                        const evD = document.getElementById('hm-dynamic-date');
+                                        if (evV && v !== undefined) evV.innerText = v + ' Orders';
+                                        if (evD && d) { evD.innerText = d; evD.style.opacity = '1'; }
+                                    }
                                 }
                             },
                             mouseLeave: function () {

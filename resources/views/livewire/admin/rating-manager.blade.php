@@ -1,15 +1,9 @@
-<div class="p-2 sm:p-6">
-    <div class="sm:flex sm:items-center mb-6">
-        <div class="sm:flex-auto">
-            <h1 class="text-2xl font-bold text-foreground">Moderasi Rating & Feedback</h1>
-            <p class="mt-2 text-sm text-muted-foreground italic">Kelola ulasan yang diberikan pelanggan untuk ditampilkan di marquee beranda.</p>
-        </div>
-        <div class="mt-4 sm:ml-16 sm:mt-0">
-             <a href="{{ route('admin.settings') }}" class="inline-flex h-8 items-center gap-2 px-4 rounded-lg border border-border bg-background text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all shadow-sm active:scale-95">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                Kembali
-            </a>
-        </div>
+<div class="p-2 sm:p-4">
+    <div class="flex items-center justify-end mb-4">
+        <a href="{{ route('admin.settings') }}" class="inline-flex h-8 items-center gap-2 px-3.5 rounded-xl border border-border bg-background text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-all shadow-xs active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <span>Kembali</span>
+        </a>
     </div>
 
     <!-- Filters (Samain Logs) -->

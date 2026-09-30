@@ -1,39 +1,34 @@
 <div>
     <div>
-        <div class="sm:flex sm:items-center">
-            <div class="sm:flex-auto">
-                <h1 class="text-2xl font-bold tracking-tight text-foreground">Unit Management</h1>
-                <p class="mt-2 text-sm text-muted-foreground">List all rental items across categories (iPhone and Gear).
-                </p>
-            </div>
-            <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex gap-2">
-                @if(auth()->user()->role === 'admin')
-                    @if($activeTab === 'units')
-                        <button type="button" wire:key="btn-add-unit" wire:click="create" wire:loading.attr="disabled"
-                            class="btn btn-neutral btn-sm shadow-sm">
-                            + Tambah Unit
-                        </button>
-                    @else
-                        <button type="button" wire:key="btn-add-cat" wire:click="createCat" wire:loading.attr="disabled"
-                            class="btn btn-neutral btn-sm shadow-sm">
-                            + Tambah Kategori
-                        </button>
-                    @endif
-                @endif
-            </div>
-        </div>
-        
-        <!-- Pills Switcher (DaisyUI Tabs) -->
-        <div class="mt-6 flex justify-start">
-            <div class="tabs tabs-box">
+    <div>
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <!-- Pills Switcher -->
+            <div class="flex p-1 bg-muted/60 rounded-xl border border-border/50 backdrop-blur-sm shadow-xs">
                 <button wire:click="setTab('units')"
-                    class="tab text-sm font-semibold {{ $activeTab === 'units' ? 'tab-active' : '' }}">
+                    class="px-4 py-1.5 text-xs font-semibold transition-all duration-200 rounded-lg {{ $activeTab === 'units' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground' }}">
                     Unit
                 </button>
                 <button wire:click="setTab('categories')"
-                    class="tab text-sm font-semibold {{ $activeTab === 'categories' ? 'tab-active' : '' }}">
+                    class="px-4 py-1.5 text-xs font-semibold transition-all duration-200 rounded-lg {{ $activeTab === 'categories' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground' }}">
                     Kategori
                 </button>
+            </div>
+
+            <!-- Action Button -->
+            <div class="flex items-center gap-2">
+                @if(auth()->user()->role === 'admin')
+                    @if($activeTab === 'units')
+                        <button type="button" wire:key="btn-add-unit" wire:click="create" wire:loading.attr="disabled"
+                            class="inline-flex items-center justify-center rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-all active:scale-95">
+                            + Unit
+                        </button>
+                    @else
+                        <button type="button" wire:key="btn-add-cat" wire:click="createCat" wire:loading.attr="disabled"
+                            class="inline-flex items-center justify-center rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-all active:scale-95">
+                            + Kategori
+                        </button>
+                    @endif
+                @endif
             </div>
         </div>
 
@@ -53,20 +48,20 @@
                             </svg>
                         </div>
                         <input type="text" wire:model.live.debounce.300ms="search"
-                            class="input input-bordered input-sm w-full pl-10 text-sm"
+                            class="block w-full h-9 pl-10 pr-3 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             placeholder="Cari seri, IMEI, warna...">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 w-full sm:flex sm:gap-2 sm:w-auto mt-2 sm:mt-0">
                         <select wire:model.live="filterKategori"
-                            class="select select-bordered select-sm w-full sm:w-[150px] text-xs font-semibold">
+                            class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             <option value="">Semua Kategori</option>
                             @foreach($all_categories as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
                         </select>
                         <select wire:model.live="filterStatus"
-                            class="select select-bordered select-sm w-full sm:w-[150px] text-xs font-semibold">
+                            class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                             <option value="">Semua Status</option>
                             <option value="active">🟢 Aktif</option>
                             <option value="rented">🟡 Sedang Disewa</option>
@@ -105,31 +100,42 @@
                                         <tr wire:key="unit-row-{{ $unit->id }}"
                                             class="hover:bg-muted/50 transition-colors {{ $unit->trashed() ? 'bg-red-500/5' : (!$unit->is_active ? 'opacity-50' : '') }}">
                                             <td class="px-2 sm:px-6 py-1 sm:py-2 align-middle">
-                                                <div
-                                                    class="font-bold text-[11px] sm:text-sm {{ $unit->trashed() ? 'text-red-900 dark:text-red-300' : '' }} flex items-center gap-1.5 leading-tight">
-                                                    <span class="inline-flex items-center rounded border border-border/50 bg-muted/60 px-1 py-0 font-mono text-[8.5px] font-bold text-muted-foreground leading-none">#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}</span>
-                                                    {{ $unit->seri }}
-                                                    @if($unit->category)
-                                                        <x-ui.badge
-                                                            variant="{{ $unit->trashed() ? 'red' : (str_contains(strtolower($unit->category->slug), 'iphone') ? 'blue' : 'purple') }}"
-                                                            class="ml-1 text-[10px] uppercase font-medium">
-                                                            {{ $unit->category->name }}
-                                                        </x-ui.badge>
+                                                <div class="flex items-center gap-2">
+                                                    @if($unit->foto)
+                                                        <img src="/uploads/unit/{{ $unit->foto }}"
+                                                            alt="Foto {{ $unit->seri }}" loading="lazy"
+                                                            class="h-9 w-9 shrink-0 rounded-md border border-border object-cover">
+                                                    @else
+                                                        <div
+                                                            class="h-9 w-9 shrink-0 rounded-md border border-dashed border-border bg-muted/40"></div>
                                                     @endif
-                                                </div>
-                                                @if($unit->imei)
-                                                    <div class="text-[9.5px] text-muted-foreground leading-none mt-0.5">{{ $unit->imei }}</div>
-                                                @endif
-                                                {{-- Specs + price shown only on mobile --}}
-                                                {{-- Specs + price shown only on mobile --}}
-                                                <div class="sm:hidden mt-0.5 space-y-0.5">
-                                                    @if($unit->warna || $unit->memori)
-                                                        <div class="text-[9.5px] text-muted-foreground leading-tight">{{ $unit->warna }} ·
-                                                            {{ $unit->memori }}</div>
-                                                    @endif
-                                                    <div class="text-[10px] font-semibold text-foreground leading-tight">Rp
-                                                        {{ number_format($unit->harga_per_hari, 0, ',', '.') }}/h · Rp
-                                                        {{ number_format($unit->harga_per_jam, 0, ',', '.') }}/j</div>
+                                                    <div class="min-w-0">
+                                                        <div
+                                                            class="flex items-center gap-1.5 text-[11px] font-bold leading-tight sm:text-sm {{ $unit->trashed() ? 'text-red-900 dark:text-red-300' : '' }}">
+                                                            <span class="inline-flex items-center rounded border border-border/50 bg-muted/60 px-1 py-0 font-mono text-[8.5px] font-bold text-muted-foreground leading-none">#{{ str_pad($unit->id, 3, '0', STR_PAD_LEFT) }}</span>
+                                                            {{ $unit->seri }}
+                                                            @if($unit->category)
+                                                                <x-ui.badge
+                                                                    variant="{{ $unit->trashed() ? 'red' : (str_contains(strtolower($unit->category->slug), 'iphone') ? 'blue' : 'purple') }}"
+                                                                    class="ml-1 text-[10px] uppercase font-medium">
+                                                                    {{ $unit->category->name }}
+                                                                </x-ui.badge>
+                                                            @endif
+                                                        </div>
+                                                        @if($unit->imei)
+                                                            <div class="mt-0.5 text-[9.5px] leading-none text-muted-foreground">{{ $unit->imei }}</div>
+                                                        @endif
+                                                        {{-- Specs + price shown only on mobile --}}
+                                                        <div class="mt-0.5 space-y-0.5 sm:hidden">
+                                                            @if($unit->warna || $unit->memori)
+                                                                <div class="text-[9.5px] leading-tight text-muted-foreground">{{ $unit->warna }} ·
+                                                                    {{ $unit->memori }}</div>
+                                                            @endif
+                                                            <div class="text-[10px] font-semibold leading-tight text-foreground">Rp
+                                                                {{ number_format($unit->harga_per_hari, 0, ',', '.') }}/h · Rp
+                                                                {{ number_format($unit->harga_per_jam, 0, ',', '.') }}/j</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td class="hidden sm:table-cell px-6 py-2 align-middle">
@@ -447,6 +453,42 @@
                                     <input type="text" wire:model="kondisi"
                                         class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                         placeholder="Mulus, BH 98%">
+                                </div>
+
+                                <div>
+                                    <label class="text-sm font-medium leading-none">Foto Unit (untuk story Instagram)</label>
+                                    <div class="mt-1 flex items-start gap-4">
+                                        <div
+                                            class="h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-dashed border-border bg-muted/30">
+                                            @if($fotoPreview)
+                                                <img src="{{ str_starts_with($fotoPreview, 'http') ? $fotoPreview : asset($fotoPreview) }}"
+                                                    alt="Foto unit" class="h-full w-full object-cover">
+                                            @else
+                                                <div class="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                                                    Tidak ada
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <input type="file" wire:model="foto" accept="image/*"
+                                                class="w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary hover:file:bg-primary/20">
+                                            <div wire:loading wire:target="foto"
+                                                class="mt-1 text-xs font-semibold text-red-600 animate-pulse">
+                                                Mengunggah...
+                                            </div>
+                                            <p class="mt-1 text-xs text-muted-foreground">
+                                                Rasio 9:16 (1080×1920) paling pas. Maks 4 MB. Story tetap bisa dibuat tanpa foto.
+                                            </p>
+                                            @if($isEditing && $unit_id)
+                                                <button type="button" wire:click="removeFoto"
+                                                    wire:confirm="Hapus foto unit ini?"
+                                                    class="mt-2 text-xs font-semibold text-destructive hover:underline">
+                                                    Hapus foto
+                                                </button>
+                                            @endif
+                                            @error('foto') <span class="mt-1 block text-xs text-red-500">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Dynamic Specs Sections -->

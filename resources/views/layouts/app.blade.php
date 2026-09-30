@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     <meta charset="utf-8">
@@ -25,7 +25,8 @@
     
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#09090b">
+    <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RENT SPACE">
@@ -39,16 +40,28 @@
     @livewireStyles
     <script>
         function applyTheme() {
-            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
+            // Default adalah dark mode ala Apple HIG Developer
+            if (localStorage.theme === 'light') {
                 document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
             }
         }
         // Run on initial load
         applyTheme();
         // Re-apply after Livewire 3 attribute morphs the HTML tag
         document.addEventListener('livewire:navigated', applyTheme);
+
+        document.addEventListener('alpine:init', () => {
+            if (window.Alpine && !Alpine.store('chat')) {
+                Alpine.store('chat', {
+                    isOpen: false,
+                    open() { this.isOpen = true },
+                    close() { this.isOpen = false },
+                    toggle() { this.isOpen = !this.isOpen }
+                });
+            }
+        });
     </script>
 
     <style>
@@ -89,28 +102,66 @@
         }
     </style>
     <script>
-        // Force disable zooming
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
+        // Force disable zooming safely without re-declaration errors
+        (function() {
+            if (window._touchZoomPrevented) return;
+            window._touchZoomPrevented = true;
 
-        document.addEventListener('touchstart', function(event) {
-            if (event.touches.length > 1) {
-                event.preventDefault();
-            }
-        }, {
-            passive: false
-        });
+            document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            });
 
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(event) {
-            let now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
+            document.addEventListener('touchstart', function(event) {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                }
+            }, {
+                passive: false
+            });
+
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                let now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        })();
+
+        // Advanced Haptic Engine (Native Feeling for Web)
+        window.hapticEngine = {
+            canVibrate: !!navigator.vibrate,
+            hapticSwitch: null,
+
+            init: function() {
+                this.hapticSwitch = document.getElementById('ios-haptic-switch');
+            },
+
+            trigger: function(type = 'light') {
+                try {
+                    // 1. Native Vibration (Android)
+                    if (this.canVibrate) {
+                        navigator.vibrate(type === 'success' ? [10, 30, 10] : 15);
+                    }
+
+                    // 2. The Switch Trick (iOS Safari)
+                    if (this.hapticSwitch) {
+                        this.hapticSwitch.click();
+                    }
+                } catch (e) {}
             }
-            lastTouchEnd = now;
-        }, false);
+        };
+
+        document.addEventListener('DOMContentLoaded', () => window.hapticEngine.init());
+        document.addEventListener('click', (e) => {
+            const target = e.target.closest('[data-haptic]');
+            if (target) {
+                window.hapticEngine.trigger(target.dataset.haptic);
+            }
+        }, { passive: true });
     </script>
+    <input type="checkbox" id="ios-haptic-switch" aria-hidden="true" style="position: absolute; opacity: 0; pointer-events: none; left: -9999px;">
 </head>
 
 <body class="bg-background text-foreground antialiased font-sans flex flex-col min-h-screen">
@@ -122,6 +173,14 @@
     <main class="flex-1 w-full flex flex-col">
         {{ $slot }}
     </main>
+
+    @unless($hideFooter ?? false)
+    <x-front.footer />
+    @endunless
+
+    @if(\App\Models\Setting::getVal('is_chatbot_active', '1') == '1')
+        <livewire:front.chat-ai />
+    @endif
 
     <script>
         document.addEventListener('alpine:init', () => {

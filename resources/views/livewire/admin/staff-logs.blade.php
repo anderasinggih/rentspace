@@ -1,204 +1,350 @@
-<div class="p-2 sm:p-6">
-    <div class="sm:flex sm:items-center mb-6">
-        <div class="sm:flex-auto">
-            <h1 class="text-2xl font-bold text-foreground">Audit Trail: Staff Activity Logs</h1>
-            <p class="mt-2 text-sm text-muted-foreground italic">Pelacakan otomatis untuk semua tindakan yang dilakukan oleh staff di sistem admin.</p>
-        </div>
+<div class="max-w-4xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
+    <!-- Top Action Bar -->
+    <div class="flex items-center justify-end mb-3">
+        <button wire:click="$refresh" 
+            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-foreground/5 hover:bg-foreground/10 text-foreground border border-border/80 transition-all duration-200 active:scale-95 shadow-xs">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M8 16H3v5"/>
+            </svg>
+            <span>Segarkan</span>
+        </button>
     </div>
 
-    <!-- Filters -->
-    <div class="mb-4 bg-background rounded-xl border border-border p-3 shadow-sm">
-        <div class="flex flex-wrap items-end gap-3">
-            <!-- Search -->
-            <div class="flex-1 min-w-[240px] group">
-                <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2 block ml-1">Cari Tindakan</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    </div>
-                    <input type="text" wire:model.live.debounce.300ms="search" 
-                        class="block w-full h-8 pl-8 pr-3 text-[11px] font-medium rounded-lg border border-input bg-muted/20 focus:bg-background shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" 
-                        placeholder="Cari aksi, detail, atau staff...">
-                </div>
+    <!-- Category Filter Pills (DailyPhone Style) -->
+    <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-2 mb-4">
+        <button wire:click="setCategory('all')"
+            class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 {{ $category === 'all' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+            <span>Semua</span>
+            <span class="text-[10px] opacity-75 px-1 rounded-full bg-black/10 dark:bg-white/10">{{ $counts['all'] }}</span>
+        </button>
+
+        <button wire:click="setCategory('transaksi')"
+            class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 {{ $category === 'transaksi' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+            <span>Transaksi & Sewa</span>
+            <span class="text-[10px] opacity-75 px-1 rounded-full bg-black/10 dark:bg-white/10">{{ $counts['transaksi'] }}</span>
+        </button>
+
+        <button wire:click="setCategory('unit')"
+            class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 {{ $category === 'unit' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+            <span>Inventory Unit</span>
+            <span class="text-[10px] opacity-75 px-1 rounded-full bg-black/10 dark:bg-white/10">{{ $counts['unit'] }}</span>
+        </button>
+
+        <button wire:click="setCategory('promo')"
+            class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 {{ $category === 'promo' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+            <span>Promo & Harga</span>
+            <span class="text-[10px] opacity-75 px-1 rounded-full bg-black/10 dark:bg-white/10">{{ $counts['promo'] }}</span>
+        </button>
+
+        <button wire:click="setCategory('system')"
+            class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 {{ $category === 'system' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Sistem & Lainnya</span>
+            <span class="text-[10px] opacity-75 px-1 rounded-full bg-black/10 dark:bg-white/10">{{ $counts['system'] }}</span>
+        </button>
+    </div>
+
+    <!-- Search & Filter Card (Rounded-2xl Apple Material) -->
+    <div x-data="{ showAdvanced: false }" class="rounded-2xl border border-border/80 bg-card p-3 sm:p-4 mb-5 shadow-xs transition-all">
+        <div class="flex flex-col sm:flex-row items-center gap-2">
+            <div class="relative flex-1 w-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+                <input type="text" wire:model.live.debounce.300ms="search"
+                    placeholder="Cari aktivitas, nama staff, IP address..."
+                    class="w-full h-9 rounded-xl border border-border/80 bg-background/60 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all">
             </div>
 
-            <!-- Filter User -->
-            <div class="w-full md:w-44">
-                <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2 block ml-1">Staff</label>
-                <select wire:model.live="selectedUser" class="block w-full h-8 px-2.5 text-[11px] font-medium rounded-lg border border-input bg-muted/20 focus:bg-background shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none cursor-pointer">
-                    <option value="">Semua Staff</option>
-                    @foreach($users as $user)
-                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button @click="showAdvanced = !showAdvanced"
+                    class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-xl border border-border/80 text-xs font-semibold text-foreground hover:bg-foreground/5 transition-all"
+                    :class="showAdvanced || '{{ $selectedRole || $selectedUser || $dateFrom || $dateTo }}' ? 'bg-primary/10 text-primary border-primary/30' : 'bg-background'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    <span>Filter</span>
+                </button>
+
+                @if($search || $selectedRole || $selectedUser || $dateFrom || $dateTo || $category !== 'all')
+                    <button wire:click="resetFilters"
+                        class="h-9 px-3 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors">
+                        Reset
+                    </button>
+                @endif
+            </div>
+        </div>
+
+        <!-- Advanced Collapsible Filters -->
+        <div x-show="showAdvanced" x-collapse x-cloak class="pt-3 mt-3 border-t border-border/50 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Staff / User</label>
+                <select wire:model.live="selectedUser" class="w-full h-8 rounded-lg border border-border bg-background px-2.5 text-xs text-foreground focus:outline-none focus:border-primary">
+                    <option value="">Semua User</option>
+                    @foreach($users as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->role }})</option>
                     @endforeach
                 </select>
             </div>
 
-            <!-- Filter Role -->
-            <div class="w-full md:w-32">
-                <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2 block ml-1">Role</label>
-                <select wire:model.live="selectedRole" class="block w-full h-8 px-2.5 text-[11px] font-medium rounded-lg border border-input bg-muted/20 focus:bg-background shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none cursor-pointer">
+            <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Role Akun</label>
+                <select wire:model.live="selectedRole" class="w-full h-8 rounded-lg border border-border bg-background px-2.5 text-xs text-foreground focus:outline-none focus:border-primary">
                     <option value="">Semua Role</option>
-                    <option value="admin">Admin</option>
-                    <option value="staff">Staff</option>
+                    <option value="admin">Administrator</option>
+                    <option value="staff">Staff Operasional</option>
                 </select>
             </div>
 
-            <!-- Date Range -->
-            <div class="w-full md:w-auto flex items-end gap-2 flex-1 min-w-[280px]">
-                <div class="flex-1">
-                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2 block ml-1 text-center md:text-left">Dari</label>
-                    <input type="date" wire:model.live="dateFrom" class="block w-full h-8 px-2 text-[11px] font-medium rounded-lg border border-input bg-muted/20 focus:bg-background shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none">
-                </div>
-                <div class="flex-1">
-                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2 block ml-1 text-center md:text-left">Sampai</label>
-                    <input type="date" wire:model.live="dateTo" class="block w-full h-8 px-2 text-[11px] font-medium rounded-lg border border-input bg-muted/20 focus:bg-background shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none">
+            <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Tanggal</label>
+                <div class="flex items-center gap-1">
+                    <input type="date" wire:model.live="dateFrom" class="w-full h-8 rounded-lg border border-border bg-background px-2 text-xs text-foreground focus:outline-none focus:border-primary">
+                    <span class="text-xs text-muted-foreground">-</span>
+                    <input type="date" wire:model.live="dateTo" class="w-full h-8 rounded-lg border border-border bg-background px-2 text-xs text-foreground focus:outline-none focus:border-primary">
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Reset -->
-            <button wire:click="resetFilters" 
-                class="w-full md:w-auto h-8 px-4 rounded-lg border border-border bg-background text-[10px] font-black uppercase tracking-widest hover:bg-muted active:scale-95 transition-all shadow-sm">
-                Reset
+    <!-- Timeline Posts Feed (Social/Activity Post Stream ala DailyPhone) -->
+    <div class="space-y-3">
+        @forelse($logs as $log)
+            @php
+                $userName = $log->user ? $log->user->name : 'System Robot';
+                $userRole = $log->user ? $log->user->role : 'system';
+                $action = $log->action;
+
+                // Category & Badge style logic
+                $badgeBg = 'bg-muted text-muted-foreground border-border/80';
+                $badgeLabel = str_replace('_', ' ', $action);
+                $iconClass = 'text-primary';
+
+                if (str_contains($action, 'paid')) {
+                    $badgeBg = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+                    $badgeLabel = 'Pembayaran Lunas';
+                    $iconClass = 'text-emerald-500';
+                } elseif (str_contains($action, 'handover')) {
+                    $badgeBg = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+                    $badgeLabel = 'Unit Diambil / Diserahkan';
+                    $iconClass = 'text-blue-500';
+                } elseif (str_contains($action, 'complete')) {
+                    $badgeBg = 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20';
+                    $badgeLabel = 'Sewa Selesai (Kembali)';
+                    $iconClass = 'text-teal-500';
+                } elseif (str_contains($action, 'cancel')) {
+                    $badgeBg = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
+                    $badgeLabel = 'Transaksi Dibatalkan';
+                    $iconClass = 'text-rose-500';
+                } elseif (str_contains($action, 'unit')) {
+                    $badgeBg = 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20';
+                    $badgeLabel = 'Manajemen Unit';
+                    $iconClass = 'text-purple-500';
+                } elseif (str_contains($action, 'promo') || str_contains($action, 'rule')) {
+                    $badgeBg = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+                    $badgeLabel = 'Promo & Pricing';
+                    $iconClass = 'text-amber-500';
+                }
+
+                $timeDiff = $log->created_at->diffForHumans();
+                $fullTime = $log->created_at->translatedFormat('d M Y, H:i') . ' WIB';
+                $hasDiff = !empty($log->data_before) || !empty($log->data_after);
+            @endphp
+
+            <!-- Post Card -->
+            <article wire:key="log-post-{{ $log->id }}"
+                wire:click="openDetail({{ $log->id }})"
+                class="group bg-card rounded-2xl border border-border/70 p-4 sm:p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden">
+                
+                <!-- Post Header: Avatar, Name, Category Pill, Relative Time -->
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <!-- User Avatar Initials -->
+                        <div class="h-10 w-10 rounded-full bg-foreground/5 border border-border/80 flex items-center justify-center shrink-0 font-bold text-xs text-foreground group-hover:scale-105 transition-transform">
+                            {{ strtoupper(substr($userName, 0, 2)) }}
+                        </div>
+
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-bold text-foreground truncate leading-tight">{{ $userName }}</span>
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-foreground/5 text-muted-foreground uppercase tracking-tight">{{ $userRole }}</span>
+                            </div>
+                            <p class="text-[11px] text-muted-foreground/70 font-medium leading-none mt-1" title="{{ $fullTime }}">
+                                {{ $timeDiff }} • <span class="font-mono text-[10px]">{{ $log->ip_address ?? 'Local' }}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Category Badge Tag -->
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border {{ $badgeBg }} shrink-0">
+                        <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
+                        <span>{{ $badgeLabel }}</span>
+                    </span>
+                </div>
+
+                <!-- Post Content / Narrative Body -->
+                <div class="mt-3.5 text-xs sm:text-sm text-foreground/90 font-normal leading-relaxed pl-0 sm:pl-[52px]">
+                    <p>{{ $log->description ?: 'Melakukan operasi ' . $action . ' pada sistem.' }}</p>
+
+                    <!-- Quick Changes Preview Tag if available -->
+                    @if($hasDiff)
+                        <div class="mt-2.5 flex items-center gap-1.5 text-[11px] text-primary font-medium">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/>
+                            </svg>
+                            <span>Terdapat riwayat perubahan data (sebelum & sesudah)</span>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Post Footer Action -->
+                <div class="mt-3 pt-3 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground pl-0 sm:pl-[52px]">
+                    <span class="font-mono text-[10px] text-muted-foreground/60">ID #{{ $log->id }}</span>
+                    <span class="text-primary font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                        <span>Lihat Rincian</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </span>
+                </div>
+            </article>
+        @empty
+            <div class="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
+                <div class="mx-auto h-12 w-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                </div>
+                <h3 class="text-sm font-bold text-foreground">Tidak Ada Aktivitas Ditemukan</h3>
+                <p class="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">Belum ada rekaman log pada filter ini atau kriteria pencarian tidak cocok.</p>
+                <button wire:click="resetFilters" class="mt-4 px-4 py-2 rounded-full text-xs font-semibold bg-foreground/5 hover:bg-foreground/10 text-foreground transition-all">
+                    Reset Filter
+                </button>
+            </div>
+        @endforelse
+    </div>
+
+    <!-- Pagination (Apple Minimalist) -->
+    <div class="mt-6 flex items-center justify-between gap-4 px-1">
+        <p class="text-xs text-muted-foreground font-medium">
+            Menampilkan <span class="font-bold text-foreground">{{ $logs->firstItem() ?? 0 }}</span> - <span class="font-bold text-foreground">{{ $logs->lastItem() ?? 0 }}</span> dari <span class="font-bold text-foreground">{{ $logs->total() }}</span> aktivitas
+        </p>
+
+        <div class="flex items-center gap-1.5">
+            <button wire:click="previousPage" @disabled($logs->onFirstPage())
+                class="h-8 px-3 rounded-full border border-border/80 bg-card text-xs font-semibold text-foreground hover:bg-foreground/5 disabled:opacity-30 disabled:pointer-events-none transition-all">
+                ‹ Sebelumnya
+            </button>
+            <button wire:click="nextPage" @disabled(!$logs->hasMorePages())
+                class="h-8 px-3 rounded-full border border-border/80 bg-card text-xs font-semibold text-foreground hover:bg-foreground/5 disabled:opacity-30 disabled:pointer-events-none transition-all">
+                Berikutnya ›
             </button>
         </div>
     </div>
 
-    <div class="overflow-hidden shadow ring-1 ring-border rounded-xl bg-background">
-        <table class="min-w-full divide-y divide-border">
-            <thead class="bg-muted/50">
-                <tr>
-                    <th class="px-4 py-3.5 text-left text-xs font-bold text-muted-foreground uppercase tracking-widest">Waktu</th>
-                    <th class="px-4 py-3.5 text-left text-xs font-bold text-muted-foreground uppercase tracking-widest">Staff</th>
-                    <th class="px-4 py-3.5 text-left text-xs font-bold text-muted-foreground uppercase tracking-widest">Tindakan</th>
-                    <th class="px-4 py-3.5 text-left text-xs font-bold text-muted-foreground uppercase tracking-widest">Detail Perubahan</th>
-                    <th class="px-4 py-3.5 text-left text-xs font-bold text-muted-foreground uppercase tracking-widest">IP Address</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-border bg-background">
-                @forelse($logs as $log)
-                    <tr class="hover:bg-muted/30 transition-colors">
-                        <td class="whitespace-nowrap px-3 sm:px-4 py-4 text-xs">
-                            <div class="font-semibold text-foreground">{{ $log->created_at->format('d M Y') }}</div>
-                            <div class="text-muted-foreground opacity-70">{{ $log->created_at->format('H:i:s') }} WIB</div>
-                        </td>
-                        <td class="whitespace-nowrap px-3 sm:px-4 py-4">
-                            <div class="flex items-center gap-2">
-                                <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
-                                    {{ substr($log->user->name, 0, 1) }}
-                                </div>
-                                <div>
-                                    <div class="text-sm font-bold text-foreground leading-none">{{ $log->user->name }}</div>
-                                    <div class="text-[10px] text-muted-foreground mt-1 lowercase">{{ $log->user->role }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="whitespace-nowrap px-3 sm:px-4 py-4">
-                            <span class="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter
-                                {{ str_contains($log->action, 'paid') || str_contains($log->action, 'handover') ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : '' }}
-                                {{ str_contains($log->action, 'cancel') ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : '' }}
-                                {{ str_contains($log->action, 'edit') || str_contains($log->action, 'complete') ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : '' }}
-                                {{ !str_contains($log->action, 'paid') && !str_contains($log->action, 'handover') && !str_contains($log->action, 'cancel') && !str_contains($log->action, 'edit') && !str_contains($log->action, 'complete') ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-400' : '' }}
-                            ">
-                                {{ $log->action === 'handover_unit' ? 'validasi ambil' : str_replace('_', ' ', $log->action) }}
-                            </span>
-                        </td>
-                        <td class="px-3 sm:px-4 py-4 text-xs text-muted-foreground leading-relaxed">
-                            <div x-data="{ open: false }">
-                                <div>{{ $log->description }}</div>
-                                
-                                @if($log->data_before || $log->data_after)
-                                    <button @click="open = !open" class="mt-2 text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
-                                        <span x-show="!open">Lihat Detail Perubahan</span>
-                                        <span x-show="open">Sembunyikan Detail</span>
-                                        <svg :class="open ? 'rotate-180' : ''" class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </button>
-
-                                    <div x-show="open" x-collapse x-cloak class="mt-3 overflow-hidden rounded-lg border border-border bg-muted/30">
-                                        <table class="w-full text-[10px]">
-                                            <thead class="bg-muted border-b border-border">
-                                                <tr>
-                                                    <th class="px-2 py-1.5 text-left font-black uppercase tracking-tighter">Field</th>
-                                                    <th class="px-2 py-1.5 text-left font-black uppercase tracking-tighter">Sebelum</th>
-                                                    <th class="px-2 py-1.5 text-left font-black uppercase tracking-tighter text-primary">Sesudah</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-border/50">
-                                                @php
-                                                    $before = $log->data_before ?? [];
-                                                    $after = $log->data_after ?? [];
-                                                    $allKeys = array_unique(array_merge(array_keys($before), array_keys($after)));
-                                                @endphp
-                                                @foreach($allKeys as $key)
-                                                    @if(($before[$key] ?? null) != ($after[$key] ?? null))
-                                                        <tr class="hover:bg-background/50">
-                                                            <td class="px-2 py-1.5 font-bold text-foreground capitalize">{{ str_replace('_', ' ', $key) }}</td>
-                                                            <td class="px-2 py-1.5 text-rose-600 line-through decoration-rose-300 opacity-70">
-                                                                {{ is_array($before[$key] ?? '') ? json_encode($before[$key]) : (is_numeric($before[$key] ?? '') ? number_format($before[$key], 0, ',', '.') : ($before[$key] ?? '-')) }}
-                                                            </td>
-                                                            <td class="px-2 py-1.5 text-emerald-600 font-black">
-                                                                {{ is_array($after[$key] ?? '') ? json_encode($after[$key]) : (is_numeric($after[$key] ?? '') ? number_format($after[$key], 0, ',', '.') : ($after[$key] ?? '-')) }}
-                                                            </td>
-                                                        </tr>
-                                                    @endif
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                @endif
-                            </div>
-                        </td>
-                        <td class="whitespace-nowrap px-3 sm:px-4 py-4 text-[10px] font-mono text-muted-foreground">
-                            {{ $log->ip_address }}
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-4 py-12 text-center text-sm text-muted-foreground">
-                            Belum ada log aktivitas staff yang tersimpan.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <div class="p-4 border-t border-border mt-4 overflow-hidden shadow ring-1 ring-border rounded-xl bg-background">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
-                <!-- Left: Rows & Info -->
-                <div class="flex items-center gap-6 order-2 md:order-1">
-                    <div class="flex items-center gap-2">
-                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Rows</label>
-                        <select wire:model.live="perPage" class="h-8 rounded-lg border border-border bg-background px-2 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm uppercase">
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
+    <!-- Detail Activity Modal (Pure Apple Sheet / Dialog) -->
+    @if($selectedLog)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            wire:click.self="closeDetail">
+            
+            <div class="w-full max-w-lg rounded-3xl border border-border/80 bg-card/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+                
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-5 border-b border-border/50">
+                    <div class="flex items-center gap-3">
+                        <div class="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                            {{ strtoupper(substr($selectedLog->user->name ?? 'S', 0, 2)) }}
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-foreground leading-tight">Detail Aktivitas</h3>
+                            <p class="text-[11px] text-muted-foreground mt-0.5">ID #{{ $selectedLog->id }} • {{ $selectedLog->created_at->format('d M Y, H:i') }} WIB</p>
+                        </div>
                     </div>
-                    <div class="hidden sm:block">
-                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none opacity-70">
-                            Showing {{ $logs->firstItem() ?? 0 }}-{{ $logs->lastItem() ?? 0 }} of {{ $logs->total() }}
-                        </p>
-                    </div>
+                    <button wire:click="closeDetail" class="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
                 </div>
 
-                <!-- Right: Navigation -->
-                <div class="flex items-center gap-3 order-1 md:order-2">
-                    <button wire:click="previousPage" @disabled($logs->onFirstPage())
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    </button>
-                    
-                    <div class="flex items-center gap-2 px-3 h-8 bg-muted/50 rounded-lg border border-border/50">
-                        <span class="text-xs font-black text-foreground">{{ $logs->currentPage() }}</span>
-                        <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50">/</span>
-                        <span class="text-xs font-black text-foreground">{{ $logs->lastPage() }}</span>
+                <!-- Modal Body -->
+                <div class="p-5 overflow-y-auto space-y-4">
+                    <!-- Info Grid -->
+                    <div class="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-foreground/5 border border-border/50 text-xs">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase text-muted-foreground">Staff / Pelaku</span>
+                            <p class="font-semibold text-foreground mt-0.5">{{ $selectedLog->user->name ?? 'System' }}</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase text-muted-foreground">Role Akun</span>
+                            <p class="font-semibold text-foreground mt-0.5 capitalize">{{ $selectedLog->user->role ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase text-muted-foreground">Jenis Tindakan</span>
+                            <p class="font-semibold text-foreground mt-0.5 font-mono text-[11px]">{{ $selectedLog->action }}</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase text-muted-foreground">IP Address</span>
+                            <p class="font-semibold text-foreground mt-0.5 font-mono text-[11px]">{{ $selectedLog->ip_address ?? '127.0.0.1' }}</p>
+                        </div>
                     </div>
 
-                    <button wire:click="nextPage" @disabled(!$logs->hasMorePages())
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted disabled:pointer-events-none disabled:opacity-40 active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    <!-- Narrative Description -->
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Deskripsi Aktivitas</span>
+                        <div class="p-3.5 rounded-2xl bg-card border border-border/60 text-xs leading-relaxed text-foreground">
+                            {{ $selectedLog->description ?: 'Tidak ada deskripsi tambahan.' }}
+                        </div>
+                    </div>
+
+                    <!-- Before & After Comparison Table if available -->
+                    @php
+                        $before = $selectedLog->data_before ?? [];
+                        $after = $selectedLog->data_after ?? [];
+                        $allKeys = array_unique(array_merge(array_keys($before), array_keys($after)));
+                    @endphp
+
+                    @if(count($allKeys) > 0)
+                        <div class="space-y-1.5 pt-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Perubahan Data (Audit Diff)</span>
+                            <div class="rounded-2xl border border-border/60 overflow-hidden text-xs">
+                                <table class="w-full text-left">
+                                    <thead class="bg-muted/50 border-b border-border/60 text-[10px] font-bold uppercase text-muted-foreground">
+                                        <tr>
+                                            <th class="px-3 py-2">Field</th>
+                                            <th class="px-3 py-2">Sebelum</th>
+                                            <th class="px-3 py-2 text-primary">Sesudah</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-border/40 font-mono text-[11px]">
+                                        @foreach($allKeys as $key)
+                                            @php
+                                                $bVal = $before[$key] ?? null;
+                                                $aVal = $after[$key] ?? null;
+                                                $isDiff = $bVal !== $aVal;
+                                            @endphp
+                                            <tr class="{{ $isDiff ? 'bg-primary/5' : '' }}">
+                                                <td class="px-3 py-2 font-semibold text-foreground font-sans">{{ str_replace('_', ' ', $key) }}</td>
+                                                <td class="px-3 py-2 text-rose-500 line-through opacity-80">
+                                                    {{ is_array($bVal) ? json_encode($bVal) : ($bVal !== null ? (is_numeric($bVal) ? number_format($bVal, 0, ',', '.') : $bVal) : '-') }}
+                                                </td>
+                                                <td class="px-3 py-2 text-emerald-500 font-bold">
+                                                    {{ is_array($aVal) ? json_encode($aVal) : ($aVal !== null ? (is_numeric($aVal) ? number_format($aVal, 0, ',', '.') : $aVal) : '-') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="p-4 border-t border-border/50 flex justify-end">
+                    <button wire:click="closeDetail" class="px-5 py-2 rounded-full text-xs font-semibold bg-foreground/10 hover:bg-foreground/15 text-foreground transition-all">
+                        Tutup
                     </button>
                 </div>
             </div>
-    </div>
+        </div>
+    @endif
 </div>

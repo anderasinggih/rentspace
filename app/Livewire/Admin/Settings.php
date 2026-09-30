@@ -109,6 +109,25 @@ class Settings extends Component
     public $admin_wa_group_id = '';
     public $admin_report_group_id = '';
     public $admin_notify_group_id = '';
+
+    // Notifikasi tim ke grup WA (template statis, tanpa AI)
+    public $notif_group_booking = true;
+    public $notif_group_status = true;
+    public $notif_group_reminder = true;
+    public $notif_staff_pickup_minutes = 60;
+    public $notif_staff_return_minutes = 60;
+    public $notif_staff_late_minutes = 30;
+    public $staffNotifMessage = null; // ['ok' => bool, 'text' => string] — hasil tombol "Kirim Contoh"
+
+    // Instagram Story (Graph API). Token disimpan di tabel settings supaya bisa
+    // diganti dari panel admin tanpa edit .env, mengikuti pola setting lain.
+    public $ig_user_id = '';
+    public $ig_access_token = '';
+    public $ig_graph_version = 'v21.0';
+    public $ig_story_caption_template = '';
+    public $ig_story_overlay_template = '';
+    public $ig_story_theme = '#0f172a';
+    public $igStoryMessage = null; // ['ok' => bool, 'text' => string] — hasil tombol "Tes Koneksi"
     public $chatbot_custom_knowledge = [];
     public $new_knowledge_key = '';
     public $new_knowledge_value = '';
@@ -224,6 +243,12 @@ class Settings extends Component
         $this->admin_wa_group_id = \App\Models\Setting::getVal('admin_wa_group_id', '');
         $this->admin_report_group_id = \App\Models\Setting::getVal('admin_report_group_id', '');
         $this->admin_notify_group_id = \App\Models\Setting::getVal('admin_notify_group_id', '');
+        $this->notif_group_booking = \App\Models\Setting::getVal('notif_group_booking', '1') == '1';
+        $this->notif_group_status = \App\Models\Setting::getVal('notif_group_status', '1') == '1';
+        $this->notif_group_reminder = \App\Models\Setting::getVal('notif_group_reminder', '1') == '1';
+        $this->notif_staff_pickup_minutes = \App\Models\Setting::getVal('notif_staff_pickup_minutes', '60');
+        $this->notif_staff_return_minutes = \App\Models\Setting::getVal('notif_staff_return_minutes', '60');
+        $this->notif_staff_late_minutes = \App\Models\Setting::getVal('notif_staff_late_minutes', '30');
         $rawKnowledge = \App\Models\Setting::getVal('chatbot_custom_knowledge', '[]');
         $this->chatbot_custom_knowledge = json_decode($rawKnowledge, true) ?: [];
 
@@ -248,6 +273,15 @@ class Settings extends Component
         $this->onesignal_app_id = \App\Models\Setting::getVal('onesignal_app_id', '');
         $this->onesignal_rest_api_key = \App\Models\Setting::getVal('onesignal_rest_api_key', '');
         $this->onesignal_safari_web_id = \App\Models\Setting::getVal('onesignal_safari_web_id', '');
+
+        // Load Instagram Story Settings
+        $this->ig_user_id = (string) \App\Models\Setting::getVal('ig_user_id', '');
+        $this->ig_access_token = (string) \App\Models\Setting::getVal('ig_access_token', '');
+        $this->ig_graph_version = (string) \App\Models\Setting::getVal('ig_graph_version', 'v21.0');
+        $composer = new \App\Services\InstagramStoryComposer(new \App\Models\Unit());
+        $this->ig_story_caption_template = (string) \App\Models\Setting::getVal('ig_story_caption_template', $composer->defaultCaptionTemplate());
+        $this->ig_story_overlay_template = (string) \App\Models\Setting::getVal('ig_story_overlay_template', $composer->defaultOverlayTemplate());
+        $this->ig_story_theme = (string) \App\Models\Setting::getVal('ig_story_theme', '#0f172a');
     }
 
     // Removed loadUsers() to use paginate in render()
@@ -461,6 +495,12 @@ class Settings extends Component
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_wa_group_id)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_report_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_report_group_id)]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_notify_group_id'], ['value' => \App\Models\Setting::sanitizeJid($this->admin_notify_group_id)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_group_booking'], ['value' => $this->notif_group_booking ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_group_status'], ['value' => $this->notif_group_status ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_group_reminder'], ['value' => $this->notif_group_reminder ? '1' : '0']);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_staff_pickup_minutes'], ['value' => max(5, (int) $this->notif_staff_pickup_minutes)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_staff_return_minutes'], ['value' => max(5, (int) $this->notif_staff_return_minutes)]);
+        \App\Models\Setting::updateOrCreate(['key' => 'notif_staff_late_minutes'], ['value' => max(5, (int) $this->notif_staff_late_minutes)]);
         \App\Models\Setting::updateOrCreate(['key' => 'chatbot_custom_knowledge'], ['value' => json_encode(array_values($this->chatbot_custom_knowledge))]);
 
         // Save OneSignal Settings
@@ -478,6 +518,108 @@ class Settings extends Component
         ]);
 
         session()->flash('general_message', 'Pengaturan AI & Umum berhasil disimpan.');
+    }
+
+    /**
+     * Kirim satu pesan contoh ke grup notifikasi.
+     *
+     * Cara paling murah buat memastikan grup benar-benar terhubung dan bot
+     * sedang online, tanpa harus menunggu ada pesanan sungguhan.
+     */
+    public function testStaffNotif()
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) {
+            return;
+        }
+
+        $targets = \App\Services\NotifService::targets();
+        if (empty($targets)) {
+            $this->staffNotifMessage = ['ok' => false, 'text' => 'Belum ada target. Isi ID Grup WA Notifikasi atau nomor WA admin.'];
+            return;
+        }
+
+        $unit = \App\Models\Unit::where('is_active', true)->first();
+        $rental = new \App\Models\Rental([
+            'nama' => 'Contoh Customer',
+            'no_wa' => \App\Models\Setting::getVal('admin_wa', '6280000000000'),
+            'waktu_mulai' => now()->addHour(),
+            'waktu_selesai' => now()->addHours(3),
+            'grand_total' => 150000,
+            'status' => 'paid',
+        ]);
+        $rental->booking_code = 'CONTOH';
+        $rental->setRelation('units', $unit ? collect([$unit]) : collect());
+
+        $ok = \App\Services\NotifService::reminderPickup($rental, 60);
+
+        $this->staffNotifMessage = $ok
+            ? ['ok' => true, 'text' => 'Pesan contoh terkirim ke grup.']
+            : ['ok' => false, 'text' => 'Gagal kirim. Cek status koneksi bot WA.'];
+    }
+
+    /**
+     * Simpan pengaturan Instagram Story.
+     *
+     * Token tidak pernah ditampilkan penuh di input: yang tampil hanya penanda
+     * "sudah tersimpan" supaya admin tidak perlu menyalin ulang string panjang
+     * setiap kali mau ganti template.
+     */
+    public function saveInstagramSettings()
+    {
+        if (auth()->user()->role !== 'admin') {
+            return;
+        }
+
+        $this->validate([
+            'ig_user_id' => 'nullable|regex:/^\d{5,25}$/',
+            'ig_access_token' => 'nullable|min:20',
+            'ig_graph_version' => 'required|regex:/^v\d{1,2}\.\d{1,3}$/',
+            'ig_story_caption_template' => 'nullable|max:2200',
+            'ig_story_overlay_template' => 'nullable|max:500',
+            'ig_story_theme' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+        ], [
+            'ig_user_id.regex' => 'IG User ID harus berupa angka.',
+            'ig_access_token.min' => 'Token Instagram minimal 20 karakter.',
+            'ig_graph_version.regex' => 'Format versi harus seperti v21.0.',
+            'ig_story_theme.regex' => 'Warna tema harus format hex, contoh #0f172a.',
+        ]);
+
+        $S = fn(string $key, $value) => \App\Models\Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+
+        $S('ig_user_id', trim((string) $this->ig_user_id));
+        $S('ig_graph_version', trim((string) $this->ig_graph_version));
+        $S('ig_story_caption_template', (string) $this->ig_story_caption_template);
+        $S('ig_story_overlay_template', (string) $this->ig_story_overlay_template);
+        $S('ig_story_theme', trim((string) $this->ig_story_theme));
+
+        // Input token kosong = pertahankan token lama, bukan hapus.
+        if (trim((string) $this->ig_access_token) !== '') {
+            $S('ig_access_token', trim((string) $this->ig_access_token));
+        }
+        $this->ig_access_token = '';
+
+        $this->igStoryMessage = ['ok' => true, 'text' => 'Pengaturan Instagram Story tersimpan.'];
+    }
+
+    /**
+     * Tes koneksi Graph API. Memakai nilai di form (bukan yang tersimpan) supaya
+     * admin bisa paste token baru lalu langsung tes tanpa menyimpan dulu.
+     */
+    public function testInstagramConnection()
+    {
+        if (auth()->user()->role !== 'admin') {
+            return;
+        }
+
+        // Simpan dulu supaya InstagramService membaca nilai terbaru.
+        $this->saveInstagramSettings();
+
+        $result = \App\Services\InstagramService::testConnection();
+
+        $this->igStoryMessage = [
+            'ok' => (bool) $result['ok'],
+            'text' => (string) $result['message'],
+        ];
     }
 
     /**

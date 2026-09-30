@@ -3,16 +3,19 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Unit;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class UnitManager extends Component
 {
-    use WithPagination, \App\Traits\LogsStaffActivity;
+    use WithPagination, WithFileUploads, \App\Traits\LogsStaffActivity;
     public $perPage = 20;
     public $unit_id, $seri, $imei, $memori, $warna, $kondisi, $is_active;
     public $category_id, $harga_per_jam, $harga_per_hari;
+    public $foto, $fotoPreview;
     public $specs = []; // Dynamic specifications
     public $isEditing = false;
     public $showModal = false;
@@ -38,7 +41,7 @@ class UnitManager extends Component
     public function create()
     {
         if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'staff'])) return;
-        $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing', 'is_active']);
+        $this->reset(['unit_id', 'seri', 'imei', 'memori', 'warna', 'kondisi', 'harga_per_jam', 'harga_per_hari', 'specs', 'isEditing', 'is_active', 'foto', 'fotoPreview']);
         $this->category_id = '';
         $this->is_active = true;
         $this->showModal = true;
@@ -59,8 +62,100 @@ class UnitManager extends Component
         $this->harga_per_jam = $unit->harga_per_jam;
         $this->harga_per_hari = $unit->harga_per_hari;
         $this->is_active = $unit->is_active;
+        $this->foto = null;
+        $this->fotoPreview = $unit->foto ? $this->fotoUrl($unit->foto) : null;
         $this->isEditing = true;
         $this->showModal = true;
+    }
+
+    /**
+     * Foto dipakai sebagai gambar utama story Instagram, jadi disimpan di
+     * `uploads/unit/` — folder yang bisa dilayani langsung oleh web server
+     * tanpa lewat PHP, seperti upload lain di aplikasi ini.
+     */
+    public function updatedFoto()
+    {
+        $this->validate([
+            'foto' => 'nullable|image|max:4096|mimes:jpg,jpeg,png,webp',
+        ]);
+
+        $this->fotoPreview = $this->foto
+            ? $this->foto->temporaryUrl()
+            : null;
+    }
+
+    protected function storeFoto(): ?string
+    {
+        if (!$this->foto) {
+            return null;
+        }
+
+        $this->validate([
+            'foto' => 'image|max:4096|mimes:jpg,jpeg,png,webp',
+        ]);
+
+        $root = $_SERVER['DOCUMENT_ROOT'] ?? public_path();
+        if (!is_dir($root) || !is_writable($root)) {
+            $root = public_path();
+        }
+
+        $dir = rtrim((string) $root, '/') . '/uploads/unit';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $extension = strtolower($this->foto->getClientOriginalExtension()) ?: 'jpg';
+        $base = Str::slug((string) ($this->imei ?: $this->seri ?: 'unit')) ?: 'unit';
+        $filename = $base . '-' . time() . '-' . bin2hex(random_bytes(3)) . '.' . $extension;
+
+        file_put_contents($dir . '/' . $filename, file_get_contents($this->foto->getRealPath()));
+
+        return $filename;
+    }
+
+    public function removeFoto()
+    {
+        if (!$this->unit_id) {
+            return;
+        }
+
+        $unit = Unit::findOrFail($this->unit_id);
+        if ($unit->foto) {
+            foreach ($this->uploadRoots() as $root) {
+                $path = rtrim($root, '/') . '/uploads/unit/' . $unit->foto;
+                if (is_file($path)) {
+                    @unlink($path);
+                    break;
+                }
+            }
+        }
+
+        $unit->forceFill(['foto' => null])->save();
+        $this->foto = null;
+        $this->fotoPreview = null;
+        session()->flash('message', 'Foto unit dihapus.');
+    }
+
+    public function fotoUrl(?string $foto): ?string
+    {
+        if (!$foto) {
+            return null;
+        }
+
+        return '/uploads/unit/' . $foto;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function uploadRoots(): array
+    {
+        $roots = [public_path()];
+        if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+            $roots[] = (string) $_SERVER['DOCUMENT_ROOT'];
+        }
+
+        return array_values(array_unique($roots));
     }
 
     public function save()
@@ -75,6 +170,7 @@ class UnitManager extends Component
             'harga_per_jam' => 'required|numeric',
             'harga_per_hari' => 'required|numeric',
             'specs.*' => 'nullable|string',
+            'foto' => 'nullable|image|max:4096|mimes:jpg,jpeg,png,webp',
         ];
 
         if ($isIphone) {
@@ -86,6 +182,16 @@ class UnitManager extends Component
         }
 
         $this->validate($rules);
+
+        // `is_active` tidak punya default di database, jadi form yang dibuka
+        // tanpa lewat `create()` akan mengirim null. Perlakukan sebagai aktif.
+        $isActive = $this->is_active === null ? true : (bool) $this->is_active;
+
+        $foto = $this->storeFoto();
+
+        // Foto lama harus ikut hilang dari database kalau tidak ada file baru
+        // yang diunggah, jadi nilainya dibaca dari unit yang sudah ada dulu.
+        $existing = $this->unit_id ? Unit::find($this->unit_id) : null;
 
         $unit = Unit::updateOrCreate(
             ['id' => $this->unit_id],
@@ -99,13 +205,15 @@ class UnitManager extends Component
                 'specs' => $this->specs,
                 'harga_per_jam' => $this->harga_per_jam,
                 'harga_per_hari' => $this->harga_per_hari,
-                'is_active' => $this->is_active,
+                'is_active' => $isActive,
+                'foto' => $foto ?: $existing?->foto,
             ]
         );
 
         $action = $this->unit_id ? 'edit_unit' : 'create_unit';
         $this->logActivity($action, $unit, "Mengelola data unit: {$unit->seri}");
 
+        $this->reset(['foto', 'fotoPreview']);
         $this->showModal = false;
     }
 

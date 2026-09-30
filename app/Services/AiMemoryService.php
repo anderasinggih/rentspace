@@ -51,7 +51,13 @@ class AiMemoryService
         try {
             return AiConversation::resolve($channel, $peerId, $peerName);
         } catch (\Throwable $e) {
-            Log::warning('AiMemoryService::session gagal: ' . $e->getMessage());
+            // Sesi tidak tersimpan = histori kosong = bot lupa semua konteks dan
+            // menyapa ulang tiap pesan. Penyebab yang paling sering: migration
+            // tabel ai_conversations/ai_messages belum dijalankan di server.
+            Log::error(
+                'AiMemoryService::session gagal, memori percakapan TIDAK tersimpan'
+                . ' (cek `php artisan migrate --force`): ' . $e->getMessage()
+            );
             return new AiConversation(['channel' => $channel, 'memory' => []]);
         }
     }
@@ -111,7 +117,7 @@ class AiMemoryService
                 ->whereNotIn('id', $keepIds)
                 ->delete();
         } catch (\Throwable $e) {
-            Log::warning('AiMemoryService::saveTurn gagal: ' . $e->getMessage());
+            Log::error('AiMemoryService::saveTurn gagal, giliran ini hilang dari histori: ' . $e->getMessage());
         }
     }
 

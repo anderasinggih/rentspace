@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/ratings', \App\Livewire\Admin\RatingManager::class)->name('admin.ratings');
         Route::get('/admin/scan', \App\Livewire\Admin\QuickScan::class)->name('admin.scan');
         Route::get('/admin/radar', \App\Livewire\Admin\RadarDevices::class)->name('admin.radar');
+        Route::get('/admin/instagram-story', \App\Livewire\Admin\InstagramStory::class)->name('admin.instagram-story');
         Route::get('/admin/whatsapp-qr', function() {
             $botUrl = config('services.whatsapp.url', 'http://localhost:3001');
             try {

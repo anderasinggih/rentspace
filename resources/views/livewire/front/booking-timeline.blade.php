@@ -47,23 +47,23 @@
                 <p class="text-muted-foreground mt-1 text-sm">Lihat kapan daftar unit kami kosong dan siap disewa.</p>
             </div>
             <div class="flex items-center gap-3 w-full md:w-auto">
-                <div class="join join-horizontal w-full md:w-auto shadow-sm">
+                <div class="inline-flex rounded-md shadow-sm h-10 w-full md:w-auto" role="group">
                     <button wire:click="$set('timeframe', 14)" type="button"
-                        class="btn btn-sm join-item flex-1 md:flex-none {{ $timeframe == 14 ? 'btn-neutral' : 'btn-outline border-base-300' }}">
-                        14 Hari
+                        class="relative flex-1 md:flex-none px-4 py-2 text-xs md:text-sm font-medium border rounded-s-md focus:outline-none transition-colors {{ $timeframe == 14 ? 'bg-primary text-primary-foreground border-primary z-10' : 'bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground z-0' }}">
+                        14hr
                     </button>
                     <button wire:click="$set('timeframe', 30)" type="button"
-                        class="btn btn-sm join-item flex-1 md:flex-none {{ $timeframe == 30 ? 'btn-neutral' : 'btn-outline border-base-300' }}">
-                        30 Hari
+                        class="relative flex-1 md:flex-none px-4 py-2 text-xs md:text-sm font-medium border -ml-px focus:outline-none transition-colors {{ $timeframe == 30 ? 'bg-primary text-primary-foreground border-primary z-10' : 'bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground z-0' }}">
+                        30hr
                     </button>
                     <button wire:click="$set('timeframe', 'month')" type="button"
-                        class="btn btn-sm join-item flex-1 md:flex-none {{ $timeframe == 'month' ? 'btn-neutral' : 'btn-outline border-base-300' }}">
-                        Bulan Ini
+                        class="relative flex-1 md:flex-none px-4 py-2 text-xs md:text-sm font-medium border -ml-px rounded-e-md focus:outline-none transition-colors {{ $timeframe == 'month' ? 'bg-primary text-primary-foreground border-primary z-10' : 'bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground z-0' }}">
+                        Bulan
                     </button>
                 </div>
                 <a href="{{ route('public.booking') }}" wire:navigate
-                    class="btn btn-sm btn-primary shadow-sm px-6 w-full md:w-auto">
-                    Sewa Sekarang
+                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow-md hover:bg-primary/90 h-10 px-6 py-2 w-full md:w-auto">
+                    Sewa
                 </a>
             </div>
         </div>
@@ -193,22 +193,39 @@
             </div>
 
             <div
-                class="flex items-center gap-3 justify-center text-xs font-medium text-muted-foreground mt-4 overflow-x-auto whitespace-nowrap hide-scrollbar px-4">
-                <div class="flex items-center gap-1.5">
-                    <span class="badge badge-success badge-xs"></span>
-                    <span>Telah Disewa</span>
+                class="flex items-center gap-1 justify-center text-xs font-medium text-muted-foreground mt-4 overflow-x-auto whitespace-nowrap hide-scrollbar px-4">
+                <div class="flex items-center gap-2">
+                    <div
+                        class="w-4 h-4 rounded bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-2.5" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <path d="m9 11 3 3L22 4" />
+                        </svg>
+                    </div> Telah Disewa
                 </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="badge badge-warning badge-xs"></span>
-                    <span>Dibooking</span>
+                <div class="flex items-center gap-2">
+                    <div
+                        class="w-4 h-4 rounded bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-2.5" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                    </div> Dibooking
                 </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="badge badge-neutral badge-xs"></span>
-                    <span>Selesai</span>
+                <div class="flex items-center gap-2">
+                    <div
+                        class="w-4 h-4 rounded bg-slate-500/20 border border-slate-500/30 flex items-center justify-center text-slate-700 dark:text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                            <line x1="4" x2="4" y1="22" y2="15" />
+                        </svg>
+                    </div> Selesai
                 </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="badge badge-outline badge-xs"></span>
-                    <span>Tersedia</span>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded border border-dashed border-border bg-muted/20"></div> Tersedia
                 </div>
             </div>
         @endif
