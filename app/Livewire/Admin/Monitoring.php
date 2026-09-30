@@ -82,7 +82,8 @@ class Monitoring extends Component
             ]);
             $this->calculateAffiliateCommission($rental);
             
-            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id} via Monitoring");
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi {$rentalLabel} via Monitoring");
         }
     }
 
@@ -93,7 +94,8 @@ class Monitoring extends Component
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'paid', 'pending_confirmation'])) {
             $rental->update(['status' => 'cancelled']);
-            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id} via Monitoring");
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi {$rentalLabel} via Monitoring");
         }
     }
 
@@ -144,7 +146,8 @@ class Monitoring extends Component
                     'completed_at' => now(),
                 ]);
                 $this->calculateAffiliateCommission($rental);
-                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} via Monitoring");
+                $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa {$rentalLabel} via Monitoring");
             }
         }
         $this->closeDendaModal();
@@ -157,7 +160,8 @@ class Monitoring extends Component
         if ($rental->status === 'renting') {
             $rental->update(['status' => 'completed', 'denda' => 0, 'denda_payment_method' => null, 'completed_at' => now()]);
             $this->calculateAffiliateCommission($rental);
-            $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} tanpa denda via Monitoring");
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa {$rentalLabel} tanpa denda via Monitoring");
         }
     }
 
@@ -167,7 +171,8 @@ class Monitoring extends Component
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'paid') {
             $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
-            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi #{$rental->id}");
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi {$rentalLabel}");
             session()->flash('message', 'Unit berhasil divalidasi ambil. Status sekarang: Renting.');
         }
     }

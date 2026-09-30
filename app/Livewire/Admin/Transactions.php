@@ -108,7 +108,8 @@ class Transactions extends Component
             $rental->update(['status' => 'paid', 'paid_at' => now()]);
             $after = ['status' => 'paid'];
             
-            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi #{$rental->id}", $before, $after);
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('mark_as_paid', $rental, "Memvalidasi pembayaran transaksi {$rentalLabel}", $before, $after);
             
             $this->calculateAffiliateCommission($rental);
 
@@ -134,7 +135,8 @@ class Transactions extends Component
             $before = ['status' => $rental->status];
             $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
             $after = ['status' => 'renting'];
-            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi #{$rental->id} (via Transaksi)", $before, $after);
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi {$rentalLabel} (via Transaksi)", $before, $after);
             session()->flash('message', 'Unit berhasil divalidasi ambil.');
         }
     }
@@ -148,7 +150,8 @@ class Transactions extends Component
             $before = ['status' => $rental->status];
             $rental->update(['status' => 'cancelled']);
             $after = ['status' => 'cancelled'];
-            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi #{$rental->id}", $before, $after);
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('cancel_transaction', $rental, "Membatalkan transaksi {$rentalLabel}", $before, $after);
 
             // Send Email Notification
             $this->sendEmailNotification($rental, 'cancelled');
@@ -270,7 +273,8 @@ class Transactions extends Component
 
                 $this->calculateAffiliateCommission($rental);
                 
-                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} dengan total denda Rp" . number_format($this->dendaAmount + $this->dendaKerusakanAmount, 0, ',', '.'), $before, $after);
+                $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+                $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa {$rentalLabel} dengan total denda Rp" . number_format($this->dendaAmount + $this->dendaKerusakanAmount, 0, ',', '.'), $before, $after);
             }
         }
 
@@ -291,7 +295,8 @@ class Transactions extends Component
             ]);
             $this->calculateAffiliateCommission($rental);
             
-            $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa #{$rental->id} tanpa denda");
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('complete_rental', $rental, "Menyelesaikan sewa {$rentalLabel} tanpa denda");
         }
     }
 
@@ -535,7 +540,8 @@ class Transactions extends Component
             'status' => $this->edit_status,
         ];
 
-        $this->logActivity('edit_transaction', $trx, "Mengedit data transaksi #{$trx->id}", $before, $after);
+        $rentalLabel = $trx->nama ? "{$trx->nama} ({$trx->booking_code})" : $trx->booking_code;
+        $this->logActivity('edit_transaction', $trx, "Mengedit data transaksi {$rentalLabel}", $before, $after);
 
         $this->closeEditModal();
         session()->flash('message', 'Transaksi berhasil diperbarui.');

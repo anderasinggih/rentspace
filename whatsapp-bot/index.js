@@ -59,6 +59,23 @@ const lastCustomerMessage = new Map(); // jid -> text
 const humanTakeoverMap = new Map(); // jid -> timestampMs
 const HUMAN_TAKEOVER_TIMEOUT_MS = 5 * 60 * 1000; // 5 menit
 
+// Contacts Cache: Menyimpan nama kontak yang di-save admin di HP/Google Kontak
+// Map: jid/phone -> { name, notify, verifiedName }
+const contactsMap = new Map();
+
+function getSavedContactName(jid, phone) {
+    if (!jid && !phone) return null;
+    const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+    const jidClean = (jid || '').split('@')[0].split(':')[0];
+
+    const contact = contactsMap.get(jid)
+        || contactsMap.get(`${cleanPhone}@s.whatsapp.net`)
+        || contactsMap.get(jidClean)
+        || contactsMap.get(cleanPhone);
+
+    return contact?.name || contact?.notify || contact?.verifiedName || null;
+}
+
 // Track ID pesan yang dikirim oleh bot sendiri agar tidak dianggap sebagai chat manual admin
 const botSentMsgIds = new Set();
 function markBotSent(msgId) {
@@ -207,6 +224,29 @@ async function connectToWhatsApp() {
     });
 
     sock.ev.on('creds.update', saveCreds);
+
+    // Sync Contacts (Nama Kontak yang di-save di HP / Google Kontak)
+    sock.ev.on('contacts.upsert', (contacts) => {
+        for (const contact of contacts) {
+            if (contact.id) {
+                const existing = contactsMap.get(contact.id) || {};
+                contactsMap.set(contact.id, { ...existing, ...contact });
+                const clean = contact.id.split('@')[0].split(':')[0];
+                contactsMap.set(clean, { ...existing, ...contact });
+            }
+        }
+    });
+
+    sock.ev.on('contacts.update', (updates) => {
+        for (const update of updates) {
+            if (update.id) {
+                const existing = contactsMap.get(update.id) || {};
+                contactsMap.set(update.id, { ...existing, ...update });
+                const clean = update.id.split('@')[0].split(':')[0];
+                contactsMap.set(clean, { ...existing, ...update });
+            }
+        }
+    });
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
@@ -396,7 +436,10 @@ async function connectToWhatsApp() {
 
             if (!text.trim()) continue;
 
-            console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (${isGroup ? 'Group: ' + sender : 'Phone: ' + (actualPhone || 'LID: ' + senderNumber)}): "${text}"`);
+            const savedName = getSavedContactName(sender, actualPhone || senderNumber);
+            const adminFacingName = savedName || pushName;
+
+            console.log(`[RentSpace WA Bot] Pesan masuk dari ${adminFacingName} (push: ${pushName}) (${isGroup ? 'Group: ' + sender : 'Phone: ' + (actualPhone || 'LID: ' + senderNumber)}): "${text}"`);
 
             // Catat pesan customer terakhir (non-grup, bukan pemicu admin) supaya
             // saat dia ngetik "ADMIN", forward ke admin membawa pertanyaan aslinya.
@@ -405,13 +448,14 @@ async function connectToWhatsApp() {
             }
 
             // 1. Forward otomatis chat customer ke HP Admin (Multi Admin) by system (0 token AI)
+            // Gunakan savedName jika ada di kontak HP admin, agar terbaca jelas nama kontak di notifikasi forward
             if (!isGroup) {
-                forwardToAdmin(sender, actualPhone || senderNumber, pushName, text.trim(), 'chat customer masuk');
+                forwardToAdmin(sender, actualPhone || senderNumber, adminFacingName, text.trim(), 'chat customer masuk');
             }
 
             // 2. Cek apakah admin sedang handle chat customer ini (Human Takeover 5 menit)
             if (!isGroup && isHumanHandling(sender)) {
-                console.log(`[RentSpace WA Bot] ⏸️ Bot diam untuk ${pushName} (${sender}): Admin sedang menangani chat ini di HP.`);
+                console.log(`[RentSpace WA Bot] ⏸️ Bot diam untuk ${adminFacingName} (${sender}): Admin sedang menangani chat ini di HP.`);
                 continue;
             }
 
@@ -756,12 +800,15 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
         // Yang diteruskan pertanyaan customer sebelumnya (atau teks ini bila tidak ada),
         // ditandai "-admin", bukan kata pemicu "ADMIN" yang tidak menjelaskan apa-apa.
         const forwardText = (lastCustomerMessage.get(sender) || text.trim()) + ' -admin';
+        const savedContactName = getSavedContactName(sender, actualPhone || senderNumber);
+        const adminFacingName = savedContactName || pushName;
+
         try {
             await axios.post(LARAVEL_WEBHOOK_URL, {
                 action: 'forward_admin',
                 sender_jid: sender,
                 phone: actualPhone || '',
-                name: pushName,
+                name: adminFacingName,
                 text: forwardText
             }, {
                 headers: { 'X-API-KEY': API_KEY },
@@ -793,7 +840,8 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
         if (res.data && res.data.handoff) {
             const reason = res.data.handoff_reason || 'di luar topik sewa';
             await sendChatReply('Maaf kak, untuk yang itu aku teruskan ke admin ya. Tunggu sebentar, admin kami akan nge-chat kakak sendiri 🙏');
-            await forwardToAdmin(sender, actualPhone || senderNumber, pushName, text, reason);
+            const savedContactName = getSavedContactName(sender, actualPhone || senderNumber);
+            await forwardToAdmin(sender, actualPhone || senderNumber, savedContactName || pushName, text, reason);
             return;
         }
 

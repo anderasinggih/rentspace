@@ -44,7 +44,8 @@ class QuickScan extends Component
         if (in_array($rental->status, ['paid', 'confirmed'])) {
             $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
             
-            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi #{$rental->id} (via QuickScan)");
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi {$rentalLabel} (via QuickScan)");
             
             $this->findUnit($this->scannedUnit->id);
             session()->flash('message', 'Validasi ambil unit BERHASIL! Unit sekarang dalam status RENT.');
@@ -60,7 +61,8 @@ class QuickScan extends Component
         if ($rental->status === 'renting') {
             $rental->update(['status' => 'completed', 'completed_at' => now()]);
             
-            $this->logActivity('complete_rental', $rental, "Pengembalian unit untuk transaksi #{$rental->id} (via QuickScan)");
+            $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
+            $this->logActivity('complete_rental', $rental, "Pengembalian unit untuk transaksi {$rentalLabel} (via QuickScan)");
             
             $this->findUnit($this->scannedUnit->id);
             session()->flash('message', 'Pengembalian unit BERHASIL! Transaksi telah SELESAI.');

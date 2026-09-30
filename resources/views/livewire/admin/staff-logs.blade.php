@@ -188,25 +188,58 @@
                     </div>
                 </div>
 
+                @php
+                    $displayDesc = $log->description ?: 'Melakukan operasi ' . $action . ' pada sistem.';
+                    
+                    // Jika log adalah transaksi rental (atau deskripsi masih berisi format lama #123)
+                    if ($log->target_type === 'App\Models\Rental' || $log->target_type === 'Rental' || str_contains($log->action, 'transaction') || str_contains($log->action, 'rental') || str_contains($log->action, 'paid') || str_contains($log->action, 'handover')) {
+                        $targetRental = $log->target;
+                        if ($targetRental) {
+                            $rentalIdent = ($targetRental->nama ? $targetRental->nama : 'Penyewa') . ' (' . $targetRental->booking_code . ')';
+                            // Ganti pola #123 atau transaksi #123 dengan Nama (Kode Booking)
+                            if (preg_match('/#\d+/', $displayDesc)) {
+                                $displayDesc = preg_replace('/#\d+/', $rentalIdent, $displayDesc);
+                            }
+                        }
+                    }
+                @endphp
+
                 <!-- Post Content / Narrative Body -->
-                <div class="mt-3.5 text-xs sm:text-sm text-foreground/90 font-normal leading-relaxed pl-0 sm:pl-[52px]">
-                    <p>{{ $log->description ?: 'Melakukan operasi ' . $action . ' pada sistem.' }}</p>
+                <div class="mt-3 text-xs sm:text-sm text-foreground/90 font-normal leading-relaxed pl-0 sm:pl-[52px]">
+                    <div class="flex items-start gap-2">
+                        <p class="flex-1 font-medium text-foreground/90">
+                            {{ $displayDesc }}
+                        </p>
+                    </div>
+
+                    <!-- Target / Booking Badge if available -->
+                    @if($log->target && ($log->target_type === 'App\Models\Rental' || $log->target_type === 'Rental'))
+                        <div class="mt-2 flex items-center gap-2 flex-wrap">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[11px] font-semibold">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                <span>{{ $log->target->nama ?? 'Penyewa' }}</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border/80 font-mono text-[10px] font-medium">
+                                {{ $log->target->booking_code ?? '-' }}
+                            </span>
+                        </div>
+                    @endif
 
                     <!-- Quick Changes Preview Tag if available -->
                     @if($hasDiff)
-                        <div class="mt-2.5 flex items-center gap-1.5 text-[11px] text-primary font-medium">
+                        <div class="mt-2.5 flex items-center gap-1.5 text-[11px] text-primary/90 font-medium bg-primary/5 border border-primary/15 rounded-xl px-2.5 py-1.5 w-fit">
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/>
                             </svg>
-                            <span>Terdapat riwayat perubahan data (sebelum & sesudah)</span>
+                            <span>Terdapat audit perubahan data sebelum & sesudah</span>
                         </div>
                     @endif
                 </div>
 
                 <!-- Post Footer Action -->
-                <div class="mt-3 pt-3 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground pl-0 sm:pl-[52px]">
-                    <span class="font-mono text-[10px] text-muted-foreground/60">ID #{{ $log->id }}</span>
-                    <span class="text-primary font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                <div class="mt-3 pt-2.5 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground pl-0 sm:pl-[52px]">
+                    <span class="font-mono text-[10px] text-muted-foreground/60">Log #{{ $log->id }}</span>
+                    <span class="text-primary font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform text-xs">
                         <span>Lihat Rincian</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </span>
@@ -289,12 +322,35 @@
                         </div>
                     </div>
 
+                    @php
+                        $detailDesc = $selectedLog->description ?: 'Tidak ada deskripsi tambahan.';
+                        if ($selectedLog->target && ($selectedLog->target_type === 'App\Models\Rental' || $selectedLog->target_type === 'Rental')) {
+                            $r = $selectedLog->target;
+                            $ident = ($r->nama ? $r->nama : 'Penyewa') . ' (' . $r->booking_code . ')';
+                            if (preg_match('/#\d+/', $detailDesc)) {
+                                $detailDesc = preg_replace('/#\d+/', $ident, $detailDesc);
+                            }
+                        }
+                    @endphp
+
                     <!-- Narrative Description -->
-                    <div class="space-y-1">
+                    <div class="space-y-1.5">
                         <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Deskripsi Aktivitas</span>
-                        <div class="p-3.5 rounded-2xl bg-card border border-border/60 text-xs leading-relaxed text-foreground">
-                            {{ $selectedLog->description ?: 'Tidak ada deskripsi tambahan.' }}
+                        <div class="p-3.5 rounded-2xl bg-card border border-border/60 text-xs leading-relaxed text-foreground font-medium">
+                            {{ $detailDesc }}
                         </div>
+
+                        @if($selectedLog->target && ($selectedLog->target_type === 'App\Models\Rental' || $selectedLog->target_type === 'Rental'))
+                            <div class="flex items-center gap-2 pt-1">
+                                <span class="text-[10px] uppercase font-bold text-muted-foreground">Data Sewa:</span>
+                                <span class="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-semibold">
+                                    {{ $selectedLog->target->nama }}
+                                </span>
+                                <span class="px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-mono text-[10px]">
+                                    {{ $selectedLog->target->booking_code }}
+                                </span>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Before & After Comparison Table if available -->

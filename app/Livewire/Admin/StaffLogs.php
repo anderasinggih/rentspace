@@ -68,7 +68,7 @@ class StaffLogs extends Component
             'system' => ['update_setting', 'whatsapp_broadcast', 'login', 'logout', 'payout_affiliate']
         ];
 
-        $logs = StaffLog::with('user')
+        $logs = StaffLog::with(['user', 'target'])
             ->when($this->search, function($q) {
                 $q->where(function($qq) {
                     $qq->whereHas('user', function($qu) {
@@ -109,7 +109,7 @@ class StaffLogs extends Component
             'system' => StaffLog::whereIn('action', $categoryMap['system'])->count(),
         ];
 
-        $selectedLog = $this->selectedLogId ? StaffLog::with('user')->find($this->selectedLogId) : null;
+        $selectedLog = $this->selectedLogId ? StaffLog::with(['user', 'target'])->find($this->selectedLogId) : null;
 
         $users = \App\Models\User::whereIn('role', ['admin', 'staff'])
             ->orderBy('name')
