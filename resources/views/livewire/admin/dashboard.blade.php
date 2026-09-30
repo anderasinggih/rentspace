@@ -1,10 +1,5 @@
 <div class="relative min-h-screen pb-12 overflow-x-hidden">
     <style>
-        body {
-            overflow-x: hidden !important;
-            @apply bg-slate-50 dark:bg-background text-foreground;
-            user-select: none;
-        }
 
         .liquid-glass {
             background-color: var(--card);

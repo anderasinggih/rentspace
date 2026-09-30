@@ -161,16 +161,16 @@
                 class="group bg-card rounded-2xl border border-border/70 p-4 sm:p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden">
                 
                 <!-- Post Header: Avatar, Name, Category Pill, Relative Time -->
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
                     <div class="flex items-center gap-3 min-w-0">
                         <!-- User Avatar Initials -->
                         <div class="h-10 w-10 rounded-full bg-foreground/5 border border-border/80 flex items-center justify-center shrink-0 font-bold text-xs text-foreground group-hover:scale-105 transition-transform">
                             {{ strtoupper(substr($userName, 0, 2)) }}
                         </div>
 
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm font-bold text-foreground truncate leading-tight">{{ $userName }}</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-bold text-foreground leading-tight">{{ $userName }}</span>
                                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-foreground/5 text-muted-foreground uppercase tracking-tight">{{ $userRole }}</span>
                             </div>
                             <p class="text-[11px] text-muted-foreground/70 font-medium leading-none mt-1" title="{{ $fullTime }}">
@@ -180,10 +180,12 @@
                     </div>
 
                     <!-- Category Badge Tag -->
-                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border {{ $badgeBg }} shrink-0">
-                        <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
-                        <span>{{ $badgeLabel }}</span>
-                    </span>
+                    <div class="self-start sm:self-auto pl-[52px] sm:pl-0 shrink-0">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border {{ $badgeBg }}">
+                            <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
+                            <span>{{ $badgeLabel }}</span>
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Post Content / Narrative Body -->

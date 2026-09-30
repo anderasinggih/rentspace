@@ -44,7 +44,7 @@
         
         /* Prevent Flash of Light Mode & Transitions */
         .dark { color-scheme: dark; }
-        html.dark body { background-color: #09090b; } /* Same as bg-background in dark mode */
+        :root { color-scheme: light; }
         
         /* Disable transition during page load/navigate to stop blinking */
         .no-transitions * {
