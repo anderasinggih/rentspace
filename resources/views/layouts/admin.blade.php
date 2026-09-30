@@ -134,49 +134,57 @@
         </div>
     </div>
 
-    <!-- Livewire Request / Navigate Global Loading Listener (DailyPhone pattern) -->
+    <!-- Livewire Request / Navigate Global Loading Listener (Instant Feedback ala DailyPhone) -->
     <script>
         (function() {
             let loader = document.getElementById('admin-global-loader');
-            let timer = null;
             let activeRequests = 0;
+            let showTimestamp = 0;
 
             function showLoader() {
                 activeRequests++;
                 if (!loader) loader = document.getElementById('admin-global-loader');
                 if (!loader) return;
                 
-                // Muncul cepat (80ms) agar transisi navigasi tidak terasa freeze
-                if (!timer) {
-                    timer = setTimeout(() => {
-                        loader.style.display = 'flex';
-                        requestAnimationFrame(() => {
-                            loader.classList.remove('opacity-0');
-                            loader.classList.add('opacity-100');
-                        });
-                    }, 80);
-                }
+                showTimestamp = Date.now();
+                loader.style.display = 'flex';
+                requestAnimationFrame(() => {
+                    loader.classList.remove('opacity-0');
+                    loader.classList.add('opacity-100');
+                });
             }
 
             function hideLoader() {
                 activeRequests = Math.max(0, activeRequests - 1);
                 if (activeRequests > 0) return;
 
-                if (timer) {
-                    clearTimeout(timer);
-                    timer = null;
-                }
                 if (!loader) loader = document.getElementById('admin-global-loader');
                 if (!loader) return;
 
-                loader.classList.remove('opacity-100');
-                loader.classList.add('opacity-0');
+                const elapsed = Date.now() - showTimestamp;
+                const minDisplayTime = 250;
+                const delay = elapsed < minDisplayTime ? (minDisplayTime - elapsed) : 0;
+
                 setTimeout(() => {
-                    if (activeRequests === 0 && loader.classList.contains('opacity-0')) {
-                        loader.style.display = 'none';
+                    if (activeRequests === 0 && loader) {
+                        loader.classList.remove('opacity-100');
+                        loader.classList.add('opacity-0');
+                        setTimeout(() => {
+                            if (activeRequests === 0 && loader.classList.contains('opacity-0')) {
+                                loader.style.display = 'none';
+                            }
+                        }, 200);
                     }
-                }, 200);
+                }, delay);
             }
+
+            // Hook langsung saat link wire:navigate diklik pengguna
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a[wire\\:navigate], a[wire\\:navigate\\.hover]');
+                if (link && link.getAttribute('href') && !link.getAttribute('href').startsWith('#') && !link.getAttribute('target')) {
+                    showLoader();
+                }
+            }, true);
 
             // Hook ke event Livewire SPA navigation
             document.addEventListener('livewire:navigating', showLoader);
