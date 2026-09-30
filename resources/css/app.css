@@ -126,3 +126,43 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   transform: skewX(-20deg);
   animation: shine 3s infinite;
 }
+
+/* iOS Native Floating Liquid Glass Island (DailyPhone Style) */
+.apple-floating-glass {
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background-color: color-mix(in srgb, var(--card) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.12), 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+}
+
+.dark .apple-floating-glass {
+  background-color: rgba(22, 22, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Nav pill - active state */
+.apple-nav-pill {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.apple-nav-pill-active {
+  background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.apple-nav-pill-inactive {
+  color: var(--muted-foreground);
+}
+.apple-nav-pill-inactive:hover {
+  color: var(--foreground);
+  background-color: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
