@@ -1,4 +1,4 @@
-<div class="pt-8 pb-96 sm:pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
+<div class="pt-6 pb-20 sm:pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
 <style>
     /* Fix iOS Safari Scroll Lock and Height Constraints */
     html, body {
@@ -27,7 +27,7 @@
 
         <div x-data="bookingForm()" 
             class="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-6">
-            <form wire:submit.prevent="submit" class="space-y-8 pb-[180px] sm:pb-0">
+            <form wire:submit.prevent="submit" class="space-y-8 pb-6 sm:pb-0">
 
                 <!-- Progress Bar -->
                 <div class="mb-8 border-b border-border pb-4">
@@ -44,7 +44,7 @@
                 </div>
 
                 <!-- STEP 1: Jadwal & Unit -->
-                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-32 sm:pb-8 font-sans">
+                <div x-show="step === 1" x-transition.opacity.duration.300ms class="space-y-8 pb-8 sm:pb-6 font-sans">
                 <!-- 1. Pilihan Unit Tersedia -->
                 <div class="space-y-6">
                     <div class="flex flex-col gap-4">
@@ -197,8 +197,8 @@
                         <!-- Tanggal Pengambilan -->
                         <div>
                             <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengambilan</label>
-                            <input type="date" value="{{ $tanggal_mulai }}"
-                                x-on:input="$wire.set('tanggal_mulai', $event.target.value)"
+                            <input type="date" wire:model.live="tanggal_mulai"
+                                x-on:change="waktuMulai = $event.target.value + 'T' + ($wire.jam_mulai || '12:00')"
                                 class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
                             @error('waktu_mulai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
                         </div>
@@ -206,8 +206,8 @@
                         <!-- Tanggal Pengembalian -->
                         <div>
                             <label class="text-[11px] font-bold text-muted-foreground ml-1 mb-1.5 block">Tanggal Pengembalian</label>
-                            <input type="date" value="{{ $tanggal_selesai }}"
-                                x-on:input="$wire.set('tanggal_selesai', $event.target.value)"
+                            <input type="date" wire:model.live="tanggal_selesai"
+                                x-on:change="waktuSelesai = $event.target.value + 'T' + ($wire.jam_mulai || '12:00')"
                                 class="flex w-full h-11 rounded-xl border border-border bg-card/40 px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground appearance-none [-webkit-appearance:none]">
                             @error('waktu_selesai') <span class="text-[9px] text-red-500 leading-tight block mt-1 ml-1 font-medium">{{ $message }}</span> @enderror
                         </div>
@@ -284,7 +284,7 @@
                 </div> <!-- END STEP 1 -->
 
                 <!-- STEP 2: Data Diri & Promo -->
-                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-96 sm:pb-8 font-sans">
+                <div x-show="step === 2" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-8 sm:pb-6 font-sans">
 <!-- 5. Data Diri -->
                 <div>
                     <h2 class="text-xl font-bold tracking-tight mb-4 text-foreground">{{ (!empty($selected_unit_ids) && $waktu_mulai &&
@@ -511,13 +511,10 @@
 
 
 
-                <!-- Spacer to force mobile scrolling past the fixed bottom calculation bar -->
-                <div class="h-96 sm:hidden"></div>
-                
                 </div> <!-- END STEP 2 -->
-
-                <!-- STEP 3: Tagihan & TNC -->
-                <div x-show="step === 3" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-32 sm:pb-8">
+ 
+                 <!-- STEP 3: Tagihan & TNC -->
+                 <div x-show="step === 3" x-transition.opacity.duration.300ms x-cloak class="space-y-8 pb-8 sm:pb-6">
 @if(!empty($selected_unit_ids) && $waktu_mulai && $waktu_selesai)
                 <div class="bg-primary/5 rounded-xl p-6 border border-primary/20 relative overflow-hidden">
                     <!-- Price Loader Overlay -->
@@ -614,14 +611,21 @@
                     </div>
                 @endif
 
-                <button type="submit" wire:loading.attr="disabled"
-                    class="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-8.5 font-bold text-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all">
-                    <span wire:loading.remove wire:target="submit">Sewa & Lanjut Pembayaran</span>
-                    <div wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
-                        <span class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
-                        <span>Memproses...</span>
-                    </div>
-                </button>
+                <div class="flex flex-col sm:flex-row items-center gap-3 pt-4">
+                    <button type="button" @click="step = 2; window.scrollTo({top: 0, behavior: 'smooth'})"
+                        class="w-full sm:w-auto order-2 sm:order-1 inline-flex items-center justify-center rounded-full border border-border bg-card px-6 h-11 text-xs sm:text-sm font-semibold text-muted-foreground hover:bg-muted active:scale-95 transition-all">
+                        ← Kembali Perbaiki Data
+                    </button>
+
+                    <button type="submit" wire:loading.attr="disabled"
+                        class="w-full flex-1 order-1 sm:order-2 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 sm:h-12 px-8 font-bold text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 transition-all">
+                        <span wire:loading.remove wire:target="submit">Sewa & Lanjut Pembayaran</span>
+                        <div wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
+                            <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
+                            <span>Memproses...</span>
+                        </div>
+                    </button>
+                </div>
             
                 </div> <!-- END STEP 3 -->
             </form>
@@ -749,19 +753,34 @@
         </div>
     </div>
 
-            <!-- Desktop Navigation Buttons -->
-            <div x-cloak x-show="step < 3" class="hidden sm:flex justify-end mt-6 gap-3 border-t border-border pt-6">
-                <button type="button" x-show="step === 2" @click="step = 1" class="px-6 py-2 border border-border rounded-lg font-bold text-muted-foreground hover:bg-muted text-sm transition-colors">Kembali</button>
-                <button type="button" @click="nextStep()" class="bg-primary text-primary-foreground font-bold px-8 py-2 rounded-lg shadow text-sm hover:bg-primary/90 transition-colors">Lanjut</button>
+            <!-- Desktop Navigation Buttons & Calculation Bar -->
+            <div x-cloak x-show="step < 3" class="hidden sm:flex items-center justify-between mt-6 gap-4 border-t border-border pt-6">
+                <div>
+                    <template x-if="selectedIds.length > 0">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-muted-foreground font-semibold">
+                                Estimasi (<span class="font-bold text-foreground" x-text="selectedIds.length"></span> unit):
+                            </span>
+                            <span class="text-base font-black text-primary" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, subtotal - (potonganDiskon || 0)))"></span>
+                            <template x-if="potonganDiskon > 0">
+                                <span class="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-bold text-green-600 dark:text-green-400">
+                                    -Rp<span x-text="new Intl.NumberFormat('id-ID').format(potonganDiskon)"></span>
+                                </span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button" x-show="step === 2" @click="step = 1; window.scrollTo({top: 0, behavior: 'smooth'})" 
+                        class="px-6 h-10 border border-border rounded-full font-bold text-muted-foreground hover:bg-muted text-xs sm:text-sm transition-all active:scale-95">
+                        ← Kembali
+                    </button>
+                    <button type="button" @click="nextStep()" 
+                        class="bg-primary text-primary-foreground font-bold px-8 h-10 rounded-full shadow hover:bg-primary/90 text-xs sm:text-sm transition-all active:scale-95">
+                        Lanjut →
+                    </button>
+                </div>
             </div>
-
-            <!-- Step 3 Desktop Back Button -->
-            <div x-cloak x-show="step === 3" class="mt-4 flex justify-between">
-                <button type="button" @click="step = 2" class="px-6 py-2 border border-border rounded-lg font-bold text-muted-foreground hover:bg-muted text-sm transition-colors">Kembali Perbaiki Data</button>
-            </div>
-
-            <!-- Giant empty spacer container to force body height and scrolling on mobile -->
-            <div x-show="step < 3" class="h-[160px] w-full block sm:hidden"></div>
         </div>
     </div>
 </div>
