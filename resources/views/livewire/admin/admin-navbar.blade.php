@@ -22,8 +22,8 @@
         window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: newTheme } }));
     }
 }" 
-class="fixed bottom-3 sm:bottom-4 left-3 right-3 sm:left-6 sm:right-6 z-50 pointer-events-none transition-all duration-300"
-style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+class="fixed bottom-2 sm:bottom-4 left-2 right-2 sm:left-6 sm:right-6 z-50 pointer-events-none transition-all duration-300"
+style="padding-bottom: max(0.25rem, env(safe-area-inset-bottom, 0px));">
 
     <!-- Mobile Drawer / Popover More Menu (Transparent Blur Glass) -->
     <div x-show="adminMenuOpen" 
@@ -107,6 +107,7 @@ style="padding-bottom: env(safe-area-inset-bottom, 0px);">
                 <span class="text-xs text-muted-foreground/40">›</span>
             </a>
 
+            @if(auth()->user()->role !== 'staff')
             <a href="{{ route('admin.customers') }}" wire:navigate @click="adminMenuOpen = false"
                 class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary' : 'hover:bg-foreground/5 text-foreground' }}">
                 <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.customers') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
@@ -115,6 +116,7 @@ style="padding-bottom: env(safe-area-inset-bottom, 0px);">
                 <span class="flex-1">Pelanggan</span>
                 <span class="text-xs text-muted-foreground/40">›</span>
             </a>
+            @endif
 
             <!-- Activity / Staff Logs in Mobile Drawer -->
             <a href="{{ route('admin.staff-logs') }}" wire:navigate @click="adminMenuOpen = false"
@@ -221,11 +223,13 @@ style="padding-bottom: env(safe-area-inset-bottom, 0px);">
                 <span>Promo</span>
             </a>
 
+            @if(auth()->user()->role !== 'staff')
             <a href="{{ route('admin.customers') }}" wire:navigate
                 class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 {{ request()->routeIs('admin.customers') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 <span>Pelanggan</span>
             </a>
+            @endif
 
             @if(auth()->user()->role === 'admin')
                 <a href="{{ route('admin.settings') }}" wire:navigate

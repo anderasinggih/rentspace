@@ -20,6 +20,13 @@ class CustomerManager extends Component
 
     protected $queryString = ['search'];
 
+    public function mount()
+    {
+        if (auth()->check() && auth()->user()->role === 'staff') {
+            abort(403, 'Akses terbatas: Staff tidak diizinkan mengakses data pelanggan.');
+        }
+    }
+
     public function updatingSearch()
     {
         $this->resetPage();
