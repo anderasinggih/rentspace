@@ -229,14 +229,10 @@
     </script>
 
     <script>
-        // Register Service Worker for PWA
+        // Register Service Worker for PWA silently
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(reg => {
-                    console.log('📦 PWA Admin Service Worker Registered!', reg.scope);
-                }).catch(err => {
-                    console.log('❌ PWA Service Worker Registration Failed:', err);
-                });
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
             });
         }
     </script>

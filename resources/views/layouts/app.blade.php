@@ -204,35 +204,23 @@
     <script>
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {
-            console.log("🚀 RENT SPACE PUSH IS READY");
-            console.log("🔔 Current Permission:", OneSignal.Notifications.permission);
-            
             await OneSignal.init({
                 appId: "{{ $osAppId }}",
                 @if($osSafariId) safari_web_id: "{{ $osSafariId }}", @endif
                 allowLocalhostAsSecureContext: true,
             });
 
-            // Beri jeda 2 detik setelah init agar benar-benar siap
             setTimeout(async () => {
                 const permission = OneSignal.Notifications.permission;
-                console.log("🔔 Current Permission Status:", permission);
-                
                 if (permission === 'default') {
-                    console.log("📢 Attempting to show Slidedown Prompt...");
                     await OneSignal.showSlidedownPrompt();
                 }
 
                 @auth
-                    // Identifikasi User & Set Tag Role
-                    console.log("🆔 Identifying User: {{ auth()->id() }}");
                     await OneSignal.login("{{ auth()->id() }}");
                     await OneSignal.User.addTag("role", "{{ auth()->user()->role }}");
-                    console.log("🏷️ Tag Role Set: {{ auth()->user()->role }}");
                 @else
-                    // Logout dari OneSignal jika tidak terautentikasi
                     if (OneSignal.User.externalId) {
-                        console.log("🔓 Logging out from OneSignal...");
                         await OneSignal.logout();
                     }
                 @endauth
@@ -242,14 +230,10 @@
     @endif
 
     <script>
-        // Register Service Worker for PWA
+        // Register Service Worker for PWA silently
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(reg => {
-                    console.log('📦 PWA Service Worker Registered!', reg.scope);
-                }).catch(err => {
-                    console.log('❌ PWA Service Worker Registration Failed:', err);
-                });
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
             });
         }
     </script>
