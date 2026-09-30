@@ -19,6 +19,10 @@ class AdminMiddleware
             return $next($request);
         }
 
+        if (!auth()->check()) {
+            return redirect()->guest(route('login'));
+        }
+
         abort(403, 'Akses terbatas untuk Administrator saja.');
     }
 }

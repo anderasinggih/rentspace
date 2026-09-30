@@ -39,11 +39,15 @@
 
     @livewireStyles
     <script>
-        // Otomatis redirect ke /admin jika dibuka dari PWA (Standalone Mode)
+        // Otomatis redirect ke halaman admin / login admin jika dibuka dari PWA (Standalone Mode)
         (function() {
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
             if (isStandalone && window.location.pathname === '/') {
-                window.location.replace('/admin');
+                @auth
+                    window.location.replace('/admin');
+                @else
+                    window.location.replace('/login');
+                @endauth
             }
         })();
 
