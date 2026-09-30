@@ -44,6 +44,15 @@ let botUser = null;
 // sebelumnya". Jadi satu chat = satu giliran AI pada satu waktu.
 const chatQueues = new Map(); // jid -> { running, pending: [] }
 
+// Kata pemicu "minta bantuan admin" (jalur forward manual customer).
+const ADMIN_REQ_WORDS = ['4', 'admin', 'cs', 'bantuan admin', 'hubungi admin', 'kontak admin'];
+const ADMIN_REQ_SET = new Set(ADMIN_REQ_WORDS);
+
+// Pesan customer terakhir per chat (bukan pemicu admin). Dipakai supaya saat
+// customer ngetik "ADMIN", yang diteruskan ke admin adalah pertanyaan aslinya,
+// bukan cuma kata "ADMIN" yang tidak menjelaskan apa-apa.
+const lastCustomerMessage = new Map(); // jid -> text
+
 // Human Takeover: jika admin mengetik/membalas manual dari HP di nomor customer,
 // bot diam selama jeda dinamis (5 menit sejak chat terakhir admin).
 // Jeda reset tiap kali admin kirim chat baru.
@@ -389,6 +398,12 @@ async function connectToWhatsApp() {
 
             console.log(`[RentSpace WA Bot] Pesan masuk dari ${pushName} (${isGroup ? 'Group: ' + sender : 'Phone: ' + (actualPhone || 'LID: ' + senderNumber)}): "${text}"`);
 
+            // Catat pesan customer terakhir (non-grup, bukan pemicu admin) supaya
+            // saat dia ngetik "ADMIN", forward ke admin membawa pertanyaan aslinya.
+            if (!isGroup && !ADMIN_REQ_SET.has(lowerText)) {
+                lastCustomerMessage.set(sender, text.trim());
+            }
+
             // 1. Forward otomatis chat customer ke HP Admin (Multi Admin) by system (0 token AI)
             if (!isGroup) {
                 forwardToAdmin(sender, actualPhone || senderNumber, pushName, text.trim(), 'chat customer masuk');
@@ -733,18 +748,21 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
     }
 
     // 3. Hubungi Admin
-    if (['4', 'admin', 'cs', 'bantuan admin', 'hubungi admin', 'kontak admin'].includes(lower)) {
+    if (ADMIN_REQ_SET.has(lower)) {
         const reply = `Mohon tunggu sebentar ya Kak *${pushName}*, pesan Kakak sudah kami teruskan ke Admin Rent Space. Admin kami akan segera menghubungi atau merespon chat Kakak di nomor ini. 🙏`;
         await send({ text: reply });
 
-        // Forward notifikasi ke webhook Laravel agar bisa memberitahu admin sekunder/tim admin
+        // Forward notifikasi ke webhook Laravel agar bisa memberitahu admin sekunder/tim admin.
+        // Yang diteruskan pertanyaan customer sebelumnya (atau teks ini bila tidak ada),
+        // ditandai "-admin", bukan kata pemicu "ADMIN" yang tidak menjelaskan apa-apa.
+        const forwardText = (lastCustomerMessage.get(sender) || text.trim()) + ' -admin';
         try {
             await axios.post(LARAVEL_WEBHOOK_URL, {
                 action: 'forward_admin',
                 sender_jid: sender,
                 phone: actualPhone || '',
                 name: pushName,
-                text: text
+                text: forwardText
             }, {
                 headers: { 'X-API-KEY': API_KEY },
                 timeout: 8000

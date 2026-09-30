@@ -150,4 +150,50 @@ class CustomerOffTopicHandoffTest extends TestCase
             ->assertJsonPath('handoff', null)
             ->assertJsonPath('reply', 'iphone 13 ready kak, mau hari ini atau besok?');
     }
+
+    public function test_ai_gagal_kuota_ikut_diteruskan_ke_admin_bukan_cek_dulu(): void
+    {
+        config(['services.whatsapp.api_key' => 'test-bot-key']);
+        // Semua slot kunci customer kena 429 (kuota habis) -> askGemini null.
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'error' => ['message' => 'Resource has been exhausted (e.g. check quota).'],
+            ], 429),
+        ]);
+
+        $response = $this->postJson('/api/v1/wa/webhook', [
+            'sender_jid' => '628123@s.whatsapp.net',
+            'phone' => '628123',
+            'name' => 'Budi',
+            'text' => 'sewa mobil bisa?',
+        ], ['X-API-KEY' => 'test-bot-key']);
+
+        // Harusnya handoff ke admin, bukan reply null diam-diam yang membuat
+        // bot jatuh ke balasan generik "cek in dulu".
+        $response->assertOk()
+            ->assertJsonPath('handoff', true)
+            ->assertJsonPath('reply', null);
+    }
+
+    public function test_ai_gagal_dengan_exception_ikut_diteruskan_ke_admin(): void
+    {
+        config(['services.whatsapp.api_key' => 'test-bot-key']);
+        // Jaringan putus: client HTTP melempar exception sebelum dapat respons.
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => function () {
+                throw new \Illuminate\Http\Client\ConnectionException('connect timed out');
+            },
+        ]);
+
+        $response = $this->postJson('/api/v1/wa/webhook', [
+            'sender_jid' => '628123@s.whatsapp.net',
+            'phone' => '628123',
+            'name' => 'Budi',
+            'text' => 'kenapa gitu',
+        ], ['X-API-KEY' => 'test-bot-key']);
+
+        $response->assertOk()
+            ->assertJsonPath('handoff', true)
+            ->assertJsonPath('reply', null);
+    }
 }

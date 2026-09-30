@@ -73,6 +73,32 @@ class GeminiKeyFailoverTest extends TestCase
         ];
     }
 
+    /**
+     * Versi fakeGemini yang melempar exception, untuk menguji timeout/jaringan.
+     *
+     * $decide mengembalikan string pesan exception untuk kunci yang harus gagal
+     * (null berarti kunci itu sehat dan dijawab normal).
+     */
+    private function fakeGeminiThrow(callable $decide): void
+    {
+        Http::fake(function ($request) use ($decide) {
+            $key = '';
+            if (str_contains($request->url(), 'key=')) {
+                parse_str(parse_url($request->url(), PHP_URL_QUERY) ?: '', $query);
+                $key = $query['key'] ?? '';
+            }
+            $this->seenKeys[] = $key;
+
+            $throw = $decide($key);
+            if ($throw) {
+                throw new \Illuminate\Http\Client\ConnectionException($throw);
+            }
+
+            $ok = $this->answerBody('Jawaban dari ' . $key);
+            return Http::response($ok['body'], $ok['status']);
+        });
+    }
+
     private function answerBody(string $text): array
     {
         return [
@@ -167,6 +193,56 @@ class GeminiKeyFailoverTest extends TestCase
             ['pool-key-1'],
             $this->seenKeys,
             'kunci ditolak bukan karena kuota, jadi pindah kunci tidak menolong'
+        );
+    }
+
+    // ---------------------------------------------------------------- timeout
+
+    /**
+     * Timeout adalah masalah jaringan, bukan salah konfigurasi kunci.
+     *
+     * Kasus nyata di production: satu kunci timeout cURL error 28, controller
+     * langsung dapat null dan customer diberi "diteruskan ke admin" padahal
+     * masih ada tiga kunci lain yang belum dicoba sama sekali.
+     */
+    public function test_timeout_pindah_ke_kunci_berikutnya(): void
+    {
+        $this->fillKeys(3);
+        $this->fakeGeminiThrow(fn (string $key) => $key === 'pool-key-1'
+            ? 'cURL error 28: Operation timed out after 25001 milliseconds with 0 bytes received'
+            : null);
+
+        $result = $this->reply();
+
+        $this->assertNotNull($result['reply'], 'kunci kedua harus rescuing jawaban setelah timeout');
+        $this->assertSame(['pool-key-1', 'pool-key-2'], $this->seenKeys, 'harus mencoba slot 1 lalu slot 2');
+    }
+
+    /** Semua kunci timeout: tidak boleh mengarang jawaban, dan dilaporkan apa adanya. */
+    public function test_semua_kunci_timeout_tidak_menghasilkan_jawaban_palsu(): void
+    {
+        $this->fillKeys(2);
+        $this->fakeGeminiThrow(fn () => 'cURL error 28: Operation timed out after 25001 milliseconds');
+
+        $result = $this->reply();
+
+        $this->assertNull($result['reply'], 'tidak boleh mengarang jawaban saat semua kunci timeout');
+        $this->assertStringContainsString('timeout', (string) GeminiAIService::lastError());
+        $this->assertSame(['pool-key-1', 'pool-key-2'], $this->seenKeys, 'semua kunci di pool harus dicoba');
+    }
+
+    /** Kunci ditolak (bukan transient) tetap berhenti di kunci pertama. */
+    public function test_exception_konfigurasi_tidak_dicoba_ke_kunci_lain(): void
+    {
+        $this->fillKeys(3);
+        $this->fakeGeminiThrow(fn () => 'API key not valid. Please pass a valid API key.');
+
+        $this->reply();
+
+        $this->assertSame(
+            ['pool-key-1'],
+            $this->seenKeys,
+            'kunci ditolak akan gagal sama persis di semua kunci, jadi tidak perlu dicoba lagi'
         );
     }
 

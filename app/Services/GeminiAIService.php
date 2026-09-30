@@ -106,10 +106,35 @@ class GeminiAIService
      * model tidak ada, payload ditolak) dan akan gagal sama persis di semua kunci,
      * jadi mencobanya ke kunci lain cuma menambah lambat tanpa mungkin berhasil.
      *
-     * Timeout (cURL error 28) sengaja tidak ikut: satu kunci yang timeout bisa
-     * memakan 25-45 detik, dan bot sudah menyerah di detik ke-10.
+     * Timeout (cURL error 28) TIDAK masuk daftar ini karena itu bukan status
+     * HTTP, tapi tetap ditangani sebagai kondisi transient di catch() bawah.
+     * Timeout ke Google sering terjadi acak dan kunci berikutnya biasanya
+     * sehat, jadi menyerah di kunci pertama membuat customer dapat
+     * "diteruskan ke admin" padahal masih ada tiga kunci yang belum dicoba.
      */
     private const RETRYABLE_STATUSES = [429, 500, 502, 503, 504];
+
+    /**
+     * Pola pesan exception yang layak dicoba lagi ke kunci berikutnya.
+     *
+     * Semuanya masalah jaringan atau sisi server, bukan salah konfigurasi
+     * kunci: timeout, koneksi terputus, dan host tidak bisa_contact.
+     * Exception konfigurasi (key ditolak, model tidak ada) sengaja tidak
+     * masuk supaya tidak menambah lambat tanpa mungkin berhasil.
+     */
+    private const TRANSIENT_EXCEPTION_PATTERNS = [
+        'cURL error 28',
+        'timed out',
+        'Operation timed out',
+        'Connection timed out',
+        'Connection reset',
+        'Connection refused',
+        'Could not resolve host',
+        'Failed to connect',
+        'Empty reply from server',
+        'Recv failure',
+        'Send failure',
+    ];
 
     /**
      * Jeda singkat sebelum pindah kunci saat kena 5xx.
@@ -330,6 +355,26 @@ class GeminiAIService
         $masked = preg_replace('/\b(?:AIza|AQ\.Ab)[A-Za-z0-9._\-]{20,}/', '***', (string) $masked);
 
         return $masked;
+    }
+
+    /**
+     * Apakah exception ini Transient (jaringan/server) sehingga layak dicoba
+     * lagi ke kunci berikutnya?
+     *
+     * Bedanya dengan status HTTP: di sini tidak ada kode status, hanya teks
+     * pesan. Yang penting hanya membedakannya dari salah konfigurasi — timeout
+     * atau koneksi putus akan mencoba kunci lain, sedangkan "API key not valid"
+     * tidak akan pernah berhasil di kunci manapun juga.
+     */
+    private static function isTransientException(string $message): bool
+    {
+        foreach (self::TRANSIENT_EXCEPTION_PATTERNS as $pattern) {
+            if (stripos($message, $pattern) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function markCooldown(string $feature, string $apiKey): void
@@ -2395,8 +2440,33 @@ Jawab sebagai asisten data internal:";
 
                 return null;
             } catch (\Throwable $e) {
-                self::$lastError = self::maskSecrets($e->getMessage());
-                Log::error('GeminiAIService Exception: ' . self::maskSecrets($e->getMessage()));
+                $message = self::maskSecrets($e->getMessage());
+                self::$lastError = $message;
+
+                if (self::isTransientException($message)) {
+                    // Timeout atau koneksi putus: kunci ini tidak salah, hanya
+                    // jaringan yang lagi tidak sehat. Pindah ke kunci berikutnya
+                    // supaya satu timeout acak tidak menggagalkan percakapan.
+                    //
+                    // Yang penting: whatever pun yang gagal saat_switch ke kunci
+                    // berikutnya (mis. cache cooldown) tidak boleh membatalkan
+                    // failover, jadi dibungkus try terpisah dari catch di atas.
+                    try {
+                        self::markCooldown($feature, $apiKey);
+                    } catch (\Throwable $ignored) {
+                        // Tanpa cache, cooldown tidak bisa disimpan. Tetap coba
+                        // kunci berikutnya — lebih baik daripada langsung gagal.
+                    }
+
+                    $exhausted[] = $apiKey;
+                    $seenStatuses['timeout'] = ($seenStatuses['timeout'] ?? 0) + 1;
+                    Log::warning('GeminiAIService timeout/jaringan, pindah kunci: ' . $message);
+
+                    usleep(self::SERVER_BUSY_BACKOFF_US);
+                    continue;
+                }
+
+                Log::error('GeminiAIService Exception: ' . $message);
                 return null;
             }
         }
@@ -2404,12 +2474,15 @@ Jawab sebagai asisten data internal:";
         if ($exhausted !== []) {
             $codes = [];
             foreach ($seenStatuses as $code => $count) {
-                $codes[] = $code . '×' . $count;
+                $codes[] = ($code === 'timeout' ? 'timeout' : 'HTTP ' . $code) . '×' . $count;
             }
 
-            $summary = 'HTTP ' . implode(', ', $codes);
+            $summary = implode(', ', $codes);
             $isRateLimit = count($seenStatuses) === 1 && isset($seenStatuses[429]);
-            $label = $isRateLimit ? 'kena rate limit' : 'gagal (server sibuk / tidak stabil)';
+            $isTimeoutOnly = count($seenStatuses) === 1 && isset($seenStatuses['timeout']);
+            $label = $isRateLimit
+                ? 'kena rate limit'
+                : ($isTimeoutOnly ? 'timeout' : 'gagal (server sibuk / tidak stabil)');
 
             self::$lastError = 'Semua ' . count($exhausted) . ' kunci API ' . $label . ' (' . $summary . ').';
             Log::error('GeminiAIService: pool kunci ' . $feature . ' habis, ' . count($exhausted) . ' kunci ' . $label . ' — ' . $summary . '.');

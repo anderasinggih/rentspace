@@ -102,8 +102,21 @@ class WhatsAppWebhookController extends Controller
         }
 
         // 2. Cek status booking (Format: "CEK RS-XXXX" atau "CEK [KODE]" atau ketik angka 2)
-        if (preg_match('/^(cek|status|order)(\s+(.*))?$/i', $text, $matches) || $text === '2') {
-            $codeQuery = isset($matches[3]) ? trim($matches[3]) : '';
+        // "cek" hanya dibaca sebagai permintaan status bila kata sisanya memang
+        // terlihat seperti kode booking. Tanpa guard ini, pertanyaan natural
+        // seperti "cek unit iPhone XR ready?" ikut dicocokkan sebagai kode
+        // pesanan dan customer menerima jawaban yang salah.
+        $bareStatusWord = preg_match('/^(cek|status|order)$/i', $text) || $text === '2';
+        $codeQuery = '';
+        if (preg_match('/^(cek|status|order)\s+(.+)$/i', $text, $codeMatches)) {
+            $candidate = trim($codeMatches[2]);
+            // Kode booking di sistem: 10 karakter alfanumerik, boleh diawali "RS".
+            if (preg_match('/^(?:RS[- ]?)?[A-Z0-9]{4,20}$/i', $candidate)) {
+                $codeQuery = $candidate;
+            }
+        }
+
+        if ($bareStatusWord || $codeQuery !== '') {
 
             // Jika user hanya ketik "CEK" atau "2", coba cari rental terakhir berdasarkan nomor WA customer
             if (empty($codeQuery)) {
@@ -148,7 +161,25 @@ class WhatsAppWebhookController extends Controller
         $isAiActive = \App\Models\Setting::getVal('is_chatbot_active', '1') == '1';
         if ($isAiActive && !empty($text)) {
             $senderJid = $request->input('sender_jid', $phone);
-            $result = \App\Services\GeminiAIService::customerReply($text, $name, $senderJid, $phone);
+
+            try {
+                $result = \App\Services\GeminiAIService::customerReply($text, $name, $senderJid, $phone);
+            } catch (\Throwable $e) {
+                // AI error tak terduga: jangan biarkan customer jatuh ke balasan
+                // generik "cek in dulu" — teruskan ke admin seperti handoff.
+                Log::warning('GeminiAIService::customerReply melempar exception, diteruskan ke admin.', [
+                    'nama' => $name,
+                    'no_wa' => $phone,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->json([
+                    'status' => true,
+                    'reply' => null,
+                    'handoff' => true,
+                    'handoff_reason' => 'AI sedang gangguan',
+                ]);
+            }
 
             // Chat di luar topik sewa: tidak dijawab AI, cuma diarahkan ke admin.
             // Bot tetap sempat membalas (supaya customer tidak merasa dibohongi),
@@ -171,9 +202,40 @@ class WhatsAppWebhookController extends Controller
             if (!empty($result['reply'])) {
                 return response()->json(['status' => true, 'reply' => $result['reply']]);
             }
+
+            // AI aktif tapi tidak menghasilkan jawaban (API key kosong, kuota
+            // habis, jaringan bermasalah). Sebelumnya dijawab null lalu bot milih
+            // balasan generik "cek in dulu" yang tidak menolong siapa-siapa dan
+            // admin tidak pernah diberi tahu. Sekarang diteruskan ke admin.
+            Log::warning('Chat customer tidak terjawab AI, diteruskan ke admin.', [
+                'nama' => $name,
+                'no_wa' => $phone,
+                'pesan' => mb_substr($text, 0, 200),
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'reply' => null,
+                'handoff' => true,
+                'handoff_reason' => 'AI sedang gangguan',
+            ]);
         }
 
-        return response()->json(['status' => true, 'reply' => null]);
+        // AI nonaktif: jawab jujur dan arahkan ke admin. Kalau hanya dibalas
+        // null, bot memilih kalimat generik "aku cekin dulu" yang tidak
+        //-menolong dan admin tidak pernah diberi tahu.
+        Log::warning('Chat customer masuk saat AI nonaktif, diteruskan ke admin.', [
+            'nama' => $name,
+            'no_wa' => $phone,
+            'pesan' => mb_substr($text, 0, 200),
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'reply' => null,
+            'handoff' => true,
+            'handoff_reason' => 'asisten AI sedang tidak aktif',
+        ]);
     }
 
     private function buildCatalogResponse(): string
@@ -706,28 +768,11 @@ class WhatsAppWebhookController extends Controller
             }
         }
 
-        $timeStr = now()->translatedFormat('d M Y H:i');
         $cleanPhone = preg_replace('/[^0-9]/', '', (string) $customerPhone);
-        if (str_starts_with($cleanPhone, '0')) {
-            $waLinkPhone = '62' . substr($cleanPhone, 1);
-        } else {
-            $waLinkPhone = $cleanPhone;
-        }
-
-        $phoneInfo = !empty($cleanPhone) && !str_starts_with($cleanPhone, '375') && strlen($cleanPhone) <= 15
-            ? "• *Nomor WA*: {$customerPhone}\n• *Link Chat*: https://wa.me/{$waLinkPhone}\n"
-            : "";
 
         $last4 = strlen($cleanPhone) >= 4 ? substr($cleanPhone, -4) : $cleanPhone;
         $simpleGroupMsg = "{$message} ({$customerName} {$last4})";
-
-        $fullAdminNotice = "🚨 *CUSTOMER MINTA DIBANTU ADMIN*\n" .
-            "------------------------------------\n" .
-            "• *Nama*: {$customerName}\n" .
-            $phoneInfo .
-            "• *Pesan*: \"{$message}\"\n" .
-            "• *Waktu*: {$timeStr} WIB\n\n" .
-            "💡 _Buka WhatsApp atau klik link di atas untuk membalas._";
+        $simpleAdminMsg = "{$message} ({$customerName} {$last4})";
 
         try {
             $waService = app(\App\Services\WhatsAppService::class);
@@ -742,7 +787,7 @@ class WhatsAppWebhookController extends Controller
                 foreach ($rawTargets as $target) {
                     $targetNum = preg_replace('/[^0-9]/', '', $target);
                     if ($targetNum !== '') {
-                        $waService->sendMessage($targetNum, $fullAdminNotice);
+                        $waService->sendMessage($targetNum, $simpleAdminMsg);
                     }
                 }
             }
