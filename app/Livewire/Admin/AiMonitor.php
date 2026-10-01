@@ -152,6 +152,18 @@ class AiMonitor extends Component
         ]);
 
         $this->testLoading = true;
+
+        // Broadcast ke WebSocket Reverb secara instan
+        try {
+            if ($this->testChannel === 'wa_group_report') {
+                broadcast(new \App\Events\AiOfficeActivityEvent('singgih', 'working', mb_substr($this->testInput, 0, 32)));
+                broadcast(new \App\Events\AiOfficeActivityEvent('andera', 'working', mb_substr($this->testInput, 0, 32)));
+            } else {
+                broadcast(new \App\Events\AiOfficeActivityEvent('dewi', 'working', mb_substr($this->testInput, 0, 32)));
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Broadcast testPrompt failed: ' . $e->getMessage());
+        }
         try {
             if ($this->testChannel === 'wa_group_report') {
                 $this->testOutput = GeminiAIService::replyInternal($this->testInput, $this->testSenderName);

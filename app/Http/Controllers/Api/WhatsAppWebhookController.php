@@ -103,6 +103,14 @@ class WhatsAppWebhookController extends Controller
                 return response()->json(['status' => true, 'reply' => $memoriReply]);
             }
 
+            // Broadcast WebSocket Reverb Event (Report Masuk) -> Karakter Andera/Singgih langsung berjalan ke meja!
+            try {
+                broadcast(new \App\Events\AiOfficeActivityEvent('andera', 'working', mb_substr($text, 0, 32)));
+                broadcast(new \App\Events\AiOfficeActivityEvent('singgih', 'working', mb_substr($text, 0, 32)));
+            } catch (\Throwable $e) {
+                \Log::warning('Broadcast AiOfficeActivityEvent report error: ' . $e->getMessage());
+            }
+
             $aiReply = \App\Services\GeminiAIService::replyInternal($text, $name);
             return response()->json(['status' => true, 'reply' => $aiReply ?: null]);
         }
@@ -215,7 +223,14 @@ class WhatsAppWebhookController extends Controller
             $senderJid = $request->input('sender_jid', $phone);
 
             try {
-                $result = \App\Services\GeminiAIService::customerReply($text, $name, $senderJid, $phone);
+                // Broadcast WebSocket Reverb Event (Chat Masuk) -> Karakter Dewi langsung berjalan ke meja!
+            try {
+                broadcast(new \App\Events\AiOfficeActivityEvent('dewi', 'working', mb_substr($text, 0, 32)));
+            } catch (\Throwable $e) {
+                \Log::warning('Broadcast AiOfficeActivityEvent error: ' . $e->getMessage());
+            }
+
+            $result = \App\Services\GeminiAIService::customerReply($text, $name, $senderJid, $phone);
             } catch (\Throwable $e) {
                 // AI error tak terduga: jangan biarkan customer jatuh ke balasan
                 // generik "cek in dulu" — teruskan ke admin seperti handoff.

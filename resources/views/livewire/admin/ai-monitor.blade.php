@@ -2432,6 +2432,24 @@
                              window._threeOfficeApp.updateLiveBubble('andera', @js($latestReportText));
                          @endif
                      });
+                         // Inisialisasi Real-time Listener via Laravel Echo / WebSocket Reverb
+                         if (window.Echo) {
+                             console.log('[3D Office] Listening on WebSocket channel: ai-office');
+                             window.Echo.channel('ai-office')
+                                 .listen('.activity', (e) => {
+                                     console.log('[WebSocket Reverb Event]', e);
+                                     if (e.character === 'dewi') {
+                                         window._threeOfficeApp?.updateCsPosition('working');
+                                         if (e.message) window._threeOfficeApp?.updateLiveBubble('dewi', e.message);
+                                     } else if (e.character === 'singgih') {
+                                         window._threeOfficeApp?.updateSinggihPosition('working');
+                                         if (e.message) window._threeOfficeApp?.updateLiveBubble('singgih', e.message);
+                                     } else if (e.character === 'andera') {
+                                         window._threeOfficeApp?.updateAnderaPosition('working');
+                                         if (e.message) window._threeOfficeApp?.updateLiveBubble('andera', e.message);
+                                     }
+                                 });
+                         }
                  },
                  syncStatus(detail) {
                       // Dewi: Bekerja di meja saat ada chat masuk (customerBubble / working), jika tidak ada kerjaan maka istirahat di sofa
