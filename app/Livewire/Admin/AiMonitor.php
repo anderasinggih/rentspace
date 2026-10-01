@@ -153,14 +153,20 @@ class AiMonitor extends Component
             if ($this->testChannel === 'wa_group_report') {
                 $this->testOutput = GeminiAIService::replyInternal($this->testInput, $this->testSenderName);
             } else {
-                $this->testOutput = GeminiAIService::replyCustomer(
-                    'test-sandbox',
+                $result = GeminiAIService::customerReply(
                     $this->testInput,
                     $this->testSenderName,
+                    'test-sandbox@s.whatsapp.net',
                     null
                 );
+                
+                if ($result['handoff']) {
+                    $this->testOutput = "⚠️ [Di Luar Topik / Handoff ke Admin]\nAlasan: " . ($result['reason'] ?? 'di luar topik sewa') . "\n\nPesan otomatis diteruskan ke admin.";
+                } else {
+                    $this->testOutput = $result['reply'] ?? 'Tidak ada respon dari AI.';
+                }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->testOutput = "Error: " . $e->getMessage();
         } finally {
             $this->testLoading = false;
