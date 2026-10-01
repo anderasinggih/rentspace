@@ -264,7 +264,11 @@
         {{ $slot }}
     </main>
 
-    @unless($hideFooter ?? false)
+    @php
+        $isBookingFlow = request()->routeIs('public.booking', 'public.payment', 'public.success');
+    @endphp
+
+    @unless(($hideFooter ?? false) || $isBookingFlow)
     <x-front.footer />
     @endunless
 

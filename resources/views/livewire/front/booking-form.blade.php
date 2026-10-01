@@ -1,4 +1,4 @@
-<div class="pt-6 pb-20 sm:pb-10 px-4 sm:px-6 lg:px-8 bg-background sm:min-h-[calc(100vh-4rem)]">
+<div class="pt-6 pb-32 sm:pb-12 px-4 sm:px-6 lg:px-8 bg-background min-h-screen sm:min-h-[calc(100vh-4rem)]">
 <style>
     /* Fix iOS Safari Scroll Lock and Height Constraints */
     html, body {
@@ -618,11 +618,16 @@
                     </button>
 
                     <button type="submit" wire:loading.attr="disabled"
-                        class="w-full flex-1 order-1 sm:order-2 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 sm:h-12 px-8 font-bold text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 transition-all">
-                        <span wire:loading.remove wire:target="submit">Sewa & Lanjut Pembayaran</span>
+                        class="w-full flex-1 order-1 sm:order-2 inline-flex items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 min-h-[52px] sm:min-h-[56px] py-3.5 px-8 font-extrabold text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed active:scale-98 transition-all">
+                        <span wire:loading.remove wire:target="submit" class="flex items-center gap-2">
+                            <span>Sewa & Lanjut Pembayaran</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+                            </svg>
+                        </span>
                         <div wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
-                            <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
-                            <span>Memproses...</span>
+                            <span class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
+                            <span>Memproses Pesanan...</span>
                         </div>
                     </button>
                 </div>
@@ -631,7 +636,7 @@
             </form>
 
     <!-- Sticky Summary & Navigation Bar (Mobile) -->
-    <div x-cloak x-show="step < 3 && selectedIds.length > 0" 
+    <div x-cloak x-show="step < 3 && selectedIds && selectedIds.length > 0" 
         wire:key="sticky-booking-summary"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="translate-y-full"
@@ -745,7 +750,12 @@
                         </span>
                     </div>
                 </div>
-                <button type="button" @click.prevent="nextStep()" class="bg-primary text-primary-foreground font-bold px-6 py-2.5 rounded-xl shadow-lg active:scale-95 transition-all text-sm">Lanjut</button>
+                <button type="button" @click.prevent="nextStep()" class="bg-primary text-primary-foreground font-black px-7 h-11 rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all text-sm flex items-center justify-center gap-1.5 shrink-0">
+                    <span>Lanjut</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                </button>
             </div>
 
             <!-- Safe Area spacer -->
