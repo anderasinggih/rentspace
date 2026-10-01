@@ -44,4 +44,21 @@ class AiOfficeActivityEvent implements ShouldBroadcastNow
     {
         return 'activity';
     }
+
+    /**
+     * Payload dikirim eksplisit (bukan relying on reflection) supaya bentuk data
+     * di browser stabil: { character, action, message, extra, at }.
+     *
+     * @return array<string, mixed>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'character' => $this->character,
+            'action' => $this->action,
+            'message' => $this->message,
+            'extra' => $this->extra,
+            'at' => now()->timestamp,
+        ];
+    }
 }

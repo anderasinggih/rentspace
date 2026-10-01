@@ -112,6 +112,13 @@ Route::get('/affiliate/register', AffiliateRegister::class)->name('affiliate.reg
 // Midtrans Webhook Route
 Route::post('/official-midtrans-callback', [\App\Http\Controllers\MidtransWebhookController::class, 'handle']);
 
+// TV Display Routes (butuh token, tanpa login)
+Route::middleware('tv.token')->prefix('tv/{token}')->group(function () {
+    Route::get('/', [\App\Http\Controllers\TvDisplayController::class, 'show'])->name('tv.display');
+    Route::get('/tracks', [\App\Http\Controllers\TvDisplayController::class, 'tracks'])->name('tv.tracks');
+    Route::get('/stats', [\App\Http\Controllers\TvDisplayController::class, 'stats'])->name('tv.stats');
+});
+
 Route::get('/test-midtrans', function() {
     \Midtrans\Config::$serverKey = config('midtrans.server_key');
     return "Library Midtrans Aman!";

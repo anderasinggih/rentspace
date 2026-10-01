@@ -36,6 +36,7 @@ class AiMonitor extends Component
     public $bonkedAgent = null;
     public $bonkMessage = null;
     public $forcedTask = null; // paksa kerja / bangunkan dari istirahat
+    public $forcedUntil = null; // override expires sendiri supaya nyangkut >60 detik tidak membekukan karakter
 
     protected $queryString = [
         'filterChannel' => ['except' => 'all'],
@@ -113,6 +114,7 @@ class AiMonitor extends Component
      */
     public function bonkAgent(string $agentKey, string $actionType = 'work')
     {
+        $this->forcedUntil = now()->addSeconds(60);
         $this->bonkedAgent = $agentKey;
 
         $agentNames = [
@@ -188,6 +190,95 @@ class AiMonitor extends Component
         }
     }
 
+    /**
+     * Sumber tunggal kebenaran status 3D office.
+     * Dipakai render() (load awal) dan syncOffice() (realtime tick) supaya
+     * karakter tidak pernah "diam di sofa" padahal ada chat masuk.
+     *
+     * @return array<string, mixed>
+     */
+    private function officeState(): array
+    {
+        // Aktivitas Real-Time (cek apakah ada pesan baru dalam 2 menit terakhir)
+        $latestCustomerMsg = AiMessage::whereHas('conversation', fn($q) => $q->where('channel', 'wa_customer'))
+            ->latest('id')
+            ->first();
+
+        $latestReportMsg = AiMessage::whereHas('conversation', fn($q) => $q->where('channel', 'wa_group_report'))
+            ->latest('id')
+            ->first();
+
+        // Bot aktif bekerja di meja HANYA saat ada chat masuk aktual (< 2 menit), selebihnya santai istirahat di sofa
+        $isCustomerActive = (bool) ($latestCustomerMsg && $latestCustomerMsg->created_at
+            && $latestCustomerMsg->created_at->diffInMinutes(now()) <= 2);
+
+        $isReportActive = (bool) ($latestReportMsg && $latestReportMsg->created_at
+            && $latestReportMsg->created_at->diffInMinutes(now()) <= 2);
+
+        $csStatus = $isCustomerActive ? 'working' : 'break';
+        $reportStatus = $isReportActive ? 'working' : 'break';
+        $coreStatus = ($isCustomerActive || $isReportActive) ? 'working' : 'break';
+
+        // Terapkan override dari aksi pentung / suruh paksa (hanya sampai batas waktu)
+        if ($this->forcedTask && $this->forcedUntil && now()->lt($this->forcedUntil)) {
+            if ($this->forcedTask === 'work') {
+                if ($this->bonkedAgent === 'cs_bot') $csStatus = 'working';
+                if ($this->bonkedAgent === 'report_bot') $reportStatus = 'working';
+                if ($this->bonkedAgent === 'core_bot') $coreStatus = 'working';
+            } elseif ($this->forcedTask === 'sleep') {
+                if ($this->bonkedAgent === 'cs_bot') $csStatus = 'sleeping';
+            } elseif ($this->forcedTask === 'break') {
+                if ($this->bonkedAgent === 'cs_bot') $csStatus = 'break';
+                if ($this->bonkedAgent === 'report_bot') $reportStatus = 'break';
+                if ($this->bonkedAgent === 'core_bot') $coreStatus = 'break';
+            }
+        } else {
+            $this->forcedTask = null;
+            $this->forcedUntil = null;
+        }
+
+        // Balon hanya muncul kalau pesannya beneran baru (< 60 detik), biar tidak nyangkut
+        $customerBubble = ($latestCustomerMsg && $latestCustomerMsg->created_at
+            && $latestCustomerMsg->created_at->diffInSeconds(now()) <= 60)
+            ? \Illuminate\Support\Str::limit($latestCustomerMsg->content, 35)
+            : null;
+
+        $reportBubble = ($latestReportMsg && $latestReportMsg->created_at
+            && $latestReportMsg->created_at->diffInSeconds(now()) <= 60)
+            ? \Illuminate\Support\Str::limit($latestReportMsg->content, 35)
+            : null;
+
+        return [
+            'csStatus' => $csStatus,
+            'reportStatus' => $reportStatus,
+            'coreStatus' => $coreStatus,
+            'latestCustomerMsg' => $latestCustomerMsg,
+            'latestReportMsg' => $latestReportMsg,
+            'customerBubble' => $customerBubble,
+            'reportBubble' => $reportBubble,
+        ];
+    }
+
+    /**
+     * Tick realtime ringan: dipanggil lewat wire:poll. Tidak me-render ulang
+     * seluruh halaman (skipRender), hanya menyiarkan status terbaru ke Alpine
+     * supaya animasi jalan ke meja tetap terjadi walau WebSocket sempat putus.
+     */
+    public function syncOffice(): void
+    {
+        $state = $this->officeState();
+
+        $this->dispatch('ai-status-sync',
+            csStatus: $state['csStatus'],
+            reportStatus: $state['reportStatus'],
+            coreStatus: $state['coreStatus'],
+            customerBubble: $state['customerBubble'],
+            reportBubble: $state['reportBubble'],
+        );
+
+        $this->skipRender();
+    }
+
     public function render()
     {
         // 1. Metrics & Statistics
@@ -200,42 +291,13 @@ class AiMonitor extends Component
         $customerSessions = AiConversation::where('channel', 'wa_customer')->count();
         $reportGroupSessions = AiConversation::where('channel', 'wa_group_report')->count();
 
-        // 1.b Aktivitas Real-Time (Cek apakah ada pesan baru dalam 5-10 menit terakhir)
-        $latestCustomerMsg = AiMessage::whereHas('conversation', fn($q) => $q->where('channel', 'wa_customer'))
-            ->latest('id')
-            ->first();
-
-        $latestReportMsg = AiMessage::whereHas('conversation', fn($q) => $q->where('channel', 'wa_group_report'))
-            ->latest('id')
-            ->first();
-
-        // Bot aktif bekerja di meja HANYA saat ada chat masuk aktual (< 2 menit), selebihnya santai istirahat di sofa
-        $isCustomerActive = false;
-        if ($latestCustomerMsg && $latestCustomerMsg->created_at) {
-            $isCustomerActive = $latestCustomerMsg->created_at->diffInMinutes(now()) <= 2;
-        }
-
-        $isReportActive = false;
-        if ($latestReportMsg && $latestReportMsg->created_at) {
-            $isReportActive = $latestReportMsg->created_at->diffInMinutes(now()) <= 2;
-        }
-
-        // Terapkan override dari aksi pentung / suruh paksa jika user baru saja klik
-        $csStatus = $isCustomerActive ? 'working' : 'break';
-        $reportStatus = $isReportActive ? 'working' : 'break';
-        $coreStatus = ($isCustomerActive || $isReportActive) ? 'working' : 'break';
-
-        if ($this->forcedTask === 'work') {
-            if ($this->bonkedAgent === 'cs_bot') $csStatus = 'working';
-            if ($this->bonkedAgent === 'report_bot') $reportStatus = 'working';
-            if ($this->bonkedAgent === 'core_bot') $coreStatus = 'working';
-        } elseif ($this->forcedTask === 'sleep') {
-            if ($this->bonkedAgent === 'cs_bot') $csStatus = 'sleeping';
-        } elseif ($this->forcedTask === 'break') {
-            if ($this->bonkedAgent === 'cs_bot') $csStatus = 'break';
-            if ($this->bonkedAgent === 'report_bot') $reportStatus = 'break';
-            if ($this->bonkedAgent === 'core_bot') $coreStatus = 'break';
-        }
+        // 1.b Status 3D office (sumber tunggal: officeState)
+        $office = $this->officeState();
+        $csStatus = $office['csStatus'];
+        $reportStatus = $office['reportStatus'];
+        $coreStatus = $office['coreStatus'];
+        $latestCustomerMsg = $office['latestCustomerMsg'];
+        $latestReportMsg = $office['latestReportMsg'];
 
         // 2. Query Conversations list
         $query = AiConversation::with(['messages' => function ($q) {
@@ -269,13 +331,8 @@ class AiMonitor extends Component
 
         // Hanya tampilkan balon percakapan jika pesan benar-benar baru (< 60 detik)
         // Jika sudah lebih dari 1 menit atau sudah terjawab, balon otomatis hilang agar tidak nyangkut terus
-        $latestCustomerText = ($latestCustomerMsg && $latestCustomerMsg->created_at && $latestCustomerMsg->created_at->diffInSeconds(now()) <= 60)
-            ? \Illuminate\Support\Str::limit($latestCustomerMsg->content, 35) 
-            : null;
-
-        $latestReportText = ($latestReportMsg && $latestReportMsg->created_at && $latestReportMsg->created_at->diffInSeconds(now()) <= 60)
-            ? \Illuminate\Support\Str::limit($latestReportMsg->content, 35) 
-            : null;
+        $latestCustomerText = $office['customerBubble'];
+        $latestReportText = $office['reportBubble'];
 
         $this->dispatch('ai-status-sync', 
             csStatus: $csStatus, 

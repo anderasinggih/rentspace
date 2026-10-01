@@ -1,4 +1,8 @@
 {
+  "_three.module-D2BEbsH5.js": {
+    "file": "assets/three.module-D2BEbsH5.js",
+    "name": "three.module"
+  },
   "resources/css/app.css": {
     "file": "assets/app-BFzqNMOz.css",
     "src": "resources/css/app.css",
@@ -13,5 +17,23 @@
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
+  },
+  "resources/js/office3d/boot.js": {
+    "file": "assets/boot-n7ACPNdu.js",
+    "name": "boot",
+    "src": "resources/js/office3d/boot.js",
+    "isEntry": true,
+    "imports": [
+      "_three.module-D2BEbsH5.js"
+    ]
+  },
+  "resources/js/three-office-runtime.js": {
+    "file": "assets/three-office-runtime-BuVu5wV_.js",
+    "name": "three-office-runtime",
+    "src": "resources/js/three-office-runtime.js",
+    "isEntry": true,
+    "imports": [
+      "_three.module-D2BEbsH5.js"
+    ]
   }
 }

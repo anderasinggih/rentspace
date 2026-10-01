@@ -38,8 +38,11 @@
     
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- Three.js + addon post-processing hanya dimuat di halaman yang benar-benar pakai scene 3D --}}
+    @if(request()->routeIs('admin.ai-monitor'))
+        @vite(['resources/js/three-office-runtime.js', 'resources/js/office3d/boot.js'])
+    @endif
     <style>
         [x-cloak] { display: none !important; }
         
