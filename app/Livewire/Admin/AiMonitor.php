@@ -197,16 +197,15 @@ class AiMonitor extends Component
             ->latest('id')
             ->first();
 
-        // CS Bot aktif bekerja jika ada pesan customer < 8 menit yang lalu, atau ada order 'work'
+        // Bot aktif bekerja di meja HANYA saat ada chat masuk aktual (< 2 menit), selebihnya santai istirahat di sofa
         $isCustomerActive = false;
         if ($latestCustomerMsg && $latestCustomerMsg->created_at) {
-            $isCustomerActive = $latestCustomerMsg->created_at->diffInMinutes(now()) <= 8;
+            $isCustomerActive = $latestCustomerMsg->created_at->diffInMinutes(now()) <= 2;
         }
 
-        // Report Bot aktif jika ada pesan report < 15 menit yang lalu
         $isReportActive = false;
         if ($latestReportMsg && $latestReportMsg->created_at) {
-            $isReportActive = $latestReportMsg->created_at->diffInMinutes(now()) <= 15;
+            $isReportActive = $latestReportMsg->created_at->diffInMinutes(now()) <= 2;
         }
 
         // Terapkan override dari aksi pentung / suruh paksa jika user baru saja klik
@@ -269,6 +268,7 @@ class AiMonitor extends Component
         $this->dispatch('ai-status-sync', 
             csStatus: $csStatus, 
             reportStatus: $reportStatus,
+            coreStatus: $coreStatus,
             customerBubble: $latestCustomerText,
             reportBubble: $latestReportText
         );

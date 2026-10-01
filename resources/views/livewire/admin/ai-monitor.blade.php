@@ -309,12 +309,18 @@
 
                 // Posisi koordinat penting di ruangan (Duduk pas di kursi ergonomis tanpa tembus meja)
                 spots: {
-                    dewiDesk: { x: -3.2, y: 0.44, z: 1.45, rotY: Math.PI },   // Duduk pas di kursi menghadap monitor ke arah -Z
-                    dewiLounge: { x: 5.0, y: 0.42, z: 1.4, rotY: 0.0 },       // Duduk santai di sofa
+                    dewiDesk: { x: -3.2, y: 0.44, z: 1.45, rotY: Math.PI },   // Duduk di meja kerja saat ada chat
+                    dewiLounge: { x: 4.2, y: 0.42, z: 1.4, rotY: 0.0 },       // Duduk santai di sofa sebelah kiri
                     dewiBed: { x: -10.5, y: 0.58, z: 1.3, rotY: Math.PI / 2 }, // Berbaring pas di kasur kamar yang mepet dinding
-                    singgihDesk: { x: -1.2, y: 0.44, z: 1.45, rotY: Math.PI }, // Duduk pas di kursi menghadap monitor ke arah -Z
-                    anderaDesk: { x: -2.2, y: 0.44, z: -1.25, rotY: 0.0 }     // Duduk pas di seberang menghadap monitor ke arah +Z
+                    singgihDesk: { x: -1.2, y: 0.44, z: 1.45, rotY: Math.PI }, // Duduk di meja kerja saat ada task core
+                    singgihLounge: { x: 5.0, y: 0.42, z: 1.4, rotY: 0.0 },     // Duduk santai di sofa tengah (sebelahan tanpa tembus)
+                    anderaDesk: { x: -2.2, y: 0.44, z: -1.25, rotY: 0.0 },     // Duduk di meja seberang saat buat report
+                    anderaLounge: { x: 5.8, y: 0.42, z: 1.4, rotY: 0.0 }       // Duduk santai di sofa sebelah kanan (sebelahan tanpa tembus)
                 },
+
+                // Status real-time masing-masing bot
+                currentSinggihStatus: 'break',
+                currentAnderaStatus: 'break',
 
                 // State transisi animasi jalan (NPC walking)
                 dewiWalk: {
@@ -555,6 +561,36 @@
                 // Trigger perpindahan jalan Dewi (Waypoint Navigation Anti-Tembus Dinding/Meja)
                 dewiWaypoints: [],
                 currentWaypointIdx: 0,
+
+                updateSinggihPosition(status) {
+                    this.currentSinggihStatus = status;
+                    if (!this.singgihGroup) return;
+                    if (status === 'working') {
+                        this.singgihGroup.position.set(this.spots.singgihDesk.x, this.spots.singgihDesk.y, this.spots.singgihDesk.z);
+                        this.singgihGroup.rotation.y = this.spots.singgihDesk.rotY;
+                        this.setMood('singgih', '⚙️ Core Processing AI');
+                    } else {
+                        // Duduk santai di sofa sebelah Dewi & Andera (x=5.0)
+                        this.singgihGroup.position.set(this.spots.singgihLounge.x, this.spots.singgihLounge.y, this.spots.singgihLounge.z);
+                        this.singgihGroup.rotation.y = this.spots.singgihLounge.rotY;
+                        this.setMood('singgih', '☕ Istirahat di Sofa');
+                    }
+                },
+
+                updateAnderaPosition(status) {
+                    this.currentAnderaStatus = status;
+                    if (!this.anderaGroup) return;
+                    if (status === 'working') {
+                        this.anderaGroup.position.set(this.spots.anderaDesk.x, this.spots.anderaDesk.y, this.spots.anderaDesk.z);
+                        this.anderaGroup.rotation.y = this.spots.anderaDesk.rotY;
+                        this.setMood('andera', '📊 Menyusun Laporan Keuangan');
+                    } else {
+                        // Duduk santai di sofa sebelah kanan (x=5.8)
+                        this.anderaGroup.position.set(this.spots.anderaLounge.x, this.spots.anderaLounge.y, this.spots.anderaLounge.z);
+                        this.anderaGroup.rotation.y = this.spots.anderaLounge.rotY;
+                        this.setMood('andera', '🍿 Nonton TV di Sofa');
+                    }
+                },
 
                 updateCsPosition(status) {
                     if (this.currentCsStatus === status && !this.dewiWalk.isMoving) return;
@@ -1916,14 +1952,16 @@
 
                     // SINGGIH (Core Dispatcher)
                     this.singgihGroup = this.buildMaleCharacter('Singgih', 'Core Dispatcher', 0x0d9488, 0x1e1b4b, '#2dd4bf', 'singgih');
-                    this.singgihGroup.position.set(this.spots.singgihDesk.x, this.spots.singgihDesk.y, this.spots.singgihDesk.z);
-                    this.singgihGroup.rotation.y = this.spots.singgihDesk.rotY;
+                    const initSinggihSpot = (this.currentSinggihStatus === 'working') ? this.spots.singgihDesk : this.spots.singgihLounge;
+                    this.singgihGroup.position.set(initSinggihSpot.x, initSinggihSpot.y, initSinggihSpot.z);
+                    this.singgihGroup.rotation.y = initSinggihSpot.rotY;
                     this.scene.add(this.singgihGroup);
 
                     // ANDERA (Report & Finance)
                     this.anderaGroup = this.buildMaleCharacter('Andera', 'Report & Finance', 0xd97706, 0x451a03, '#fbbf24', 'andera');
-                    this.anderaGroup.position.set(this.spots.anderaDesk.x, this.spots.anderaDesk.y, this.spots.anderaDesk.z);
-                    this.anderaGroup.rotation.y = this.spots.anderaDesk.rotY;
+                    const initAnderaSpot = (this.currentAnderaStatus === 'working') ? this.spots.anderaDesk : this.spots.anderaLounge;
+                    this.anderaGroup.position.set(initAnderaSpot.x, initAnderaSpot.y, initAnderaSpot.z);
+                    this.anderaGroup.rotation.y = initAnderaSpot.rotY;
                     this.scene.add(this.anderaGroup);
                 },
 
@@ -2149,29 +2187,53 @@
                         }
                     }
 
-                    // C. Animasi Singgih (Core Dispatcher mengetik & kaki masuk rapi ke bawah meja)
+                    // C. Animasi Singgih (Bekerja ngetik di meja ATAU duduk santai di sofa)
                     if (this.singgihGroup) {
                         const data = this.singgihGroup.userData;
-                        if (data && data.armL && data.armR) {
-                            data.armL.rotation.x = 0.52 + Math.cos(time * 11) * 0.14;
-                            data.armR.rotation.x = 0.52 + Math.sin(time * 11) * 0.14;
-                        }
-                        if (data && data.legL && data.legR) {
-                            data.legL.rotation.x = 1.25; // Masuk ke arah bawah meja
-                            data.legR.rotation.x = 1.25;
+                        if (this.currentSinggihStatus === 'working') {
+                            if (data && data.armL && data.armR) {
+                                data.armL.rotation.x = 0.52 + Math.cos(time * 11) * 0.14;
+                                data.armR.rotation.x = 0.52 + Math.sin(time * 11) * 0.14;
+                            }
+                            if (data && data.legL && data.legR) {
+                                data.legL.rotation.x = 1.25; // Masuk ke kolong meja
+                                data.legR.rotation.x = 1.25;
+                            }
+                        } else {
+                            // Duduk santai di sofa tengah
+                            if (data && data.armL && data.armR) {
+                                data.armL.rotation.x = 0.10 + Math.cos(time * 2) * 0.03;
+                                data.armR.rotation.x = 0.10 - Math.cos(time * 2) * 0.03;
+                            }
+                            if (data && data.legL && data.legR) {
+                                data.legL.rotation.x = -1.10; // Kaki selonjor nyaman di sofa
+                                data.legR.rotation.x = -1.10;
+                            }
                         }
                     }
 
-                    // D. Animasi Andera (Report Bot duduk di seberang hadap +Z, kaki masuk ke bawah meja)
+                    // D. Animasi Andera (Bekerja di meja seberang ATAU duduk santai di sofa kanan)
                     if (this.anderaGroup) {
                         const data = this.anderaGroup.userData;
-                        if (data && data.armL && data.armR) {
-                            data.armL.rotation.x = 0.50 + Math.sin(time * 8) * 0.14;
-                            data.armR.rotation.x = 0.50 + Math.cos(time * 8) * 0.14;
-                        }
-                        if (data && data.legL && data.legR) {
-                            data.legL.rotation.x = 1.25; // Masuk rapi ke bawah meja seberang
-                            data.legR.rotation.x = 1.25;
+                        if (this.currentAnderaStatus === 'working') {
+                            if (data && data.armL && data.armR) {
+                                data.armL.rotation.x = 0.50 + Math.sin(time * 8) * 0.14;
+                                data.armR.rotation.x = 0.50 + Math.cos(time * 8) * 0.14;
+                            }
+                            if (data && data.legL && data.legR) {
+                                data.legL.rotation.x = 1.25; // Masuk ke kolong meja seberang
+                                data.legR.rotation.x = 1.25;
+                            }
+                        } else {
+                            // Duduk santai di sofa kanan sambil nonton TV
+                            if (data && data.armL && data.armR) {
+                                data.armL.rotation.x = 0.15 + Math.sin(time * 2.2) * 0.04;
+                                data.armR.rotation.x = 0.15 - Math.sin(time * 2.2) * 0.04;
+                            }
+                            if (data && data.legL && data.legR) {
+                                data.legL.rotation.x = -1.10; // Kaki selonjor nyaman di sofa
+                                data.legR.rotation.x = -1.10;
+                            }
                         }
                     }
 
@@ -2187,7 +2249,9 @@
                  init() {
                      window._threeOfficeAlpine = this;
                      this.$nextTick(() => {
-                         window._threeOfficeApp.init(this.$refs.canvasContainer, @js($csStatus));
+                         window._threeOfficeApp.currentSinggihStatus = @js($coreStatus);
+                          window._threeOfficeApp.currentAnderaStatus = @js($reportStatus);
+                          window._threeOfficeApp.init(this.$refs.canvasContainer, @js($csStatus));
                          @if(!empty($latestCustomerText))
                              window._threeOfficeApp.updateLiveBubble('dewi', @js($latestCustomerText));
                          @endif
@@ -2197,16 +2261,27 @@
                      });
                  },
                  syncStatus(detail) {
-                     if (detail.customerBubble) {
-                         window._threeOfficeApp.updateCsPosition('working');
-                         window._threeOfficeApp.updateLiveBubble('dewi', detail.customerBubble);
-                     } else {
-                         window._threeOfficeApp.updateCsPosition(detail.csStatus);
-                     }
-                     if (detail.reportBubble) {
-                         window._threeOfficeApp.updateLiveBubble('andera', detail.reportBubble);
-                     }
-                 }
+                      // Dewi: Bekerja di meja saat ada chat masuk (customerBubble / working), jika tidak ada kerjaan maka istirahat di sofa
+                      if (detail.customerBubble || detail.csStatus === 'working') {
+                          window._threeOfficeApp.updateCsPosition('working');
+                          if (detail.customerBubble) window._threeOfficeApp.updateLiveBubble('dewi', detail.customerBubble);
+                      } else {
+                          window._threeOfficeApp.updateCsPosition(detail.csStatus);
+                      }
+
+                      // Singgih (Core Dispatcher): Istirahat di sofa jika tidak ada aktivitas core
+                      if (detail.coreStatus) {
+                          window._threeOfficeApp.updateSinggihPosition(detail.coreStatus);
+                      }
+
+                      // Andera (Report & Finance): Bekerja di meja saat ada report, santai di sofa jika tidak ada
+                      if (detail.reportBubble || detail.reportStatus === 'working') {
+                          window._threeOfficeApp.updateAnderaPosition('working');
+                          if (detail.reportBubble) window._threeOfficeApp.updateLiveBubble('andera', detail.reportBubble);
+                      } else {
+                          window._threeOfficeApp.updateAnderaPosition(detail.reportStatus || 'break');
+                      }
+                  }
              }" 
              @ai-status-sync.window="syncStatus($event.detail)"
              wire:ignore>
