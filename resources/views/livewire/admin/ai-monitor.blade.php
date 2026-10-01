@@ -152,31 +152,8 @@
         @endif
 
         <!-- 3D Canvas Viewport (Diperluas: height 440px dengan full width) -->
-        <div class="relative w-full h-[400px] sm:h-[460px] bg-[#0e1412] overflow-hidden" 
-             x-data="threeOffice({ csStatus: @js($csStatus), reportStatus: @js($reportStatus), bonk: @js($bonkedAgent) })" 
-             x-init="init()"
-             @ai-status-sync.window="updateCsPosition($event.detail.csStatus)"
-             wire:ignore>
-            
-            <div x-ref="canvasContainer" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
-
-            <!-- Clean Floating HUD Overlay -->
-            <div class="absolute bottom-3 left-4 pointer-events-none flex items-center gap-2 text-[11px] font-mono text-zinc-400/80 bg-zinc-950/70 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-xs">
-                <span class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Meja Kerja (CS Bot & Server)</span>
-                </span>
-                <span>•</span>
-                <span>Lounge Sofa (Break Area)</span>
-                <span>•</span>
-                <span class="text-zinc-500 hidden sm:inline">Geser mouse untuk putar sudut 3D</span>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        (function() {
-            function createThreeOfficeData(config) {
+        <script>
+            window.threeOffice = function(config) {
                 return {
                     scene: null,
                     camera: null,
@@ -194,120 +171,143 @@
                     currentReportStatus: config.reportStatus || 'break',
 
                     init() {
-                        const container = this.$refs.canvasContainer;
-                        if (!container) return;
+                        const setup = () => {
+                            const container = this.$refs.canvasContainer;
+                            if (!container) return;
 
-                        // Pastikan container bersih jika ada re-init
-                        container.innerHTML = '';
+                            if (typeof THREE === 'undefined') {
+                                setTimeout(setup, 80);
+                                return;
+                            }
 
-                        const width = container.clientWidth || 900;
-                        const height = container.clientHeight || 460;
+                            // Dapatkan dimensi kontainer atau hitung fallback terukur
+                            let width = container.clientWidth || container.offsetWidth;
+                            let height = container.clientHeight || container.offsetHeight;
 
-                        if (typeof THREE === 'undefined') {
-                            console.error('Three.js belum termuat');
-                            return;
-                        }
+                            if (!width || !height) {
+                                const rect = container.getBoundingClientRect();
+                                width = rect.width || 900;
+                                height = rect.height || 460;
+                            }
 
-                        this.clock = new THREE.Clock();
+                            if (width < 50 || height < 50) {
+                                setTimeout(setup, 80);
+                                return;
+                            }
 
-                        // 1. Scene
-                        this.scene = new THREE.Scene();
-                        this.scene.background = new THREE.Color(0x0e1412);
-                        this.scene.fog = new THREE.Fog(0x0e1412, 22, 45);
+                            // Bersihkan canvas lama jika ada
+                            container.innerHTML = '';
 
-                        // 2. Camera: Isometric Perspective (sudut diagonal elegan ala game sim/Ruang)
-                        const aspect = width / height;
-                        this.camera = new THREE.PerspectiveCamera(38, aspect, 0.1, 100);
-                        this.updateCameraPos();
+                            this.clock = new THREE.Clock();
 
-                        // 3. Renderer
-                        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-                        this.renderer.setSize(width, height);
-                        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-                        this.renderer.shadowMap.enabled = true;
-                        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                        container.appendChild(this.renderer.domElement);
+                            // 1. Scene
+                            this.scene = new THREE.Scene();
+                            this.scene.background = new THREE.Color(0x0e1412);
+                            this.scene.fog = new THREE.Fog(0x0e1412, 22, 45);
 
-                        // 4. Lights
-                        const ambient = new THREE.AmbientLight(0xffffff, 0.9);
-                        this.scene.add(ambient);
-
-                        const mainLight = new THREE.DirectionalLight(0xfffaf0, 1.3);
-                        mainLight.position.set(12, 18, 14);
-                        mainLight.castShadow = true;
-                        mainLight.shadow.mapSize.width = 1024;
-                        mainLight.shadow.mapSize.height = 1024;
-                        mainLight.shadow.camera.near = 0.5;
-                        mainLight.shadow.camera.far = 40;
-                        mainLight.shadow.bias = -0.001;
-                        this.scene.add(mainLight);
-
-                        // Ambient cyber/neon glow
-                        const cyanGlow = new THREE.PointLight(0x06b6d4, 1.2, 14);
-                        cyanGlow.position.set(-3, 3.5, 2);
-                        this.scene.add(cyanGlow);
-
-                        const warmLoungeLight = new THREE.PointLight(0xf59e0b, 0.8, 12);
-                        warmLoungeLight.position.set(4, 3, 1);
-                        this.scene.add(warmLoungeLight);
-
-                        // 5. Build Room Props & Isometric Environment
-                        this.buildRoom();
-
-                        // 6. Mouse & Touch Orbit Drag
-                        const dom = this.renderer.domElement;
-                        dom.addEventListener('mousedown', (e) => {
-                            this.isDragging = true;
-                            this.prevMouse = { x: e.clientX, y: e.clientY };
-                        });
-                        window.addEventListener('mouseup', () => { this.isDragging = false; });
-                        window.addEventListener('mousemove', (e) => {
-                            if (!this.isDragging) return;
-                            const dx = e.clientX - this.prevMouse.x;
-                            const dy = e.clientY - this.prevMouse.y;
-                            this.rotY -= dx * 0.006;
-                            this.rotX = Math.max(0.18, Math.min(0.75, this.rotX + dy * 0.004));
-                            this.prevMouse = { x: e.clientX, y: e.clientY };
+                            // 2. Camera: Isometric Perspective
+                            const aspect = width / height;
+                            this.camera = new THREE.PerspectiveCamera(38, aspect, 0.1, 100);
                             this.updateCameraPos();
-                        });
 
-                        // Touch support for mobile
-                        dom.addEventListener('touchstart', (e) => {
-                            if (e.touches.length === 1) {
+                            // 3. Renderer
+                            this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+                            this.renderer.setSize(width, height);
+                            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+                            this.renderer.shadowMap.enabled = true;
+                            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                            container.appendChild(this.renderer.domElement);
+
+                            // 4. Lights
+                            const ambient = new THREE.AmbientLight(0xffffff, 0.95);
+                            this.scene.add(ambient);
+
+                            const mainLight = new THREE.DirectionalLight(0xfffaf0, 1.4);
+                            mainLight.position.set(12, 18, 14);
+                            mainLight.castShadow = true;
+                            mainLight.shadow.mapSize.width = 1024;
+                            mainLight.shadow.mapSize.height = 1024;
+                            mainLight.shadow.camera.near = 0.5;
+                            mainLight.shadow.camera.far = 40;
+                            mainLight.shadow.bias = -0.001;
+                            this.scene.add(mainLight);
+
+                            // Ambient cyber/neon glow
+                            const cyanGlow = new THREE.PointLight(0x06b6d4, 1.5, 14);
+                            cyanGlow.position.set(-3, 3.5, 2);
+                            this.scene.add(cyanGlow);
+
+                            const warmLoungeLight = new THREE.PointLight(0xf59e0b, 1.0, 12);
+                            warmLoungeLight.position.set(4, 3, 1);
+                            this.scene.add(warmLoungeLight);
+
+                            // 5. Build Room Props & Isometric Environment
+                            this.buildRoom();
+
+                            // Render frame pertama langsung agar tidak ada lag
+                            this.renderer.render(this.scene, this.camera);
+
+                            // 6. Mouse & Touch Orbit Drag
+                            const dom = this.renderer.domElement;
+                            dom.addEventListener('mousedown', (e) => {
                                 this.isDragging = true;
+                                this.prevMouse = { x: e.clientX, y: e.clientY };
+                            });
+                            window.addEventListener('mouseup', () => { this.isDragging = false; });
+                            window.addEventListener('mousemove', (e) => {
+                                if (!this.isDragging) return;
+                                const dx = e.clientX - this.prevMouse.x;
+                                const dy = e.clientY - this.prevMouse.y;
+                                this.rotY -= dx * 0.006;
+                                this.rotX = Math.max(0.18, Math.min(0.75, this.rotX + dy * 0.004));
+                                this.prevMouse = { x: e.clientX, y: e.clientY };
+                                this.updateCameraPos();
+                            });
+
+                            // Touch support for mobile
+                            dom.addEventListener('touchstart', (e) => {
+                                if (e.touches.length === 1) {
+                                    this.isDragging = true;
+                                    this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                                }
+                            }, { passive: true });
+                            window.addEventListener('touchend', () => { this.isDragging = false; });
+                            window.addEventListener('touchmove', (e) => {
+                                if (!this.isDragging || e.touches.length !== 1) return;
+                                const dx = e.touches[0].clientX - this.prevMouse.x;
+                                const dy = e.touches[0].clientY - this.prevMouse.y;
+                                this.rotY -= dx * 0.007;
+                                this.rotX = Math.max(0.18, Math.min(0.75, this.rotX + dy * 0.005));
                                 this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                            }
-                        }, { passive: true });
-                        window.addEventListener('touchend', () => { this.isDragging = false; });
-                        window.addEventListener('touchmove', (e) => {
-                            if (!this.isDragging || e.touches.length !== 1) return;
-                            const dx = e.touches[0].clientX - this.prevMouse.x;
-                            const dy = e.touches[0].clientY - this.prevMouse.y;
-                            this.rotY -= dx * 0.007;
-                            this.rotX = Math.max(0.18, Math.min(0.75, this.rotX + dy * 0.005));
-                            this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                            this.updateCameraPos();
-                        }, { passive: true });
+                                this.updateCameraPos();
+                            }, { passive: true });
 
-                        // Resize Listener
-                        window.addEventListener('resize', () => {
-                            if (!container || !this.camera || !this.renderer) return;
-                            const w = container.clientWidth;
-                            const h = container.clientHeight;
-                            if (w === 0 || h === 0) return;
-                            this.camera.aspect = w / h;
-                            this.camera.updateProjectionMatrix();
-                            this.renderer.setSize(w, h);
-                        });
+                            // Resize Listener
+                            window.addEventListener('resize', () => {
+                                if (!container || !this.camera || !this.renderer) return;
+                                const w = container.clientWidth;
+                                const h = container.clientHeight;
+                                if (w === 0 || h === 0) return;
+                                this.camera.aspect = w / h;
+                                this.camera.updateProjectionMatrix();
+                                this.renderer.setSize(w, h);
+                            });
 
-                        // Watch Livewire status updates via global event or Alpine watch
-                        window.addEventListener('ai-status-sync', (e) => {
-                            if (e.detail && e.detail.csStatus) {
-                                this.updateCsPosition(e.detail.csStatus);
-                            }
-                        });
+                            // Watch Livewire status updates via global event
+                            window.addEventListener('ai-status-sync', (e) => {
+                                if (e.detail && e.detail.csStatus) {
+                                    this.updateCsPosition(e.detail.csStatus);
+                                }
+                            });
 
-                        this.animate();
+                            this.animate();
+                        };
+
+                        if (this.$nextTick) {
+                            this.$nextTick(() => setup());
+                        } else {
+                            setTimeout(setup, 50);
+                        }
                     },
 
                     updateCameraPos() {
@@ -323,18 +323,16 @@
                         if (!this.csGroup) return;
 
                         if (status === 'working') {
-                            // Duduk di kursi Meja 1 (menghadap komputer dan layar)
                             this.csGroup.position.set(-3.8, 0.55, -0.2);
-                            this.csGroup.rotation.y = 0; // Menghadap ke arah +Z (layar monitor & keyboard)
+                            this.csGroup.rotation.y = 0;
                         } else {
-                            // Duduk santai di Sofa Lounge
                             this.csGroup.position.set(3.6, 0.45, -0.1);
                             this.csGroup.rotation.y = -0.4;
                         }
                     },
 
                     buildRoom() {
-                        // Floor (Isometric Grid Plane dengan warna aesthetic dark studio)
+                        // Floor
                         const floorGeo = new THREE.PlaneGeometry(18, 12);
                         const floorMat = new THREE.MeshStandardMaterial({ color: 0x161e1b, roughness: 0.85 });
                         const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -355,42 +353,36 @@
                         wall.receiveShadow = true;
                         this.scene.add(wall);
 
-                        // Wall neon signage Rent Space AI
+                        // Neon Sign
                         const signMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
                         const sign = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.25, 0.05), signMat);
                         sign.position.set(-3.8, 3.8, -4.28);
                         this.scene.add(sign);
 
-                        // Server Rack (Background Left)
+                        // Server Rack
                         this.buildServerRack(-7, 0, -3.8);
 
-                        // Indoor Plant / Dekorasi
+                        // Plants
                         this.buildPlant(-6.8, 0, 1.5);
                         this.buildPlant(6.8, 0, -3.8);
 
-                        // WORK AREA (Kiri): Work Desk Lengkap dengan PC, Monitor, Keyboard, Mouse, Lampu
-                        // Meja CS Bot
+                        // Work Desks
                         this.buildWorkDesk(-3.8, 0, 0.8);
-
-                        // Meja Core Bot / Server Engine
                         this.buildWorkDesk(-1.0, 0, 0.8);
 
-                        // LOUNGE AREA (Kanan): Sofa & Coffee Table
+                        // Lounge
                         this.buildLounge(4.2, 0, 0);
 
-                        // CHARACTERS:
-                        // 1. CS Bot:
+                        // Characters
                         this.csGroup = this.buildCharacter(0x0284c7, 0x1e1b4b);
                         this.updateCsPosition(this.currentCsStatus);
                         this.scene.add(this.csGroup);
 
-                        // 2. Core Bot: Selalu aktif di Meja 2
                         this.coreGroup = this.buildCharacter(0x059669, 0x78350f);
                         this.coreGroup.position.set(-1.0, 0.55, -0.2);
                         this.coreGroup.rotation.y = 0;
                         this.scene.add(this.coreGroup);
 
-                        // 3. Report Bot: Duduk santai di sofa sisi kanan
                         this.reportGroup = this.buildCharacter(0xd97706, 0x312e81);
                         this.reportGroup.position.set(4.8, 0.45, -0.1);
                         this.reportGroup.rotation.y = -0.5;
@@ -401,7 +393,7 @@
                         const group = new THREE.Group();
                         group.position.set(x, y, z);
 
-                        // Top Table (Modern Dark Oak Wood)
+                        // Top Table
                         const topGeo = new THREE.BoxGeometry(2.2, 0.1, 1.2);
                         const topMat = new THREE.MeshStandardMaterial({ color: 0x3d2716, roughness: 0.6 });
                         const top = new THREE.Mesh(topGeo, topMat);
@@ -410,7 +402,7 @@
                         top.receiveShadow = true;
                         group.add(top);
 
-                        // Legs (Matte Charcoal Metal)
+                        // Legs
                         const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.6, roughness: 0.4 });
                         const legGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.95, 8);
                         [[-0.98, -0.48], [0.98, -0.48], [-0.98, 0.48], [0.98, 0.48]].forEach(([lx, lz]) => {
@@ -420,15 +412,14 @@
                             group.add(leg);
                         });
 
-                        // Desk Pad / Mousepad Besar
+                        // Desk Pad
                         const padGeo = new THREE.BoxGeometry(1.6, 0.015, 0.7);
                         const padMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9 });
                         const pad = new THREE.Mesh(padGeo, padMat);
                         pad.position.set(0, 1.01, 0.05);
                         group.add(pad);
 
-                        // 🖥️ PC MONITOR 1 (Layar Utama yang Menghadap ke Kursi/Pengguna)
-                        // Posisi monitor di tepi belakang meja (z = 0.35), layar menghadap ke arah kursi (arah -Z)
+                        // Monitor Frame
                         const screenGeo = new THREE.BoxGeometry(1.05, 0.62, 0.04);
                         const screenFrameMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.3 });
                         const screenFrame = new THREE.Mesh(screenGeo, screenFrameMat);
@@ -436,21 +427,20 @@
                         screenFrame.castShadow = true;
                         group.add(screenFrame);
 
-                        // Glowing Display Screen (Menghadap Kursi: z = 0.32)
+                        // Display Screen (Glow)
                         const displayGeo = new THREE.PlaneGeometry(0.98, 0.54);
                         const displayMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
                         const display = new THREE.Mesh(displayGeo, displayMat);
                         display.position.set(0, 1.48, 0.328);
-                        display.rotation.y = Math.PI; // Menghadap ke arah -Z (ke hadapan karakter duduk)
+                        display.rotation.y = Math.PI;
                         group.add(display);
                         this.screenMeshes.push(display);
 
-                        // Monitor Back Screen Glow (Juga terlihat dari kamera isometric belakang)
                         const backDisplay = new THREE.Mesh(displayGeo, new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
                         backDisplay.position.set(0, 1.48, 0.372);
                         group.add(backDisplay);
 
-                        // Monitor Stand
+                        // Stand
                         const standGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.4, 8);
                         const stand = new THREE.Mesh(standGeo, screenFrameMat);
                         stand.position.set(0, 1.15, 0.35);
@@ -461,7 +451,7 @@
                         standBase.position.set(0, 1.02, 0.35);
                         group.add(standBase);
 
-                        // 🖥️ PC TOWER CASE (Casing CPU Gaming di samping meja)
+                        // PC Tower Case
                         const pcCaseGeo = new THREE.BoxGeometry(0.28, 0.55, 0.5);
                         const pcCaseMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.3, metalness: 0.5 });
                         const pcCase = new THREE.Mesh(pcCaseGeo, pcCaseMat);
@@ -469,12 +459,11 @@
                         pcCase.castShadow = true;
                         group.add(pcCase);
 
-                        // RGB Fan Light di depan PC Case
                         const rgbFan = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), new THREE.MeshBasicMaterial({ color: 0x10b981 }));
                         rgbFan.position.set(0.85, 1.28, -0.01);
                         group.add(rgbFan);
 
-                        // ⌨️ KEYBOARD & MOUSE (Di atas meja depan layar)
+                        // Keyboard & Mouse
                         const kbGeo = new THREE.BoxGeometry(0.65, 0.03, 0.2);
                         const kbMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.8 });
                         const kb = new THREE.Mesh(kbGeo, kbMat);
@@ -486,7 +475,7 @@
                         mouse.position.set(0.48, 1.03, 0.05);
                         group.add(mouse);
 
-                        // 🪑 ERGONOMIC OFFICE CHAIR (Di hadapan meja: z = -0.3)
+                        // Chair
                         const chairGeo = new THREE.BoxGeometry(0.58, 0.08, 0.58);
                         const chairMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9 });
                         const chairSeat = new THREE.Mesh(chairGeo, chairMat);
@@ -511,7 +500,6 @@
                         const group = new THREE.Group();
                         group.position.set(x, y, z);
 
-                        // Modern Deep Teal / Navy Sofa
                         const sofaMat = new THREE.MeshStandardMaterial({ color: 0x1e3a5f, roughness: 0.85 });
                         const seatBase = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.45, 1.2), sofaMat);
                         seatBase.position.set(0, 0.35, 0);
@@ -523,7 +511,6 @@
                         seatBack.castShadow = true;
                         group.add(seatBack);
 
-                        // Armrests
                         const armL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.6, 1.2), sofaMat);
                         armL.position.set(-1.5, 0.55, 0);
                         group.add(armL);
@@ -532,14 +519,12 @@
                         armR.position.set(1.5, 0.55, 0);
                         group.add(armR);
 
-                        // Coffee Table
                         const tableMat = new THREE.MeshStandardMaterial({ color: 0x5c3d2e, roughness: 0.7 });
                         const table = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.35, 0.8), tableMat);
                         table.position.set(0, 0.2, 1.3);
                         table.castShadow = true;
                         group.add(table);
 
-                        // Coffee Mug
                         const cupMat = new THREE.MeshStandardMaterial({ color: 0xf3f4f6 });
                         const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.12, 12), cupMat);
                         cup.position.set(0.25, 0.43, 1.3);
@@ -552,13 +537,11 @@
                         const plantGroup = new THREE.Group();
                         plantGroup.position.set(x, y, z);
 
-                        // Pot
                         const potMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.9 });
                         const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.5, 12), potMat);
                         pot.position.y = 0.25;
                         plantGroup.add(pot);
 
-                        // Leaves
                         const leafMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.7 });
                         for (let i = 0; i < 5; i++) {
                             const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), leafMat);
@@ -577,7 +560,6 @@
                         rack.castShadow = true;
                         this.scene.add(rack);
 
-                        // LEDs
                         const ledMat1 = new THREE.MeshBasicMaterial({ color: 0x10b981 });
                         const ledMat2 = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
                         for (let i = 0; i < 5; i++) {
@@ -618,7 +600,7 @@
                         char.add(eyeL);
                         char.add(eyeR);
 
-                        // Torso (Shirt)
+                        // Torso
                         const torsoGeo = new THREE.BoxGeometry(0.42, 0.44, 0.28);
                         const shirtMat = new THREE.MeshStandardMaterial({ color: shirtColor });
                         const torso = new THREE.Mesh(torsoGeo, shirtMat);
@@ -648,7 +630,6 @@
 
                         const time = this.clock ? this.clock.getElapsedTime() : 0;
 
-                        // Subtle typing / breathing animation
                         if (this.csGroup && this.currentCsStatus === 'working') {
                             const data = this.csGroup.userData;
                             if (data && data.armL && data.armR) {
@@ -666,7 +647,6 @@
                             }
                         }
 
-                        // Screen glow pulse
                         this.screenMeshes.forEach((mesh, idx) => {
                             const intensity = 0.85 + Math.sin(time * 4 + idx) * 0.15;
                             mesh.material.color.setRGB(0.22 * intensity, 0.74 * intensity, 0.97 * intensity);
@@ -675,25 +655,41 @@
                         this.renderer.render(this.scene, this.camera);
                     }
                 };
-            }
-
-            // Expose globally so Alpine component can always call it
-            window.threeOffice = createThreeOfficeData;
+            };
 
             // Register ke Alpine.data
-            function registerAlpine() {
-                if (window.Alpine && window.Alpine.data) {
-                    window.Alpine.data('threeOffice', createThreeOfficeData);
-                }
-            }
-
-            if (window.Alpine) {
-                registerAlpine();
+            if (window.Alpine && window.Alpine.data) {
+                window.Alpine.data('threeOffice', window.threeOffice);
             } else {
-                document.addEventListener('alpine:init', registerAlpine);
+                document.addEventListener('alpine:init', () => {
+                    if (window.Alpine && window.Alpine.data) {
+                        window.Alpine.data('threeOffice', window.threeOffice);
+                    }
+                });
             }
-        })();
-    </script>
+        </script>
+
+        <div class="relative w-full h-[400px] sm:h-[460px] bg-[#0e1412] overflow-hidden" 
+             x-data="threeOffice({ csStatus: @js($csStatus), reportStatus: @js($reportStatus), bonk: @js($bonkedAgent) })" 
+             x-init="init()"
+             @ai-status-sync.window="updateCsPosition($event.detail.csStatus)"
+             wire:ignore>
+            
+            <div x-ref="canvasContainer" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+            <!-- Clean Floating HUD Overlay -->
+            <div class="absolute bottom-3 left-4 pointer-events-none flex items-center gap-2 text-[11px] font-mono text-zinc-400/80 bg-zinc-950/70 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-xs">
+                <span class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Meja Kerja (CS Bot & Server)</span>
+                </span>
+                <span>•</span>
+                <span>Lounge Sofa (Break Area)</span>
+                <span>•</span>
+                <span class="text-zinc-500 hidden sm:inline">Geser mouse untuk putar sudut 3D</span>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Workspace: Split Screen (Left: Sessions List, Right: Chat Transcript / Test Sandbox) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
