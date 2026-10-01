@@ -613,12 +613,12 @@
 
                 <div class="flex flex-col sm:flex-row items-center gap-3 pt-4">
                     <button type="button" @click="step = 2; window.scrollTo({top: 0, behavior: 'smooth'})"
-                        class="w-full sm:w-auto order-2 sm:order-1 inline-flex items-center justify-center rounded-full border border-border bg-card px-6 h-11 text-xs sm:text-sm font-semibold text-muted-foreground hover:bg-muted active:scale-95 transition-all">
+                        class="w-full sm:w-auto order-2 sm:order-1 inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 h-12 text-sm font-bold text-muted-foreground hover:bg-muted active:scale-95 transition-all">
                         ← Kembali Perbaiki Data
                     </button>
 
                     <button type="submit" wire:loading.attr="disabled"
-                        class="w-full flex-1 order-1 sm:order-2 inline-flex items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 min-h-[52px] sm:min-h-[56px] py-3.5 px-8 font-extrabold text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed active:scale-98 transition-all">
+                        class="w-full sm:flex-1 order-1 sm:order-2 inline-flex items-center justify-center rounded-xl bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-8 font-extrabold text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 transition-all">
                         <span wire:loading.remove wire:target="submit" class="flex items-center gap-2">
                             <span>Sewa & Lanjut Pembayaran</span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -626,7 +626,7 @@
                             </svg>
                         </span>
                         <div wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
-                            <span class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
+                            <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
                             <span>Memproses Pesanan...</span>
                         </div>
                     </button>
@@ -636,15 +636,9 @@
             </form>
 
     <!-- Sticky Summary & Navigation Bar (Mobile) -->
-    <div x-cloak x-show="step < 3 && selectedIds && selectedIds.length > 0" 
+    <div x-cloak x-show="step < 3 && ((selectedIds && selectedIds.length > 0) || ($wire.selected_unit_ids && $wire.selected_unit_ids.length > 0))" 
         wire:key="sticky-booking-summary"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="translate-y-full"
-        x-transition:enter-end="translate-y-0"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="translate-y-0"
-        x-transition:leave-end="translate-y-full"
-        class="fixed bottom-0 left-0 right-0 z-[60] sm:hidden">
+        class="fixed bottom-0 left-0 right-0 z-[99] sm:hidden">
         
         <!-- Backdrop/Overlay -->
         <div x-show="summaryExpanded" 
@@ -782,11 +776,11 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <button type="button" x-show="step === 2" @click="step = 1; window.scrollTo({top: 0, behavior: 'smooth'})" 
-                        class="px-6 h-10 border border-border rounded-full font-bold text-muted-foreground hover:bg-muted text-xs sm:text-sm transition-all active:scale-95">
+                        class="px-6 h-11 border border-border rounded-xl font-bold text-muted-foreground hover:bg-muted text-sm transition-all active:scale-95">
                         ← Kembali
                     </button>
                     <button type="button" @click="nextStep()" 
-                        class="bg-primary text-primary-foreground font-bold px-8 h-10 rounded-full shadow hover:bg-primary/90 text-xs sm:text-sm transition-all active:scale-95">
+                        class="bg-primary text-primary-foreground font-bold px-8 h-11 rounded-xl shadow hover:bg-primary/90 text-sm transition-all active:scale-95">
                         Lanjut →
                     </button>
                 </div>
