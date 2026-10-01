@@ -66,12 +66,23 @@ export class NavGrid {
 
     /* ---------------- grid maths ---------------- */
 
+    /**
+     * Which cell a world coordinate falls inside.
+     *
+     * This is a span lookup, not a nearest-centre one: cell `c` occupies
+     * [xOf(c), xOf(c) + cell). Rounding instead sent the *centre* of a cell
+     * to the next index, biasing every point lookup half a cell east. That
+     * used to cancel out because _fillRect rounded both ends the same way,
+     * but with _span doing true overlap the two disagreed, and bodies
+     * standing in a widened doorway came out "inside a wall" while the
+     * pixels showed them in the clear.
+     */
     colOf(x) {
-        return clamp(Math.round((x - this.minX) / this.cell), 0, this.cols - 1);
+        return clamp(Math.floor((x - this.minX) / this.cell), 0, this.cols - 1);
     }
 
     rowOf(z) {
-        return clamp(Math.round((z - this.minZ) / this.cell), 0, this.rows - 1);
+        return clamp(Math.floor((z - this.minZ) / this.cell), 0, this.rows - 1);
     }
 
     xOf(col) {
@@ -128,9 +139,10 @@ export class NavGrid {
 
         // then re-open the door gaps that inflation may have pinched shut.
         // Each of these is a real opening in the plan; if a body fits
-        // through it, the grid has to agree.
+        // through it, the grid has to agree — which for a partition means
+        // cutting the structural layer too, not just the furniture one.
         for (const gap of DOORWAYS) {
-            this._clearRect(gap.x0, gap.z0, gap.x1, gap.z1, gap.margin);
+            this._clearRect(gap.x0, gap.z0, gap.x1, gap.z1, gap.margin, true);
         }
 
         // built-in seats, each with the side it is entered from

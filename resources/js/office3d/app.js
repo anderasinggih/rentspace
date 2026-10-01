@@ -291,10 +291,11 @@ export class OfficeApp {
                 b.sprite.visible = false;
                 b.until = 0;
             }
-            const pose = a.controller.pose;
-            b.sprite.position.y = pose === 'sleep' ? 0.95 : 2.28;
-            // walking with a bubble in the way reads as a glitch
-            b.sprite.visible = b.sprite.visible && pose !== 'walk';
+            // A sleeping body is low to the floor, so its bubble comes down
+            // with it. Walking deliberately does *not* hide it: the bubble is
+            // the chat itself, and it matters most during the walk to the
+            // desk that the chat just sent them to.
+            b.sprite.position.y = a.controller.pose === 'sleep' ? 0.95 : 2.28;
         }
     }
 }
