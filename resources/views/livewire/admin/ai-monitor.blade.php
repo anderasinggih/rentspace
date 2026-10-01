@@ -268,7 +268,7 @@
                         this.rotY = 0.45;
                         this.rotX = 0.32;
                         this.cameraRadius = 9.5;
-                        this.targetLookAt = { x: -9.5, y: 1.0, z: 2.5 };
+                        this.targetLookAt = { x: -8.4, y: 1.2, z: 1.4 };
                     } else if (viewName === 'dewi_pov') {
                         // TRUE FIRST-PERSON POV: Kamera terpasang di depan muka Dewi menghadap ke depan meja!
                         this.isPovMode = true;
@@ -311,7 +311,7 @@
                 spots: {
                     dewiDesk: { x: -3.2, y: 0.44, z: 1.45, rotY: Math.PI },   // Duduk pas di kursi menghadap monitor ke arah -Z
                     dewiLounge: { x: 5.0, y: 0.42, z: 1.4, rotY: 0.0 },       // Duduk santai di sofa
-                    dewiBed: { x: -9.7, y: 0.58, z: 2.5, rotY: Math.PI / 2 }, // Berbaring di kasur kamar tidur AI
+                    dewiBed: { x: -9.0, y: 0.58, z: 1.4, rotY: Math.PI / 2 }, // Berbaring di kasur kamar tidur AI
                     singgihDesk: { x: -1.2, y: 0.44, z: 1.45, rotY: Math.PI }, // Duduk pas di kursi menghadap monitor ke arah -Z
                     anderaDesk: { x: -2.2, y: 0.44, z: -1.25, rotY: 0.0 }     // Duduk pas di seberang menghadap monitor ke arah +Z
                 },
@@ -575,9 +575,10 @@
                     this.dewiWaypoints = [];
 
                     if (status === 'sleeping') {
-                        // Menuju kamar: Keluar lorong depan (z=2.8) -> geser koridor (x=-8.5) -> masuk kasur
-                        this.dewiWaypoints.push({ x: curX, z: 2.8 });
-                        this.dewiWaypoints.push({ x: -8.5, z: 2.8 });
+                        // Menuju kamar: Lewat lorong (z=3.8) -> belok ke depan pintu kamar (x=-6.8, z=4.8) -> masuk ke kasur
+                        this.dewiWaypoints.push({ x: curX, z: 3.8 });
+                        this.dewiWaypoints.push({ x: -6.8, z: 4.8 });
+                        this.dewiWaypoints.push({ x: -9.0, z: 2.8 });
                         this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     } else if (status === 'working') {
                         // Menuju meja: Ke lorong depan -> sejajar kursi dewi -> maju ke kursi
@@ -1341,95 +1342,140 @@
                     }
                 },
 
-                                // 8. Ruang Kamar Tidur Tertutup AI (Private Rest Bedroom & Charging Sanctuary)
+                                // 8. Ruang Kamar Tidur AI Luas & Rapat Sempurna (Private Rest Bedroom Suite)
+                bedroomDoorPivot: null,
+                targetDoorAngle: 0, // 0 = Tertutup rapat, -Math.PI / 2 = Terbuka lebar
+
                 buildBedroom(x, y, z) {
                     const bedGroup = new THREE.Group();
                     bedGroup.position.set(x, y, z);
 
-                    // Dinding Partisi Kamar Tidur: Memisahkan kamar dari kantor utama
                     const wallMat = new THREE.MeshStandardMaterial({ color: 0x2b2724, roughness: 0.9 });
                     
-                    // Dinding Depan Kamar (dengan bukaan pintu masuk)
-                    const frontWallA = new THREE.Mesh(new THREE.BoxGeometry(2.4, 4.8, 0.3), wallMat);
-                    frontWallA.position.set(-1.6, 2.4, 2.2);
-                    bedGroup.add(frontWallA);
+                    // A. Dinding Belakang Kamar (Full tinggi 5.2m menutup rapat ke dinding luar, tidak ada bolongan ke server rack!)
+                    const backWall = new THREE.Mesh(new THREE.BoxGeometry(6.4, 5.2, 0.4), wallMat);
+                    backWall.position.set(0, 2.6, -3.2);
+                    bedGroup.add(backWall);
 
-                    const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 0.3), wallMat);
-                    doorHeader.position.set(0.4, 4.2, 2.2);
-                    bedGroup.add(doorHeader);
-
-                    // Kusen & Pintu Kayu Kamar Terbuka
-                    const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(1.6, 3.6, 0.34), new THREE.MeshStandardMaterial({ color: 0x18181b }));
-                    doorFrame.position.set(0.4, 1.8, 2.2);
-                    bedGroup.add(doorFrame);
-
-                    const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(1.4, 3.4, 0.08), new THREE.MeshStandardMaterial({ color: 0x4a3427, roughness: 0.6 }));
-                    doorLeaf.position.set(0.4, 1.8, 2.2);
-                    doorLeaf.rotation.y = -0.95; // Pintu setengah terbuka estetik
-                    bedGroup.add(doorLeaf);
-
-                    // Dinding Kanan Kamar (Pemisah lorong)
-                    const sideWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.8, 4.6), wallMat);
-                    sideWall.position.set(1.4, 2.4, -0.1);
+                    // B. Dinding Samping Kanan Kamar (Penyekat dengan koridor kantor utama, full rapat dari belakang ke depan)
+                    const sideWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5.2, 6.8), wallMat);
+                    sideWall.position.set(3.0, 2.6, 0.2);
                     bedGroup.add(sideWall);
 
-                    // Lantai Parket Khusus Kamar Tidur (Abu Hangat Cozy)
-                    const bedFloor = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.02, 4.6), new THREE.MeshStandardMaterial({ color: 0x241d18, roughness: 0.7 }));
-                    bedFloor.position.set(-1.0, 0.015, -0.1);
+                    // C. Dinding Depan Kamar (Pintu masuk dari koridor kantor)
+                    // Bagian dinding depan kiri
+                    const frontWallLeft = new THREE.Mesh(new THREE.BoxGeometry(3.6, 5.2, 0.4), wallMat);
+                    frontWallLeft.position.set(-1.4, 2.6, 3.4);
+                    bedGroup.add(frontWallLeft);
+
+                    // Bagian ambang atas pintu (Header)
+                    const frontWallHeader = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 0.4), wallMat);
+                    frontWallHeader.position.set(1.6, 4.4, 3.4);
+                    bedGroup.add(frontWallHeader);
+
+                    // D. Kusen Pintu Kokoh di bukaan pintu (x = 1.6, z = 3.4)
+                    const doorFrameMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.3 });
+                    const frameTop = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.12, 0.45), doorFrameMat);
+                    frameTop.position.set(1.6, 3.6, 3.4);
+                    bedGroup.add(frameTop);
+
+                    const frameL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.6, 0.45), doorFrameMat);
+                    frameL.position.set(0.85, 1.8, 3.4);
+                    bedGroup.add(frameL);
+
+                    const frameR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.6, 0.45), doorFrameMat);
+                    frameR.position.set(2.35, 1.8, 3.4);
+                    bedGroup.add(frameR);
+
+                    // E. Daun Pintu Kayu Elegan dengan PIVOT ENGSEL (Siap Buka-Tutup Halus!)
+                    const pivot = new THREE.Group();
+                    pivot.position.set(0.90, 0, 3.4); // Engsel di tiang kiri kusen
+
+                    const doorLeaf = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.42, 3.5, 0.08), 
+                        new THREE.MeshStandardMaterial({ color: 0x4a3427, roughness: 0.55 })
+                    );
+                    doorLeaf.position.set(0.71, 1.75, 0); // Offset setengah lebar pintu agar berputar di engsel
+                    doorLeaf.castShadow = true;
+                    pivot.add(doorLeaf);
+
+                    // Gagang Pintu Stainless Steel Minimalis
+                    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.24, 8), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9 }));
+                    handle.position.set(1.28, 1.65, 0.07);
+                    pivot.add(handle);
+
+                    bedGroup.add(pivot);
+                    this.bedroomDoorPivot = pivot;
+
+                    // F. Lantai Parket Luas & Hangat Khusus Kamar Tidur
+                    const bedFloor = new THREE.Mesh(
+                        new THREE.BoxGeometry(6.2, 0.025, 6.6), 
+                        new THREE.MeshStandardMaterial({ color: 0x241d18, roughness: 0.65 })
+                    );
+                    bedFloor.position.set(0, 0.015, 0.1);
                     bedGroup.add(bedFloor);
 
-                    // Karpet Bulu Empuk Kamar
-                    const rug = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.03, 3.0), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.95 }));
-                    rug.position.set(-1.2, 0.03, 0.2);
+                    // G. Karpet Mewah Kamar Tidur
+                    const rug = new THREE.Mesh(
+                        new THREE.BoxGeometry(3.6, 0.03, 3.4), 
+                        new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.95 })
+                    );
+                    rug.position.set(-0.6, 0.03, 0.2);
                     bedGroup.add(rug);
 
-                    // Rangka Ranjang Kayu Minimalis Elegan
+                    // H. Ranjang Springbed Luas & Empuk (Tengah-Tengah Kamar Tidur)
                     const frameMat = new THREE.MeshStandardMaterial({ color: 0x3d271d, roughness: 0.7 });
-                    const bedFrame = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.35, 2.8), frameMat);
-                    bedFrame.position.set(-1.2, 0.18, 0);
+                    const bedFrame = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.35, 2.9), frameMat);
+                    bedFrame.position.set(-0.6, 0.18, 0);
                     bedFrame.castShadow = true;
                     bedGroup.add(bedFrame);
 
+                    // Sandaran Kepala Ranjang (Headboard Kayu Mewah)
+                    const headboard = new THREE.Mesh(new THREE.BoxGeometry(2.7, 1.2, 0.18), frameMat);
+                    headboard.position.set(-0.6, 0.85, -1.45);
+                    headboard.castShadow = true;
+                    bedGroup.add(headboard);
+
                     // Kasur Springbed Empuk Putih
                     const mattressMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
-                    const mattress = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.28, 2.6), mattressMat);
-                    mattress.position.set(-1.2, 0.45, 0);
+                    const mattress = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.28, 2.7), mattressMat);
+                    mattress.position.set(-0.6, 0.45, 0);
                     mattress.castShadow = true;
                     bedGroup.add(mattress);
 
                     // Selimut Hangat Pink Pastel
                     const blanketMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.8 });
-                    const blanket = new THREE.Mesh(new THREE.BoxGeometry(2.12, 0.12, 1.7), blanketMat);
-                    blanket.position.set(-1.2, 0.52, 0.45);
+                    const blanket = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.12, 1.8), blanketMat);
+                    blanket.position.set(-0.6, 0.52, 0.45);
                     blanket.castShadow = true;
                     bedGroup.add(blanket);
 
                     // 2x Bantal Empuk
                     const pillowMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
-                    const pillow1 = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.16, 0.50), pillowMat);
-                    pillow1.position.set(-1.7, 0.62, -0.85);
+                    const pillow1 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.52), pillowMat);
+                    pillow1.position.set(-1.15, 0.62, -0.90);
                     bedGroup.add(pillow1);
 
-                    const pillow2 = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.16, 0.50), pillowMat);
-                    pillow2.position.set(-0.7, 0.62, -0.85);
+                    const pillow2 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.52), pillowMat);
+                    pillow2.position.set(-0.05, 0.62, -0.90);
                     bedGroup.add(pillow2);
 
                     // Meja Nakas & Lampu Tidur Warm
                     const nakas = new THREE.Mesh(new THREE.BoxGeometry(0.60, 0.55, 0.60), frameMat);
-                    nakas.position.set(-2.65, 0.275, -0.85);
+                    nakas.position.set(-2.25, 0.275, -1.15);
                     nakas.castShadow = true;
                     bedGroup.add(nakas);
 
                     const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.14, 0.28, 12), new THREE.MeshStandardMaterial({ color: 0xd4d4d8 }));
-                    lampBase.position.set(-2.65, 0.68, -0.85);
+                    lampBase.position.set(-2.25, 0.68, -1.15);
                     bedGroup.add(lampBase);
 
                     const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 0.26, 14), new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfef08a, emissiveIntensity: 0.4 }));
-                    lampShade.position.set(-2.65, 0.94, -0.85);
+                    lampShade.position.set(-2.25, 0.94, -1.15);
                     bedGroup.add(lampShade);
 
-                    const nightLight = new THREE.PointLight(0xffe8ba, 1.1, 7, 2);
-                    nightLight.position.set(-2.65, 1.1, -0.85);
+                    const nightLight = new THREE.PointLight(0xffe8ba, 1.2, 8, 2);
+                    nightLight.position.set(-2.25, 1.1, -1.15);
                     bedGroup.add(nightLight);
 
                     this.scene.add(bedGroup);
@@ -1682,15 +1728,32 @@
                     armR.add(armRMesh);
                     armR.position.set(0.26, 0.61, 0.08);
 
-                    // Gagang Pel & Spons (NEMPEL DI TANGAN KANAN)
-                    const mopPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.35, 8), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 }));
-                    mopPole.position.set(0.05, -0.25, 0.20);
-                    mopPole.rotation.x = 0.45;
-                    armR.add(mopPole);
+                    // Sapu Ijuk Rumah Asli (Tongkat Kayu + Kepala Ijuk Bulu Mekar yang JELAS KELIHATAN!)
+                    const broomPole = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.022, 0.022, 1.35, 8), 
+                        new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.6 }) // Kayu gagang sapu
+                    );
+                    broomPole.position.set(0.05, -0.25, 0.20);
+                    broomPole.rotation.x = 0.45;
+                    armR.add(broomPole);
 
-                    const mopHead = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.08, 0.16), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.9 }));
-                    mopHead.position.set(0.05, -0.80, 0.48);
-                    armR.add(mopHead);
+                    // Kepala Klem Penjepit Sapu (Merah Minimalis)
+                    const broomCap = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.24, 0.08, 0.10), 
+                        new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.4 })
+                    );
+                    broomCap.position.set(0.05, -0.75, 0.45);
+                    armR.add(broomCap);
+
+                    // Bulu Ijuk Sapu Jerami Mekar Tebal (Cokelat/Kuning Serat Alami - Terlihat Jelas!)
+                    const broomBristles = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.14, 0.32, 0.32, 8), 
+                        new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.95 })
+                    );
+                    broomBristles.scale.set(1.0, 1.0, 0.45); // Gepeng pipih seperti sapu ijuk
+                    broomBristles.position.set(0.05, -0.92, 0.52);
+                    broomBristles.rotation.x = 0.20;
+                    armR.add(broomBristles);
                     char.add(armR);
 
                     // Celana & Sepatu
@@ -1767,7 +1830,7 @@
                     this.buildLoungeWithTV(5.0, 0, 1.4);
 
                     // 7. Ruang Kamar Tidur AI (Rest Bedroom saat Token Habis / Low Energy)
-                    this.buildBedroom(-8.5, 0, 2.5);
+                    this.buildBedroom(-8.4, 0, 1.4);
 
                     // 8. Dekorasi Dinding: Frame Galeri Poster, Jam Nyata, AC Dinding & Pintu
                     this.buildGalleryWall();
@@ -1777,7 +1840,7 @@
                     this.buildOfficeDoors();
 
                     // 9. Perabot Pendukung (Server Rack, Lemari Arsip, Tanaman Hias)
-                    this.buildServerRack(-8.8, 0, -4.0);
+                    this.buildServerRack(-4.5, 0, -4.2); // Dipindah ke dinding kantor utama agar tidak menembus kamar
                     this.buildBookshelf(-5.2, 0, -4.0);
                     this.buildPlant(-6.5, 0, -4.1);
                     this.buildPlant(1.6, 0, 2.6);
@@ -1814,6 +1877,31 @@
 
                     // Update Jam Dinding Real-Time
                     this.updateClockCanvas();
+
+                    // Animasi Pintu Kamar Tidur Berayun Buka/Tutup Otomatis saat Ada Orang Masuk!
+                    if (this.bedroomDoorPivot && this.dewiGroup) {
+                        // Cek jarak Dewi ke pintu kamar (koordinat pintu global: x = -6.8, z = 4.8)
+                        const dx = this.dewiGroup.position.x - (-6.8);
+                        const dz = this.dewiGroup.position.z - (4.8);
+                        const distToDoor = Math.sqrt(dx * dx + dz * dz);
+
+                        if (this.currentCsStatus === 'sleeping' && distToDoor < 3.2 && distToDoor > 0.8) {
+                            // Dewi sedang mendekat mau masuk kamar: BUKA PINTU!
+                            this.targetDoorAngle = -Math.PI / 1.8;
+                        } else if (this.currentCsStatus === 'sleeping' && distToDoor <= 0.8) {
+                            // Dewi sudah masuk di dalam kamar kasur: TUTUP PINTU PERLAHAN
+                            this.targetDoorAngle = 0;
+                        } else if (this.currentCsStatus === 'working' && distToDoor < 3.0) {
+                            // Dewi keluar kamar menuju kantor: BUKA PINTU
+                            this.targetDoorAngle = -Math.PI / 1.8;
+                        } else {
+                            // Kondisi normal: Pintu tertutup rapi
+                            this.targetDoorAngle = 0;
+                        }
+
+                        // Lerp halus ayunan pintu
+                        this.bedroomDoorPivot.rotation.y += (this.targetDoorAngle - this.bedroomDoorPivot.rotation.y) * 0.08;
+                    }
 
                     // Animasi Pak Budi (Patroli di LORONG DEPAN BEBAS RINTANGAN - tidak nabrak meja/kursi!)
                     if (this.budiGroup) {
