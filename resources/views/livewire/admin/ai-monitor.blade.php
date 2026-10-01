@@ -1,4 +1,4 @@
-<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-28 sm:pb-12" wire:poll.5s.visible="syncOffice">
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-28 sm:pb-12">
     <!-- Header: Title, Engine Status & Toggle -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-5">
         <div class="flex items-center gap-3">
@@ -919,6 +919,13 @@
                     this.screenCanvas.height = 280;
                     this.screenCtx = this.screenCanvas.getContext('2d');
                     this.screenTexture = new THREE.CanvasTexture(this.screenCanvas);
+
+                    // Dedicated TV Canvas untuk Smart TV 65-inch di Lounge (Sinkron RentSpace TV Display)
+                    this.tvCanvas = document.createElement('canvas');
+                    this.tvCanvas.width = 640;
+                    this.tvCanvas.height = 360;
+                    this.tvCtx = this.tvCanvas.getContext('2d');
+                    this.tvTexture = new THREE.CanvasTexture(this.tvCanvas);
                 },
 
                 // Lantai Parquet Kayu Walnut Procedural (Papan kayu nyata dengan serat alami + variasi warna)
@@ -2210,7 +2217,7 @@
                     tvFrame.castShadow = true;
                     group.add(tvFrame);
 
-                    const tvScreen = new THREE.Mesh(new THREE.PlaneGeometry(2.12, 1.17), this.setSelfLit(new THREE.MeshBasicMaterial({ map: this.screenTexture }), 2.0));
+                    const tvScreen = new THREE.Mesh(new THREE.PlaneGeometry(2.12, 1.17), this.setSelfLit(new THREE.MeshBasicMaterial({ map: this.tvTexture }), 2.0));
                     tvScreen.position.set(0, 1.85, 2.915);
                     tvScreen.rotation.y = Math.PI;
                     group.add(tvScreen);
@@ -3192,6 +3199,72 @@
                         ctx.fillText('● AI CORE ONLINE', 362, 259);
 
                         this.screenTexture.needsUpdate = true;
+                    }
+
+                    // A2. Update Smart TV 65-Inch di Lounge (RentSpace TV Live Display Simulator)
+                    if (this.tvCtx && this.tvTexture) {
+                        const tc = this.tvCtx;
+                        // Video / Music Backdrop dinamis
+                        const hue = (time * 12) % 360;
+                        tc.fillStyle = '#060810';
+                        tc.fillRect(0, 0, 640, 360);
+
+                        // Gradient ambient lighting layaknya video music playing
+                        const tvGrad = tc.createRadialGradient(320, 180, 40, 320, 180, 300);
+                        tvGrad.addColorStop(0, `hsla(${hue}, 65%, 28%, 0.85)`);
+                        tvGrad.addColorStop(0.6, `hsla(${(hue + 45) % 360}, 50%, 15%, 0.6)`);
+                        tvGrad.addColorStop(1, '#05070e');
+                        tc.fillStyle = tvGrad;
+                        tc.fillRect(0, 0, 640, 360);
+
+                        // Top bar HUD TV
+                        tc.fillStyle = 'rgba(255,255,255,0.12)';
+                        tc.fillRect(20, 18, 600, 48);
+                        tc.fillStyle = '#ffffff';
+                        tc.font = 'bold 20px sans-serif';
+                        tc.fillText('📺 RentSpace TV · Lounge Station', 36, 49);
+
+                        const now = new Date();
+                        const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+                        tc.font = 'bold 18px monospace';
+                        tc.fillStyle = '#38bdf8';
+                        tc.fillText(timeStr, 560, 49);
+
+                        // Visualizer equalizer bar (gelombang audio aktif)
+                        for (let b = 0; b < 24; b++) {
+                            const barH = 30 + Math.sin(time * 5 + b * 0.45) * 25 + Math.cos(time * 3 + b * 0.8) * 15;
+                            tc.fillStyle = `hsl(${(hue + b * 8) % 360}, 85%, 65%)`;
+                            tc.fillRect(50 + b * 22, 230 - barH, 14, barH);
+                        }
+
+                        // Now Playing Banner bawah
+                        tc.fillStyle = 'rgba(9, 11, 20, 0.78)';
+                        tc.fillRect(20, 260, 600, 80);
+                        tc.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                        tc.lineWidth = 1;
+                        tc.strokeRect(20, 260, 600, 80);
+
+                        // Icon Play & Music Title
+                        tc.fillStyle = '#ec4899';
+                        tc.font = 'bold 24px sans-serif';
+                        tc.fillText('♪', 40, 308);
+
+                        tc.fillStyle = '#ffffff';
+                        tc.font = 'bold 18px sans-serif';
+                        tc.fillText('Head In The Clouds · Chill Ambient Mix', 68, 296);
+
+                        tc.fillStyle = '#94a3b8';
+                        tc.font = '13px sans-serif';
+                        tc.fillText('Live stream audio · 88rising & Pop 2026 Collection', 68, 324);
+
+                        // Pill Live
+                        tc.fillStyle = '#10b981';
+                        tc.fillRect(530, 282, 70, 24);
+                        tc.fillStyle = '#ffffff';
+                        tc.font = 'bold 11px sans-serif';
+                        tc.fillText('● ON AIR', 542, 298);
+
+                        this.tvTexture.needsUpdate = true;
                     }
 
                     // B. Animasi Berjalan Dewi (NPC Walking Mechanics - Sinkron & Momentum Realistis)

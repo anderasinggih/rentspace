@@ -46,17 +46,14 @@
 
     #playerWrap {
         position: absolute;
-        top: 50%;
-        left: 50%;
+        inset: 0;
         width: 100%;
         height: 100%;
-        transform-origin: center center;
+        overflow: hidden;
     }
 
     #playerWrap iframe {
         position: absolute;
-        top: 50%;
-        left: 50%;
         border: 0;
         pointer-events: none;
     }
@@ -609,10 +606,12 @@
 
     function fitPlayer() {
         var wrap = el('playerWrap');
-        wrap.style.width = vw + 'px';
-        wrap.style.height = vh + 'px';
+        if (wrap) {
+            wrap.style.width = vw + 'px';
+            wrap.style.height = vh + 'px';
+        }
 
-        var frame = el('player') ? el('player').firstElementChild : null;
+        var frame = document.querySelector('#playerWrap iframe') || el('player');
         if (!frame) return;
 
         var h = Math.max(vh, vw * 9 / 16);
