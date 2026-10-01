@@ -145,7 +145,13 @@
                 <button wire:click="bonkAgent('cs_bot', 'break')" 
                     class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-muted hover:bg-muted/80 text-muted-foreground border border-border active:scale-95 transition">
                     <span>🛋️</span>
-                    <span>Dewi Istirahat</span>
+                    <span>Dewi Santai</span>
+                </button>
+                <button wire:click="bonkAgent('cs_bot', 'sleep')" 
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30 active:scale-95 transition"
+                    title="Simulasi Token Habis / Low Energy - Dewi Tidur di Kamar">
+                    <span>🪫</span>
+                    <span>Tidur Zzz</span>
                 </button>
             </div>
         </div>
@@ -171,6 +177,10 @@
                 <button type="button" onclick="window._threeOfficeApp?.setView('dewi_pov')" title="POV Menatap Layar Monitor Dewi"
                     class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/40 hover:bg-pink-500/30 active:scale-95 transition">
                     💻 POV Layar Dewi
+                </button>
+                <button type="button" onclick="window._threeOfficeApp?.setView('bedroom')" title="Lihat Kamar Tidur AI"
+                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 active:scale-95 transition">
+                    🛏️ Kamar Tidur
                 </button>
                 <button type="button" onclick="window._threeOfficeApp?.setView('pantry')"
                     class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 active:scale-95 transition">
@@ -252,6 +262,12 @@
                         this.rotX = 0.30;
                         this.cameraRadius = 12.5;
                         this.targetLookAt = { x: 4.8, y: 1.1, z: 0.8 };
+                    } else if (viewName === 'bedroom') {
+                        // View Kamar Tidur AI & Charging Bed
+                        this.rotY = 0.45;
+                        this.rotX = 0.32;
+                        this.cameraRadius = 9.5;
+                        this.targetLookAt = { x: -8.5, y: 1.0, z: 2.2 };
                     } else if (viewName === 'dewi_pov') {
                         // POV Menatap Langsung ke Layar Monitor Kerja Dewi
                         this.rotY = 0.05; // Menghadap lurus ke arah monitor dari belakang Dewi
@@ -294,10 +310,11 @@
 
                 // Posisi koordinat penting di ruangan (Duduk pas di kursi ergonomis tanpa tembus meja)
                 spots: {
-                    dewiDesk: { x: -3.2, y: 0.44, z: 1.25, rotY: Math.PI },   // Duduk di kursi menghadap monitor ke arah -Z
-                    dewiLounge: { x: 5.0, y: 0.42, z: 1.4, rotY: 0.0 },       // Duduk santai di sofa menghadap ke TV
-                    singgihDesk: { x: -1.2, y: 0.44, z: 1.25, rotY: Math.PI }, // Duduk di kursi menghadap monitor ke arah -Z
-                    anderaDesk: { x: -2.2, y: 0.44, z: -1.05, rotY: 0.0 }     // Duduk di seberang menghadap monitor ke arah +Z
+                    dewiDesk: { x: -3.2, y: 0.44, z: 1.45, rotY: Math.PI },   // Duduk pas di kursi menghadap monitor ke arah -Z
+                    dewiLounge: { x: 5.0, y: 0.42, z: 1.4, rotY: 0.0 },       // Duduk santai di sofa
+                    dewiBed: { x: -7.5, y: 0.58, z: 2.2, rotY: Math.PI / 2 }, // Berbaring di kasur kamar tidur AI
+                    singgihDesk: { x: -1.2, y: 0.44, z: 1.45, rotY: Math.PI }, // Duduk pas di kursi menghadap monitor ke arah -Z
+                    anderaDesk: { x: -2.2, y: 0.44, z: -1.25, rotY: 0.0 }     // Duduk pas di seberang menghadap monitor ke arah +Z
                 },
 
                 // State transisi animasi jalan (NPC walking)
@@ -523,16 +540,20 @@
 
                     if (!this.dewiGroup) return;
 
+                    let target = this.spots.dewiLounge;
                     if (status === 'working') {
                         this.setMood('dewi', '⌨️ Sedang Membalas Chat...');
+                        target = this.spots.dewiDesk;
+                    } else if (status === 'sleeping') {
+                        this.setMood('dewi', '🪫 Low Energy · Tidur Zzz...');
+                        target = this.spots.dewiBed;
                     } else {
-                        // Variasi mood santai saat istirahat (bisa musikan / ngopi santai)
+                        // Variasi mood santai saat istirahat (musikan / ngopi santai)
                         const breakMoods = ['🎧 Lagi Dengerin Musik', '☕ Istirahat Santai', '🥤 Minum & Recharge', '🛋️ Duduk Santai Senang'];
                         const randomMood = breakMoods[Math.floor(Math.random() * breakMoods.length)];
                         this.setMood('dewi', randomMood);
+                        target = this.spots.dewiLounge;
                     }
-
-                    const target = (status === 'working') ? this.spots.dewiDesk : this.spots.dewiLounge;
                     
                     this.dewiWalk.isMoving = true;
                     this.dewiWalk.startX = this.dewiGroup.position.x;
@@ -929,11 +950,11 @@
                     tray.position.set(0, 0.88, 0);
                     group.add(tray);
 
-                    // Setup Masing-Masing Tempat Duduk (Dewi di sisi Z positif, Singgih di sisi Z positif, Andera di sisi Z negatif seberang)
+                    // Setup Masing-Masing Tempat Duduk: Monitor menghadap tepat ke wajah pengguna!
                     const deskSetups = [
-                        { dx: -1.0, dz: 0.65, rot: 0, theme: 0xf472b6, label: 'Dewi' },     // Dewi
-                        { dx: 1.0, dz: 0.65, rot: 0, theme: 0x2dd4bf, label: 'Singgih' },   // Singgih
-                        { dx: 0.0, dz: -0.65, rot: Math.PI, theme: 0xfbbf24, label: 'Andera' } // Andera (Hadap-hadapan)
+                        { dx: -1.0, dz: 0.65, rot: 0, theme: 0xf472b6, label: 'Dewi' },     // Dewi di sisi Z positif menghadap ke -Z
+                        { dx: 1.0, dz: 0.65, rot: 0, theme: 0x2dd4bf, label: 'Singgih' },   // Singgih di sisi Z positif menghadap ke -Z
+                        { dx: 0.0, dz: -0.65, rot: Math.PI, theme: 0xfbbf24, label: 'Andera' } // Andera di sisi Z negatif menghadap ke +Z
                     ];
 
                     deskSetups.forEach(setup => {
@@ -954,12 +975,12 @@
                         screenFrame.castShadow = true;
                         sub.add(screenFrame);
 
-                        // Monitor Display Screen (Live matrix)
+                        // Monitor Display Screen: HARUS MENGHADAP KE PENGGUNA (Z positif lokal)
                         const displayGeo = new THREE.PlaneGeometry(1.00, 0.54);
                         const displayMat = new THREE.MeshBasicMaterial({ map: this.screenTexture });
                         const display = new THREE.Mesh(displayGeo, displayMat);
-                        display.position.set(0, 0.48, -0.242);
-                        display.rotation.y = Math.PI;
+                        display.position.set(0, 0.48, -0.198); // Di depan frame menghadap ke arah pengguna
+                        display.rotation.y = 0; // TIDAK DIBALIK, menghadap lurus ke wajah orang yang duduk!
                         sub.add(display);
                         this.screenMeshes.push(display);
 
@@ -987,7 +1008,8 @@
                         group.add(sub);
                     });
 
-                    // 3x Kursi Kantor Ergonomis Modern
+                    // 3x Kursi Kantor Ergonomis Modern (Mundur pas agar tidak tembus meja)
+                    // Sandaran kursi berada di belakang pengguna!
                     const makeChair = (cx, cz, crot) => {
                         const chair = new THREE.Group();
                         chair.position.set(cx, 0, cz);
@@ -999,8 +1021,9 @@
                         seat.castShadow = true;
                         chair.add(seat);
 
+                        // Sandaran di posisi Z positif lokal (belakang punggung saat menghadap -Z)
                         const back = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.64, 0.07), chairMat);
-                        back.position.set(0, 0.88, -0.26);
+                        back.position.set(0, 0.88, 0.26);
                         back.castShadow = true;
                         chair.add(back);
 
@@ -1015,9 +1038,9 @@
                         return chair;
                     };
 
-                    group.add(makeChair(-1.0, 1.05, 0));            // Kursi Dewi
-                    group.add(makeChair(1.0, 1.05, 0));             // Kursi Singgih
-                    group.add(makeChair(0.0, -1.05, Math.PI));       // Kursi Andera
+                    group.add(makeChair(-1.0, 1.45, 0));            // Kursi Dewi (Mundur 0.4m pas, sandaran di belakang)
+                    group.add(makeChair(1.0, 1.45, 0));             // Kursi Singgih (Mundur 0.4m pas, sandaran di belakang)
+                    group.add(makeChair(0.0, -1.45, Math.PI));      // Kursi Andera (Hadap seberang +Z, sandaran di belakang)
 
                     this.scene.add(group);
                 },
@@ -1285,6 +1308,333 @@
                     }
                 },
 
+                                // 8. Ruang Kamar Tidur AI (Rest Bedroom & Charging Station)
+                buildBedroom(x, y, z) {
+                    const bedGroup = new THREE.Group();
+                    bedGroup.position.set(x, y, z);
+
+                    // Karpet Kamar Hangat
+                    const rugGeo = new THREE.BoxGeometry(3.6, 0.02, 3.2);
+                    const rugMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.95 });
+                    const rug = new THREE.Mesh(rugGeo, rugMat);
+                    rug.position.y = 0.01;
+                    bedGroup.add(rug);
+
+                    // Rangka Ranjang Kayu Minimalis Elegan
+                    const frameMat = new THREE.MeshStandardMaterial({ color: 0x3d271d, roughness: 0.7 });
+                    const bedFrame = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.35, 3.0), frameMat);
+                    bedFrame.position.set(0, 0.18, 0);
+                    bedFrame.castShadow = true;
+                    bedGroup.add(bedFrame);
+
+                    // Kasur Springbed Empuk Putih
+                    const mattressMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
+                    const mattress = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.28, 2.8), mattressMat);
+                    mattress.position.set(0, 0.45, 0);
+                    mattress.castShadow = true;
+                    bedGroup.add(mattress);
+
+                    // Selimut Hangat Pastel
+                    const blanketMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.8 });
+                    const blanket = new THREE.Mesh(new THREE.BoxGeometry(2.22, 0.12, 1.8), blanketMat);
+                    blanket.position.set(0, 0.52, 0.45);
+                    blanket.castShadow = true;
+                    bedGroup.add(blanket);
+
+                    // Bantal Empuk
+                    const pillowMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+                    const pillow1 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.55), pillowMat);
+                    pillow1.position.set(-0.55, 0.62, -0.95);
+                    bedGroup.add(pillow1);
+
+                    const pillow2 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.55), pillowMat);
+                    pillow2.position.set(0.55, 0.62, -0.95);
+                    bedGroup.add(pillow2);
+
+                    // Meja Nakas & Lampu Tidur Warm
+                    const nakas = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.55, 0.65), frameMat);
+                    nakas.position.set(-1.65, 0.275, -0.95);
+                    nakas.castShadow = true;
+                    bedGroup.add(nakas);
+
+                    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.32, 12), new THREE.MeshStandardMaterial({ color: 0xd4d4d8 }));
+                    lampBase.position.set(-1.65, 0.70, -0.95);
+                    bedGroup.add(lampBase);
+
+                    const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 0.30, 14), new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfef08a, emissiveIntensity: 0.3 }));
+                    lampShade.position.set(-1.65, 0.98, -0.95);
+                    bedGroup.add(lampShade);
+
+                    const nightLight = new THREE.PointLight(0xffe8ba, 0.9, 8, 2);
+                    nightLight.position.set(-1.65, 1.1, -0.95);
+                    bedGroup.add(nightLight);
+
+                    this.scene.add(bedGroup);
+                },
+
+                // 9. Frame Galeri Foto & Poster di Dinding
+                buildGalleryWall() {
+                    const group = new THREE.Group();
+
+                    const createFrame = (fx, fy, fz, w, h, title, sub, color) => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 384; canvas.height = 480;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = color; ctx.fillRect(0, 0, 384, 480);
+                        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(20, 20, 344, 440);
+                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'center';
+                        ctx.fillText(title, 192, 220);
+                        ctx.font = '20px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                        ctx.fillText(sub, 192, 265);
+                        const tex = new THREE.CanvasTexture(canvas);
+
+                        const frameMesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.05), new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4 }));
+                        frameMesh.position.set(fx, fy, fz);
+                        group.add(frameMesh);
+
+                        const pic = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.1, h - 0.1), new THREE.MeshBasicMaterial({ map: tex }));
+                        pic.position.set(fx, fy, fz + 0.028);
+                        group.add(pic);
+                    };
+
+                    // Poster Katalog iPhone RentSpace di dinding kantor
+                    createFrame(-6.0, 3.4, -4.58, 1.4, 1.8, 'iPHONE 16 PRO', 'READY TO RENT', '#1e293b');
+                    createFrame(-7.8, 3.4, -4.58, 1.2, 1.6, 'RENTSPACE TEAM', 'EXCELLENCE 2026', '#0f766e');
+                    createFrame(8.2, 3.4, -4.58, 1.3, 1.7, 'COFFEE & CODE', 'AI LAB PURWOKERTO', '#854d0e');
+
+                    this.scene.add(group);
+                },
+
+                // 10. AC Modern Dinding (Air Conditioner Inverter dengan Lampu Indikator Hijau)
+                buildAirConditioner(x, y, z) {
+                    const acGroup = new THREE.Group();
+                    acGroup.position.set(x, y, z);
+
+                    const acMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 });
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.52, 0.35), acMat);
+                    body.castShadow = true;
+                    acGroup.add(body);
+
+                    // Flap kisi AC bawah
+                    const flap = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.06, 0.08), new THREE.MeshStandardMaterial({ color: 0xe2e8f0 }));
+                    flap.position.set(0, -0.22, 0.12);
+                    flap.rotation.x = 0.35; // Terbuka menghembus udara
+                    acGroup.add(flap);
+
+                    // LED Display Hijau Suhu Dingin (18°C)
+                    const led = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.02), new THREE.MeshBasicMaterial({ color: 0x10b981 }));
+                    led.position.set(0.65, 0.05, 0.18);
+                    acGroup.add(led);
+
+                    this.scene.add(acGroup);
+                },
+
+                // 11. Jam Dinding Realistis (Berjalan Real-Time Sesuai Waktu Asli)
+                buildRealClock(x, y, z) {
+                    this.clockCanvas = document.createElement('canvas');
+                    this.clockCanvas.width = 256;
+                    this.clockCanvas.height = 256;
+                    this.clockCtx = this.clockCanvas.getContext('2d');
+                    this.clockTexture = new THREE.CanvasTexture(this.clockCanvas);
+
+                    const clockFrame = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.06, 32), new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.8, roughness: 0.2 }));
+                    clockFrame.position.set(x, y, z);
+                    clockFrame.rotation.x = Math.PI / 2;
+                    this.scene.add(clockFrame);
+
+                    const clockFace = new THREE.Mesh(new THREE.CircleGeometry(0.44, 32), new THREE.MeshBasicMaterial({ map: this.clockTexture }));
+                    clockFace.position.set(x, y, z + 0.035);
+                    this.scene.add(clockFace);
+                },
+
+                updateClockCanvas() {
+                    if (!this.clockCtx || !this.clockTexture) return;
+                    const ctx = this.clockCtx;
+                    ctx.clearRect(0, 0, 256, 256);
+
+                    // Dial Putih Bersih
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath(); ctx.arc(128, 128, 120, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 5; ctx.stroke();
+
+                    // Titik jam
+                    for (let i = 0; i < 12; i++) {
+                        const ang = (i * Math.PI) / 6;
+                        const rx = 128 + Math.sin(ang) * 95;
+                        const ry = 128 - Math.cos(ang) * 95;
+                        ctx.fillStyle = '#334155';
+                        ctx.beginPath(); ctx.arc(rx, ry, i % 3 === 0 ? 5 : 2.5, 0, Math.PI * 2); ctx.fill();
+                    }
+
+                    const now = new Date();
+                    const sec = now.getSeconds() + now.getMilliseconds() / 1000;
+                    const min = now.getMinutes() + sec / 60;
+                    const hr = (now.getHours() % 12) + min / 60;
+
+                    // Jarum Jam
+                    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+                    ctx.beginPath(); ctx.moveTo(128, 128);
+                    ctx.lineTo(128 + Math.sin(hr * Math.PI / 6) * 55, 128 - Math.cos(hr * Math.PI / 6) * 55);
+                    ctx.stroke();
+
+                    // Jarum Menit
+                    ctx.strokeStyle = '#334155'; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(128, 128);
+                    ctx.lineTo(128 + Math.sin(min * Math.PI / 30) * 82, 128 - Math.cos(min * Math.PI / 30) * 82);
+                    ctx.stroke();
+
+                    // Jarum Detik (Merah Presisi)
+                    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(128, 128);
+                    ctx.lineTo(128 + Math.sin(sec * Math.PI / 30) * 95, 128 - Math.cos(sec * Math.PI / 30) * 95);
+                    ctx.stroke();
+
+                    // Center cap
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath(); ctx.arc(128, 128, 5, 0, Math.PI * 2); ctx.fill();
+
+                    this.clockTexture.needsUpdate = true;
+                },
+
+                // 12. Jendela Dunia Luar (Outdoor World Window & Skyline Gedung + Langit Pagi/Malam)
+                buildOutdoorWindow() {
+                    const winGroup = new THREE.Group();
+
+                    // Frame jendela kaca besar di dinding kanan
+                    const frameMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.3, metalness: 0.8 });
+                    const winFrame = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.4, 8.5), frameMat);
+                    winFrame.position.set(11.8, 2.5, 1.2);
+                    winGroup.add(winFrame);
+
+                    // Kaca Jendela Transparan Bening
+                    const glassMat = new THREE.MeshStandardMaterial({ color: 0xdbeafe, transparent: true, opacity: 0.28, roughness: 0.05, metalness: 0.9 });
+                    const glass = new THREE.Mesh(new THREE.BoxGeometry(0.08, 4.2, 8.3), glassMat);
+                    glass.position.set(11.8, 2.5, 1.2);
+                    winGroup.add(glass);
+
+                    // Pemandangan Luar Jendela: Backdrop Langit & Siluet Gedung Kota Modern
+                    const skyCanvas = document.createElement('canvas');
+                    skyCanvas.width = 512; skyCanvas.height = 512;
+                    this.skyCtx = skyCanvas.getContext('2d');
+                    this.skyTexture = new THREE.CanvasTexture(skyCanvas);
+                    this.updateSkyCanvas();
+
+                    const skyBackdrop = new THREE.Mesh(new THREE.PlaneGeometry(16, 10), new THREE.MeshBasicMaterial({ map: this.skyTexture }));
+                    skyBackdrop.position.set(15.2, 4.0, 1.2);
+                    skyBackdrop.rotation.y = -Math.PI / 2;
+                    winGroup.add(skyBackdrop);
+
+                    this.scene.add(winGroup);
+                },
+
+                updateSkyCanvas() {
+                    if (!this.skyCtx || !this.skyTexture) return;
+                    const ctx = this.skyCtx;
+                    const hour = new Date().getHours();
+
+                    // Gradasi langit berdasarkan jam nyata
+                    const grad = ctx.createLinearGradient(0, 0, 0, 512);
+                    if (hour >= 6 && hour < 15) {
+                        // Siang Segar
+                        grad.addColorStop(0, '#38bdf8'); grad.addColorStop(0.7, '#bae6fd'); grad.addColorStop(1, '#f0f9ff');
+                    } else if (hour >= 15 && hour < 18) {
+                        // Sore Golden Hour
+                        grad.addColorStop(0, '#f97316'); grad.addColorStop(0.6, '#fbbf24'); grad.addColorStop(1, '#fef08a');
+                    } else {
+                        // Malam Gemerlap
+                        grad.addColorStop(0, '#020617'); grad.addColorStop(0.7, '#0f172a'); grad.addColorStop(1, '#1e293b');
+                    }
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, 512, 512);
+
+                    // Siluet Gedung-Gedung Kota
+                    const bColor = (hour >= 6 && hour < 18) ? '#64748b' : '#090d16';
+                    ctx.fillStyle = bColor;
+                    const buildings = [
+                        [20, 240, 70, 272], [100, 180, 85, 332], [200, 140, 95, 372],
+                        [310, 210, 75, 302], [400, 160, 90, 352]
+                    ];
+                    buildings.forEach(([bx, by, bw, bh]) => {
+                        ctx.fillRect(bx, by, bw, bh);
+                        // Lampu jendela gedung
+                        ctx.fillStyle = (hour >= 18 || hour < 6) ? '#fef08a' : '#94a3b8';
+                        for (let r = by + 20; r < 490; r += 26) {
+                            for (let c = bx + 12; c < bx + bw - 12; c += 22) {
+                                ctx.fillRect(c, r, 9, 13);
+                            }
+                        }
+                        ctx.fillStyle = bColor;
+                    });
+
+                    this.skyTexture.needsUpdate = true;
+                },
+
+                // 13. Pintu Utama Kantor
+                buildOfficeDoors() {
+                    const doorGroup = new THREE.Group();
+                    const frameMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4 });
+                    const frame = new THREE.Mesh(new THREE.BoxGeometry(2.4, 4.4, 0.45), frameMat);
+                    frame.position.set(-11.6, 2.2, 8.5);
+                    doorGroup.add(frame);
+
+                    // Daun Pintu Kaca Modern dengan Gagang Stainless
+                    const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(2.0, 3.8, 0.08), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.2, metalness: 0.6 }));
+                    doorLeaf.position.set(-11.6, 2.0, 8.5);
+                    doorGroup.add(doorLeaf);
+
+                    this.scene.add(doorGroup);
+                },
+
+                // 14. NPC Tambahan: "Pak Budi" (Cleaning Service / Office Assistant yang keliling rapi)
+                budiGroup: null,
+                budiWalk: { progress: 0, speed: 0.28 },
+
+                buildCleaningService() {
+                    const char = new THREE.Group();
+                    const skinMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.6 });
+                    const head = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.36, 0.34), skinMat);
+                    head.position.y = 0.88;
+                    char.add(head);
+
+                    // Topi Cleaning Service Biru Tua
+                    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.12, 0.44), new THREE.MeshStandardMaterial({ color: 0x1e3a8a }));
+                    cap.position.set(0, 1.05, 0.04);
+                    char.add(cap);
+
+                    // Seragam Kemeja Kerja Biru Muda
+                    const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.44, 0.26), new THREE.MeshStandardMaterial({ color: 0x38bdf8 }));
+                    shirt.position.y = 0.45;
+                    char.add(shirt);
+
+                    // Tangan & Tongkat Pel Lantai
+                    const armGeo = new THREE.BoxGeometry(0.09, 0.36, 0.11);
+                    const armL = new THREE.Mesh(armGeo, skinMat); armL.position.set(-0.26, 0.43, 0.08); char.add(armL);
+                    const armR = new THREE.Mesh(armGeo, skinMat); armR.position.set(0.26, 0.43, 0.12); char.add(armR);
+
+                    // Gagang Pel & Spons
+                    const mopPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 8), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 }));
+                    mopPole.position.set(0.34, 0.55, 0.32);
+                    mopPole.rotation.x = 0.35;
+                    char.add(mopPole);
+
+                    const mopHead = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.08, 0.16), new THREE.MeshStandardMaterial({ color: 0xf1f5f9 }));
+                    mopHead.position.set(0.34, 0.04, 0.65);
+                    char.add(mopHead);
+
+                    // Celana & Sepatu
+                    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.36, 0.14), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+                    legL.position.set(-0.10, 0.18, 0); char.add(legL);
+                    const legR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.36, 0.14), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+                    legR.position.set(0.10, 0.18, 0); char.add(legR);
+
+                    const nameTag = this.createNameTag('budi', 'Pak Budi', 'Office Assistant', '#38bdf8', '🧹 Bersih-bersih Kantor');
+                    char.add(nameTag);
+
+                    char.userData = { armL, armR, legL, legR, head };
+                    this.budiGroup = char;
+                    this.scene.add(char);
+                },
+
                 buildRoom() {
                     // 1. Lantai Parquet Kayu Walnut Hangat Mewah
                     const floorGeo = new THREE.PlaneGeometry(24, 15);
@@ -1338,14 +1688,27 @@
                     // 6. Ruang Lounge Santai & Smart TV 65-Inch
                     this.buildLoungeWithTV(5.0, 0, 1.4);
 
-                    // 7. Perabot Pendukung (Server Rack, Lemari Arsip, Tanaman Hias)
+                    // 7. Ruang Kamar Tidur AI (Rest Bedroom saat Token Habis / Low Energy)
+                    this.buildBedroom(-8.5, 0, 2.5);
+
+                    // 8. Dekorasi Dinding: Frame Galeri Poster, Jam Nyata, AC Dinding & Pintu
+                    this.buildGalleryWall();
+                    this.buildRealClock(-2.2, 4.8, -4.56);
+                    this.buildAirConditioner(2.5, 4.4, -4.56);
+                    this.buildOutdoorWindow();
+                    this.buildOfficeDoors();
+
+                    // 9. Perabot Pendukung (Server Rack, Lemari Arsip, Tanaman Hias)
                     this.buildServerRack(-8.8, 0, -4.0);
-                    this.buildBookshelf(-8.8, 0, 1.2);
+                    this.buildBookshelf(-5.2, 0, -4.0);
                     this.buildPlant(-6.5, 0, -4.1);
                     this.buildPlant(1.6, 0, 2.6);
                     this.buildPlant(9.5, 0, -4.1);
 
-                    // 8. Spawn Karakter 3D (Dewi, Singgih, Andera)
+                    // 10. NPC Pak Budi (Cleaning Service / Office Assistant)
+                    this.buildCleaningService();
+
+                    // 11. Spawn Karakter 3D (Dewi, Singgih, Andera)
                     // DEWI (CS Customer: Baju Pink Cantik, Rambut Panjang Cokelat Caramel)
                     this.dewiGroup = this.buildDewiCharacter();
                     this.scene.add(this.dewiGroup);
@@ -1370,6 +1733,24 @@
 
                     const time = this.clock ? this.clock.getElapsedTime() : 0;
                     const delta = 0.016; // approx frame time
+
+                    // Update Jam Dinding Real-Time
+                    this.updateClockCanvas();
+
+                    // Animasi Pak Budi (Cleaning Service Patroli keliling lorong & membersihkan lantai)
+                    if (this.budiGroup) {
+                        this.budiWalk.progress += delta * this.budiWalk.speed;
+                        const patrolT = (Math.sin(this.budiWalk.progress) + 1) / 2; // bolak-balik 0 ke 1
+                        this.budiGroup.position.x = -6.5 + patrolT * 5.0; // Jalan antara x=-6.5 sampai x=-1.5
+                        this.budiGroup.position.z = -1.2;
+                        this.budiGroup.rotation.y = Math.cos(this.budiWalk.progress) > 0 ? Math.PI / 2 : -Math.PI / 2;
+
+                        // Gerakan mengayun pel lantai
+                        const sweep = Math.sin(time * 6) * 0.25;
+                        if (this.budiGroup.userData.armR) this.budiGroup.userData.armR.rotation.z = sweep;
+                        if (this.budiGroup.userData.legL) this.budiGroup.userData.legL.rotation.x = Math.sin(time * 8) * 0.35;
+                        if (this.budiGroup.userData.legR) this.budiGroup.userData.legR.rotation.x = -Math.sin(time * 8) * 0.35;
+                    }
 
                     // A. Update Layar Komputer Live (Simulasi coding terminal & live chat bubble)
                     if (this.screenCtx && this.screenTexture) {
@@ -1472,17 +1853,30 @@
                         // Posisi diam (Ngetik di meja ATAU bersantai santai di sofa)
                         const data = this.dewiGroup.userData;
                         if (this.currentCsStatus === 'working') {
-                            // Dewi ngetik aktif di keyboard & posisi duduk melipat kaki rapi di bawah kursi (tidak menembus meja)
+                            // Dewi mengetik aktif di keyboard & paha masuk rapi ke bawah meja
                             if (data.armL && data.armR) {
-                                data.armL.rotation.x = 0.55 + Math.sin(time * 14) * 0.18;
-                                data.armR.rotation.x = 0.55 + Math.cos(time * 14) * 0.18;
+                                data.armL.rotation.x = 0.58 + Math.sin(time * 14) * 0.18;
+                                data.armR.rotation.x = 0.58 + Math.cos(time * 14) * 0.18;
                             }
                             if (data.legL && data.legR) {
-                                data.legL.rotation.x = -1.25; // Melipat ke depan bawah kursi
-                                data.legR.rotation.x = -1.25;
+                                data.legL.rotation.x = 1.25; // Melipat maju ke arah depan (masuk ke bawah kolong meja)
+                                data.legR.rotation.x = 1.25;
                             }
                             if (data.head) {
                                 data.head.position.y = data.baseHeadY + Math.sin(time * 3.5) * 0.012;
+                            }
+                        } else if (this.currentCsStatus === 'sleeping') {
+                            // Dewi tidur santai di kasur kamar tidur AI & nafas beraturan
+                            if (data.armL && data.armR) {
+                                data.armL.rotation.x = 0.15;
+                                data.armR.rotation.x = 0.15;
+                            }
+                            if (data.legL && data.legR) {
+                                data.legL.rotation.x = 0.05;
+                                data.legR.rotation.x = 0.05;
+                            }
+                            if (data.head) {
+                                data.head.position.y = data.baseHeadY + Math.sin(time * 1.5) * 0.015; // Nafas pelan
                             }
                         } else {
                             // Dewi bersantai di sofa (tangan santai, kaki selonjor nyaman di sofa)
@@ -1500,29 +1894,29 @@
                         }
                     }
 
-                    // C. Animasi Singgih (Core Dispatcher mengetik konstan & duduk melipat kaki rapi)
+                    // C. Animasi Singgih (Core Dispatcher mengetik & kaki masuk rapi ke bawah meja)
                     if (this.singgihGroup) {
                         const data = this.singgihGroup.userData;
                         if (data && data.armL && data.armR) {
-                            data.armL.rotation.x = 0.50 + Math.cos(time * 11) * 0.14;
-                            data.armR.rotation.x = 0.50 + Math.sin(time * 11) * 0.14;
+                            data.armL.rotation.x = 0.52 + Math.cos(time * 11) * 0.14;
+                            data.armR.rotation.x = 0.52 + Math.sin(time * 11) * 0.14;
                         }
                         if (data && data.legL && data.legR) {
-                            data.legL.rotation.x = -1.25; // Masuk rapi di bawah kursi
-                            data.legR.rotation.x = -1.25;
+                            data.legL.rotation.x = 1.25; // Masuk ke arah bawah meja
+                            data.legR.rotation.x = 1.25;
                         }
                     }
 
-                    // D. Animasi Andera (Report Bot mengetik & duduk melipat kaki rapi di seberang)
+                    // D. Animasi Andera (Report Bot duduk di seberang hadap +Z, kaki masuk ke bawah meja)
                     if (this.anderaGroup) {
                         const data = this.anderaGroup.userData;
                         if (data && data.armL && data.armR) {
-                            data.armL.rotation.x = 0.48 + Math.sin(time * 8) * 0.14;
-                            data.armR.rotation.x = 0.48 + Math.cos(time * 8) * 0.14;
+                            data.armL.rotation.x = 0.50 + Math.sin(time * 8) * 0.14;
+                            data.armR.rotation.x = 0.50 + Math.cos(time * 8) * 0.14;
                         }
                         if (data && data.legL && data.legR) {
-                            data.legL.rotation.x = -1.25; // Masuk rapi di bawah kursi
-                            data.legR.rotation.x = -1.25;
+                            data.legL.rotation.x = 1.25; // Masuk rapi ke bawah meja seberang
+                            data.legR.rotation.x = 1.25;
                         }
                     }
 

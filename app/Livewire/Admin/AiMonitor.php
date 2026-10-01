@@ -122,7 +122,10 @@ class AiMonitor extends Component
         ];
         $name = $agentNames[$agentKey] ?? 'Staff';
 
-        if ($actionType === 'break') {
+        if ($actionType === 'sleep') {
+            $this->forcedTask = 'sleep';
+            $this->bonkMessage = "🪫 {$name} kehabisan energi! Sedang istirahat tidur di kamar AI (Zzz)...";
+        } elseif ($actionType === 'break') {
             $this->forcedTask = 'break';
             $this->bonkMessage = "💤 {$name} disuruh istirahat santai di lounge sofa!";
         } else {
@@ -215,6 +218,8 @@ class AiMonitor extends Component
             if ($this->bonkedAgent === 'cs_bot') $csStatus = 'working';
             if ($this->bonkedAgent === 'report_bot') $reportStatus = 'working';
             if ($this->bonkedAgent === 'core_bot') $coreStatus = 'working';
+        } elseif ($this->forcedTask === 'sleep') {
+            if ($this->bonkedAgent === 'cs_bot') $csStatus = 'sleeping';
         } elseif ($this->forcedTask === 'break') {
             if ($this->bonkedAgent === 'cs_bot') $csStatus = 'break';
             if ($this->bonkedAgent === 'report_bot') $reportStatus = 'break';
