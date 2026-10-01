@@ -38,6 +38,7 @@
     
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         [x-cloak] { display: none !important; }
@@ -141,32 +142,47 @@
             let activeRequests = 0;
             let showTimestamp = 0;
 
+            let showTimer = null;
+
             function showLoader() {
                 activeRequests++;
                 if (!loader) loader = document.getElementById('admin-global-loader');
                 if (!loader) return;
                 
-                showTimestamp = Date.now();
-                loader.style.display = 'flex';
-                requestAnimationFrame(() => {
-                    loader.classList.remove('opacity-0');
-                    loader.classList.add('opacity-100');
-                });
+                if (!showTimer && activeRequests > 0) {
+                    showTimer = setTimeout(() => {
+                        if (activeRequests > 0 && loader) {
+                            showTimestamp = Date.now();
+                            loader.style.display = 'flex';
+                            requestAnimationFrame(() => {
+                                loader.classList.remove('opacity-0');
+                                loader.classList.add('opacity-100');
+                            });
+                        }
+                    }, 180);
+                }
             }
 
             function hideLoader() {
                 activeRequests = Math.max(0, activeRequests - 1);
+                if (activeRequests === 0) {
+                    if (showTimer) {
+                        clearTimeout(showTimer);
+                        showTimer = null;
+                    }
+                }
                 if (activeRequests > 0) return;
 
                 if (!loader) loader = document.getElementById('admin-global-loader');
                 if (!loader) return;
 
-                const elapsed = Date.now() - showTimestamp;
-                const minDisplayTime = 250;
-                const delay = elapsed < minDisplayTime ? (minDisplayTime - elapsed) : 0;
+                const elapsed = showTimestamp ? (Date.now() - showTimestamp) : 0;
+                const minDisplayTime = 200;
+                const delay = (showTimestamp && elapsed < minDisplayTime) ? (minDisplayTime - elapsed) : 0;
 
                 setTimeout(() => {
                     if (activeRequests === 0 && loader) {
+                        showTimestamp = 0;
                         loader.classList.remove('opacity-100');
                         loader.classList.add('opacity-0');
                         setTimeout(() => {
@@ -190,16 +206,31 @@
             document.addEventListener('livewire:navigating', showLoader);
             document.addEventListener('livewire:navigated', () => {
                 activeRequests = 0;
-                hideLoader();
+                if (showTimer) {
+                    clearTimeout(showTimer);
+                    showTimer = null;
+                }
+                if (loader) {
+                    showTimestamp = 0;
+                    loader.classList.remove('opacity-100');
+                    loader.classList.add('opacity-0');
+                    loader.style.display = 'none';
+                }
             });
 
             // Hook ke event Livewire commit (klik tombol / action / filter)
             document.addEventListener('livewire:init', () => {
                 if (window.Livewire && Livewire.hook) {
-                    Livewire.hook('commit', ({ succeed, fail }) => {
-                        showLoader();
-                        succeed(() => hideLoader());
-                        fail(() => hideLoader());
+                    Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
+                        // Jangan munculkan fullscreen loader untuk background polling atau sync realtime
+                        const isPoll = commit && commit.calls && commit.calls.some(c => 
+                            c.method === '$refresh' || c.method === 'pingGateway' || c.method === 'checkGatewayStatus'
+                        );
+                        if (!isPoll) {
+                            showLoader();
+                            succeed(() => hideLoader());
+                            fail(() => hideLoader());
+                        }
                     });
                 }
             });

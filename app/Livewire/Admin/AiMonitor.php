@@ -245,6 +245,8 @@ class AiMonitor extends Component
             }
         }
 
+        $this->dispatch('ai-status-sync', csStatus: $csStatus, reportStatus: $reportStatus);
+
         return view('livewire.admin.ai-monitor', [
             'totalSessions' => $totalSessions,
             'activeSessionsToday' => $activeSessionsToday,
