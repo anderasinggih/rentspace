@@ -54,8 +54,11 @@
 
     #playerWrap iframe {
         position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         border: 0;
-        pointer-events: none;
     }
 
     #scrim {
@@ -605,12 +608,6 @@
     }
 
     function fitPlayer() {
-        var wrap = el('playerWrap');
-        if (wrap) {
-            wrap.style.width = vw + 'px';
-            wrap.style.height = vh + 'px';
-        }
-
         var frame = document.querySelector('#playerWrap iframe') || el('player');
         if (!frame) return;
 
