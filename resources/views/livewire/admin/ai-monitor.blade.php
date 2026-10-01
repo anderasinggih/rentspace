@@ -242,6 +242,7 @@
                 targetLookAt: { x: 0, y: 1.0, z: 0 },
 
                 setView(viewName) {
+                    this.isPovMode = (viewName === 'dewi_pov');
                     if (viewName === 'iso') {
                         this.rotY = 0.58;
                         this.rotX = 0.38;
@@ -269,11 +270,9 @@
                         this.cameraRadius = 9.5;
                         this.targetLookAt = { x: -9.5, y: 1.0, z: 2.5 };
                     } else if (viewName === 'dewi_pov') {
-                        // POV Menatap Langsung ke Layar Monitor Kerja Dewi
-                        this.rotY = 0.05; // Menghadap lurus ke arah monitor dari belakang Dewi
-                        this.rotX = 0.12;
-                        this.cameraRadius = 4.2;
-                        this.targetLookAt = { x: -3.2, y: 1.45, z: 0.70 };
+                        // TRUE FIRST-PERSON POV: Kamera terpasang di depan muka Dewi menghadap ke depan meja!
+                        this.isPovMode = true;
+                        this.targetLookAt = { x: -3.2, y: 1.40, z: -0.5 }; // Menatap langsung ke arah monitor & keyboard di depan muka
                     } else if (viewName === 'front') {
                         this.rotY = 0.0;
                         this.rotX = 0.12;
@@ -399,23 +398,21 @@
                         }
                         container.appendChild(this.renderer.domElement);
 
-                        // 4. Pencahayaan Realistis: Warm Luxury Interior (2700K - 3000K Lighting)
-                        // A. Ambient Light hangat lembut (tidak bikin flat)
-                        const ambient = new THREE.AmbientLight(0xffeedb, 0.55);
+                        // 4. Pencahayaan Realistis: Home Cozy Warm Interior (Suasana Rumah Nyaman & Hangat)
+                        // A. Ambient Light hangat lembut
+                        const ambient = new THREE.AmbientLight(0xffedd5, 0.65);
                         this.scene.add(ambient);
 
-                        // B. Hemisphere Light (Langit-langit warm cream, pantulan lantai kayu walnut)
-                        const hemiLight = new THREE.HemisphereLight(0xffedd5, 0x452a1a, 0.45);
+                        // B. Hemisphere Light (Pantulan kayu lantai hangat)
+                        const hemiLight = new THREE.HemisphereLight(0xffedd5, 0x3d2817, 0.50);
                         this.scene.add(hemiLight);
 
-                        // C. Main Warm Key Light (Spot/Directional matahari jendela studio)
-                        const sunLight = new THREE.DirectionalLight(0xfff3e0, 1.25);
-                        sunLight.position.set(11, 18, 13);
+                        // C. Lampu Plafon Rumah Lembut
+                        const sunLight = new THREE.DirectionalLight(0xfff1dc, 0.95);
+                        sunLight.position.set(8, 16, 10);
                         sunLight.castShadow = true;
                         sunLight.shadow.mapSize.width = 1024;
                         sunLight.shadow.mapSize.height = 1024;
-                        sunLight.shadow.camera.near = 0.5;
-                        sunLight.shadow.camera.far = 45;
                         sunLight.shadow.bias = -0.0006;
                         this.scene.add(sunLight);
 
@@ -521,7 +518,18 @@
                     this.screenTexture = new THREE.CanvasTexture(this.screenCanvas);
                 },
 
+                isPovMode: false,
+
                 updateCameraPos() {
+                    if (this.isPovMode && this.dewiGroup) {
+                        // Kamera FPS ditaruh pas di posisi mata Dewi!
+                        const headY = (this.dewiGroup.position.y || 0.44) + 0.88;
+                        this.camera.position.set(this.dewiGroup.position.x, headY, this.dewiGroup.position.z - 0.12);
+                        // Menatap lurus ke meja kerja dan monitor di depan mata
+                        this.camera.lookAt(this.dewiGroup.position.x, headY - 0.05, this.dewiGroup.position.z - 2.5);
+                        return;
+                    }
+
                     const radius = this.cameraRadius || 18.5;
                     const tx = this.targetLookAt?.x || 0;
                     const ty = this.targetLookAt?.y || 1.0;
@@ -533,12 +541,19 @@
                     this.camera.lookAt(tx, ty, tz);
                 },
 
-                // Trigger perpindahan jalan Dewi (NPC Walking) antara Meja dan Sofa
+                // Trigger perpindahan jalan Dewi (Waypoint Navigation Anti-Tembus Dinding/Meja)
+                dewiWaypoints: [],
+                currentWaypointIdx: 0,
+
                 updateCsPosition(status) {
                     if (this.currentCsStatus === status && !this.dewiWalk.isMoving) return;
                     this.currentCsStatus = status;
 
                     if (!this.dewiGroup) return;
+
+                    // Reset rotasi tidur saat bangun jalan
+                    this.dewiGroup.rotation.x = 0;
+                    this.dewiGroup.rotation.z = 0;
 
                     let target = this.spots.dewiLounge;
                     if (status === 'working') {
@@ -548,23 +563,54 @@
                         this.setMood('dewi', '🪫 Low Energy · Tidur Zzz...');
                         target = this.spots.dewiBed;
                     } else {
-                        // Variasi mood santai saat istirahat (musikan / ngopi santai)
                         const breakMoods = ['🎧 Lagi Dengerin Musik', '☕ Istirahat Santai', '🥤 Minum & Recharge', '🛋️ Duduk Santai Senang'];
                         const randomMood = breakMoods[Math.floor(Math.random() * breakMoods.length)];
                         this.setMood('dewi', randomMood);
                         target = this.spots.dewiLounge;
                     }
-                    
+
+                    // Tentukan Rute Waypoints agar tidak menabrak meja atau dinding
+                    const curX = this.dewiGroup.position.x;
+                    const curZ = this.dewiGroup.position.z;
+                    this.dewiWaypoints = [];
+
+                    if (status === 'sleeping') {
+                        // Menuju kamar: Keluar lorong depan (z=2.8) -> geser koridor (x=-8.5) -> masuk kasur
+                        this.dewiWaypoints.push({ x: curX, z: 2.8 });
+                        this.dewiWaypoints.push({ x: -8.5, z: 2.8 });
+                        this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
+                    } else if (status === 'working') {
+                        // Menuju meja: Ke lorong depan -> sejajar kursi dewi -> maju ke kursi
+                        this.dewiWaypoints.push({ x: curX, z: 2.8 });
+                        this.dewiWaypoints.push({ x: target.x, z: 2.8 });
+                        this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
+                    } else {
+                        // Menuju sofa: Ke lorong depan -> ke depan sofa -> duduk di sofa
+                        this.dewiWaypoints.push({ x: curX, z: 2.8 });
+                        this.dewiWaypoints.push({ x: target.x, z: 2.8 });
+                        this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
+                    }
+
+                    this.currentWaypointIdx = 0;
+                    this.startNextWaypoint();
+                },
+
+                startNextWaypoint() {
+                    if (this.currentWaypointIdx >= this.dewiWaypoints.length) {
+                        this.dewiWalk.isMoving = false;
+                        return;
+                    }
+
+                    const wp = this.dewiWaypoints[this.currentWaypointIdx];
                     this.dewiWalk.isMoving = true;
                     this.dewiWalk.startX = this.dewiGroup.position.x;
                     this.dewiWalk.startZ = this.dewiGroup.position.z;
-                    this.dewiWalk.targetX = target.x;
-                    this.dewiWalk.targetZ = target.z;
-                    this.dewiWalk.targetRotY = target.rotY;
+                    this.dewiWalk.targetX = wp.x;
+                    this.dewiWalk.targetZ = wp.z;
+                    this.dewiWalk.targetRotY = (wp.rotY !== undefined) ? wp.rotY : Math.atan2(wp.x - this.dewiWalk.startX, wp.z - this.dewiWalk.startZ);
                     this.dewiWalk.progress = 0;
 
-                    // Buat Dewi menghadap ke arah tujuan jalan
-                    const angle = Math.atan2(target.x - this.dewiWalk.startX, target.z - this.dewiWalk.startZ);
+                    const angle = Math.atan2(wp.x - this.dewiWalk.startX, wp.z - this.dewiWalk.startZ);
                     this.dewiGroup.rotation.y = angle;
                 },
 
@@ -1727,7 +1773,7 @@
                     this.buildGalleryWall();
                     this.buildRealClock(-2.2, 4.8, -4.56);
                     this.buildAirConditioner(2.5, 4.4, -4.56);
-                    this.buildOutdoorWindow();
+                    // Window luar dihapus agar dinding rapi bersih
                     this.buildOfficeDoors();
 
                     // 9. Perabot Pendukung (Server Rack, Lemari Arsip, Tanaman Hias)
@@ -1878,13 +1924,16 @@
                         this.dewiGroup.position.y = 0.48 + Math.abs(Math.sin(time * 16)) * 0.06;
 
                         if (t >= 1) {
-                            this.dewiWalk.isMoving = false;
                             this.dewiGroup.rotation.y = this.dewiWalk.targetRotY;
+                            this.currentWaypointIdx++;
+                            this.startNextWaypoint();
                         }
                     } else if (this.dewiGroup) {
                         // Posisi diam (Ngetik di meja ATAU bersantai santai di sofa)
                         const data = this.dewiGroup.userData;
-                        if (this.currentCsStatus === 'working') {
+                        this.dewiGroup.rotation.x = 0;
+                            this.dewiGroup.rotation.z = 0;
+                            if (this.currentCsStatus === 'working') {
                             // Dewi mengetik aktif di keyboard & paha masuk rapi ke bawah meja
                             if (data.armL && data.armR) {
                                 data.armL.rotation.x = 0.58 + Math.sin(time * 14) * 0.18;
@@ -1898,17 +1947,22 @@
                                 data.head.position.y = data.baseHeadY + Math.sin(time * 3.5) * 0.012;
                             }
                         } else if (this.currentCsStatus === 'sleeping') {
-                            // Dewi tidur santai di kasur kamar tidur AI & nafas beraturan
+                            // Dewi tidur TENGKUREP di kasur kamar tidur AI (wajah menoleh santai ke samping)
+                            this.dewiGroup.rotation.x = -Math.PI / 2; // Tengkurep di kasur
+                            this.dewiGroup.rotation.z = 0.12;        // Miring santai
                             if (data.armL && data.armR) {
-                                data.armL.rotation.x = 0.15;
-                                data.armR.rotation.x = 0.15;
+                                data.armL.rotation.x = -2.4; // Tangan naik merangkul bantal
+                                data.armR.rotation.x = -2.1;
+                                data.armL.rotation.z = -0.4;
+                                data.armR.rotation.z = 0.4;
                             }
                             if (data.legL && data.legR) {
-                                data.legL.rotation.x = 0.05;
-                                data.legR.rotation.x = 0.05;
+                                data.legL.rotation.x = 0.05; // Kaki selonjor di kasur
+                                data.legR.rotation.x = -0.15;
                             }
                             if (data.head) {
-                                data.head.position.y = data.baseHeadY + Math.sin(time * 1.5) * 0.015; // Nafas pelan
+                                data.head.rotation.y = 0.85; // Menoleh ke samping bantal
+                                data.head.position.y = data.baseHeadY + Math.sin(time * 1.5) * 0.010;
                             }
                         } else {
                             // Dewi bersantai di sofa (tangan santai, kaki selonjor nyaman di sofa)
