@@ -267,7 +267,7 @@
                         this.rotY = 0.45;
                         this.rotX = 0.32;
                         this.cameraRadius = 9.5;
-                        this.targetLookAt = { x: -8.5, y: 1.0, z: 2.2 };
+                        this.targetLookAt = { x: -9.5, y: 1.0, z: 2.5 };
                     } else if (viewName === 'dewi_pov') {
                         // POV Menatap Langsung ke Layar Monitor Kerja Dewi
                         this.rotY = 0.05; // Menghadap lurus ke arah monitor dari belakang Dewi
@@ -312,7 +312,7 @@
                 spots: {
                     dewiDesk: { x: -3.2, y: 0.44, z: 1.45, rotY: Math.PI },   // Duduk pas di kursi menghadap monitor ke arah -Z
                     dewiLounge: { x: 5.0, y: 0.42, z: 1.4, rotY: 0.0 },       // Duduk santai di sofa
-                    dewiBed: { x: -7.5, y: 0.58, z: 2.2, rotY: Math.PI / 2 }, // Berbaring di kasur kamar tidur AI
+                    dewiBed: { x: -9.7, y: 0.58, z: 2.5, rotY: Math.PI / 2 }, // Berbaring di kasur kamar tidur AI
                     singgihDesk: { x: -1.2, y: 0.44, z: 1.45, rotY: Math.PI }, // Duduk pas di kursi menghadap monitor ke arah -Z
                     anderaDesk: { x: -2.2, y: 0.44, z: -1.25, rotY: 0.0 }     // Duduk pas di seberang menghadap monitor ke arah +Z
                 },
@@ -1189,7 +1189,7 @@
                     this.scene.add(group);
                 },
 
-                // Neon Box Minimalis Elegan: Huruf Putih Bersih Tanpa Emoticon / Tanpa Glow Lebay
+                // Tulisan Neon 3D Huruf Timbul Minimalis Putih di Tembok (Tanpa Background Kotak Hitam!)
                 buildMinimalNeonBox() {
                     const canvas = document.createElement('canvas');
                     canvas.width = 1024;
@@ -1198,45 +1198,32 @@
 
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                    // Background panel akrilik abu gelap minimalis
-                    ctx.fillStyle = 'rgba(18, 20, 23, 0.96)';
-                    ctx.beginPath();
-                    ctx.roundRect(40, 20, canvas.width - 80, canvas.height - 40, 28);
-                    ctx.fill();
-
-                    // Border tipis elegan
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-
-                    // Tulisan "RENTSPACE" Putih Bersih & Tajam (Tanpa Emoticon)
+                    // Tulisan "RENTSPACE" Huruf Timbul Putih Bersih (Background transparan murni)
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 88px "Inter", "Outfit", sans-serif';
+                    ctx.font = '900 96px "Inter", "Outfit", sans-serif';
                     ctx.textAlign = 'center';
+                    ctx.letterSpacing = '8px';
                     ctx.fillText('RENTSPACE', canvas.width / 2, 115);
 
                     // Subtitle elegan
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.70)';
-                    ctx.font = '500 24px "Inter", "Outfit", sans-serif';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                    ctx.font = '600 24px "Inter", "Outfit", sans-serif';
                     ctx.letterSpacing = '6px';
                     ctx.fillText('HEADQUARTER & CUSTOMER SERVICE', canvas.width / 2, 168);
 
                     const texture = new THREE.CanvasTexture(canvas);
 
-                    // Kotak fisik 3D Neon Box (Akrilik + Frame Alumunium)
-                    const boxGeo = new THREE.BoxGeometry(6.4, 1.6, 0.18);
-                    const boxFrameMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.3, metalness: 0.8 });
-                    const boxMesh = new THREE.Mesh(boxGeo, boxFrameMat);
-                    boxMesh.position.set(-2.2, 3.6, -4.68);
-                    boxMesh.castShadow = true;
-                    this.scene.add(boxMesh);
-
-                    // Muka neon box bercahaya putih halus
-                    const faceGeo = new THREE.PlaneGeometry(6.3, 1.5);
+                    // Panel transparan menempel tepat di dinding (-4.58)
+                    const faceGeo = new THREE.PlaneGeometry(6.4, 1.6);
                     const faceMat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
                     const faceMesh = new THREE.Mesh(faceGeo, faceMat);
                     faceMesh.position.set(-2.2, 3.6, -4.58);
                     this.scene.add(faceMesh);
+
+                    // Backlight putih lembut persis di belakang huruf
+                    const wallBacklight = new THREE.PointLight(0xffffff, 1.2, 6, 2);
+                    wallBacklight.position.set(-2.2, 3.6, -4.4);
+                    this.scene.add(wallBacklight);
                 },
 
                 // Rak Lemari Arsip & Storage Ruangan
@@ -1308,65 +1295,95 @@
                     }
                 },
 
-                                // 8. Ruang Kamar Tidur AI (Rest Bedroom & Charging Station)
+                                // 8. Ruang Kamar Tidur Tertutup AI (Private Rest Bedroom & Charging Sanctuary)
                 buildBedroom(x, y, z) {
                     const bedGroup = new THREE.Group();
                     bedGroup.position.set(x, y, z);
 
-                    // Karpet Kamar Hangat
-                    const rugGeo = new THREE.BoxGeometry(3.6, 0.02, 3.2);
-                    const rugMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.95 });
-                    const rug = new THREE.Mesh(rugGeo, rugMat);
-                    rug.position.y = 0.01;
+                    // Dinding Partisi Kamar Tidur: Memisahkan kamar dari kantor utama
+                    const wallMat = new THREE.MeshStandardMaterial({ color: 0x2b2724, roughness: 0.9 });
+                    
+                    // Dinding Depan Kamar (dengan bukaan pintu masuk)
+                    const frontWallA = new THREE.Mesh(new THREE.BoxGeometry(2.4, 4.8, 0.3), wallMat);
+                    frontWallA.position.set(-1.6, 2.4, 2.2);
+                    bedGroup.add(frontWallA);
+
+                    const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 0.3), wallMat);
+                    doorHeader.position.set(0.4, 4.2, 2.2);
+                    bedGroup.add(doorHeader);
+
+                    // Kusen & Pintu Kayu Kamar Terbuka
+                    const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(1.6, 3.6, 0.34), new THREE.MeshStandardMaterial({ color: 0x18181b }));
+                    doorFrame.position.set(0.4, 1.8, 2.2);
+                    bedGroup.add(doorFrame);
+
+                    const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(1.4, 3.4, 0.08), new THREE.MeshStandardMaterial({ color: 0x4a3427, roughness: 0.6 }));
+                    doorLeaf.position.set(0.4, 1.8, 2.2);
+                    doorLeaf.rotation.y = -0.95; // Pintu setengah terbuka estetik
+                    bedGroup.add(doorLeaf);
+
+                    // Dinding Kanan Kamar (Pemisah lorong)
+                    const sideWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.8, 4.6), wallMat);
+                    sideWall.position.set(1.4, 2.4, -0.1);
+                    bedGroup.add(sideWall);
+
+                    // Lantai Parket Khusus Kamar Tidur (Abu Hangat Cozy)
+                    const bedFloor = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.02, 4.6), new THREE.MeshStandardMaterial({ color: 0x241d18, roughness: 0.7 }));
+                    bedFloor.position.set(-1.0, 0.015, -0.1);
+                    bedGroup.add(bedFloor);
+
+                    // Karpet Bulu Empuk Kamar
+                    const rug = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.03, 3.0), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.95 }));
+                    rug.position.set(-1.2, 0.03, 0.2);
                     bedGroup.add(rug);
 
                     // Rangka Ranjang Kayu Minimalis Elegan
                     const frameMat = new THREE.MeshStandardMaterial({ color: 0x3d271d, roughness: 0.7 });
-                    const bedFrame = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.35, 3.0), frameMat);
-                    bedFrame.position.set(0, 0.18, 0);
+                    const bedFrame = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.35, 2.8), frameMat);
+                    bedFrame.position.set(-1.2, 0.18, 0);
                     bedFrame.castShadow = true;
                     bedGroup.add(bedFrame);
 
                     // Kasur Springbed Empuk Putih
                     const mattressMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
-                    const mattress = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.28, 2.8), mattressMat);
-                    mattress.position.set(0, 0.45, 0);
+                    const mattress = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.28, 2.6), mattressMat);
+                    mattress.position.set(-1.2, 0.45, 0);
                     mattress.castShadow = true;
                     bedGroup.add(mattress);
 
-                    // Selimut Hangat Pastel
+                    // Selimut Hangat Pink Pastel
                     const blanketMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.8 });
-                    const blanket = new THREE.Mesh(new THREE.BoxGeometry(2.22, 0.12, 1.8), blanketMat);
-                    blanket.position.set(0, 0.52, 0.45);
+                    const blanket = new THREE.Mesh(new THREE.BoxGeometry(2.12, 0.12, 1.7), blanketMat);
+                    blanket.position.set(-1.2, 0.52, 0.45);
                     blanket.castShadow = true;
                     bedGroup.add(blanket);
 
-                    // Bantal Empuk
+                    // 2x Bantal Empuk
                     const pillowMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
-                    const pillow1 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.55), pillowMat);
-                    pillow1.position.set(-0.55, 0.62, -0.95);
+                    const pillow1 = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.16, 0.50), pillowMat);
+                    pillow1.position.set(-1.7, 0.62, -0.85);
                     bedGroup.add(pillow1);
 
-                    const pillow2 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.55), pillowMat);
-                    pillow2.position.set(0.55, 0.62, -0.95);
+                    const pillow2 = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.16, 0.50), pillowMat);
+                    pillow2.position.set(-0.7, 0.62, -0.85);
                     bedGroup.add(pillow2);
 
                     // Meja Nakas & Lampu Tidur Warm
-                    const nakas = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.55, 0.65), frameMat);
-                    nakas.position.set(-1.65, 0.275, -0.95);
+                    const nakas = new THREE.Mesh(new THREE.BoxGeometry(0.60, 0.55, 0.60), frameMat);
+                    nakas.position.set(-2.65, 0.275, -0.85);
                     nakas.castShadow = true;
                     bedGroup.add(nakas);
 
-                    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.32, 12), new THREE.MeshStandardMaterial({ color: 0xd4d4d8 }));
-                    lampBase.position.set(-1.65, 0.70, -0.95);
+                    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.14, 0.28, 12), new THREE.MeshStandardMaterial({ color: 0xd4d4d8 }));
+                    lampBase.position.set(-2.65, 0.68, -0.85);
                     bedGroup.add(lampBase);
 
-                    const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 0.30, 14), new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfef08a, emissiveIntensity: 0.3 }));
-                    lampShade.position.set(-1.65, 0.98, -0.95);
+                    const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 0.26, 14), new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfef08a, emissiveIntensity: 0.4 }));
+                    lampShade.position.set(-2.65, 0.94, -0.85);
                     bedGroup.add(lampShade);
 
-                    const nightLight = new THREE.PointLight(0xffe8ba, 0.9, 8, 2);
-                    nightLight.position.set(-1.65, 1.1, -0.95);
+                    const nightLight = new THREE.PointLight(0xffe8ba, 1.1, 7, 2);
+                    nightLight.position.set(-2.65, 1.1, -0.85);
                     bedGroup.add(nightLight);
 
                     this.scene.add(bedGroup);
@@ -1606,20 +1623,29 @@
                     shirt.position.y = 0.45;
                     char.add(shirt);
 
-                    // Tangan & Tongkat Pel Lantai
+                    // Tangan Kiri
                     const armGeo = new THREE.BoxGeometry(0.09, 0.36, 0.11);
-                    const armL = new THREE.Mesh(armGeo, skinMat); armL.position.set(-0.26, 0.43, 0.08); char.add(armL);
-                    const armR = new THREE.Mesh(armGeo, skinMat); armR.position.set(0.26, 0.43, 0.12); char.add(armR);
+                    const armL = new THREE.Mesh(armGeo, skinMat); 
+                    armL.position.set(-0.26, 0.43, 0.08); 
+                    char.add(armL);
 
-                    // Gagang Pel & Spons
-                    const mopPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 8), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 }));
-                    mopPole.position.set(0.34, 0.55, 0.32);
-                    mopPole.rotation.x = 0.35;
-                    char.add(mopPole);
+                    // Tangan Kanan memegang Gagang Pel (Tongkat pel masuk sebagai child armR!)
+                    const armR = new THREE.Group();
+                    const armRMesh = new THREE.Mesh(armGeo, skinMat);
+                    armRMesh.position.y = -0.18;
+                    armR.add(armRMesh);
+                    armR.position.set(0.26, 0.61, 0.08);
 
-                    const mopHead = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.08, 0.16), new THREE.MeshStandardMaterial({ color: 0xf1f5f9 }));
-                    mopHead.position.set(0.34, 0.04, 0.65);
-                    char.add(mopHead);
+                    // Gagang Pel & Spons (NEMPEL DI TANGAN KANAN)
+                    const mopPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.35, 8), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 }));
+                    mopPole.position.set(0.05, -0.25, 0.20);
+                    mopPole.rotation.x = 0.45;
+                    armR.add(mopPole);
+
+                    const mopHead = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.08, 0.16), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.9 }));
+                    mopHead.position.set(0.05, -0.80, 0.48);
+                    armR.add(mopHead);
+                    char.add(armR);
 
                     // Celana & Sepatu
                     const legL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.36, 0.14), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
@@ -1658,11 +1684,17 @@
                     backWall.receiveShadow = true;
                     this.scene.add(backWall);
 
-                    // Dinding Samping Kiri (Studio Kantor)
+                    // Dinding Samping Kiri (Studio Kantor & Kamar Tidur)
                     const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5.2, 15), wallMat);
                     leftWall.position.set(-11.8, 2.6, 2.5);
                     leftWall.receiveShadow = true;
                     this.scene.add(leftWall);
+
+                    // Dinding Samping Kanan Penuh (Lounge & Dapur)
+                    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5.2, 15), wallMat);
+                    rightWall.position.set(11.8, 2.6, 2.5);
+                    rightWall.receiveShadow = true;
+                    this.scene.add(rightWall);
 
                     // Dinding Partisi Pembatas: Memisahkan Kantor Utama dengan Area Pantry/Dapur & Lounge
                     const glassPartitionMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, transparent: true, opacity: 0.35, roughness: 0.1 });
@@ -1737,19 +1769,19 @@
                     // Update Jam Dinding Real-Time
                     this.updateClockCanvas();
 
-                    // Animasi Pak Budi (Cleaning Service Patroli keliling lorong & membersihkan lantai)
+                    // Animasi Pak Budi (Patroli di LORONG DEPAN BEBAS RINTANGAN - tidak nabrak meja/kursi!)
                     if (this.budiGroup) {
                         this.budiWalk.progress += delta * this.budiWalk.speed;
                         const patrolT = (Math.sin(this.budiWalk.progress) + 1) / 2; // bolak-balik 0 ke 1
-                        this.budiGroup.position.x = -6.5 + patrolT * 5.0; // Jalan antara x=-6.5 sampai x=-1.5
-                        this.budiGroup.position.z = -1.2;
+                        this.budiGroup.position.x = -4.8 + patrolT * 7.5; // Lorong depan luas antara x=-4.8 dan x=2.7
+                        this.budiGroup.position.z = 3.6; // Di depan meja (Z positif aman tanpa rintangan meja)
                         this.budiGroup.rotation.y = Math.cos(this.budiWalk.progress) > 0 ? Math.PI / 2 : -Math.PI / 2;
 
-                        // Gerakan mengayun pel lantai
-                        const sweep = Math.sin(time * 6) * 0.25;
-                        if (this.budiGroup.userData.armR) this.budiGroup.userData.armR.rotation.z = sweep;
-                        if (this.budiGroup.userData.legL) this.budiGroup.userData.legL.rotation.x = Math.sin(time * 8) * 0.35;
-                        if (this.budiGroup.userData.legR) this.budiGroup.userData.legR.rotation.x = -Math.sin(time * 8) * 0.35;
+                        // Gerakan mengayun pel lantai natural
+                        const sweep = Math.sin(time * 5) * 0.20;
+                        if (this.budiGroup.userData.armR) this.budiGroup.userData.armR.rotation.x = 0.2 + sweep;
+                        if (this.budiGroup.userData.legL) this.budiGroup.userData.legL.rotation.x = Math.sin(time * 7) * 0.35;
+                        if (this.budiGroup.userData.legR) this.budiGroup.userData.legR.rotation.x = -Math.sin(time * 7) * 0.35;
                     }
 
                     // A. Update Layar Komputer Live (Simulasi coding terminal & live chat bubble)
