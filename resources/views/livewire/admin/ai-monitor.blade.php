@@ -325,7 +325,7 @@
                     targetZ: 0,
                     targetRotY: 0,
                     progress: 1,
-                    speed: 0.55 // durasi perpindahan detik
+                    walkDuration: 1.0 // Durasi detik per segmen jalan agar stabil & natural
                 },
 
                 // Live bubbles
@@ -416,22 +416,33 @@
                         sunLight.shadow.bias = -0.0006;
                         this.scene.add(sunLight);
 
-                        // D. Ceiling Downlights (Lampu sorot gantung warm golden di atas meja bersama)
-                        const deskPendantLight = new THREE.PointLight(0xffe2b3, 1.35, 14, 1.8);
-                        deskPendantLight.position.set(-2.2, 4.2, 0.1);
+                        // D. Lampu Sorot Hangat Lembut di Meja Kerja (Spotlight Nyorot Fokus tp Halus)
+                        const deskSpotLight = new THREE.SpotLight(0xffdfa9, 1.7, 12, Math.PI / 3.2, 0.55, 1.4);
+                        deskSpotLight.position.set(-2.2, 4.2, 0.1);
+                        deskSpotLight.target.position.set(-2.2, 0.9, 0.1);
+                        this.scene.add(deskSpotLight);
+                        this.scene.add(deskSpotLight.target);
+
+                        const deskPendantLight = new THREE.PointLight(0xffe5bd, 0.85, 9, 2.0);
+                        deskPendantLight.position.set(-2.2, 3.6, 0.1);
                         this.scene.add(deskPendantLight);
 
-                        // E. Warm Lounge Sconce (Pencahayaan santai ruang sofa)
-                        const loungeWarmLight = new THREE.PointLight(0xffd699, 1.2, 13, 1.8);
-                        loungeWarmLight.position.set(4.8, 3.8, 1.2);
+                        // E. Ruang Lounge Santai: Warm Golden Glow (Hangat Mewah)
+                        const loungeWarmLight = new THREE.PointLight(0xffd485, 1.4, 14, 1.7);
+                        loungeWarmLight.position.set(5.0, 3.6, 1.4);
                         this.scene.add(loungeWarmLight);
 
-                        // F. Pantry & Kitchen Accent Light (Warm amber minimalis)
-                        const pantryLight = new THREE.PointLight(0xffe8cc, 1.1, 12, 1.8);
-                        pantryLight.position.set(4.8, 3.8, -2.8);
-                        this.scene.add(pantryLight);
+                        // F. Ruang Dapur / Pantry: Pencahayaan Putih Bersih Modern (Clean Modern Cool White 5000K)
+                        const pantryCleanWhite = new THREE.PointLight(0xf1f5f9, 1.35, 12, 1.6);
+                        pantryCleanWhite.position.set(5.2, 3.6, -3.2);
+                        this.scene.add(pantryCleanWhite);
 
-                        // G. Neon Box Subtle White Backlight (Sesuai request: putih minimalis elegan)
+                        // G. Ruang Kamar Tidur: Warm Cozy Bedside Ambient (Lampu Hangat 2700K Nyaman Buat Istirahat)
+                        const bedroomCeilingLight = new THREE.PointLight(0xffe1a8, 1.15, 10, 1.8);
+                        bedroomCeilingLight.position.set(-8.4, 3.8, 1.4);
+                        this.scene.add(bedroomCeilingLight);
+
+                        // H. Neon Box Subtle White Backlight (Sesuai request: putih minimalis elegan)
                         const neonBoxLight = new THREE.PointLight(0xffffff, 0.8, 8, 2);
                         neonBoxLight.position.set(0, 3.8, -4.0);
                         this.scene.add(neonBoxLight);
@@ -575,20 +586,38 @@
                     this.dewiWaypoints = [];
 
                     if (status === 'sleeping') {
-                        // Menuju kamar: Lewat lorong (z=3.8) -> belok ke depan pintu kamar (x=-6.8, z=4.8) -> masuk ke kasur
+                        // Rute Bersih Anti-Tembus Dinding/Pintu/Kusen:
+                        // 1. Mundur dari meja ke lorong depan bebas rintangan (z=3.8)
+                        // 2. Jalan sepanjang lorong depan ke depan pintu kamar (x=-6.8, z=3.8)
+                        // 3. Masuk lurus melewati kusen pintu (x=-6.8, z=4.8)
+                        // 4. Masuk ke lorong dalam kamar tidur (x=-6.8, z=2.4)
+                        // 5. Belok ke samping ranjang (x=-7.4, z=1.4)
+                        // 6. Naik ke atas kasur ranjang (-9.0, 1.4)
                         this.dewiWaypoints.push({ x: curX, z: 3.8 });
+                        this.dewiWaypoints.push({ x: -6.8, z: 3.8 });
                         this.dewiWaypoints.push({ x: -6.8, z: 4.8 });
-                        this.dewiWaypoints.push({ x: -9.0, z: 2.8 });
+                        this.dewiWaypoints.push({ x: -6.8, z: 2.4 });
+                        this.dewiWaypoints.push({ x: -7.5, z: 1.4 });
                         this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     } else if (status === 'working') {
-                        // Menuju meja: Ke lorong depan -> sejajar kursi dewi -> maju ke kursi
-                        this.dewiWaypoints.push({ x: curX, z: 2.8 });
-                        this.dewiWaypoints.push({ x: target.x, z: 2.8 });
+                        // Menuju meja kerja dari kamar/sofa:
+                        if (curX < -5.5) {
+                            // Keluar dari kamar lewat pintu:
+                            this.dewiWaypoints.push({ x: -6.8, z: 2.4 });
+                            this.dewiWaypoints.push({ x: -6.8, z: 4.8 });
+                            this.dewiWaypoints.push({ x: -6.8, z: 3.8 });
+                        }
+                        this.dewiWaypoints.push({ x: target.x, z: 3.8 });
                         this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     } else {
-                        // Menuju sofa: Ke lorong depan -> ke depan sofa -> duduk di sofa
-                        this.dewiWaypoints.push({ x: curX, z: 2.8 });
-                        this.dewiWaypoints.push({ x: target.x, z: 2.8 });
+                        // Menuju sofa santai:
+                        if (curX < -5.5) {
+                            // Keluar dari kamar lewat pintu:
+                            this.dewiWaypoints.push({ x: -6.8, z: 2.4 });
+                            this.dewiWaypoints.push({ x: -6.8, z: 4.8 });
+                            this.dewiWaypoints.push({ x: -6.8, z: 3.8 });
+                        }
+                        this.dewiWaypoints.push({ x: target.x, z: 3.8 });
                         this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     }
 
@@ -599,6 +628,14 @@
                 startNextWaypoint() {
                     if (this.currentWaypointIdx >= this.dewiWaypoints.length) {
                         this.dewiWalk.isMoving = false;
+                        // Reset kaki dan tangan saat selesai sampai tujuan agar tidak jalan di tempat!
+                        if (this.dewiGroup && this.dewiGroup.userData) {
+                            const data = this.dewiGroup.userData;
+                            if (data.legL) data.legL.rotation.x = 0;
+                            if (data.legR) data.legR.rotation.x = 0;
+                            if (data.armL) data.armL.rotation.x = 0;
+                            if (data.armR) data.armR.rotation.x = 0;
+                        }
                         return;
                     }
 
@@ -609,9 +646,23 @@
                     this.dewiWalk.targetX = wp.x;
                     this.dewiWalk.targetZ = wp.z;
                     this.dewiWalk.targetRotY = (wp.rotY !== undefined) ? wp.rotY : Math.atan2(wp.x - this.dewiWalk.startX, wp.z - this.dewiWalk.startZ);
+
+                    // Hitung jarak Euclidean untuk kecepatan jalan yang konstan & manusiawi (Natural Human Walking Speed: ~1.8 unit/sec)
+                    const dx = wp.x - this.dewiWalk.startX;
+                    const dz = wp.z - this.dewiWalk.startZ;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist < 0.05) {
+                        // Jarak sangat dekat, langsung ke waypoint berikutnya
+                        this.currentWaypointIdx++;
+                        this.startNextWaypoint();
+                        return;
+                    }
+
+                    this.dewiWalk.walkDuration = Math.max(0.4, dist / 1.75); // 1.75 units per second (kecepatan santai natural)
                     this.dewiWalk.progress = 0;
 
-                    const angle = Math.atan2(wp.x - this.dewiWalk.startX, wp.z - this.dewiWalk.startZ);
+                    const angle = Math.atan2(dx, dz);
                     this.dewiGroup.rotation.y = angle;
                 },
 
@@ -1992,40 +2043,51 @@
                         this.screenTexture.needsUpdate = true;
                     }
 
-                    // B. Animasi Berjalan Dewi (NPC Walking Mechanics)
+                    // B. Animasi Berjalan Dewi (NPC Walking Mechanics - Sinkron & Kecepatan Stabil Natural)
                     if (this.dewiWalk.isMoving && this.dewiGroup) {
-                        this.dewiWalk.progress += delta * this.dewiWalk.speed;
+                        const dur = this.dewiWalk.walkDuration || 1.0;
+                        this.dewiWalk.progress += delta / dur;
                         const t = Math.min(1, this.dewiWalk.progress);
 
-                        // Interpolasi posisi (lerp)
+                        // Interpolasi posisi (lerp halus)
                         this.dewiGroup.position.x = this.dewiWalk.startX + (this.dewiWalk.targetX - this.dewiWalk.startX) * t;
                         this.dewiGroup.position.z = this.dewiWalk.startZ + (this.dewiWalk.targetZ - this.dewiWalk.startZ) * t;
 
-                        // Langkah kaki mengayun saat berjalan
-                        const legSwing = Math.sin(time * 16) * 0.45;
+                        // Langkah kaki mengayun saat berjalan (kecepatan ayunan kaki proporsional dengan langkah nyata)
+                        const legSwing = Math.sin(time * 10) * 0.42;
                         if (this.dewiGroup.userData.legL) this.dewiGroup.userData.legL.rotation.x = legSwing;
                         if (this.dewiGroup.userData.legR) this.dewiGroup.userData.legR.rotation.x = -legSwing;
-                        if (this.dewiGroup.userData.armL) this.dewiGroup.userData.armL.rotation.x = -legSwing * 0.8;
-                        if (this.dewiGroup.userData.armR) this.dewiGroup.userData.armR.rotation.x = legSwing * 0.8;
+                        if (this.dewiGroup.userData.armL) this.dewiGroup.userData.armL.rotation.x = -legSwing * 0.7;
+                        if (this.dewiGroup.userData.armR) this.dewiGroup.userData.armR.rotation.x = legSwing * 0.7;
 
-                        // Bobbing naik-turun saat melangkah
-                        this.dewiGroup.position.y = 0.48 + Math.abs(Math.sin(time * 16)) * 0.06;
+                        // Bobbing naik-turun halus saat melangkah
+                        this.dewiGroup.position.y = 0.48 + Math.abs(Math.sin(time * 10)) * 0.04;
+
+                        // Pastikan orientasi badan lurus berdiri tegak saat berjalan
+                        this.dewiGroup.rotation.x = 0;
+                        this.dewiGroup.rotation.z = 0;
 
                         if (t >= 1) {
+                            this.dewiGroup.position.x = this.dewiWalk.targetX;
+                            this.dewiGroup.position.z = this.dewiWalk.targetZ;
                             this.dewiGroup.rotation.y = this.dewiWalk.targetRotY;
                             this.currentWaypointIdx++;
                             this.startNextWaypoint();
                         }
                     } else if (this.dewiGroup) {
-                        // Posisi diam (Ngetik di meja ATAU bersantai santai di sofa)
+                        // Posisi diam (Ngetik di meja, tidur nyenyak di kasur, ATAU santai di sofa)
                         const data = this.dewiGroup.userData;
-                        this.dewiGroup.rotation.x = 0;
+                        
+                        if (this.currentCsStatus === 'working') {
+                            this.dewiGroup.rotation.x = 0;
                             this.dewiGroup.rotation.z = 0;
-                            if (this.currentCsStatus === 'working') {
+                            this.dewiGroup.position.y = this.spots.dewiDesk.y;
                             // Dewi mengetik aktif di keyboard & paha masuk rapi ke bawah meja
                             if (data.armL && data.armR) {
                                 data.armL.rotation.x = 0.58 + Math.sin(time * 14) * 0.18;
                                 data.armR.rotation.x = 0.58 + Math.cos(time * 14) * 0.18;
+                                data.armL.rotation.z = 0;
+                                data.armR.rotation.z = 0;
                             }
                             if (data.legL && data.legR) {
                                 data.legL.rotation.x = 1.25; // Melipat maju ke arah depan (masuk ke bawah kolong meja)
@@ -2035,22 +2097,32 @@
                                 data.head.position.y = data.baseHeadY + Math.sin(time * 3.5) * 0.012;
                             }
                         } else if (this.currentCsStatus === 'sleeping') {
-                            // Dewi tidur TENGKUREP di kasur kamar tidur AI (wajah menoleh santai ke samping)
-                            this.dewiGroup.rotation.x = -Math.PI / 2; // Tengkurep di kasur
-                            this.dewiGroup.rotation.z = 0.12;        // Miring santai
-                            if (data.armL && data.armR) {
-                                data.armL.rotation.x = -2.4; // Tangan naik merangkul bantal
-                                data.armR.rotation.x = -2.1;
-                                data.armL.rotation.z = -0.4;
-                                data.armR.rotation.z = 0.4;
-                            }
+                            // Dewi tidur TENGKUREP NYENYAK di kasur kamar tidur AI (Tanpa gerak kaki/jalan di tempat!)
+                            this.dewiGroup.position.set(this.spots.dewiBed.x, this.spots.dewiBed.y, this.spots.dewiBed.z);
+                            this.dewiGroup.rotation.x = -Math.PI / 2; // Tengkurep telentang/tengkurep di kasur
+                            this.dewiGroup.rotation.y = this.spots.dewiBed.rotY;
+                            this.dewiGroup.rotation.z = 0.10;        // Miring santai natural
+
+                            // Kaki DIAM tenang selonjor di kasur (TIDAK BOLEH MENGAYUN/JALAN DI TEMPAT!)
                             if (data.legL && data.legR) {
-                                data.legL.rotation.x = 0.05; // Kaki selonjor di kasur
-                                data.legR.rotation.x = -0.15;
+                                data.legL.rotation.x = 0.05;
+                                data.legR.rotation.x = -0.05;
+                                data.legL.rotation.z = 0.08;
+                                data.legR.rotation.z = -0.08;
                             }
+
+                            // Tangan rileks merangkul bantal
+                            if (data.armL && data.armR) {
+                                data.armL.rotation.x = -2.3;
+                                data.armR.rotation.x = -2.1;
+                                data.armL.rotation.z = -0.35;
+                                data.armR.rotation.z = 0.35;
+                            }
+
+                            // Kepala menoleh ke samping bantal dengan nafas perlahan
                             if (data.head) {
-                                data.head.rotation.y = 0.85; // Menoleh ke samping bantal
-                                data.head.position.y = data.baseHeadY + Math.sin(time * 1.5) * 0.010;
+                                data.head.rotation.y = 0.85;
+                                data.head.position.y = data.baseHeadY + Math.sin(time * 1.5) * 0.008; // Irama nafas tidur lembut
                             }
                         } else {
                             // Dewi bersantai di sofa (tangan santai, kaki selonjor nyaman di sofa)
