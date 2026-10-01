@@ -116,21 +116,21 @@ class AiMonitor extends Component
         $this->bonkedAgent = $agentKey;
 
         $agentNames = [
-            'cs_bot' => 'CS Customer Bot',
-            'core_bot' => 'Gemini Core Dispatcher',
-            'report_bot' => 'Tim Finance & Report Bot',
+            'cs_bot' => 'Dewi (CS Customer)',
+            'core_bot' => 'Singgih (Core Dispatcher)',
+            'report_bot' => 'Andera (Report & Finance)',
         ];
-        $name = $agentNames[$agentKey] ?? 'Agent AI';
+        $name = $agentNames[$agentKey] ?? 'Staff';
 
         if ($actionType === 'break') {
             $this->forcedTask = 'break';
-            $this->bonkMessage = "💤 {$name} disuruh istirahat santai di sofa dulu!";
+            $this->bonkMessage = "💤 {$name} disuruh istirahat santai di lounge sofa!";
         } else {
             $this->forcedTask = 'work';
             $quotes = [
-                "💥 BONK! {$name} terbangun kaget: 'Ampun bos! Langsung duduk di meja kerja!'",
-                "🔨 PLAK! {$name} disentil bos: 'Siap laksanakan, langsung standby pantau chat!'",
-                "⚡ TING! {$name} disiram kopi virtual: 'Mata melek! Langsung ngetik!'",
+                "💥 {$name} bergegas: 'Siap bos! Langsung meluncur ke meja komputer!'",
+                "⚡ {$name} sigap: 'Monitor ready, langsung balas chat customer!'",
+                "☕ {$name} menyeruput kopi: 'Fokus penuh! Semua sistem online!'",
             ];
             $this->bonkMessage = $quotes[array_rand($quotes)];
         }
@@ -245,7 +245,15 @@ class AiMonitor extends Component
             }
         }
 
-        $this->dispatch('ai-status-sync', csStatus: $csStatus, reportStatus: $reportStatus);
+        $latestCustomerText = $latestCustomerMsg ? \Illuminate\Support\Str::limit($latestCustomerMsg->content, 35) : null;
+        $latestReportText = $latestReportMsg ? \Illuminate\Support\Str::limit($latestReportMsg->content, 35) : null;
+
+        $this->dispatch('ai-status-sync', 
+            csStatus: $csStatus, 
+            reportStatus: $reportStatus,
+            customerBubble: $latestCustomerText,
+            reportBubble: $latestReportText
+        );
 
         return view('livewire.admin.ai-monitor', [
             'totalSessions' => $totalSessions,
@@ -262,6 +270,8 @@ class AiMonitor extends Component
             'coreStatus' => $coreStatus,
             'latestCustomerMsgTime' => $latestCustomerMsg?->created_at?->diffForHumans() ?? 'Belum ada',
             'latestReportMsgTime' => $latestReportMsg?->created_at?->diffForHumans() ?? 'Belum ada',
+            'latestCustomerText' => $latestCustomerText,
+            'latestReportText' => $latestReportText,
         ])->layout('layouts.admin', ['title' => 'AI Mission Control & Monitoring']);
     }
 }

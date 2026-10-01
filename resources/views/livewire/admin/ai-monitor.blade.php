@@ -121,25 +121,31 @@
     <div class="bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden">
         <!-- Room Minimalist Toolbar -->
         <div class="px-5 py-3 bg-muted/20 border-b border-border/60 flex items-center justify-between flex-wrap gap-3">
-            <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2.5 flex-wrap">
                 <span class="text-sm">🏢</span>
-                <span class="text-xs font-bold text-foreground">Virtual Office & Lounge</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold {{ $csStatus === 'working' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20' }}">
-                    CS: {{ $csStatus === 'working' ? 'Aktif di Meja' : 'Istirahat (Sofa)' }}
+                <span class="text-xs font-bold text-foreground">RentSpace 3D Studio & Office Lounge</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold {{ $csStatus === 'working' ? 'bg-pink-500/15 text-pink-500 border border-pink-500/30' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20' }}">
+                    Dewi: {{ $csStatus === 'working' ? '👩‍💻 Online di Meja' : '🛋️ Istirahat di Sofa' }}
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                    Singgih: 👨‍💻 Dispatcher Ready
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    Andera: 📊 Finance Ready
                 </span>
             </div>
 
-            <!-- Simple Clean Controls -->
+            <!-- Quick Action Controls -->
             <div class="flex items-center gap-2">
                 <button wire:click="bonkAgent('cs_bot', 'work')" 
-                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 active:scale-95 transition">
-                    <span>⚡</span>
-                    <span>Tugaskan CS</span>
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-pink-500/20 text-pink-600 dark:text-pink-300 border border-pink-500/40 hover:bg-pink-500/30 active:scale-95 transition">
+                    <span>👩‍💻</span>
+                    <span>Tugaskan Dewi</span>
                 </button>
                 <button wire:click="bonkAgent('cs_bot', 'break')" 
                     class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-muted hover:bg-muted/80 text-muted-foreground border border-border active:scale-95 transition">
                     <span>🛋️</span>
-                    <span>Istirahat</span>
+                    <span>Dewi Istirahat</span>
                 </button>
             </div>
         </div>
@@ -151,25 +157,53 @@
             </div>
         @endif
 
-        <!-- 3D Canvas Viewport (Diperluas: height 440px dengan full width) -->
+        <!-- 3D Canvas Viewport (Height 480px, Cozy & Cheerful Modern Studio) -->
         <script>
-            // Simpan instance Three.js secara internal agar TIDAK dibungkus Alpine Reactive Proxy
-            // (Three.js memiliki property read-only seperti modelViewMatrix yang crash jika di-proxy oleh Alpine)
             window._threeOfficeApp = {
                 scene: null,
                 camera: null,
                 renderer: null,
-                csGroup: null,
-                reportGroup: null,
-                coreGroup: null,
+                dewiGroup: null,     // CS Customer: Cewek baju pink, rambut panjang cantik
+                singgihGroup: null,  // Core Dispatcher: Pria baju tosca/teal
+                anderaGroup: null,   // Finance & Report: Pria baju amber/warm
+                screenCanvas: null,
+                screenCtx: null,
+                screenTexture: null,
                 screenMeshes: [],
                 clock: null,
                 isDragging: false,
                 prevMouse: { x: 0, y: 0 },
-                rotY: 0.65,
-                rotX: 0.42,
+                rotY: 0.58,
+                rotX: 0.38,
                 currentCsStatus: 'break',
                 animationFrameId: null,
+
+                // Posisi koordinat penting di ruangan
+                spots: {
+                    dewiDesk: { x: -3.8, y: 0.48, z: 0.3, rotY: 0 },
+                    dewiLounge: { x: 3.5, y: 0.45, z: -0.1, rotY: -0.4 },
+                    singgihDesk: { x: -0.9, y: 0.48, z: 0.3, rotY: 0 },
+                    anderaDesk: { x: 2.0, y: 0.48, z: 0.3, rotY: 0 }
+                },
+
+                // State transisi animasi jalan (NPC walking)
+                dewiWalk: {
+                    isMoving: false,
+                    startX: 0,
+                    startZ: 0,
+                    targetX: 0,
+                    targetZ: 0,
+                    targetRotY: 0,
+                    progress: 1,
+                    speed: 0.55 // durasi perpindahan detik
+                },
+
+                // Live bubbles
+                bubbles: {
+                    dewi: null,
+                    singgih: null,
+                    andera: null
+                },
 
                 init(container, initialStatus) {
                     if (!container) return;
@@ -177,7 +211,7 @@
 
                     const setup = () => {
                         if (typeof THREE === 'undefined') {
-                            setTimeout(setup, 80);
+                            setTimeout(setup, 60);
                             return;
                         }
 
@@ -187,15 +221,14 @@
                         if (!width || !height) {
                             const rect = container.getBoundingClientRect();
                             width = rect.width || 900;
-                            height = rect.height || 460;
+                            height = rect.height || 480;
                         }
 
                         if (width < 50 || height < 50) {
-                            setTimeout(setup, 80);
+                            setTimeout(setup, 60);
                             return;
                         }
 
-                        // Bersihkan canvas lama
                         container.innerHTML = '';
                         if (this.animationFrameId) {
                             cancelAnimationFrame(this.animationFrameId);
@@ -204,54 +237,68 @@
                         this.clock = new THREE.Clock();
                         this.screenMeshes = [];
 
-                        // 1. Scene
+                        // 1. Scene & Warm Modern Aesthetics
                         this.scene = new THREE.Scene();
-                        this.scene.background = new THREE.Color(0x0e1412);
-                        this.scene.fog = new THREE.Fog(0x0e1412, 22, 45);
+                        this.scene.background = new THREE.Color(0x131b18);
+                        this.scene.fog = new THREE.FogExp2(0x131b18, 0.022);
 
-                        // 2. Camera: Isometric Perspective
+                        // 2. Camera Isometric Perspective
                         const aspect = width / height;
-                        this.camera = new THREE.PerspectiveCamera(38, aspect, 0.1, 100);
+                        this.camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 100);
                         this.updateCameraPos();
 
-                        // 3. Renderer
+                        // 3. WebGL Renderer with Shadows
                         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
                         this.renderer.setSize(width, height);
                         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
                         this.renderer.shadowMap.enabled = true;
                         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                        this.renderer.outputEncoding = THREE.sRGBEncoding;
                         container.appendChild(this.renderer.domElement);
 
-                        // 4. Lights
-                        const ambient = new THREE.AmbientLight(0xffffff, 0.95);
+                        // 4. Studio Lighting (Warm, Vibrant, Cute & Real)
+                        const ambient = new THREE.AmbientLight(0xfff6ea, 0.95);
                         this.scene.add(ambient);
 
-                        const mainLight = new THREE.DirectionalLight(0xfffaf0, 1.4);
-                        mainLight.position.set(12, 18, 14);
-                        mainLight.castShadow = true;
-                        mainLight.shadow.mapSize.width = 1024;
-                        mainLight.shadow.mapSize.height = 1024;
-                        mainLight.shadow.camera.near = 0.5;
-                        mainLight.shadow.camera.far = 40;
-                        mainLight.shadow.bias = -0.001;
-                        this.scene.add(mainLight);
+                        const sunLight = new THREE.DirectionalLight(0xfff8e7, 1.4);
+                        sunLight.position.set(10, 16, 12);
+                        sunLight.castShadow = true;
+                        sunLight.shadow.mapSize.width = 1024;
+                        sunLight.shadow.mapSize.height = 1024;
+                        sunLight.shadow.camera.near = 0.5;
+                        sunLight.shadow.camera.far = 40;
+                        sunLight.shadow.bias = -0.001;
+                        this.scene.add(sunLight);
 
-                        // Ambient cyber/neon glow
-                        const cyanGlow = new THREE.PointLight(0x06b6d4, 1.5, 14);
-                        cyanGlow.position.set(-3, 3.5, 2);
-                        this.scene.add(cyanGlow);
+                        // Lampu aksen hangat & pastel cerah
+                        const pinkAccent = new THREE.PointLight(0xf472b6, 1.6, 12);
+                        pinkAccent.position.set(-3.8, 3.5, 1.5);
+                        this.scene.add(pinkAccent);
 
-                        const warmLoungeLight = new THREE.PointLight(0xf59e0b, 1.0, 12);
-                        warmLoungeLight.position.set(4, 3, 1);
-                        this.scene.add(warmLoungeLight);
+                        const tealAccent = new THREE.PointLight(0x2dd4bf, 1.4, 12);
+                        tealAccent.position.set(-0.9, 3.5, 1.5);
+                        this.scene.add(tealAccent);
 
-                        // 5. Build Room Props & Isometric Environment
+                        const warmLounge = new THREE.PointLight(0xfbbf24, 1.2, 14);
+                        warmLounge.position.set(4.5, 3.0, 1.0);
+                        this.scene.add(warmLounge);
+
+                        // 5. Inisialisasi Dynamic Animated Screen Texture (Live Code/Chat Matrix)
+                        this.initAnimatedScreenCanvas();
+
+                        // 6. Build 3D Studio & Characters
                         this.buildRoom();
 
-                        // Render frame pertama langsung
+                        // Posisi awal Dewi
+                        if (this.dewiGroup) {
+                            const initSpot = (this.currentCsStatus === 'working') ? this.spots.dewiDesk : this.spots.dewiLounge;
+                            this.dewiGroup.position.set(initSpot.x, initSpot.y, initSpot.z);
+                            this.dewiGroup.rotation.y = initSpot.rotY;
+                        }
+
                         this.renderer.render(this.scene, this.camera);
 
-                        // 6. Mouse & Touch Orbit Drag
+                        // 7. Mouse / Touch Controls
                         const dom = this.renderer.domElement;
                         dom.addEventListener('mousedown', (e) => {
                             this.isDragging = true;
@@ -262,13 +309,12 @@
                             if (!this.isDragging) return;
                             const dx = e.clientX - this.prevMouse.x;
                             const dy = e.clientY - this.prevMouse.y;
-                            this.rotY -= dx * 0.006;
-                            this.rotX = Math.max(0.18, Math.min(0.75, this.rotX + dy * 0.004));
+                            this.rotY -= dx * 0.005;
+                            this.rotX = Math.max(0.18, Math.min(0.70, this.rotX + dy * 0.004));
                             this.prevMouse = { x: e.clientX, y: e.clientY };
                             this.updateCameraPos();
                         });
 
-                        // Touch support for mobile
                         dom.addEventListener('touchstart', (e) => {
                             if (e.touches.length === 1) {
                                 this.isDragging = true;
@@ -280,13 +326,12 @@
                             if (!this.isDragging || e.touches.length !== 1) return;
                             const dx = e.touches[0].clientX - this.prevMouse.x;
                             const dy = e.touches[0].clientY - this.prevMouse.y;
-                            this.rotY -= dx * 0.007;
-                            this.rotX = Math.max(0.18, Math.min(0.75, this.rotX + dy * 0.005));
+                            this.rotY -= dx * 0.006;
+                            this.rotX = Math.max(0.18, Math.min(0.70, this.rotX + dy * 0.005));
                             this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
                             this.updateCameraPos();
                         }, { passive: true });
 
-                        // Resize Listener
                         window.addEventListener('resize', () => {
                             if (!container || !this.camera || !this.renderer) return;
                             const w = container.clientWidth;
@@ -303,270 +348,232 @@
                     setup();
                 },
 
+                initAnimatedScreenCanvas() {
+                    this.screenCanvas = document.createElement('canvas');
+                    this.screenCanvas.width = 512;
+                    this.screenCanvas.height = 280;
+                    this.screenCtx = this.screenCanvas.getContext('2d');
+                    this.screenTexture = new THREE.CanvasTexture(this.screenCanvas);
+                },
+
                 updateCameraPos() {
-                    const radius = 16.5;
+                    const radius = 16.8;
                     this.camera.position.x = radius * Math.sin(this.rotY) * Math.cos(this.rotX);
-                    this.camera.position.y = radius * Math.sin(this.rotX) + 1.8;
+                    this.camera.position.y = radius * Math.sin(this.rotX) + 2.0;
                     this.camera.position.z = radius * Math.cos(this.rotY) * Math.cos(this.rotX);
-                    this.camera.lookAt(0, 0.9, 0);
+                    this.camera.lookAt(0, 0.8, 0);
                 },
 
+                // Trigger perpindahan jalan Dewi (NPC Walking) antara Meja dan Sofa
                 updateCsPosition(status) {
+                    if (this.currentCsStatus === status && !this.dewiWalk.isMoving) return;
                     this.currentCsStatus = status;
-                    if (!this.csGroup) return;
 
-                    if (status === 'working') {
-                        this.csGroup.position.set(-3.8, 0.55, -0.2);
-                        this.csGroup.rotation.y = 0;
-                    } else {
-                        this.csGroup.position.set(3.6, 0.45, -0.1);
-                        this.csGroup.rotation.y = -0.4;
+                    if (!this.dewiGroup) return;
+
+                    const target = (status === 'working') ? this.spots.dewiDesk : this.spots.dewiLounge;
+                    
+                    this.dewiWalk.isMoving = true;
+                    this.dewiWalk.startX = this.dewiGroup.position.x;
+                    this.dewiWalk.startZ = this.dewiGroup.position.z;
+                    this.dewiWalk.targetX = target.x;
+                    this.dewiWalk.targetZ = target.z;
+                    this.dewiWalk.targetRotY = target.rotY;
+                    this.dewiWalk.progress = 0;
+
+                    // Buat Dewi menghadap ke arah tujuan jalan
+                    const angle = Math.atan2(target.x - this.dewiWalk.startX, target.z - this.dewiWalk.startZ);
+                    this.dewiGroup.rotation.y = angle;
+                },
+
+                // Update teks balon percakapan live
+                updateLiveBubble(agent, text) {
+                    if (!this.bubbles[agent]) return;
+                    const b = this.bubbles[agent];
+                    if (!text) {
+                        b.mesh.visible = false;
+                        return;
                     }
+                    const ctx = b.canvas.getContext('2d');
+                    ctx.clearRect(0, 0, b.canvas.width, b.canvas.height);
+
+                    // Gambar bubble chat bulat lucu
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+                    ctx.strokeStyle = agent === 'dewi' ? '#f472b6' : (agent === 'singgih' ? '#2dd4bf' : '#fbbf24');
+                    ctx.lineWidth = 6;
+                    
+                    // Rounded rect
+                    const w = b.canvas.width - 20;
+                    const h = b.canvas.height - 35;
+                    ctx.beginPath();
+                    ctx.roundRect(10, 10, w, h, 24);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Tail segitiga
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+                    ctx.beginPath();
+                    ctx.moveTo(w / 2 - 15, 10 + h);
+                    ctx.lineTo(w / 2, 10 + h + 20);
+                    ctx.lineTo(w / 2 + 15, 10 + h);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Teks bubble
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 26px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const cleanText = text.length > 28 ? text.substring(0, 26) + '...' : text;
+                    ctx.fillText('💬 ' + cleanText, b.canvas.width / 2, (h / 2) + 10);
+
+                    b.texture.needsUpdate = true;
+                    b.mesh.visible = true;
                 },
 
-                buildRoom() {
-                    // Floor
-                    const floorGeo = new THREE.PlaneGeometry(18, 12);
-                    const floorMat = new THREE.MeshStandardMaterial({ color: 0x161e1b, roughness: 0.85 });
-                    const floor = new THREE.Mesh(floorGeo, floorMat);
-                    floor.rotation.x = -Math.PI / 2;
-                    floor.receiveShadow = true;
-                    this.scene.add(floor);
+                // Membuat Label Nama 3D Melayang di atas kepala karakter
+                createNameTag(name, role, badgeColor) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 384;
+                    canvas.height = 120;
+                    const ctx = canvas.getContext('2d');
 
-                    // Subtle Grid Floor
-                    const grid = new THREE.GridHelper(18, 18, 0x22362e, 0x1a2621);
-                    grid.position.y = 0.01;
-                    this.scene.add(grid);
+                    // Background pill badge
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+                    ctx.strokeStyle = badgeColor;
+                    ctx.lineWidth = 5;
+                    ctx.beginPath();
+                    ctx.roundRect(10, 10, canvas.width - 20, canvas.height - 20, 32);
+                    ctx.fill();
+                    ctx.stroke();
 
-                    // Back Wall
-                    const wallGeo = new THREE.BoxGeometry(18, 5, 0.4);
-                    const wallMat = new THREE.MeshStandardMaterial({ color: 0x111714, roughness: 0.95 });
-                    const wall = new THREE.Mesh(wallGeo, wallMat);
-                    wall.position.set(0, 2.5, -4.5);
-                    wall.receiveShadow = true;
-                    this.scene.add(wall);
+                    // Indicator dot
+                    ctx.fillStyle = badgeColor;
+                    ctx.beginPath();
+                    ctx.arc(42, 60, 12, 0, Math.PI * 2);
+                    ctx.fill();
 
-                    // Neon Sign
-                    const signMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
-                    const sign = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.25, 0.05), signMat);
-                    sign.position.set(-3.8, 3.8, -4.28);
-                    this.scene.add(sign);
+                    // Text Name & Role
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 36px sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(name, 72, 54);
 
-                    // Server Rack
-                    this.buildServerRack(-7, 0, -3.8);
+                    ctx.fillStyle = badgeColor;
+                    ctx.font = 'bold 22px sans-serif';
+                    ctx.fillText(role, 72, 88);
 
-                    // Plants
-                    this.buildPlant(-6.8, 0, 1.5);
-                    this.buildPlant(6.8, 0, -3.8);
-
-                    // Work Desks
-                    this.buildWorkDesk(-3.8, 0, 0.8);
-                    this.buildWorkDesk(-1.0, 0, 0.8);
-
-                    // Lounge
-                    this.buildLounge(4.2, 0, 0);
-
-                    // Characters
-                    this.csGroup = this.buildCharacter(0x0284c7, 0x1e1b4b);
-                    this.updateCsPosition(this.currentCsStatus);
-                    this.scene.add(this.csGroup);
-
-                    this.coreGroup = this.buildCharacter(0x059669, 0x78350f);
-                    this.coreGroup.position.set(-1.0, 0.55, -0.2);
-                    this.coreGroup.rotation.y = 0;
-                    this.scene.add(this.coreGroup);
-
-                    this.reportGroup = this.buildCharacter(0xd97706, 0x312e81);
-                    this.reportGroup.position.set(4.8, 0.45, -0.1);
-                    this.reportGroup.rotation.y = -0.5;
-                    this.scene.add(this.reportGroup);
+                    const texture = new THREE.CanvasTexture(canvas);
+                    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                    const sprite = new THREE.Sprite(mat);
+                    sprite.scale.set(1.4, 0.44, 1);
+                    sprite.position.y = 1.38;
+                    return sprite;
                 },
 
-                buildWorkDesk(x, y, z) {
-                    const group = new THREE.Group();
-                    group.position.set(x, y, z);
-
-                    // Top Table
-                    const topGeo = new THREE.BoxGeometry(2.2, 0.1, 1.2);
-                    const topMat = new THREE.MeshStandardMaterial({ color: 0x3d2716, roughness: 0.6 });
-                    const top = new THREE.Mesh(topGeo, topMat);
-                    top.position.y = 0.95;
-                    top.castShadow = true;
-                    top.receiveShadow = true;
-                    group.add(top);
-
-                    // Legs
-                    const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.6, roughness: 0.4 });
-                    const legGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.95, 8);
-                    [[-0.98, -0.48], [0.98, -0.48], [-0.98, 0.48], [0.98, 0.48]].forEach(([lx, lz]) => {
-                        const leg = new THREE.Mesh(legGeo, legMat);
-                        leg.position.set(lx, 0.475, lz);
-                        leg.castShadow = true;
-                        group.add(leg);
-                    });
-
-                    // Desk Pad
-                    const padGeo = new THREE.BoxGeometry(1.6, 0.015, 0.7);
-                    const padMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9 });
-                    const pad = new THREE.Mesh(padGeo, padMat);
-                    pad.position.set(0, 1.01, 0.05);
-                    group.add(pad);
-
-                    // Monitor Frame
-                    const screenGeo = new THREE.BoxGeometry(1.05, 0.62, 0.04);
-                    const screenFrameMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.3 });
-                    const screenFrame = new THREE.Mesh(screenGeo, screenFrameMat);
-                    screenFrame.position.set(0, 1.48, 0.35);
-                    screenFrame.castShadow = true;
-                    group.add(screenFrame);
-
-                    // Display Screen (Glow)
-                    const displayGeo = new THREE.PlaneGeometry(0.98, 0.54);
-                    const displayMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-                    const display = new THREE.Mesh(displayGeo, displayMat);
-                    display.position.set(0, 1.48, 0.328);
-                    display.rotation.y = Math.PI;
-                    group.add(display);
-                    this.screenMeshes.push(display);
-
-                    const backDisplay = new THREE.Mesh(displayGeo, new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
-                    backDisplay.position.set(0, 1.48, 0.372);
-                    group.add(backDisplay);
-
-                    // Stand
-                    const standGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.4, 8);
-                    const stand = new THREE.Mesh(standGeo, screenFrameMat);
-                    stand.position.set(0, 1.15, 0.35);
-                    group.add(stand);
-
-                    const baseGeo = new THREE.BoxGeometry(0.3, 0.02, 0.2);
-                    const standBase = new THREE.Mesh(baseGeo, screenFrameMat);
-                    standBase.position.set(0, 1.02, 0.35);
-                    group.add(standBase);
-
-                    // PC Tower Case
-                    const pcCaseGeo = new THREE.BoxGeometry(0.28, 0.55, 0.5);
-                    const pcCaseMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.3, metalness: 0.5 });
-                    const pcCase = new THREE.Mesh(pcCaseGeo, pcCaseMat);
-                    pcCase.position.set(0.85, 1.28, 0.25);
-                    pcCase.castShadow = true;
-                    group.add(pcCase);
-
-                    const rgbFan = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), new THREE.MeshBasicMaterial({ color: 0x10b981 }));
-                    rgbFan.position.set(0.85, 1.28, -0.01);
-                    group.add(rgbFan);
-
-                    // Keyboard & Mouse
-                    const kbGeo = new THREE.BoxGeometry(0.65, 0.03, 0.2);
-                    const kbMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.8 });
-                    const kb = new THREE.Mesh(kbGeo, kbMat);
-                    kb.position.set(0, 1.03, 0.05);
-                    group.add(kb);
-
-                    const mouseGeo = new THREE.BoxGeometry(0.08, 0.03, 0.12);
-                    const mouse = new THREE.Mesh(mouseGeo, kbMat);
-                    mouse.position.set(0.48, 1.03, 0.05);
-                    group.add(mouse);
-
-                    // Chair
-                    const chairGeo = new THREE.BoxGeometry(0.58, 0.08, 0.58);
-                    const chairMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9 });
-                    const chairSeat = new THREE.Mesh(chairGeo, chairMat);
-                    chairSeat.position.set(0, 0.55, -0.3);
-                    chairSeat.castShadow = true;
-                    group.add(chairSeat);
-
-                    const chairBackGeo = new THREE.BoxGeometry(0.52, 0.65, 0.08);
-                    const chairBack = new THREE.Mesh(chairBackGeo, chairMat);
-                    chairBack.position.set(0, 0.9, -0.58);
-                    chairBack.castShadow = true;
-                    group.add(chairBack);
-
-                    const chairStem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.55, 8), legMat);
-                    chairStem.position.set(0, 0.275, -0.3);
-                    group.add(chairStem);
-
-                    this.scene.add(group);
+                // Membuat Speech Bubble Sprite
+                createSpeechBubble() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 440;
+                    canvas.height = 140;
+                    const texture = new THREE.CanvasTexture(canvas);
+                    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                    const sprite = new THREE.Sprite(mat);
+                    sprite.scale.set(1.8, 0.58, 1);
+                    sprite.position.y = 1.95;
+                    sprite.visible = false;
+                    return { mesh: sprite, canvas, texture };
                 },
 
-                buildLounge(x, y, z) {
-                    const group = new THREE.Group();
-                    group.position.set(x, y, z);
+                // Karakter Dewi (Cewek Cantik: Rambut Panjang Cokelat-Caramel, Baju Pink Manis)
+                buildDewiCharacter() {
+                    const char = new THREE.Group();
 
-                    const sofaMat = new THREE.MeshStandardMaterial({ color: 0x1e3a5f, roughness: 0.85 });
-                    const seatBase = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.45, 1.2), sofaMat);
-                    seatBase.position.set(0, 0.35, 0);
-                    seatBase.castShadow = true;
-                    group.add(seatBase);
+                    // Head
+                    const headGeo = new THREE.BoxGeometry(0.36, 0.36, 0.34);
+                    const skinMat = new THREE.MeshStandardMaterial({ color: 0xfed7aa, roughness: 0.6 });
+                    const head = new THREE.Mesh(headGeo, skinMat);
+                    head.position.y = 0.82;
+                    head.castShadow = true;
+                    char.add(head);
 
-                    const seatBack = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.75, 0.28), sofaMat);
-                    seatBack.position.set(0, 0.8, -0.46);
-                    seatBack.castShadow = true;
-                    group.add(seatBack);
+                    // Rambut Panjang Cantik Dewi
+                    const hairMat = new THREE.MeshStandardMaterial({ color: 0x5c2e14, roughness: 0.8 }); // Brown hazelnut
+                    const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.16, 0.38), hairMat);
+                    hairTop.position.set(0, 0.98, 0);
+                    char.add(hairTop);
 
-                    const armL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.6, 1.2), sofaMat);
-                    armL.position.set(-1.5, 0.55, 0);
-                    group.add(armL);
+                    // Helai rambut panjang samping & belakang
+                    const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.58, 0.14), hairMat);
+                    hairBack.position.set(0, 0.72, -0.16);
+                    char.add(hairBack);
 
-                    const armR = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.6, 1.2), sofaMat);
-                    armR.position.set(1.5, 0.55, 0);
-                    group.add(armR);
+                    const hairL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.48, 0.22), hairMat);
+                    hairL.position.set(-0.20, 0.76, 0.05);
+                    char.add(hairL);
 
-                    const tableMat = new THREE.MeshStandardMaterial({ color: 0x5c3d2e, roughness: 0.7 });
-                    const table = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.35, 0.8), tableMat);
-                    table.position.set(0, 0.2, 1.3);
-                    table.castShadow = true;
-                    group.add(table);
+                    const hairR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.48, 0.22), hairMat);
+                    hairR.position.set(0.20, 0.76, 0.05);
+                    char.add(hairR);
 
-                    const cupMat = new THREE.MeshStandardMaterial({ color: 0xf3f4f6 });
-                    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.12, 12), cupMat);
-                    cup.position.set(0.25, 0.43, 1.3);
-                    group.add(cup);
+                    // Eyes (Lucu & Ramah)
+                    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+                    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.05, 0.02), eyeMat);
+                    eyeL.position.set(-0.09, 0.83, 0.175);
+                    const eyeR = eyeL.clone();
+                    eyeR.position.x = 0.09;
+                    char.add(eyeL);
+                    char.add(eyeR);
 
-                    this.scene.add(group);
+                    // Pipi Blush Pink Manis
+                    const blushMat = new THREE.MeshBasicMaterial({ color: 0xf472b6 });
+                    const blushL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.025, 0.01), blushMat);
+                    blushL.position.set(-0.11, 0.77, 0.176);
+                    const blushR = blushL.clone();
+                    blushR.position.x = 0.11;
+                    char.add(blushL);
+                    char.add(blushR);
+
+                    // Torso: Baju Pink Cantik
+                    const shirtMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.6 }); // Pastel Lovely Pink
+                    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.44, 0.26), shirtMat);
+                    torso.position.y = 0.45;
+                    torso.castShadow = true;
+                    char.add(torso);
+
+                    // Arms
+                    const armGeo = new THREE.BoxGeometry(0.09, 0.34, 0.11);
+                    const armL = new THREE.Mesh(armGeo, skinMat);
+                    armL.position.set(-0.24, 0.43, 0.04);
+                    const armR = new THREE.Mesh(armGeo, skinMat);
+                    armR.position.set(0.24, 0.43, 0.04);
+                    char.add(armL);
+                    char.add(armR);
+
+                    // Legs / Kaki saat jalan
+                    const legGeo = new THREE.BoxGeometry(0.12, 0.38, 0.14);
+                    const pantsMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+                    const legL = new THREE.Mesh(legGeo, pantsMat);
+                    legL.position.set(-0.10, 0.19, 0);
+                    const legR = new THREE.Mesh(legGeo, pantsMat);
+                    legR.position.set(0.10, 0.19, 0);
+                    char.add(legL);
+                    char.add(legR);
+
+                    // Name Tag "Dewi (CS Customer)"
+                    const nameTag = this.createNameTag('Dewi', 'CS Customer Chat', '#f472b6');
+                    char.add(nameTag);
+
+                    // Speech Bubble
+                    this.bubbles.dewi = this.createSpeechBubble();
+                    char.add(this.bubbles.dewi.mesh);
+
+                    char.userData = { armL, armR, legL, legR, head, baseHeadY: 0.82 };
+                    return char;
                 },
 
-                buildPlant(x, y, z) {
-                    const plantGroup = new THREE.Group();
-                    plantGroup.position.set(x, y, z);
-
-                    const potMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.9 });
-                    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.5, 12), potMat);
-                    pot.position.y = 0.25;
-                    plantGroup.add(pot);
-
-                    const leafMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.7 });
-                    for (let i = 0; i < 5; i++) {
-                        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), leafMat);
-                        leaf.scale.set(0.6, 1.5, 0.6);
-                        leaf.position.set(Math.sin(i * 1.3) * 0.15, 0.6 + i * 0.1, Math.cos(i * 1.3) * 0.15);
-                        plantGroup.add(leaf);
-                    }
-
-                    this.scene.add(plantGroup);
-                },
-
-                buildServerRack(x, y, z) {
-                    const rackMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.5, metalness: 0.6 });
-                    const rack = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3.2, 0.9), rackMat);
-                    rack.position.set(x, 1.6, z);
-                    rack.castShadow = true;
-                    this.scene.add(rack);
-
-                    const ledMat1 = new THREE.MeshBasicMaterial({ color: 0x10b981 });
-                    const ledMat2 = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-                    for (let i = 0; i < 5; i++) {
-                        const led1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), ledMat1);
-                        led1.position.set(x - 0.3, 0.8 + (i * 0.45), z + 0.46);
-                        this.scene.add(led1);
-
-                        const led2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), ledMat2);
-                        led2.position.set(x + 0.3, 0.8 + (i * 0.45), z + 0.46);
-                        this.scene.add(led2);
-                    }
-                },
-
-                buildCharacter(shirtColor, hairColor) {
+                // Karakter Pria (Singgih & Andera)
+                buildMaleCharacter(name, role, shirtColor, hairColor, badgeColor, bubbleKey) {
                     const char = new THREE.Group();
 
                     // Head
@@ -578,14 +585,13 @@
                     char.add(head);
 
                     // Hair
-                    const hairGeo = new THREE.BoxGeometry(0.4, 0.14, 0.38);
                     const hairMat = new THREE.MeshStandardMaterial({ color: hairColor });
-                    const hair = new THREE.Mesh(hairGeo, hairMat);
+                    const hair = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.14, 0.38), hairMat);
                     hair.position.set(0, 0.98, -0.01);
                     char.add(hair);
 
                     // Eyes
-                    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
+                    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
                     const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), eyeMat);
                     eyeL.position.set(-0.09, 0.83, 0.18);
                     const eyeR = eyeL.clone();
@@ -594,26 +600,397 @@
                     char.add(eyeR);
 
                     // Torso
-                    const torsoGeo = new THREE.BoxGeometry(0.42, 0.44, 0.28);
                     const shirtMat = new THREE.MeshStandardMaterial({ color: shirtColor });
-                    const torso = new THREE.Mesh(torsoGeo, shirtMat);
+                    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.44, 0.28), shirtMat);
                     torso.position.y = 0.45;
                     torso.castShadow = true;
                     char.add(torso);
 
                     // Arms
-                    const armGeo = new THREE.BoxGeometry(0.1, 0.35, 0.12);
+                    const armGeo = new THREE.BoxGeometry(0.10, 0.35, 0.12);
                     const armL = new THREE.Mesh(armGeo, skinMat);
                     armL.position.set(-0.27, 0.43, 0.05);
-                    armL.rotation.x = 0.3;
                     const armR = new THREE.Mesh(armGeo, skinMat);
                     armR.position.set(0.27, 0.43, 0.05);
-                    armR.rotation.x = 0.3;
                     char.add(armL);
                     char.add(armR);
 
-                    char.userData = { armL, armR, head, baseHeadY: 0.82 };
+                    // Legs
+                    const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+                    const legGeo = new THREE.BoxGeometry(0.13, 0.38, 0.14);
+                    const legL = new THREE.Mesh(legGeo, pantsMat);
+                    legL.position.set(-0.11, 0.19, 0);
+                    const legR = new THREE.Mesh(legGeo, pantsMat);
+                    legR.position.set(0.11, 0.19, 0);
+                    char.add(legL);
+                    char.add(legR);
+
+                    // Name Tag
+                    const nameTag = this.createNameTag(name, role, badgeColor);
+                    char.add(nameTag);
+
+                    // Speech Bubble
+                    this.bubbles[bubbleKey] = this.createSpeechBubble();
+                    char.add(this.bubbles[bubbleKey].mesh);
+
+                    char.userData = { armL, armR, legL, legR, head, baseHeadY: 0.82 };
                     return char;
+                },
+
+                // Meja Kerja Lengkap dengan Kursi Ergonomis, Monitor, PC, Keyboard, Mouse, Mug Kopi
+                buildWorkDesk(x, y, z, deskLabel, colorTheme) {
+                    const group = new THREE.Group();
+                    group.position.set(x, y, z);
+
+                    // Top Table (Warm Teak Wood Finish)
+                    const topGeo = new THREE.BoxGeometry(2.3, 0.1, 1.25);
+                    const topMat = new THREE.MeshStandardMaterial({ color: 0x4a3222, roughness: 0.5 });
+                    const top = new THREE.Mesh(topGeo, topMat);
+                    top.position.y = 0.95;
+                    top.castShadow = true;
+                    top.receiveShadow = true;
+                    group.add(top);
+
+                    // Meja Legs (Matte Black Metal Frame)
+                    const legMat = new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.8, roughness: 0.3 });
+                    const legGeo = new THREE.CylinderGeometry(0.038, 0.038, 0.95, 12);
+                    [[-1.02, -0.52], [1.02, -0.52], [-1.02, 0.52], [1.02, 0.52]].forEach(([lx, lz]) => {
+                        const leg = new THREE.Mesh(legGeo, legMat);
+                        leg.position.set(lx, 0.475, lz);
+                        leg.castShadow = true;
+                        group.add(leg);
+                    });
+
+                    // Desk Leather Pad
+                    const padMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+                    const pad = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.015, 0.72), padMat);
+                    pad.position.set(0, 1.01, 0.05);
+                    group.add(pad);
+
+                    // Curved Ultra-Wide Monitor Frame
+                    const screenFrameGeo = new THREE.BoxGeometry(1.12, 0.65, 0.04);
+                    const screenFrameMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.2 });
+                    const screenFrame = new THREE.Mesh(screenFrameGeo, screenFrameMat);
+                    screenFrame.position.set(0, 1.50, 0.36);
+                    screenFrame.castShadow = true;
+                    group.add(screenFrame);
+
+                    // Animated Live Computer Screen Texture
+                    const displayGeo = new THREE.PlaneGeometry(1.06, 0.58);
+                    const displayMat = new THREE.MeshBasicMaterial({ map: this.screenTexture });
+                    const display = new THREE.Mesh(displayGeo, displayMat);
+                    display.position.set(0, 1.50, 0.338);
+                    display.rotation.y = Math.PI;
+                    group.add(display);
+                    this.screenMeshes.push(display);
+
+                    // Monitor Stand & Base
+                    const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.45, 8), screenFrameMat);
+                    stand.position.set(0, 1.18, 0.36);
+                    group.add(stand);
+
+                    const standBase = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.02, 0.22), screenFrameMat);
+                    standBase.position.set(0, 1.02, 0.36);
+                    group.add(standBase);
+
+                    // PC Gaming Tower Case with RGB Strip
+                    const pcCaseMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2, metalness: 0.6 });
+                    const pcCase = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.58, 0.52), pcCaseMat);
+                    pcCase.position.set(0.92, 1.29, 0.22);
+                    pcCase.castShadow = true;
+                    group.add(pcCase);
+
+                    const fanGlow = new THREE.Mesh(new THREE.CircleGeometry(0.09, 16), new THREE.MeshBasicMaterial({ color: colorTheme }));
+                    fanGlow.position.set(0.92, 1.29, -0.045);
+                    group.add(fanGlow);
+
+                    // Keyboard RGB & Mouse
+                    const kbMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.7 });
+                    const kb = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.03, 0.22), kbMat);
+                    kb.position.set(0, 1.03, 0.05);
+                    group.add(kb);
+
+                    const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.13), kbMat);
+                    mouse.position.set(0.50, 1.03, 0.05);
+                    group.add(mouse);
+
+                    // Mug Kopi Lucu di Meja
+                    const mugMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
+                    const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.055, 0.13, 12), mugMat);
+                    mug.position.set(-0.65, 1.07, 0.15);
+                    group.add(mug);
+
+                    // Kursi Kerja Ergonomis Nyata (Modern Mesh Chair)
+                    const chairMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+                    const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.08, 0.62), chairMat);
+                    chairSeat.position.set(0, 0.54, -0.32);
+                    chairSeat.castShadow = true;
+                    group.add(chairSeat);
+
+                    const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.68, 0.08), chairMat);
+                    chairBack.position.set(0, 0.90, -0.61);
+                    chairBack.castShadow = true;
+                    group.add(chairBack);
+
+                    // Armrest kursi
+                    const armrestGeo = new THREE.BoxGeometry(0.08, 0.28, 0.42);
+                    const armL = new THREE.Mesh(armrestGeo, legMat);
+                    armL.position.set(-0.32, 0.72, -0.32);
+                    const armR = new THREE.Mesh(armrestGeo, legMat);
+                    armR.position.set(0.32, 0.72, -0.32);
+                    group.add(armL);
+                    group.add(armR);
+
+                    // Tiang kursi & roda bintang
+                    const chairStem = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.52, 8), legMat);
+                    chairStem.position.set(0, 0.26, -0.32);
+                    group.add(chairStem);
+
+                    const chairBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.03, 5), legMat);
+                    chairBase.position.set(0, 0.04, -0.32);
+                    group.add(chairBase);
+
+                    this.scene.add(group);
+                },
+
+                // Lounge Area Istirahat (Sofa Lembut, Meja Kopi, Tanaman Hias)
+                buildLounge(x, y, z) {
+                    const group = new THREE.Group();
+                    group.position.set(x, y, z);
+
+                    // Sofa Modern L-Shape / Cozy Fabric Sofa
+                    const sofaMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.85 }); // Royal Cozy Blue
+                    const seatBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.46, 1.3), sofaMat);
+                    seatBase.position.set(0, 0.35, 0);
+                    seatBase.castShadow = true;
+                    group.add(seatBase);
+
+                    const seatBack = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.80, 0.30), sofaMat);
+                    seatBack.position.set(0, 0.85, -0.48);
+                    seatBack.castShadow = true;
+                    group.add(seatBack);
+
+                    const armL = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.65, 1.3), sofaMat);
+                    armL.position.set(-1.6, 0.58, 0);
+                    group.add(armL);
+
+                    const armR = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.65, 1.3), sofaMat);
+                    armR.position.set(1.6, 0.58, 0);
+                    group.add(armR);
+
+                    // Bantal Sofa Pastel Lucu
+                    const pillowMat1 = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.9 });
+                    const pillow1 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.18), pillowMat1);
+                    pillow1.position.set(-1.1, 0.70, -0.32);
+                    pillow1.rotation.z = 0.15;
+                    group.add(pillow1);
+
+                    const pillowMat2 = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.9 });
+                    const pillow2 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.18), pillowMat2);
+                    pillow2.position.set(1.1, 0.70, -0.32);
+                    pillow2.rotation.z = -0.15;
+                    group.add(pillow2);
+
+                    // Coffee Table
+                    const tableMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.6 });
+                    const table = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.36, 0.85), tableMat);
+                    table.position.set(0, 0.22, 1.4);
+                    table.castShadow = true;
+                    group.add(table);
+
+                    // Majalah & Snack di Meja
+                    const magMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0 });
+                    const mag = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.02, 0.45), magMat);
+                    mag.position.set(-0.4, 0.41, 1.4);
+                    group.add(mag);
+
+                    // Karpet Bulu Estetik
+                    const rugMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.95 });
+                    const rug = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.02, 2.6), rugMat);
+                    rug.position.set(0, 0.01, 0.7);
+                    group.add(rug);
+
+                    this.scene.add(group);
+                },
+
+                // Tulisan Neon 3D di Tembok: "RENTSPACE" Modern & Estetik
+                buildWallBranding() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 1024;
+                    canvas.height = 256;
+                    const ctx = canvas.getContext('2d');
+
+                    // Latar belakang transparan
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    // Glow effect
+                    ctx.shadowColor = '#10b981';
+                    ctx.shadowBlur = 24;
+
+                    // Neon Sign "RENTSPACE"
+                    ctx.fillStyle = '#10b981';
+                    ctx.font = '900 86px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('⚡ RENTSPACE STUDIO', canvas.width / 2, 110);
+
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.font = 'bold 36px sans-serif';
+                    ctx.fillText('OFFICIAL AI & CUSTOMER MISSION CONTROL', canvas.width / 2, 175);
+
+                    const texture = new THREE.CanvasTexture(canvas);
+                    const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+                    const plane = new THREE.Mesh(new THREE.PlaneGeometry(6.8, 1.7), mat);
+                    plane.position.set(0, 3.4, -4.28);
+                    this.scene.add(plane);
+                },
+
+                // Dispenser Air Minum & Coffee Station
+                buildWaterDispenser(x, y, z) {
+                    const group = new THREE.Group();
+                    group.position.set(x, y, z);
+
+                    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.2, 0.5), bodyMat);
+                    body.position.y = 0.6;
+                    body.castShadow = true;
+                    group.add(body);
+
+                    const gallonMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75, roughness: 0.1 });
+                    const gallon = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.55, 16), gallonMat);
+                    gallon.position.y = 1.45;
+                    group.add(gallon);
+
+                    this.scene.add(group);
+                },
+
+                // Rak Buku / Lemari File
+                buildBookshelf(x, y, z) {
+                    const group = new THREE.Group();
+                    group.position.set(x, y, z);
+
+                    const woodMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.7 });
+                    const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.6, 0.55), woodMat);
+                    shelf.position.y = 1.3;
+                    shelf.castShadow = true;
+                    group.add(shelf);
+
+                    // Buku-buku warna-warni lucu
+                    const colors = [0xf43f5e, 0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6];
+                    for (let row = 0; row < 3; row++) {
+                        for (let col = 0; col < 6; col++) {
+                            const bMat = new THREE.MeshStandardMaterial({ color: colors[(row + col) % colors.length] });
+                            const book = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.38, 0.32), bMat);
+                            book.position.set(-0.55 + col * 0.18, 0.6 + row * 0.75, 0.10);
+                            group.add(book);
+                        }
+                    }
+
+                    this.scene.add(group);
+                },
+
+                // Tanaman Hias Monsterra Pot
+                buildPlant(x, y, z) {
+                    const plantGroup = new THREE.Group();
+                    plantGroup.position.set(x, y, z);
+
+                    const potMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4 });
+                    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.22, 0.55, 16), potMat);
+                    pot.position.y = 0.275;
+                    pot.castShadow = true;
+                    plantGroup.add(pot);
+
+                    const leafMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.6 });
+                    for (let i = 0; i < 7; i++) {
+                        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 8), leafMat);
+                        leaf.scale.set(0.65, 1.8, 0.65);
+                        leaf.position.set(Math.sin(i * 1.1) * 0.22, 0.65 + i * 0.11, Math.cos(i * 1.1) * 0.22);
+                        leaf.rotation.x = Math.sin(i) * 0.3;
+                        plantGroup.add(leaf);
+                    }
+
+                    this.scene.add(plantGroup);
+                },
+
+                buildServerRack(x, y, z) {
+                    const rackMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.4, metalness: 0.7 });
+                    const rack = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3.4, 0.95), rackMat);
+                    rack.position.set(x, 1.7, z);
+                    rack.castShadow = true;
+                    this.scene.add(rack);
+
+                    const ledMat1 = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+                    const ledMat2 = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+                    for (let i = 0; i < 6; i++) {
+                        const led1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), ledMat1);
+                        led1.position.set(x - 0.35, 0.75 + (i * 0.48), z + 0.49);
+                        this.scene.add(led1);
+
+                        const led2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), ledMat2);
+                        led2.position.set(x + 0.35, 0.75 + (i * 0.48), z + 0.49);
+                        this.scene.add(led2);
+                    }
+                },
+
+                buildRoom() {
+                    // Lantai Vinyl Kayu Hangat Estetik
+                    const floorGeo = new THREE.PlaneGeometry(19, 13);
+                    const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e2722, roughness: 0.8 });
+                    const floor = new THREE.Mesh(floorGeo, floorMat);
+                    floor.rotation.x = -Math.PI / 2;
+                    floor.receiveShadow = true;
+                    this.scene.add(floor);
+
+                    const grid = new THREE.GridHelper(19, 19, 0x2e4238, 0x22322a);
+                    grid.position.y = 0.01;
+                    this.scene.add(grid);
+
+                    // Tembok Belakang Studio
+                    const wallGeo = new THREE.BoxGeometry(19, 5.2, 0.4);
+                    const wallMat = new THREE.MeshStandardMaterial({ color: 0x131a17, roughness: 0.95 });
+                    const wall = new THREE.Mesh(wallGeo, wallMat);
+                    wall.position.set(0, 2.6, -4.5);
+                    wall.receiveShadow = true;
+                    this.scene.add(wall);
+
+                    // Wall Branding Tulisan "RENTSPACE"
+                    this.buildWallBranding();
+
+                    // Perabot & Dekorasi Kamar Lengkap
+                    this.buildServerRack(-7.2, 0, -3.8);
+                    this.buildBookshelf(7.2, 0, -3.8);
+                    this.buildWaterDispenser(7.2, 0, 1.2);
+
+                    this.buildPlant(-7.2, 0, 1.5);
+                    this.buildPlant(5.8, 0, -3.8);
+                    this.buildPlant(-2.3, 0, -3.8);
+
+                    // 1. Meja CS Customer (Dewi)
+                    this.buildWorkDesk(-3.8, 0, 0.8, 'Dewi CS Desk', 0xf472b6);
+
+                    // 2. Meja Core Dispatcher (Singgih)
+                    this.buildWorkDesk(-0.9, 0, 0.8, 'Singgih Core Desk', 0x2dd4bf);
+
+                    // 3. Meja Tim Report (Andera)
+                    this.buildWorkDesk(2.0, 0, 0.8, 'Andera Report Desk', 0xfbbf24);
+
+                    // 4. Area Santai Lounge (Sofa Break)
+                    this.buildLounge(4.5, 0, 1.8);
+
+                    // 5. Spawn Karakter 3D
+                    // DEWI (CS Customer: Baju Pink Cantik, Rambut Panjang)
+                    this.dewiGroup = this.buildDewiCharacter();
+                    this.scene.add(this.dewiGroup);
+
+                    // SINGGIH (Core Dispatcher)
+                    this.singgihGroup = this.buildMaleCharacter('Singgih', 'Core Dispatcher', 0x0d9488, 0x1e1b4b, '#2dd4bf', 'singgih');
+                    this.singgihGroup.position.set(this.spots.singgihDesk.x, this.spots.singgihDesk.y, this.spots.singgihDesk.z);
+                    this.scene.add(this.singgihGroup);
+
+                    // ANDERA (Report & Finance)
+                    this.anderaGroup = this.buildMaleCharacter('Andera', 'Report & Finance', 0xd97706, 0x451a03, '#fbbf24', 'andera');
+                    this.anderaGroup.position.set(this.spots.anderaDesk.x, this.spots.anderaDesk.y, this.spots.anderaDesk.z);
+                    this.scene.add(this.anderaGroup);
                 },
 
                 animate() {
@@ -622,60 +999,171 @@
                     if (!this.renderer || !this.scene || !this.camera) return;
 
                     const time = this.clock ? this.clock.getElapsedTime() : 0;
+                    const delta = 0.016; // approx frame time
 
-                    if (this.csGroup && this.currentCsStatus === 'working') {
-                        const data = this.csGroup.userData;
-                        if (data && data.armL && data.armR) {
-                            data.armL.rotation.x = 0.4 + Math.sin(time * 12) * 0.18;
-                            data.armR.rotation.x = 0.4 + Math.cos(time * 12) * 0.18;
-                            data.head.position.y = data.baseHeadY + Math.sin(time * 3) * 0.015;
+                    // A. Update Layar Komputer Live (Simulasi coding terminal & live chat bubble)
+                    if (this.screenCtx && this.screenTexture) {
+                        const ctx = this.screenCtx;
+                        ctx.fillStyle = '#090d16';
+                        ctx.fillRect(0, 0, 512, 280);
+
+                        // Top bar OS
+                        ctx.fillStyle = '#1e293b';
+                        ctx.fillRect(0, 0, 512, 34);
+                        ctx.fillStyle = '#ef4444';
+                        ctx.beginPath(); ctx.arc(20, 17, 6, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = '#f59e0b';
+                        ctx.beginPath(); ctx.arc(40, 17, 6, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = '#10b981';
+                        ctx.beginPath(); ctx.arc(60, 17, 6, 0, Math.PI * 2); ctx.fill();
+
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.font = 'bold 15px monospace';
+                        ctx.fillText('RentSpace Core OS · Live Terminal', 85, 22);
+
+                        // Simulated Chat Streams & Code Bars
+                        const wave = Math.sin(time * 6);
+                        for (let i = 0; i < 7; i++) {
+                            const barW = 120 + Math.sin(time * 3 + i * 1.5) * 80;
+                            const isGreen = (i % 2 === 0);
+                            ctx.fillStyle = isGreen ? '#10b981' : '#38bdf8';
+                            ctx.fillRect(25, 55 + i * 28, Math.max(60, barW), 14);
+
+                            ctx.fillStyle = '#475569';
+                            ctx.fillRect(25 + barW + 15, 55 + i * 28, 80, 14);
+                        }
+
+                        // Status pill running
+                        ctx.fillStyle = wave > 0 ? '#10b981' : '#059669';
+                        ctx.fillRect(360, 240, 125, 25);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 13px sans-serif';
+                        ctx.fillText('● SYSTEM READY', 372, 257);
+
+                        this.screenTexture.needsUpdate = true;
+                    }
+
+                    // B. Animasi Berjalan Dewi (NPC Walking Mechanics)
+                    if (this.dewiWalk.isMoving && this.dewiGroup) {
+                        this.dewiWalk.progress += delta * this.dewiWalk.speed;
+                        const t = Math.min(1, this.dewiWalk.progress);
+
+                        // Interpolasi posisi (lerp)
+                        this.dewiGroup.position.x = this.dewiWalk.startX + (this.dewiWalk.targetX - this.dewiWalk.startX) * t;
+                        this.dewiGroup.position.z = this.dewiWalk.startZ + (this.dewiWalk.targetZ - this.dewiWalk.startZ) * t;
+
+                        // Langkah kaki mengayun saat berjalan
+                        const legSwing = Math.sin(time * 16) * 0.45;
+                        if (this.dewiGroup.userData.legL) this.dewiGroup.userData.legL.rotation.x = legSwing;
+                        if (this.dewiGroup.userData.legR) this.dewiGroup.userData.legR.rotation.x = -legSwing;
+                        if (this.dewiGroup.userData.armL) this.dewiGroup.userData.armL.rotation.x = -legSwing * 0.8;
+                        if (this.dewiGroup.userData.armR) this.dewiGroup.userData.armR.rotation.x = legSwing * 0.8;
+
+                        // Bobbing naik-turun saat melangkah
+                        this.dewiGroup.position.y = 0.48 + Math.abs(Math.sin(time * 16)) * 0.06;
+
+                        if (t >= 1) {
+                            this.dewiWalk.isMoving = false;
+                            this.dewiGroup.rotation.y = this.dewiWalk.targetRotY;
+                            if (this.dewiGroup.userData.legL) this.dewiGroup.userData.legL.rotation.x = 0;
+                            if (this.dewiGroup.userData.legR) this.dewiGroup.userData.legR.rotation.x = 0;
+                        }
+                    } else if (this.dewiGroup) {
+                        // Posisi diam (Ngetik di meja ATAU bersantai santai di sofa)
+                        const data = this.dewiGroup.userData;
+                        if (this.currentCsStatus === 'working') {
+                            // Dewi ngetik aktif di keyboard
+                            if (data.armL && data.armR) {
+                                data.armL.rotation.x = 0.5 + Math.sin(time * 14) * 0.22;
+                                data.armR.rotation.x = 0.5 + Math.cos(time * 14) * 0.22;
+                            }
+                            if (data.head) {
+                                data.head.position.y = data.baseHeadY + Math.sin(time * 3.5) * 0.015;
+                            }
+                        } else {
+                            // Dewi bersantai di sofa (tangan santai, kepala breathing tenang)
+                            if (data.armL && data.armR) {
+                                data.armL.rotation.x = 0.15 + Math.sin(time * 2) * 0.05;
+                                data.armR.rotation.x = 0.15 - Math.sin(time * 2) * 0.05;
+                            }
+                            if (data.head) {
+                                data.head.position.y = data.baseHeadY + Math.sin(time * 2) * 0.012;
+                            }
                         }
                     }
 
-                    if (this.coreGroup) {
-                        const data = this.coreGroup.userData;
+                    // C. Animasi Singgih (Core Dispatcher mengetik konstan)
+                    if (this.singgihGroup) {
+                        const data = this.singgihGroup.userData;
                         if (data && data.armL && data.armR) {
-                            data.armL.rotation.x = 0.4 + Math.cos(time * 10) * 0.12;
-                            data.armR.rotation.x = 0.4 + Math.sin(time * 10) * 0.12;
+                            data.armL.rotation.x = 0.45 + Math.cos(time * 11) * 0.16;
+                            data.armR.rotation.x = 0.45 + Math.sin(time * 11) * 0.16;
                         }
                     }
 
-                    this.screenMeshes.forEach((mesh, idx) => {
-                        const intensity = 0.85 + Math.sin(time * 4 + idx) * 0.15;
-                        mesh.material.color.setRGB(0.22 * intensity, 0.74 * intensity, 0.97 * intensity);
-                    });
+                    // D. Animasi Andera (Report Bot mengetik & memantau)
+                    if (this.anderaGroup) {
+                        const data = this.anderaGroup.userData;
+                        if (data && data.armL && data.armR) {
+                            data.armL.rotation.x = 0.40 + Math.sin(time * 8) * 0.14;
+                            data.armR.rotation.x = 0.40 + Math.cos(time * 8) * 0.14;
+                        }
+                    }
 
                     this.renderer.render(this.scene, this.camera);
                 }
             };
         </script>
 
-        <div class="relative w-full h-[400px] sm:h-[460px] bg-[#0e1412] overflow-hidden" 
+        <div class="relative w-full h-[440px] sm:h-[490px] bg-[#131b18] overflow-hidden" 
              x-data="{
                  init() {
                      this.$nextTick(() => {
                          window._threeOfficeApp.init(this.$refs.canvasContainer, @js($csStatus));
+                         @if(!empty($latestCustomerText))
+                             window._threeOfficeApp.updateLiveBubble('dewi', @js($latestCustomerText));
+                         @endif
+                         @if(!empty($latestReportText))
+                             window._threeOfficeApp.updateLiveBubble('andera', @js($latestReportText));
+                         @endif
                      });
                  },
-                 syncStatus(status) {
-                     window._threeOfficeApp.updateCsPosition(status);
+                 syncStatus(detail) {
+                     window._threeOfficeApp.updateCsPosition(detail.csStatus);
+                     if (detail.customerBubble) {
+                         window._threeOfficeApp.updateLiveBubble('dewi', detail.customerBubble);
+                     }
+                     if (detail.reportBubble) {
+                         window._threeOfficeApp.updateLiveBubble('andera', detail.reportBubble);
+                     }
                  }
              }" 
-             @ai-status-sync.window="syncStatus($event.detail.csStatus)"
+             @ai-status-sync.window="syncStatus($event.detail)"
              wire:ignore>
             
             <div x-ref="canvasContainer" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
 
-            <!-- Clean Floating HUD Overlay -->
-            <div class="absolute bottom-3 left-4 pointer-events-none flex items-center gap-2 text-[11px] font-mono text-zinc-400/80 bg-zinc-950/70 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-xs">
-                <span class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Meja Kerja (CS Bot & Server)</span>
-                </span>
-                <span>•</span>
-                <span>Lounge Sofa (Break Area)</span>
-                <span>•</span>
-                <span class="text-zinc-500 hidden sm:inline">Geser mouse untuk putar sudut 3D</span>
+            <!-- Modern Floating HUD Overlay (Informative & Cute) -->
+            <div class="absolute bottom-3 left-4 right-4 pointer-events-none flex items-center justify-between flex-wrap gap-2 text-[11px] font-mono text-zinc-300 bg-zinc-950/80 px-3.5 py-2 rounded-xl border border-white/10 backdrop-blur-md">
+                <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
+                    <span class="flex items-center gap-1.5 text-pink-400 font-bold">
+                        <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
+                        <span>Dewi (CS Customer)</span>
+                    </span>
+                    <span class="text-zinc-600 hidden sm:inline">•</span>
+                    <span class="flex items-center gap-1.5 text-teal-400 font-bold">
+                        <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+                        <span>Singgih (Core AI)</span>
+                    </span>
+                    <span class="text-zinc-600 hidden sm:inline">•</span>
+                    <span class="flex items-center gap-1.5 text-amber-400 font-bold">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        <span>Andera (Finance & Report)</span>
+                    </span>
+                </div>
+                <div class="text-zinc-400 hidden md:block">
+                    🖱️ Geser mouse / usap layar untuk putar sudut 3D
+                </div>
             </div>
         </div>
     </div>
