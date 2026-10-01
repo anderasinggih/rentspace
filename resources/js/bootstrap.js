@@ -9,22 +9,17 @@ import Pusher from 'pusher-js';
 window.Pusher = Pusher;
 
 try {
-    const isHttps = window.location.protocol === 'https:';
-    const currentHost = window.location.hostname;
-    
-    // Jika dibuka di domain live (rentspace.id / domain VPS), konek ke host tersebut dan port 8080
-    // Reverb running on host:0.0.0.0 port:8080
+    const pusherKey = '8536c6c758470a793654';
+    const pusherCluster = 'ap1';
+
     window.Echo = new Echo({
-        broadcaster: 'reverb',
-        key: 'bmkxdqurg6bgcqiiuj24',
-        wsHost: currentHost,
-        wsPort: 8080,
-        wssPort: 8080,
-        forceTLS: isHttps,
-        enabledTransports: ['ws', 'wss'],
+        broadcaster: 'pusher',
+        key: pusherKey,
+        cluster: pusherCluster,
+        forceTLS: true,
     });
 
-    console.log('[Echo/Reverb] WebSocket Client connected to', currentHost + ':8080', 'TLS:', isHttps);
+    console.log('[Echo/Pusher] WebSocket Client connected via Pusher Cloud (Cluster: ap1)');
 } catch (e) {
-    console.warn('[Echo/Reverb] Failed to initialize WebSocket Echo:', e);
+    console.warn('[Echo/Pusher] Failed to initialize Pusher Echo:', e);
 }
