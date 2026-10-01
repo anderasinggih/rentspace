@@ -1,4 +1,4 @@
-<div wire:poll.5s class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-28 sm:pb-12">
+<div wire:poll.2s class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-28 sm:pb-12">
     <!-- Header: Title, Engine Status & Toggle -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-5">
         <div class="flex items-center gap-3">
@@ -746,12 +746,15 @@
                             // Keluar kamar tidur:
                             this.dewiWaypoints.push({ x: -9.2, z: 2.2 });
                             this.dewiWaypoints.push({ x: -7.0, z: 2.2 });
+                            this.dewiWaypoints.push({ x: target.x, z: 2.4 });
                         } else if (curX > 2.0) {
                             // Dari sofa lounge: lewat lorong bebas partisi (z=2.4)
                             this.dewiWaypoints.push({ x: curX, z: 2.4 });
                             this.dewiWaypoints.push({ x: target.x, z: 2.4 });
+                        } else {
+                            this.dewiWaypoints.push({ x: curX, z: 2.4 });
+                            this.dewiWaypoints.push({ x: target.x, z: 2.4 });
                         }
-                        this.dewiWaypoints.push({ x: target.x, z: 2.4 });
                         this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     } else {
                         // Menuju sofa lounge istirahat santai bersama:
@@ -2654,7 +2657,18 @@
                         </div>
 
                         <div class="flex justify-end">
-                            <button type="button" wire:click="runTestPrompt" wire:loading.attr="disabled"
+                            <button type="button" 
+                                @click="
+                                    if (testChannel === 'wa_group_report') {
+                                        window._threeOfficeApp?.updateSinggihPosition('working');
+                                    } else {
+                                        window._threeOfficeApp?.updateCsPosition('working');
+                                    }
+                                    if (testInput) {
+                                        window._threeOfficeApp?.updateLiveBubble(testChannel === 'wa_group_report' ? 'singgih' : 'dewi', testInput.substring(0, 32));
+                                    }
+                                "
+                                wire:click="runTestPrompt" wire:loading.attr="disabled"
                                 class="inline-flex items-center gap-2 px-5 h-9 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow hover:bg-primary/90 active:scale-95 transition disabled:opacity-50">
                                 <span wire:loading.remove wire:target="runTestPrompt">Kirim ke Gemini AI →</span>
                                 <span wire:loading wire:target="runTestPrompt">Sedang Berpikir...</span>
