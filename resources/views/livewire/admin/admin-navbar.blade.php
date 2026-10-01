@@ -135,6 +135,17 @@
                 <span class="text-xs text-muted-foreground/40">›</span>
             </a>
 
+            <a href="{{ route('admin.ai-monitor') }}" wire:navigate @click="adminMenuOpen = false"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl transition {{ request()->routeIs('admin.ai-monitor') ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground' }}">
+                <div class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.ai-monitor') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-semibold flex-1">AI Monitoring</span>
+                <span class="text-xs text-muted-foreground/40">›</span>
+            </a>
+
             <a href="{{ route('admin.staff-logs') }}" wire:navigate @click="adminMenuOpen = false"
                 class="flex items-center gap-2.5 px-3 py-2 rounded-xl transition {{ request()->routeIs('admin.staff-logs') ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground' }}">
                 <div class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.staff-logs') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
@@ -400,6 +411,17 @@
                                 </svg>
                             </div>
                             <span class="flex-1">Notes (Pinned)</span>
+                            <span class="text-xs text-muted-foreground/40">›</span>
+                        </a>
+
+                        <a href="{{ route('admin.ai-monitor') }}" wire:navigate @click="adminMenuOpen = false"
+                            class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl transition text-xs font-semibold {{ request()->routeIs('admin.ai-monitor') ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground' }}">
+                            <div class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.ai-monitor') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+                                </svg>
+                            </div>
+                            <span class="flex-1">AI Monitoring</span>
                             <span class="text-xs text-muted-foreground/40">›</span>
                         </a>
 
