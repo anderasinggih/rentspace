@@ -322,17 +322,15 @@
                 currentSinggihStatus: 'break',
                 currentAnderaStatus: 'break',
 
-                // State transisi animasi jalan (NPC walking)
-                dewiWalk: {
-                    isMoving: false,
-                    startX: 0,
-                    startZ: 0,
-                    targetX: 0,
-                    targetZ: 0,
-                    targetRotY: 0,
-                    progress: 1,
-                    walkDuration: 1.0 // Durasi detik per segmen jalan agar stabil & natural
-                },
+                // State transisi animasi jalan untuk masing-masing karakter AI
+                dewiWalk: { isMoving: false, startX: 0, startZ: 0, targetX: 0, targetZ: 0, targetRotY: 0, progress: 1, walkDuration: 1.0 },
+                singgihWalk: { isMoving: false, startX: 0, startZ: 0, targetX: 0, targetZ: 0, targetRotY: 0, progress: 1, walkDuration: 1.0 },
+                anderaWalk: { isMoving: false, startX: 0, startZ: 0, targetX: 0, targetZ: 0, targetRotY: 0, progress: 1, walkDuration: 1.0 },
+
+                singgihWaypoints: [],
+                currentSinggihWpIdx: 0,
+                anderaWaypoints: [],
+                currentAnderaWpIdx: 0,
 
                 // Live bubbles
                 bubbles: {
@@ -563,33 +561,133 @@
                 currentWaypointIdx: 0,
 
                 updateSinggihPosition(status) {
+                    if (this.currentSinggihStatus === status && !this.singgihWalk.isMoving) return;
                     this.currentSinggihStatus = status;
                     if (!this.singgihGroup) return;
+
+                    const curX = this.singgihGroup.position.x;
+                    const curZ = this.singgihGroup.position.z;
+                    this.singgihWaypoints = [];
+
+                    let target = this.spots.singgihLounge;
                     if (status === 'working') {
-                        this.singgihGroup.position.set(this.spots.singgihDesk.x, this.spots.singgihDesk.y, this.spots.singgihDesk.z);
-                        this.singgihGroup.rotation.y = this.spots.singgihDesk.rotY;
                         this.setMood('singgih', '⚙️ Core Processing AI');
+                        target = this.spots.singgihDesk;
+                        // Mundur dari sofa ke lorong bebas (z=2.4) -> jalan ke depan meja Singgih -> duduk di meja
+                        this.singgihWaypoints.push({ x: curX, z: 2.4 });
+                        this.singgihWaypoints.push({ x: target.x, z: 2.4 });
+                        this.singgihWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     } else {
-                        // Duduk santai di sofa sebelah Dewi & Andera (x=5.0)
-                        this.singgihGroup.position.set(this.spots.singgihLounge.x, this.spots.singgihLounge.y, this.spots.singgihLounge.z);
-                        this.singgihGroup.rotation.y = this.spots.singgihLounge.rotY;
                         this.setMood('singgih', '☕ Istirahat di Sofa');
+                        target = this.spots.singgihLounge;
+                        // Mundur dari meja ke lorong bebas (z=2.4) -> jalan ke depan sofa tengah -> duduk di sofa
+                        this.singgihWaypoints.push({ x: curX, z: 2.4 });
+                        this.singgihWaypoints.push({ x: target.x, z: 2.4 });
+                        this.singgihWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     }
+
+                    this.currentSinggihWpIdx = 0;
+                    this.startNextSinggihWaypoint();
+                },
+
+                startNextSinggihWaypoint() {
+                    if (this.currentSinggihWpIdx >= this.singgihWaypoints.length) {
+                        this.singgihWalk.isMoving = false;
+                        if (this.singgihGroup && this.singgihGroup.userData) {
+                            const data = this.singgihGroup.userData;
+                            if (data.legL) data.legL.rotation.x = 0;
+                            if (data.legR) data.legR.rotation.x = 0;
+                            if (data.armL) data.armL.rotation.x = 0;
+                            if (data.armR) data.armR.rotation.x = 0;
+                        }
+                        return;
+                    }
+                    const wp = this.singgihWaypoints[this.currentSinggihWpIdx];
+                    this.singgihWalk.isMoving = true;
+                    this.singgihWalk.startX = this.singgihGroup.position.x;
+                    this.singgihWalk.startZ = this.singgihGroup.position.z;
+                    this.singgihWalk.targetX = wp.x;
+                    this.singgihWalk.targetZ = wp.z;
+                    this.singgihWalk.targetRotY = (wp.rotY !== undefined) ? wp.rotY : Math.atan2(wp.x - this.singgihWalk.startX, wp.z - this.singgihWalk.startZ);
+
+                    const dx = wp.x - this.singgihWalk.startX;
+                    const dz = wp.z - this.singgihWalk.startZ;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+                    if (dist < 0.05) {
+                        this.currentSinggihWpIdx++;
+                        this.startNextSinggihWaypoint();
+                        return;
+                    }
+                    this.singgihWalk.walkDuration = Math.max(0.4, dist / 1.75);
+                    this.singgihWalk.progress = 0;
+                    this.singgihGroup.rotation.y = Math.atan2(dx, dz);
                 },
 
                 updateAnderaPosition(status) {
+                    if (this.currentAnderaStatus === status && !this.anderaWalk.isMoving) return;
                     this.currentAnderaStatus = status;
                     if (!this.anderaGroup) return;
+
+                    const curX = this.anderaGroup.position.x;
+                    const curZ = this.anderaGroup.position.z;
+                    this.anderaWaypoints = [];
+
+                    let target = this.spots.anderaLounge;
                     if (status === 'working') {
-                        this.anderaGroup.position.set(this.spots.anderaDesk.x, this.spots.anderaDesk.y, this.spots.anderaDesk.z);
-                        this.anderaGroup.rotation.y = this.spots.anderaDesk.rotY;
                         this.setMood('andera', '📊 Menyusun Laporan Keuangan');
+                        target = this.spots.anderaDesk;
+                        // Mundur dari sofa ke lorong bebas (z=2.4) -> jalan ke seberang meja Andera (z=-2.2) -> duduk di meja seberang
+                        this.anderaWaypoints.push({ x: curX, z: 2.4 });
+                        this.anderaWaypoints.push({ x: target.x - 1.2, z: 2.4 });
+                        this.anderaWaypoints.push({ x: target.x - 1.2, z: -2.0 });
+                        this.anderaWaypoints.push({ x: target.x, z: -2.0 });
+                        this.anderaWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     } else {
-                        // Duduk santai di sofa sebelah kanan (x=5.8)
-                        this.anderaGroup.position.set(this.spots.anderaLounge.x, this.spots.anderaLounge.y, this.spots.anderaLounge.z);
-                        this.anderaGroup.rotation.y = this.spots.anderaLounge.rotY;
                         this.setMood('andera', '🍿 Nonton TV di Sofa');
+                        target = this.spots.anderaLounge;
+                        // Dari meja seberang: mundur ke lorong belakang -> lewat samping meja -> masuk lorong depan -> ke sofa kanan
+                        this.anderaWaypoints.push({ x: curX, z: -2.0 });
+                        this.anderaWaypoints.push({ x: curX - 1.2, z: -2.0 });
+                        this.anderaWaypoints.push({ x: curX - 1.2, z: 2.4 });
+                        this.anderaWaypoints.push({ x: target.x, z: 2.4 });
+                        this.anderaWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     }
+
+                    this.currentAnderaWpIdx = 0;
+                    this.startNextAnderaWaypoint();
+                },
+
+                startNextAnderaWaypoint() {
+                    if (this.currentAnderaWpIdx >= this.anderaWaypoints.length) {
+                        this.anderaWalk.isMoving = false;
+                        if (this.anderaGroup && this.anderaGroup.userData) {
+                            const data = this.anderaGroup.userData;
+                            if (data.legL) data.legL.rotation.x = 0;
+                            if (data.legR) data.legR.rotation.x = 0;
+                            if (data.armL) data.armL.rotation.x = 0;
+                            if (data.armR) data.armR.rotation.x = 0;
+                        }
+                        return;
+                    }
+                    const wp = this.anderaWaypoints[this.currentAnderaWpIdx];
+                    this.anderaWalk.isMoving = true;
+                    this.anderaWalk.startX = this.anderaGroup.position.x;
+                    this.anderaWalk.startZ = this.anderaGroup.position.z;
+                    this.anderaWalk.targetX = wp.x;
+                    this.anderaWalk.targetZ = wp.z;
+                    this.anderaWalk.targetRotY = (wp.rotY !== undefined) ? wp.rotY : Math.atan2(wp.x - this.anderaWalk.startX, wp.z - this.anderaWalk.startZ);
+
+                    const dx = wp.x - this.anderaWalk.startX;
+                    const dz = wp.z - this.anderaWalk.startZ;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+                    if (dist < 0.05) {
+                        this.currentAnderaWpIdx++;
+                        this.startNextAnderaWaypoint();
+                        return;
+                    }
+                    this.anderaWalk.walkDuration = Math.max(0.4, dist / 1.75);
+                    this.anderaWalk.progress = 0;
+                    this.anderaGroup.rotation.y = Math.atan2(dx, dz);
                 },
 
                 updateCsPosition(status) {
@@ -622,28 +720,34 @@
                     this.dewiWaypoints = [];
 
                     if (status === 'sleeping') {
-                        // Rute Langsung Lurus Menuju Pintu Kamar (Pintu di dinding samping kanan x=-7.4, z=2.2):
-                        // Dari meja kerja Dewi (x=-3.2, z=1.45), mundur sedikit lalu langsung jalan ke pintu kamar
-                        this.dewiWaypoints.push({ x: curX, z: 2.2 });
-                        this.dewiWaypoints.push({ x: -7.0, z: 2.2 }); // Depan pintu luar
+                        // Dari meja/sofa ke kamar tidur AI:
+                        this.dewiWaypoints.push({ x: curX, z: 2.4 });
+                        this.dewiWaypoints.push({ x: -7.0, z: 2.2 }); // Depan pintu luar kamar
                         this.dewiWaypoints.push({ x: -7.8, z: 2.2 }); // Masuk melewati pintu
                         this.dewiWaypoints.push({ x: -9.2, z: 2.2 }); // Di dalam kamar
-                        this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY }); // Naik ke kasur
+                        this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY }); // Berbaring di kasur
                     } else if (status === 'working') {
-                        // Keluar dari kamar tidur lewat pintu samping:
+                        // Dari kasur kamar tidur ATAU sofa menuju meja kerja saat chat masuk!
                         if (curX < -7.2) {
+                            // Keluar kamar tidur:
                             this.dewiWaypoints.push({ x: -9.2, z: 2.2 });
                             this.dewiWaypoints.push({ x: -7.0, z: 2.2 });
+                        } else if (curX > 2.0) {
+                            // Dari sofa lounge: lewat lorong bebas partisi (z=2.4)
+                            this.dewiWaypoints.push({ x: curX, z: 2.4 });
+                            this.dewiWaypoints.push({ x: target.x, z: 2.4 });
                         }
-                        this.dewiWaypoints.push({ x: target.x, z: 2.2 });
+                        this.dewiWaypoints.push({ x: target.x, z: 2.4 });
                         this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     } else {
-                        // Menuju sofa santai:
+                        // Menuju sofa lounge istirahat santai bersama:
                         if (curX < -7.2) {
+                            // Keluar kamar tidur:
                             this.dewiWaypoints.push({ x: -9.2, z: 2.2 });
                             this.dewiWaypoints.push({ x: -7.0, z: 2.2 });
                         }
-                        this.dewiWaypoints.push({ x: target.x, z: 2.2 });
+                        this.dewiWaypoints.push({ x: curX, z: 2.4 });
+                        this.dewiWaypoints.push({ x: target.x, z: 2.4 });
                         this.dewiWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     }
 
@@ -2187,51 +2291,95 @@
                         }
                     }
 
-                    // C. Animasi Singgih (Bekerja ngetik di meja ATAU duduk santai di sofa)
-                    if (this.singgihGroup) {
+                    // C. Animasi Berjalan Singgih
+                    if (this.singgihWalk.isMoving && this.singgihGroup) {
+                        const dur = this.singgihWalk.walkDuration || 1.0;
+                        this.singgihWalk.progress += delta / dur;
+                        const t = Math.min(1, this.singgihWalk.progress);
+                        this.singgihGroup.position.x = this.singgihWalk.startX + (this.singgihWalk.targetX - this.singgihWalk.startX) * t;
+                        this.singgihGroup.position.z = this.singgihWalk.startZ + (this.singgihWalk.targetZ - this.singgihWalk.startZ) * t;
+
+                        const legSwing = Math.sin(time * 10) * 0.42;
+                        if (this.singgihGroup.userData.legL) this.singgihGroup.userData.legL.rotation.x = legSwing;
+                        if (this.singgihGroup.userData.legR) this.singgihGroup.userData.legR.rotation.x = -legSwing;
+                        if (this.singgihGroup.userData.armL) this.singgihGroup.userData.armL.rotation.x = -legSwing * 0.7;
+                        if (this.singgihGroup.userData.armR) this.singgihGroup.userData.armR.rotation.x = legSwing * 0.7;
+                        this.singgihGroup.position.y = 0.48 + Math.abs(Math.sin(time * 10)) * 0.04;
+
+                        if (t >= 1) {
+                            this.singgihGroup.position.x = this.singgihWalk.targetX;
+                            this.singgihGroup.position.z = this.singgihWalk.targetZ;
+                            this.singgihGroup.rotation.y = this.singgihWalk.targetRotY;
+                            this.currentSinggihWpIdx++;
+                            this.startNextSinggihWaypoint();
+                        }
+                    } else if (this.singgihGroup) {
                         const data = this.singgihGroup.userData;
                         if (this.currentSinggihStatus === 'working') {
+                            this.singgihGroup.position.y = this.spots.singgihDesk.y;
                             if (data && data.armL && data.armR) {
                                 data.armL.rotation.x = 0.52 + Math.cos(time * 11) * 0.14;
                                 data.armR.rotation.x = 0.52 + Math.sin(time * 11) * 0.14;
                             }
                             if (data && data.legL && data.legR) {
-                                data.legL.rotation.x = 1.25; // Masuk ke kolong meja
+                                data.legL.rotation.x = 1.25;
                                 data.legR.rotation.x = 1.25;
                             }
                         } else {
-                            // Duduk santai di sofa tengah
+                            this.singgihGroup.position.y = this.spots.singgihLounge.y;
                             if (data && data.armL && data.armR) {
                                 data.armL.rotation.x = 0.10 + Math.cos(time * 2) * 0.03;
                                 data.armR.rotation.x = 0.10 - Math.cos(time * 2) * 0.03;
                             }
                             if (data && data.legL && data.legR) {
-                                data.legL.rotation.x = -1.10; // Kaki selonjor nyaman di sofa
+                                data.legL.rotation.x = -1.10;
                                 data.legR.rotation.x = -1.10;
                             }
                         }
                     }
 
-                    // D. Animasi Andera (Bekerja di meja seberang ATAU duduk santai di sofa kanan)
-                    if (this.anderaGroup) {
+                    // D. Animasi Berjalan Andera
+                    if (this.anderaWalk.isMoving && this.anderaGroup) {
+                        const dur = this.anderaWalk.walkDuration || 1.0;
+                        this.anderaWalk.progress += delta / dur;
+                        const t = Math.min(1, this.anderaWalk.progress);
+                        this.anderaGroup.position.x = this.anderaWalk.startX + (this.anderaWalk.targetX - this.anderaWalk.startX) * t;
+                        this.anderaGroup.position.z = this.anderaWalk.startZ + (this.anderaWalk.targetZ - this.anderaWalk.startZ) * t;
+
+                        const legSwing = Math.sin(time * 10) * 0.42;
+                        if (this.anderaGroup.userData.legL) this.anderaGroup.userData.legL.rotation.x = legSwing;
+                        if (this.anderaGroup.userData.legR) this.anderaGroup.userData.legR.rotation.x = -legSwing;
+                        if (this.anderaGroup.userData.armL) this.anderaGroup.userData.armL.rotation.x = -legSwing * 0.7;
+                        if (this.anderaGroup.userData.armR) this.anderaGroup.userData.armR.rotation.x = legSwing * 0.7;
+                        this.anderaGroup.position.y = 0.48 + Math.abs(Math.sin(time * 10)) * 0.04;
+
+                        if (t >= 1) {
+                            this.anderaGroup.position.x = this.anderaWalk.targetX;
+                            this.anderaGroup.position.z = this.anderaWalk.targetZ;
+                            this.anderaGroup.rotation.y = this.anderaWalk.targetRotY;
+                            this.currentAnderaWpIdx++;
+                            this.startNextAnderaWaypoint();
+                        }
+                    } else if (this.anderaGroup) {
                         const data = this.anderaGroup.userData;
                         if (this.currentAnderaStatus === 'working') {
+                            this.anderaGroup.position.y = this.spots.anderaDesk.y;
                             if (data && data.armL && data.armR) {
                                 data.armL.rotation.x = 0.50 + Math.sin(time * 8) * 0.14;
                                 data.armR.rotation.x = 0.50 + Math.cos(time * 8) * 0.14;
                             }
                             if (data && data.legL && data.legR) {
-                                data.legL.rotation.x = 1.25; // Masuk ke kolong meja seberang
+                                data.legL.rotation.x = 1.25;
                                 data.legR.rotation.x = 1.25;
                             }
                         } else {
-                            // Duduk santai di sofa kanan sambil nonton TV
+                            this.anderaGroup.position.y = this.spots.anderaLounge.y;
                             if (data && data.armL && data.armR) {
                                 data.armL.rotation.x = 0.15 + Math.sin(time * 2.2) * 0.04;
                                 data.armR.rotation.x = 0.15 - Math.sin(time * 2.2) * 0.04;
                             }
                             if (data && data.legL && data.legR) {
-                                data.legL.rotation.x = -1.10; // Kaki selonjor nyaman di sofa
+                                data.legL.rotation.x = -1.10;
                                 data.legR.rotation.x = -1.10;
                             }
                         }
