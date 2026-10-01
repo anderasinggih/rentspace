@@ -282,12 +282,12 @@
                     }
                 },
 
-                // Posisi koordinat penting di ruangan
+                // Posisi koordinat penting di ruangan (Duduk pas di kursi ergonomis tanpa tembus meja)
                 spots: {
-                    dewiDesk: { x: -3.2, y: 0.48, z: 1.1, rotY: Math.PI },   // Duduk di meja hadap meja tengah
-                    dewiLounge: { x: 4.2, y: 0.45, z: 1.4, rotY: -0.3 },   // Bersantai di sofa lounge
-                    singgihDesk: { x: -1.2, y: 0.48, z: 1.1, rotY: Math.PI }, // Duduk hadap tengah
-                    anderaDesk: { x: -2.2, y: 0.48, z: -0.9, rotY: 0 }     // Duduk di seberang meja (hadap-hadapan Gen Z)
+                    dewiDesk: { x: -3.2, y: 0.44, z: 1.25, rotY: Math.PI },   // Duduk di kursi menghadap monitor ke arah -Z
+                    dewiLounge: { x: 5.0, y: 0.42, z: 1.4, rotY: 0.0 },       // Duduk santai di sofa menghadap ke TV
+                    singgihDesk: { x: -1.2, y: 0.44, z: 1.25, rotY: Math.PI }, // Duduk di kursi menghadap monitor ke arah -Z
+                    anderaDesk: { x: -2.2, y: 0.44, z: -1.05, rotY: 0.0 }     // Duduk di seberang menghadap monitor ke arah +Z
                 },
 
                 // State transisi animasi jalan (NPC walking)
@@ -528,10 +528,19 @@
                     this.dewiGroup.rotation.y = angle;
                 },
 
-                // Update teks balon percakapan live
+                // Update teks balon percakapan live (Elegan, tidak bentrok dengan nametag, & auto-hide setelah 8 detik agar tidak nyangkut)
+                bubbleTimers: {},
+
                 updateLiveBubble(agent, text) {
                     if (!this.bubbles[agent]) return;
                     const b = this.bubbles[agent];
+
+                    // Clear previous timer
+                    if (this.bubbleTimers[agent]) {
+                        clearTimeout(this.bubbleTimers[agent]);
+                        this.bubbleTimers[agent] = null;
+                    }
+
                     if (!text) {
                         b.mesh.visible = false;
                         return;
@@ -539,90 +548,97 @@
                     const ctx = b.canvas.getContext('2d');
                     ctx.clearRect(0, 0, b.canvas.width, b.canvas.height);
 
-                    // Gambar bubble chat bulat lucu
-                    ctx.fillStyle = 'rgba(23, 23, 26, 0.94)';
-                    ctx.strokeStyle = agent === 'dewi' ? '#f472b6' : (agent === 'singgih' ? '#2dd4bf' : '#fbbf24');
-                    ctx.lineWidth = 6;
-                    
-                    // Rounded rect
-                    const w = b.canvas.width - 20;
-                    const h = b.canvas.height - 35;
+                    // Gambar bubble chat elegan minimalis (Glassmorphism Dark Charcoal dengan accent hairline)
+                    const w = b.canvas.width - 24;
+                    const h = b.canvas.height - 40;
+
+                    // Fill background lembut
+                    ctx.fillStyle = 'rgba(15, 17, 23, 0.94)';
                     ctx.beginPath();
-                    ctx.roundRect(10, 10, w, h, 24);
+                    ctx.roundRect(12, 12, w, h, 20);
                     ctx.fill();
+
+                    // Hairline border elegan
+                    ctx.strokeStyle = agent === 'dewi' ? 'rgba(244, 114, 182, 0.85)' : (agent === 'singgih' ? 'rgba(45, 212, 191, 0.85)' : 'rgba(251, 191, 36, 0.85)');
+                    ctx.lineWidth = 3.5;
                     ctx.stroke();
 
-                    // Tail segitiga
-                    ctx.fillStyle = 'rgba(23, 23, 26, 0.94)';
+                    // Arrow pointer bawah minimalis
+                    ctx.fillStyle = 'rgba(15, 17, 23, 0.94)';
                     ctx.beginPath();
-                    ctx.moveTo(w / 2 - 15, 10 + h);
-                    ctx.lineTo(w / 2, 10 + h + 20);
-                    ctx.lineTo(w / 2 + 15, 10 + h);
+                    ctx.moveTo(w / 2 - 12, 12 + h);
+                    ctx.lineTo(w / 2, 12 + h + 16);
+                    ctx.lineTo(w / 2 + 12, 12 + h);
                     ctx.closePath();
                     ctx.fill();
 
-                    // Teks bubble
+                    // Text typography bersih & tajam
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 26px sans-serif';
+                    ctx.font = '600 24px "Inter", "Segoe UI", sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    const cleanText = text.length > 28 ? text.substring(0, 26) + '...' : text;
-                    ctx.fillText('💬 ' + cleanText, b.canvas.width / 2, (h / 2) + 10);
+                    const cleanText = text.length > 32 ? text.substring(0, 30) + '...' : text;
+                    ctx.fillText(cleanText, b.canvas.width / 2, (h / 2) + 12);
 
                     b.texture.needsUpdate = true;
                     b.mesh.visible = true;
+
+                    // Auto-hide setelah 8 detik agar balon tidak pernah nyangkut di atas kepala
+                    this.bubbleTimers[agent] = setTimeout(() => {
+                        b.mesh.visible = false;
+                    }, 8000);
                 },
 
-                // Membuat Label Nama 3D Melayang di atas kepala karakter
+                // Membuat Label Nama 3D Melayang di atas kepala karakter (Elegan & Rapi)
                 createNameTag(name, role, badgeColor) {
                     const canvas = document.createElement('canvas');
                     canvas.width = 384;
                     canvas.height = 120;
                     const ctx = canvas.getContext('2d');
 
-                    // Background pill badge
-                    ctx.fillStyle = 'rgba(24, 24, 27, 0.92)';
-                    ctx.strokeStyle = badgeColor;
-                    ctx.lineWidth = 5;
+                    // Background pill badge elegan
+                    ctx.fillStyle = 'rgba(20, 22, 27, 0.92)';
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
-                    ctx.roundRect(10, 10, canvas.width - 20, canvas.height - 20, 32);
+                    ctx.roundRect(10, 10, canvas.width - 20, canvas.height - 20, 28);
                     ctx.fill();
                     ctx.stroke();
 
                     // Indicator dot
                     ctx.fillStyle = badgeColor;
                     ctx.beginPath();
-                    ctx.arc(42, 60, 12, 0, Math.PI * 2);
+                    ctx.arc(42, 60, 10, 0, Math.PI * 2);
                     ctx.fill();
 
                     // Text Name & Role
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 36px sans-serif';
+                    ctx.font = 'bold 34px "Inter", sans-serif';
                     ctx.textAlign = 'left';
-                    ctx.fillText(name, 72, 54);
+                    ctx.fillText(name, 70, 54);
 
                     ctx.fillStyle = badgeColor;
-                    ctx.font = 'bold 22px sans-serif';
-                    ctx.fillText(role, 72, 88);
+                    ctx.font = '600 22px "Inter", sans-serif';
+                    ctx.fillText(role, 70, 88);
 
                     const texture = new THREE.CanvasTexture(canvas);
-                    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
                     const sprite = new THREE.Sprite(mat);
-                    sprite.scale.set(1.4, 0.44, 1);
-                    sprite.position.y = 1.48;
+                    sprite.scale.set(1.35, 0.42, 1);
+                    sprite.position.y = 1.45;
                     return sprite;
                 },
 
-                // Membuat Speech Bubble Sprite
+                // Membuat Speech Bubble Sprite (Ditempatkan di atas Name Tag agar tidak tumpang tindih)
                 createSpeechBubble() {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 440;
+                    canvas.width = 460;
                     canvas.height = 140;
                     const texture = new THREE.CanvasTexture(canvas);
-                    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
                     const sprite = new THREE.Sprite(mat);
-                    sprite.scale.set(1.8, 0.58, 1);
-                    sprite.position.y = 2.05;
+                    sprite.scale.set(1.9, 0.58, 1);
+                    sprite.position.y = 2.15; // Berada tepat di atas nametag
                     sprite.visible = false;
                     return { mesh: sprite, canvas, texture };
                 },
@@ -1358,48 +1374,62 @@
                         if (t >= 1) {
                             this.dewiWalk.isMoving = false;
                             this.dewiGroup.rotation.y = this.dewiWalk.targetRotY;
-                            if (this.dewiGroup.userData.legL) this.dewiGroup.userData.legL.rotation.x = 0;
-                            if (this.dewiGroup.userData.legR) this.dewiGroup.userData.legR.rotation.x = 0;
                         }
                     } else if (this.dewiGroup) {
                         // Posisi diam (Ngetik di meja ATAU bersantai santai di sofa)
                         const data = this.dewiGroup.userData;
                         if (this.currentCsStatus === 'working') {
-                            // Dewi ngetik aktif di keyboard
+                            // Dewi ngetik aktif di keyboard & posisi duduk melipat kaki rapi di bawah kursi (tidak menembus meja)
                             if (data.armL && data.armR) {
-                                data.armL.rotation.x = 0.5 + Math.sin(time * 14) * 0.22;
-                                data.armR.rotation.x = 0.5 + Math.cos(time * 14) * 0.22;
+                                data.armL.rotation.x = 0.55 + Math.sin(time * 14) * 0.18;
+                                data.armR.rotation.x = 0.55 + Math.cos(time * 14) * 0.18;
+                            }
+                            if (data.legL && data.legR) {
+                                data.legL.rotation.x = -1.25; // Melipat ke depan bawah kursi
+                                data.legR.rotation.x = -1.25;
                             }
                             if (data.head) {
-                                data.head.position.y = data.baseHeadY + Math.sin(time * 3.5) * 0.015;
+                                data.head.position.y = data.baseHeadY + Math.sin(time * 3.5) * 0.012;
                             }
                         } else {
-                            // Dewi bersantai di sofa (tangan santai, kepala breathing tenang)
+                            // Dewi bersantai di sofa (tangan santai, kaki selonjor nyaman di sofa)
                             if (data.armL && data.armR) {
-                                data.armL.rotation.x = 0.15 + Math.sin(time * 2) * 0.05;
-                                data.armR.rotation.x = 0.15 - Math.sin(time * 2) * 0.05;
+                                data.armL.rotation.x = 0.15 + Math.sin(time * 2) * 0.04;
+                                data.armR.rotation.x = 0.15 - Math.sin(time * 2) * 0.04;
+                            }
+                            if (data.legL && data.legR) {
+                                data.legL.rotation.x = -1.10;
+                                data.legR.rotation.x = -1.10;
                             }
                             if (data.head) {
-                                data.head.position.y = data.baseHeadY + Math.sin(time * 2) * 0.012;
+                                data.head.position.y = data.baseHeadY + Math.sin(time * 2) * 0.010;
                             }
                         }
                     }
 
-                    // C. Animasi Singgih (Core Dispatcher mengetik konstan)
+                    // C. Animasi Singgih (Core Dispatcher mengetik konstan & duduk melipat kaki rapi)
                     if (this.singgihGroup) {
                         const data = this.singgihGroup.userData;
                         if (data && data.armL && data.armR) {
-                            data.armL.rotation.x = 0.45 + Math.cos(time * 11) * 0.16;
-                            data.armR.rotation.x = 0.45 + Math.sin(time * 11) * 0.16;
+                            data.armL.rotation.x = 0.50 + Math.cos(time * 11) * 0.14;
+                            data.armR.rotation.x = 0.50 + Math.sin(time * 11) * 0.14;
+                        }
+                        if (data && data.legL && data.legR) {
+                            data.legL.rotation.x = -1.25; // Masuk rapi di bawah kursi
+                            data.legR.rotation.x = -1.25;
                         }
                     }
 
-                    // D. Animasi Andera (Report Bot mengetik & memantau)
+                    // D. Animasi Andera (Report Bot mengetik & duduk melipat kaki rapi di seberang)
                     if (this.anderaGroup) {
                         const data = this.anderaGroup.userData;
                         if (data && data.armL && data.armR) {
-                            data.armL.rotation.x = 0.40 + Math.sin(time * 8) * 0.14;
-                            data.armR.rotation.x = 0.40 + Math.cos(time * 8) * 0.14;
+                            data.armL.rotation.x = 0.48 + Math.sin(time * 8) * 0.14;
+                            data.armR.rotation.x = 0.48 + Math.cos(time * 8) * 0.14;
+                        }
+                        if (data && data.legL && data.legR) {
+                            data.legL.rotation.x = -1.25; // Masuk rapi di bawah kursi
+                            data.legR.rotation.x = -1.25;
                         }
                     }
 

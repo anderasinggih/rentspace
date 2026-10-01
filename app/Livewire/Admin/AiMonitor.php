@@ -251,8 +251,15 @@ class AiMonitor extends Component
             }
         }
 
-        $latestCustomerText = $latestCustomerMsg ? \Illuminate\Support\Str::limit($latestCustomerMsg->content, 35) : null;
-        $latestReportText = $latestReportMsg ? \Illuminate\Support\Str::limit($latestReportMsg->content, 35) : null;
+        // Hanya tampilkan balon percakapan jika pesan benar-benar baru (< 60 detik)
+        // Jika sudah lebih dari 1 menit atau sudah terjawab, balon otomatis hilang agar tidak nyangkut terus
+        $latestCustomerText = ($latestCustomerMsg && $latestCustomerMsg->created_at && $latestCustomerMsg->created_at->diffInSeconds(now()) <= 60)
+            ? \Illuminate\Support\Str::limit($latestCustomerMsg->content, 35) 
+            : null;
+
+        $latestReportText = ($latestReportMsg && $latestReportMsg->created_at && $latestReportMsg->created_at->diffInSeconds(now()) <= 60)
+            ? \Illuminate\Support\Str::limit($latestReportMsg->content, 35) 
+            : null;
 
         $this->dispatch('ai-status-sync', 
             csStatus: $csStatus, 
