@@ -269,6 +269,16 @@
                         this.rotX = 0.32;
                         this.cameraRadius = 9.5;
                         this.targetLookAt = { x: -9.8, y: 1.2, z: 1.3 };
+                    } else if (viewName === 'bathroom') {
+                        // View Kamar Mandi AI (Sebelah Kamar Tidur di pojok)
+                        this.rotY = 0.50;
+                        this.rotX = 0.35;
+                        this.cameraRadius = 8.0;
+                        this.targetLookAt = { x: -9.6, y: 1.1, z: -3.0 };
+                    } else if (viewName === 'free') {
+                        // FREE CAM: Bebas panning & orbit ke seluruh sudut
+                        this.cameraRadius = 16.0;
+                        this.targetLookAt = { x: 0, y: 1.0, z: 0 };
                     } else if (viewName === 'dewi_pov') {
                         // TRUE FIRST-PERSON POV: Kamera terpasang di depan muka Dewi menghadap ke depan meja!
                         this.isPovMode = true;
@@ -292,19 +302,37 @@
                     this.updateCameraPos();
                 },
 
-                toggleExpand() {
-                    if (window._threeOfficeAlpine) {
-                        window._threeOfficeAlpine.isExpanded = !window._threeOfficeAlpine.isExpanded;
-                        setTimeout(() => {
-                            if (this.renderer && this.camera && this.container) {
-                                const w = this.container.clientWidth;
-                                const h = this.container.clientHeight;
-                                this.camera.aspect = w / h;
-                                this.camera.updateProjectionMatrix();
-                                this.renderer.setSize(w, h);
-                            }
-                        }, 320);
+                
+                onResize() {
+                    if (!this.container || !this.camera || !this.renderer) return;
+                    const w = this.container.clientWidth;
+                    const h = this.container.clientHeight;
+                    if (w === 0 || h === 0) return;
+                    this.camera.aspect = w / h;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(w, h);
+                },
+
+                toggleFullscreen() {
+                    const elem = document.getElementById('three-office-card') || this.container?.parentElement;
+                    if (!document.fullscreenElement) {
+                        if (elem?.requestFullscreen) {
+                            elem.requestFullscreen();
+                        } else if (elem?.webkitRequestFullscreen) {
+                            elem.webkitRequestFullscreen();
+                        }
+                    } else {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        }
                     }
+                    setTimeout(() => {
+                        this.onResize();
+                    }, 250);
+                },
+
+                toggleExpand() {
+                    this.toggleFullscreen();
                 },
 
                 // Posisi koordinat penting di ruangan (Duduk pas di kursi ergonomis tanpa tembus meja)
@@ -386,44 +414,67 @@
                         this.updateCameraPos();
 
                         // 3. WebGL Renderer with ACESFilmicToneMapping (Cinematic Warmth & PBR)
-                        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+                        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false, depth: true });
                         this.renderer.setSize(width, height);
                         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
                         this.renderer.shadowMap.enabled = true;
                         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                        this.renderer.shadowMap.autoUpdate = true;
                         
-                        // Tone mapping realistis studio arsitektural
+                        // Tone mapping realistis studio arsitektural (kurva cinestetic hangat)
                         if (THREE.ACESFilmicToneMapping) {
                             this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                            this.renderer.toneMappingExposure = 1.08;
+                            this.renderer.toneMappingExposure = 1.18;
                         }
                         if (THREE.sRGBEncoding) {
                             this.renderer.outputEncoding = THREE.sRGBEncoding;
                         }
+                        // Keep examples: strong cache clearing setiap frame biar anti flicker pada scene besar
+                        this.renderer.info.autoReset = true;
                         container.appendChild(this.renderer.domElement);
 
                         // 4. Pencahayaan Realistis: Home Cozy Warm Interior (Suasana Rumah Nyaman & Hangat)
-                        // A. Ambient Light hangat lembut
-                        const ambient = new THREE.AmbientLight(0xffedd5, 0.65);
+                        // A. Ambient Light hangat lembut (dinaikkan sedikit agar tidak gelap pekat)
+                        const ambient = new THREE.AmbientLight(0xffedd5, 0.72);
                         this.scene.add(ambient);
 
-                        // B. Hemisphere Light (Pantulan kayu lantai hangat)
-                        const hemiLight = new THREE.HemisphereLight(0xffedd5, 0x3d2817, 0.50);
+                        // B. Hemisphere Light (Pantulan kayu lantai hangat + sky dingin biar kontras natural)
+                        const hemiLight = new THREE.HemisphereLight(0xfff3e0, 0x3d2817, 0.60);
                         this.scene.add(hemiLight);
 
-                        // C. Lampu Plafon Rumah Lembut
-                        const sunLight = new THREE.DirectionalLight(0xfff1dc, 0.95);
+                        // C. Lampu Plafon / Key Light Utama (Hangat Lembut) dengan Shadow berkualitas
+                        const sunLight = new THREE.DirectionalLight(0xfff1dc, 1.05);
                         sunLight.position.set(8, 16, 10);
                         sunLight.castShadow = true;
-                        sunLight.shadow.mapSize.width = 1024;
-                        sunLight.shadow.mapSize.height = 1024;
-                        sunLight.shadow.bias = -0.0006;
+                        sunLight.shadow.mapSize.width = 2048;
+                        sunLight.shadow.mapSize.height = 2048;
+                        sunLight.shadow.bias = -0.0004;
+                        sunLight.shadow.normalBias = 0.02;
+                        // Frustum shadow besar menutupi seluruh ruangan 24x15 agar tidak ada area tanpa shadow
+                        sunLight.shadow.camera.near = 2;
+                        sunLight.shadow.camera.far = 40;
+                        sunLight.shadow.camera.left = -14;
+                        sunLight.shadow.camera.right = 14;
+                        sunLight.shadow.camera.top = 12;
+                        sunLight.shadow.camera.bottom = -12;
                         this.scene.add(sunLight);
+                        if (sunLight.target) { sunLight.target.position.set(0, 0, 0); this.scene.add(sunLight.target); }
+
+                        // C2. Fill Light Lembut dari arah seberang (menghilangkan bayangan tebal yang flat)
+                        const fillLight = new THREE.DirectionalLight(0xa7c7ff, 0.35);
+                        fillLight.position.set(-10, 6, -8);
+                        this.scene.add(fillLight);
+
+                        // C3. Rim Light Hangat dari belakang (memisahkan objek dari dinding, kesan kedalaman)
+                        const rimLight = new THREE.DirectionalLight(0xffd9a0, 0.45);
+                        rimLight.position.set(0, 8, -12);
+                        this.scene.add(rimLight);
 
                         // D. Lampu Sorot Hangat Lembut di Meja Kerja (Spotlight Nyorot Fokus tp Halus)
                         const deskSpotLight = new THREE.SpotLight(0xffdfa9, 1.7, 12, Math.PI / 3.2, 0.55, 1.4);
                         deskSpotLight.position.set(-2.2, 4.2, 0.1);
                         deskSpotLight.target.position.set(-2.2, 0.9, 0.1);
+                        deskSpotLight.castShadow = false;
                         this.scene.add(deskSpotLight);
                         this.scene.add(deskSpotLight.target);
 
@@ -487,9 +538,36 @@
                             }
                         }, { passive: false });
 
+                        let isPanning = false;
+                        dom.addEventListener('contextmenu', (e) => e.preventDefault());
                         dom.addEventListener('mousedown', (e) => {
                             this.isDragging = true;
+                            isPanning = (e.button === 2 || e.shiftKey);
                             this.prevMouse = { x: e.clientX, y: e.clientY };
+                        });
+                        window.addEventListener('mouseup', () => { 
+                            this.isDragging = false; 
+                            isPanning = false; 
+                        });
+                        window.addEventListener('mousemove', (e) => {
+                            if (!this.isDragging) return;
+                            const dx = e.clientX - this.prevMouse.x;
+                            const dy = e.clientY - this.prevMouse.y;
+                            
+                            if (isPanning) {
+                                // Pan camera (geser posisi target lihat bebas kemana saja)
+                                const factor = (this.cameraRadius || 18) * 0.0018;
+                                const sinY = Math.sin(this.rotY);
+                                const cosY = Math.cos(this.rotY);
+                                this.targetLookAt.x -= (dx * cosY + dy * sinY) * factor;
+                                this.targetLookAt.z -= (-dx * sinY + dy * cosY) * factor;
+                            } else {
+                                // Orbit rotation
+                                this.rotY -= dx * 0.005;
+                                this.rotX = Math.max(0.08, Math.min(1.48, this.rotX + dy * 0.004));
+                            }
+                            this.prevMouse = { x: e.clientX, y: e.clientY };
+                            this.updateCameraPos();
                         });
                         window.addEventListener('mouseup', () => { this.isDragging = false; });
                         window.addEventListener('mousemove', (e) => {
@@ -541,6 +619,123 @@
                     this.screenCanvas.height = 280;
                     this.screenCtx = this.screenCanvas.getContext('2d');
                     this.screenTexture = new THREE.CanvasTexture(this.screenCanvas);
+                },
+
+                // Lantai Parquet Kayu Walnut Procedural (Papan kayu nyata dengan serat alami + variasi warna)
+                createWoodFloorTexture() {
+                    const c = document.createElement('canvas');
+                    c.width = 512;
+                    c.height = 512;
+                    const ctx = c.getContext('2d');
+
+                    const boardH = 64; // 8 papan horizontal, setiap board berupa papan kayu panjang
+                    const tones = ['#4a3022', '#563827', '#4d3223', '#5b3d2b', '#513331', '#5f412d'];
+                    for (let b = 0; b < 8; b++) {
+                        // Base warna papan dengan gradasi naik/turun halus (efek lembut kayu)
+                        const tone = tones[b % tones.length];
+                        const grad = ctx.createLinearGradient(0, b * boardH, 0, (b + 1) * boardH);
+                        grad.addColorStop(0, this.shade(tone, 18));
+                        grad.addColorStop(0.5, tone);
+                        grad.addColorStop(1, this.shade(tone, -14));
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(0, b * boardH, 512, boardH);
+
+                        // Serat kayu: garis-garis tipis meliuk alami
+                        ctx.strokeStyle = 'rgba(20,10,4,0.14)';
+                        for (let g = 0; g < 10; g++) {
+                            ctx.lineWidth = 1 + (Math.random() * 1.5);
+                            ctx.beginPath();
+                            let y = b * boardH + 6 + (g / 10) * (boardH - 12);
+                            const amp = 3 + Math.random() * 4;
+                            ctx.moveTo(0, y);
+                            for (let x = 0; x <= 512; x += 16) {
+                                y += Math.sin(x * 0.02 + g * 1.3) * 0.8 + (Math.random() - 0.5) * amp;
+                                ctx.lineTo(x, y);
+                            }
+                            ctx.stroke();
+                        }
+
+                        // Simpul kayu (knot) kecil di beberapa papan
+                        if (b % 2 === 0) {
+                            const kx = 80 + Math.random() * 400;
+                            const ky = b * boardH + boardH / 2;
+                            ctx.fillStyle = 'rgba(28,12,4,0.28)';
+                            ctx.beginPath();
+                            ctx.ellipse(kx, ky, 5 + Math.random() * 4, 2 + Math.random() * 2, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+
+                    // Garis sambungan antar papan (deep grooves)
+                    ctx.strokeStyle = 'rgba(12,6,2,0.5)';
+                    ctx.lineWidth = 2;
+                    for (let b = 1; b < 8; b++) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, b * boardH);
+                        ctx.lineTo(512, b * boardH);
+                        ctx.stroke();
+                    }
+                    // Sambungan vertikal (staggered seams) alami papan kayu
+                    for (let b = 0; b < 8; b++) {
+                        const seamCount = 4 + Math.floor(Math.random() * 3);
+                        ctx.strokeStyle = 'rgba(12,6,2,0.38)';
+                        ctx.lineWidth = 1.5;
+                        for (let s = 0; s < seamCount; s++) {
+                            const sx = ((b % 2) * 96) + (s * 110) + (Math.random() * 18);
+                            ctx.beginPath();
+                            ctx.moveTo(sx, b * boardH);
+                            ctx.lineTo(sx, (b + 1) * boardH);
+                            ctx.stroke();
+                        }
+                    }
+
+                    // Sheen / highlight halus di permukaan agar tidak datar
+                    const gloss = ctx.createLinearGradient(0, 0, 512, 512);
+                    gloss.addColorStop(0, 'rgba(255,240,220,0.05)');
+                    gloss.addColorStop(0.5, 'rgba(255,240,220,0.0)');
+                    gloss.addColorStop(1, 'rgba(255,230,200,0.06)');
+                    ctx.fillStyle = gloss;
+                    ctx.fillRect(0, 0, 512, 512);
+
+                    const tex = new THREE.CanvasTexture(c);
+                    tex.wrapS = THREE.RepeatWrapping;
+                    tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(5, 3);
+                    tex.anisotropy = this.renderer ? this.renderer.capabilities.getMaxAnisotropy() : 8;
+                    if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
+                    return tex;
+                },
+
+                // Helper kecil: terang-gelapkan warna hex
+                shade(hex, pct) {
+                    const n = parseInt(hex.slice(1), 16);
+                    const r = Math.max(0, Math.min(255, (n >> 16) + pct));
+                    const g = Math.max(0, Math.min(255, ((n >> 8) & 0xff) + pct));
+                    const b = Math.max(0, Math.min(255, (n & 0xff) + pct));
+                    return `rgb(${r},${g},${b})`;
+                },
+
+                // Blob Shadow lembut di bawah karakter (soft contact shadow)
+                createContactShadow(size = 0.65) {
+                    const c = document.createElement('canvas');
+                    c.width = 128;
+                    c.height = 128;
+                    const ctx = c.getContext('2d');
+                    const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+                    g.addColorStop(0, 'rgba(0,0,0,0.55)');
+                    g.addColorStop(0.6, 'rgba(0,0,0,0.28)');
+                    g.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(0, 0, 128, 128);
+
+                    const tex = new THREE.CanvasTexture(c);
+                    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 1 });
+                    const sprite = new THREE.Sprite(mat);
+                    sprite.position.y = 0.012;
+                    sprite.scale.set(size, size * 0.34, 1);
+                    sprite.renderOrder = 0;
+                    this.scene.add(sprite);
+                    return sprite;
                 },
 
                 isPovMode: false,
@@ -1544,6 +1739,111 @@
                 bedroomDoorPivot: null,
                 targetDoorAngle: 0, // 0 = Tertutup rapat, -Math.PI / 2 = Terbuka lebar
 
+                
+                // 7B. Ruang Kamar Mandi AI Modern (Sebelah Kamar Tidur di Pojok Belakang: x = -9.6, z = -3.2)
+                buildBathroom(x, y, z) {
+                    const bathGroup = new THREE.Group();
+                    bathGroup.position.set(x, y, z);
+
+                    const wallMat = new THREE.MeshStandardMaterial({ color: 0x2b2724, roughness: 0.9 });
+                    const tileMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.3 }); // Ubin abu-abu elegan modern
+
+                    // Lantai Keramik Kamar Mandi (Pola ubin basah/glossy)
+                    const floor = new THREE.Mesh(
+                        new THREE.BoxGeometry(4.4, 0.03, 3.2),
+                        new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.2, metalness: 0.1 })
+                    );
+                    floor.position.set(0, 0.015, 0);
+                    bathGroup.add(floor);
+
+                    // Dinding Penyekat Depan Kamar Mandi (Memisahkan dengan Kamar Tidur): panjang 4.4m, tinggi 5.2m
+                    const partitionWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 5.2, 0.35), wallMat);
+                    partitionWall.position.set(0, 2.6, 1.6);
+                    partitionWall.receiveShadow = true;
+                    bathGroup.add(partitionWall);
+
+                    // Pintu Kamar Mandi Kaca Buram Frosted Minimalis (di x = 1.0, z = 1.6)
+                    const glassMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.45, roughness: 0.2 });
+                    const bathDoor = new THREE.Mesh(new THREE.BoxGeometry(1.0, 3.4, 0.08), glassMat);
+                    bathDoor.position.set(1.0, 1.7, 1.6);
+                    bathGroup.add(bathDoor);
+
+                    // Kusen Pintu Kamar Mandi
+                    const frameMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.4 });
+                    const frameL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 3.4, 0.12), frameMat);
+                    frameL.position.set(0.5, 1.7, 1.6);
+                    bathGroup.add(frameL);
+                    const frameR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 3.4, 0.12), frameMat);
+                    frameR.position.set(1.5, 1.7, 1.6);
+                    bathGroup.add(frameR);
+
+                    // Dinding Samping Kanan (Pemisah dengan lorong kantor): panjang 3.2m, tebal 0.4m
+                    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5.2, 3.2), wallMat);
+                    rightWall.position.set(2.2, 2.6, 0);
+                    rightWall.receiveShadow = true;
+                    bathGroup.add(rightWall);
+
+                    // 1. Shower Box Kaca Mewah (di sudut kiri: x = -1.2, z = -0.6)
+                    const showerGlass = new THREE.Mesh(new THREE.BoxGeometry(1.6, 3.2, 1.4), new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.2, roughness: 0.1 }));
+                    showerGlass.position.set(-1.2, 1.6, -0.6);
+                    bathGroup.add(showerGlass);
+
+                    // Tiang & Kepala Shower Stainless Steel
+                    const showerPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 2.4, 8), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9 }));
+                    showerPole.position.set(-1.2, 2.0, -1.2);
+                    bathGroup.add(showerPole);
+
+                    const showerHead = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 16), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95 }));
+                    showerHead.position.set(-1.2, 3.1, -0.9);
+                    showerHead.rotation.x = 0.2;
+                    bathGroup.add(showerHead);
+
+                    // 2. Wastafel Modern & Cermin Lampu LED
+                    const vanity = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.85, 0.65), new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5 }));
+                    vanity.position.set(0.8, 0.425, -0.95);
+                    vanity.castShadow = true;
+                    bathGroup.add(vanity);
+
+                    // Bak Cuci Piring Keramik Putih
+                    const sink = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.15, 0.48), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 }));
+                    sink.position.set(0.8, 0.92, -0.95);
+                    bathGroup.add(sink);
+
+                    // Keran Air
+                    const faucet = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.25, 8), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9 }));
+                    faucet.position.set(0.8, 1.1, -1.1);
+                    bathGroup.add(faucet);
+
+                    // Cermin LED Bulat Cantik
+                    const mirror = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.02, 32), new THREE.MeshStandardMaterial({ color: 0x93c5fd, metalness: 0.8, roughness: 0.1 }));
+                    mirror.position.set(0.8, 2.1, -1.25);
+                    mirror.rotation.x = Math.PI / 2;
+                    bathGroup.add(mirror);
+
+                    // Backlight LED Cermin
+                    const mirrorLight = new THREE.PointLight(0xbae6fd, 0.8, 4, 2);
+                    mirrorLight.position.set(0.8, 2.1, -1.15);
+                    bathGroup.add(mirrorLight);
+
+                    // 3. Toilet Duduk Smart Modern
+                    const toiletBase = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.42, 0.68), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 }));
+                    toiletBase.position.set(0.8, 0.21, 0.5);
+                    toiletBase.castShadow = true;
+                    bathGroup.add(toiletBase);
+
+                    const toiletTank = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.50, 0.26), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 }));
+                    toiletTank.position.set(0.8, 0.65, 0.15);
+                    toiletTank.castShadow = true;
+                    bathGroup.add(toiletTank);
+
+                    // Lampu Plafon Kamar Mandi Hangat
+                    const bathLight = new THREE.PointLight(0xe0f2fe, 1.0, 8, 2);
+                    bathLight.position.set(0, 3.8, 0);
+                    bathGroup.add(bathLight);
+
+                    this.scene.add(bathGroup);
+                },
+
                 buildBedroom(x, y, z) {
                     const bedGroup = new THREE.Group();
                     bedGroup.position.set(x, y, z);
@@ -1987,17 +2287,35 @@
                 },
 
                 buildRoom() {
-                    // 1. Lantai Parquet Kayu Walnut Hangat Mewah
+                    // 1. Lantai Parquet Kayu Walnut Hangat Mewah (Procedural Wood Texture)
                     const floorGeo = new THREE.PlaneGeometry(24, 15);
-                    const floorMat = new THREE.MeshStandardMaterial({ color: 0x2e231c, roughness: 0.6, metalness: 0.05 });
+                    const floorMat = new THREE.MeshStandardMaterial({
+                        map: this.createWoodFloorTexture(),
+                        color: 0xffffff,
+                        roughness: 0.52,
+                        metalness: 0.02,
+                    });
                     const floor = new THREE.Mesh(floorGeo, floorMat);
                     floor.rotation.x = -Math.PI / 2;
                     floor.receiveShadow = true;
                     this.scene.add(floor);
 
-                    // Grid garis lantai subtle
+                    // Baseboard / Lantai Sock Kayu di sepanjang dinding (detail arsitektural)
+                    const baseMat = new THREE.MeshStandardMaterial({ color: 0x3a2b1e, roughness: 0.6 });
+                    [[0, 15.2, 31], [-16.2, 15, 0.4], [16.2, 15, 0.4], [0, 15.2, 9.8]].forEach((p) => {
+                        const bb = new THREE.Mesh(new THREE.BoxGeometry(p[0] ? p[0] : 0.5, 0.3, p[2] ? p[2] : 0.5), baseMat);
+                        if (p[0] === 0 && p[2] === 31) { bb.scale.set(24, 1, 1); bb.position.set(0, 0.15, p[1]); }
+                        if (p[0] === -16.2) { bb.scale.set(1, 1, 15.2); bb.position.set(-12, 0.15, 0); }
+                        if (p[0] === 16.2) { bb.scale.set(1, 1, 15.2); bb.position.set(12, 0.15, 0); }
+                        bb.receiveShadow = true;
+                        this.scene.add(bb);
+                    });
+
+                    // Grid garis lantai subtle (diganti accent plinth agar tidak noise)
                     const grid = new THREE.GridHelper(24, 24, 0x47382d, 0x382c23);
-                    grid.position.y = 0.01;
+                    grid.position.y = 0.012;
+                    grid.material.opacity = 0.25;
+                    grid.material.transparent = true;
                     this.scene.add(grid);
 
                     // 2. Dinding Utama & Partisi Multi-Ruangan (Warna Cream Taupe Hangat Elegan)
@@ -2047,6 +2365,7 @@
 
                     // 7. Ruang Kamar Tidur AI (Rest Bedroom saat Token Habis / Low Energy - Geser Rapi ke Kiri)
                     this.buildBedroom(-9.6, 0, 1.4);
+                    this.buildBathroom(-9.6, 0, -3.2);
 
                     // 8. Dekorasi Dinding: Frame Galeri Poster, Jam Nyata, AC Dinding & Pintu
                     this.buildGalleryWall();
@@ -2084,6 +2403,18 @@
                     this.anderaGroup.position.set(initAnderaSpot.x, initAnderaSpot.y, initAnderaSpot.z);
                     this.anderaGroup.rotation.y = initAnderaSpot.rotY;
                     this.scene.add(this.anderaGroup);
+
+                    // Blob Shadow lembut di bawah setiap karakter (menambah realisme kontak dengan lantai)
+                    this.dewiBlob = this.createContactShadow(0.9);
+                    this.singgihBlob = this.createContactShadow(0.95);
+                    this.anderaBlob = this.createContactShadow(0.95);
+                    if (this.budiGroup) this.budiBlob = this.createContactShadow(0.8);
+
+                    // Blob mengikuti posisi karakter (hanya X & Z / Y tetap di lantai)
+                    this.dewiBlob.position.set(this.dewiGroup.position.x, 0.012, this.dewiGroup.position.z);
+                    this.singgihBlob.position.set(this.singgihGroup.position.x, 0.012, this.singgihGroup.position.z);
+                    this.anderaBlob.position.set(this.anderaGroup.position.x, 0.012, this.anderaGroup.position.z);
+                    if (this.budiBlob) this.budiBlob.position.set(this.budiGroup.position.x, 0.012, this.budiGroup.position.z);
                 },
 
                 animate() {
@@ -2211,34 +2542,54 @@
                         this.screenTexture.needsUpdate = true;
                     }
 
-                    // B. Animasi Berjalan Dewi (NPC Walking Mechanics - Sinkron & Kecepatan Stabil Natural)
+                    // B. Animasi Berjalan Dewi (NPC Walking Mechanics - Sinkron & Momentum Realistis)
                     if (this.dewiWalk.isMoving && this.dewiGroup) {
                         const dur = this.dewiWalk.walkDuration || 1.0;
                         this.dewiWalk.progress += delta / dur;
                         const t = Math.min(1, this.dewiWalk.progress);
 
-                        // Interpolasi posisi (lerp halus)
-                        this.dewiGroup.position.x = this.dewiWalk.startX + (this.dewiWalk.targetX - this.dewiWalk.startX) * t;
-                        this.dewiGroup.position.z = this.dewiWalk.startZ + (this.dewiWalk.targetZ - this.dewiWalk.startZ) * t;
+                        // Ease-In-Out (percepatan & perlambatan natural: mulai pelan, akselerasi, lalu pelan lagi)
+                        const eased = t * t * (3 - 2 * t);
 
-                        // Langkah kaki mengayun saat berjalan (kecepatan ayunan kaki proporsional dengan langkah nyata)
-                        const legSwing = Math.sin(time * 10) * 0.42;
+                        const prevX = this.dewiGroup.position.x;
+                        const prevZ = this.dewiGroup.position.z;
+
+                        // Interpolasi posisi dengan kurva momentum
+                        this.dewiGroup.position.x = this.dewiWalk.startX + (this.dewiWalk.targetX - this.dewiWalk.startX) * eased;
+                        this.dewiGroup.position.z = this.dewiWalk.startZ + (this.dewiWalk.targetZ - this.dewiWalk.startZ) * eased;
+
+                        // Jarak tempuh frame ini -> menggerakkan fase langkah (stride) secara proporsional
+                        const moved = Math.hypot(this.dewiGroup.position.x - prevX, this.dewiGroup.position.z - prevZ);
+                        this.dewiWalk.phase += moved * this.walkPhasePerUnit;
+
+                        // Amplitude ayunan kaki proporsional kecepatan sesaat (mulai/berhenti melunak, tidak nyentak)
+                        const amp = Math.max(0, Math.min(1, 6 * t * (1 - t) * 3)) * 0.42;
+
+                        // Langkah kaki berlawanan (berjalan nyata) + ayunan lengan kontra-lateral
+                        const legSwing = Math.sin(this.dewiWalk.phase) * amp;
                         if (this.dewiGroup.userData.legL) this.dewiGroup.userData.legL.rotation.x = legSwing;
                         if (this.dewiGroup.userData.legR) this.dewiGroup.userData.legR.rotation.x = -legSwing;
                         if (this.dewiGroup.userData.armL) this.dewiGroup.userData.armL.rotation.x = -legSwing * 0.7;
                         if (this.dewiGroup.userData.armR) this.dewiGroup.userData.armR.rotation.x = legSwing * 0.7;
 
-                        // Bobbing naik-turun halus saat melangkah
-                        this.dewiGroup.position.y = 0.48 + Math.abs(Math.sin(time * 10)) * 0.04;
+                        // Bobbing badan sinkron langkah (naik saat kaki menapak gaya reaksi)
+                        this.dewiGroup.position.y = 0.48 + Math.abs(Math.sin(this.dewiWalk.phase)) * 0.04 + Math.sin(this.dewiWalk.phase) * 0.008;
 
-                        // Pastikan orientasi badan lurus berdiri tegak saat berjalan
-                        this.dewiGroup.rotation.x = 0;
+                        // Kemiringan maju halus saat berjalan (momentum natural)
+                        this.dewiGroup.rotation.x = -0.03;
                         this.dewiGroup.rotation.z = 0;
+
+                        // Putar badan mulus mengikuti arah tujuan (bukan loncat instan)
+                        let turnDiff = this.dewiWalk.targetRotY - this.dewiGroup.rotation.y;
+                        while (turnDiff > Math.PI) turnDiff -= Math.PI * 2;
+                        while (turnDiff < -Math.PI) turnDiff += Math.PI * 2;
+                        this.dewiGroup.rotation.y += turnDiff * Math.min(1, delta * 5);
 
                         if (t >= 1) {
                             this.dewiGroup.position.x = this.dewiWalk.targetX;
                             this.dewiGroup.position.z = this.dewiWalk.targetZ;
                             this.dewiGroup.rotation.y = this.dewiWalk.targetRotY;
+                            this.dewiGroup.rotation.x = 0;
                             this.currentWaypointIdx++;
                             this.startNextWaypoint();
                         }
@@ -2413,7 +2764,7 @@
             };
         </script>
 
-        <div class="relative w-full transition-all duration-300 bg-[#161513] overflow-hidden" 
+        <div id="three-office-card" class="relative w-full transition-all duration-300 bg-[#161513] overflow-hidden" 
              :class="isExpanded ? 'h-[760px]' : 'h-[540px] sm:h-[580px]'"
              x-data="{
                  isExpanded: false,
