@@ -1,4 +1,4 @@
-<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-28 sm:pb-12">
+<div wire:poll.5s class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-28 sm:pb-12">
     <!-- Header: Title, Engine Status & Toggle -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-5">
         <div class="flex items-center gap-3">
@@ -117,38 +117,54 @@
         </div>
     </div>
 
-    <!-- Visual Pixel Office: AI Team Work Simulation (ala Ruang / Hermes) -->
+    <!-- Visual Pixel Office: AI Team Work Simulation & Rest Lounge (ala Ruang / Hermes) -->
     <div class="bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden">
         <!-- Room Toolbar -->
         <div class="px-4 py-3 bg-muted/30 border-b border-border/60 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-2">
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-500 text-xs">🏢</span>
-                <span class="text-xs font-bold text-foreground">RentSpace AI Virtual Office</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">Live Simulation</span>
+                <span class="text-xs font-bold text-foreground">RentSpace AI Interactive Office & Lounge</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-bold flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Real-Time Sync (5s)</span>
+                </span>
             </div>
             <div class="flex items-center gap-3 text-[11px] text-muted-foreground font-mono">
                 <span class="flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>3 AI Agents Working</span>
+                    <span>CS:</span>
+                    <span class="font-bold {{ $csStatus === 'working' ? 'text-emerald-400' : 'text-amber-400' }}">
+                        {{ $csStatus === 'working' ? '👨‍💻 Di Meja Kerja' : '🛋️ Istirahat (Sofa)' }}
+                    </span>
                 </span>
-                <span class="hidden sm:inline text-border">|</span>
-                <span class="hidden sm:inline">Active Channel: WA Customer & Tim Report</span>
+                <span class="text-border">|</span>
+                <span class="hidden sm:inline">Pesan CS: {{ $latestCustomerMsgTime }}</span>
             </div>
         </div>
+
+        <!-- Feedback Alert dari Pentung / Perintah Bos -->
+        @if($bonkMessage)
+            <div class="px-4 py-2.5 bg-amber-500/15 border-b border-amber-500/30 flex items-center justify-between gap-3 text-xs font-bold text-amber-700 dark:text-amber-300">
+                <div class="flex items-center gap-2">
+                    <span class="text-base animate-bounce">🔨</span>
+                    <span>{{ $bonkMessage }}</span>
+                </div>
+                <button wire:click="dismissBonk" class="text-muted-foreground hover:text-foreground text-xs font-mono px-2 py-0.5 rounded bg-background/50 border border-border">✕ Tutup</button>
+            </div>
+        @endif
 
         <!-- Custom Pixel Office Canvas Styles -->
         <style>
             .pixel-office-stage {
-                background-color: #17211e;
+                background-color: #151d1a;
                 background-image: 
-                    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-                    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-                    linear-gradient(135deg, #1f2c28 0%, #16211d 50%, #101916 100%);
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+                    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+                    linear-gradient(135deg, #1d2a25 0%, #15201b 50%, #0d1613 100%);
                 background-size: 16px 16px, 16px 16px, auto;
                 position: relative;
                 overflow: hidden;
-                min-height: 240px;
-                border-bottom: 6px solid #0d1412;
+                min-height: 270px;
+                border-bottom: 6px solid #0a110f;
             }
             .pixel-floor-line {
                 position: absolute;
@@ -156,8 +172,17 @@
                 left: 0;
                 right: 0;
                 height: 48px;
-                background: linear-gradient(180deg, #1b2622 0%, #141d1a 100%);
+                background: linear-gradient(180deg, #1b2622 0%, #111a17 100%);
                 border-top: 3px solid #283933;
+            }
+            .zone-divider {
+                position: absolute;
+                top: 0;
+                bottom: 48px;
+                left: 56%;
+                width: 2px;
+                background: dashed #2a3d36;
+                opacity: 0.6;
             }
             /* Pixel Character Anatomy */
             .px-char {
@@ -166,8 +191,9 @@
                 width: 44px;
                 position: relative;
                 z-index: 20;
+                transition: transform 0.4s ease, filter 0.4s ease;
             }
-            .px-head, .px-hair, .px-torso, .px-arm, .px-leg, .px-laptop {
+            .px-head, .px-hair, .px-torso, .px-arm, .px-leg {
                 position: absolute;
                 image-rendering: pixelated;
             }
@@ -231,9 +257,21 @@
                 0%, 100% { transform: translateY(0); }
                 50% { transform: translateY(-2px); }
             }
-            @keyframes px-blink-led {
-                0%, 100% { opacity: 0.3; }
-                50% { opacity: 1; }
+            @keyframes px-breathe {
+                0%, 100% { transform: translateY(0) scaleY(1); }
+                50% { transform: translateY(2px) scaleY(0.97); }
+            }
+            @keyframes px-zzz {
+                0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+                50% { opacity: 1; transform: translate(6px, -10px) scale(1); }
+                100% { opacity: 0; transform: translate(12px, -20px) scale(1.2); }
+            }
+            @keyframes px-bonk-shake {
+                0%, 100% { transform: rotate(0deg) scale(1); }
+                20% { transform: rotate(-15deg) scale(1.1); }
+                40% { transform: rotate(15deg) scale(1.1); }
+                60% { transform: rotate(-10deg); }
+                80% { transform: rotate(10deg); }
             }
 
             .is-working .px-arm.left {
@@ -249,10 +287,29 @@
                 animation: px-screen-glow 1.2s infinite ease-in-out;
             }
 
+            /* Resting Animation (Tidur / Duduk Santai di Sofa) */
+            .is-resting .px-char {
+                animation: px-breathe 2.8s infinite ease-in-out;
+                filter: brightness(0.92);
+            }
+            .is-resting .px-eye-l, .is-resting .px-eye-r {
+                height: 1px;
+                top: 10px;
+                background: #4b5563;
+            }
+            .is-resting .px-arm {
+                top: 29px;
+                transform: rotate(15deg);
+            }
+
+            .bonked-anim {
+                animation: px-bonk-shake 0.5s ease-in-out;
+            }
+
             /* Pixel Furniture */
             .px-desk {
-                width: 90px;
-                height: 34px;
+                width: 82px;
+                height: 32px;
                 background: #473224;
                 border: 3px solid #1a120c;
                 border-top: 4px solid #785338;
@@ -262,7 +319,7 @@
             .px-laptop-screen {
                 position: absolute;
                 top: -24px;
-                left: 28px;
+                left: 24px;
                 width: 32px;
                 height: 22px;
                 background: #0f172a;
@@ -280,6 +337,46 @@
                 font-size: 8px;
                 color: #e0f2fe;
             }
+
+            /* Pixel Sofa & Lounge Furniture */
+            .px-sofa {
+                width: 105px;
+                height: 36px;
+                background: #1e3a5f;
+                border: 3px solid #0f172a;
+                border-top: 5px solid #2563eb;
+                border-radius: 4px 4px 0 0;
+                position: relative;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            }
+            .px-sofa::before, .px-sofa::after {
+                content: '';
+                position: absolute;
+                top: -12px;
+                width: 18px;
+                height: 24px;
+                background: #1d4ed8;
+                border: 3px solid #0f172a;
+                border-radius: 3px;
+            }
+            .px-sofa::before { left: -8px; }
+            .px-sofa::after { right: -8px; }
+
+            .px-coffee-table {
+                width: 60px;
+                height: 18px;
+                background: #78350f;
+                border: 2px solid #451a03;
+                position: relative;
+            }
+            .px-coffee-table::after {
+                content: '☕';
+                position: absolute;
+                top: -14px;
+                left: 20px;
+                font-size: 11px;
+            }
+
             .px-bubble {
                 background: #ffffff;
                 color: #0f172a;
@@ -306,14 +403,48 @@
                 display: block;
                 width: 0;
             }
+            .px-sleep-bubble {
+                background: #1e293b;
+                color: #93c5fd;
+                border: 1px solid #3b82f6;
+                border-radius: 6px;
+                font-size: 10px;
+                font-family: ui-monospace, monospace;
+                padding: 2px 6px;
+                margin-bottom: 4px;
+            }
+            .px-zzz-effect {
+                position: absolute;
+                top: -14px;
+                right: -8px;
+                font-weight: 900;
+                font-size: 13px;
+                color: #60a5fa;
+                font-family: monospace;
+                animation: px-zzz 2.4s infinite linear;
+            }
         </style>
 
         <!-- Room Scene -->
         <div class="pixel-office-stage p-4 sm:p-6 flex flex-col justify-end">
-            <!-- Background Props: Server Rack, Window & Whiteboard -->
-            <div class="absolute top-4 left-6 hidden sm:flex items-center gap-4 opacity-75 pointer-events-none">
-                <!-- Pixel Window -->
-                <div class="w-16 h-14 bg-gradient-to-b from-sky-400/20 via-sky-600/20 to-indigo-900/30 border-2 border-emerald-950 rounded-sm p-1 flex items-center justify-center">
+            <!-- Zone Labels -->
+            <div class="absolute top-3 left-4 z-10 flex items-center gap-2">
+                <span class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-500/30">
+                    ZONE A: MEJA KERJA (WORKSPACE)
+                </span>
+            </div>
+            <div class="absolute top-3 right-4 z-10 flex items-center gap-2">
+                <span class="text-[10px] font-mono font-bold text-sky-400 bg-sky-950/70 px-2 py-0.5 rounded border border-sky-500/30">
+                    ZONE B: RUANG ISTIRAHAT (LOUNGE)
+                </span>
+            </div>
+
+            <!-- Divider Line between Office and Lounge -->
+            <div class="zone-divider hidden md:block"></div>
+
+            <!-- Background Props: Server Rack & Space Window -->
+            <div class="absolute top-10 left-6 hidden sm:flex items-center gap-3 opacity-60 pointer-events-none">
+                <div class="w-14 h-12 bg-gradient-to-b from-sky-400/20 via-sky-600/20 to-indigo-900/30 border-2 border-emerald-950 rounded-sm p-1 flex items-center justify-center">
                     <div class="w-full h-full border border-sky-400/20 grid grid-cols-2 grid-rows-2 gap-0.5">
                         <div class="bg-sky-300/10"></div>
                         <div class="bg-sky-300/10"></div>
@@ -321,121 +452,229 @@
                         <div class="bg-sky-300/10"></div>
                     </div>
                 </div>
-                <!-- Status Board -->
-                <div class="bg-emerald-950/60 border border-emerald-500/20 rounded px-2.5 py-1.5 text-[9px] font-mono text-emerald-400/90 leading-tight">
-                    <p class="font-bold text-emerald-300">⚡ RENTSPACE AGENT CLUSTER</p>
-                    <p>STATUS: <span class="text-emerald-400 font-bold">ONLINE</span> · GEMINI-FLASH</p>
-                </div>
-            </div>
-
-            <!-- Server Rack (Right Background) -->
-            <div class="absolute top-4 right-6 hidden md:block pointer-events-none opacity-80">
-                <div class="w-12 h-20 bg-zinc-900 border-2 border-zinc-950 rounded p-1 space-y-1">
-                    <div class="h-2 bg-zinc-800 rounded-xs flex items-center justify-between px-1">
-                        <span class="w-1 h-1 rounded-full bg-emerald-400" style="animation: px-blink-led 0.6s infinite;"></span>
-                        <span class="w-1 h-1 rounded-full bg-sky-400" style="animation: px-blink-led 0.9s infinite 0.2s;"></span>
-                    </div>
-                    <div class="h-2 bg-zinc-800 rounded-xs flex items-center justify-between px-1">
-                        <span class="w-1 h-1 rounded-full bg-emerald-400" style="animation: px-blink-led 0.8s infinite 0.4s;"></span>
-                        <span class="w-1 h-1 rounded-full bg-amber-400" style="animation: px-blink-led 1.2s infinite;"></span>
-                    </div>
-                    <div class="h-2 bg-zinc-800 rounded-xs flex items-center justify-between px-1">
-                        <span class="w-1 h-1 rounded-full bg-emerald-400" style="animation: px-blink-led 0.5s infinite 0.1s;"></span>
-                        <span class="w-1 h-1 rounded-full bg-emerald-400" style="animation: px-blink-led 0.7s infinite 0.3s;"></span>
-                    </div>
+                <div class="bg-emerald-950/60 border border-emerald-500/20 rounded px-2 py-1 text-[8px] font-mono text-emerald-400/90 leading-tight">
+                    <p class="font-bold text-emerald-300">⚡ GEMINI AI NODE</p>
+                    <p>STATUS: ONLINE</p>
                 </div>
             </div>
 
             <!-- Floor bar -->
             <div class="pixel-floor-line"></div>
 
-            <!-- Workstations Row -->
-            <div class="relative z-10 flex items-end justify-around sm:justify-center sm:gap-14 pt-10 pb-1">
-                <!-- Workstation 1: CS Rental Bot (Mengetik Balas Customer) -->
-                <div class="flex flex-col items-center is-working">
-                    <div class="px-bubble mb-2">
-                        <span>💬 Menjawab Sewa...</span>
-                    </div>
-                    <!-- Pixel Agent: CS Bot -->
-                    <div class="px-char">
-                        <div class="px-hair" style="background: #1e1b4b; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
-                        <div class="px-head">
-                            <span class="px-eye-l"></span>
-                            <span class="px-eye-r"></span>
+            <!-- Interactive Stage Area -->
+            <div class="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-end pt-12 pb-1">
+                
+                <!-- KIRI: AREA MEJA KERJA (7 Cols) -->
+                <div class="md:col-span-7 flex items-end justify-around sm:justify-start sm:gap-8">
+                    
+                    <!-- AGENT 1: CS Customer Bot (Bisa di meja kerja atau pindah ke sofa) -->
+                    @if($csStatus === 'working')
+                        <div class="flex flex-col items-center is-working {{ $bonkedAgent === 'cs_bot' ? 'bonked-anim' : '' }}">
+                            <div class="px-bubble mb-1">
+                                <span>💬 Balas Chat...</span>
+                            </div>
+                            <!-- Character -->
+                            <div class="px-char">
+                                <div class="px-hair" style="background: #1e1b4b; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
+                                <div class="px-head">
+                                    <span class="px-eye-l"></span>
+                                    <span class="px-eye-r"></span>
+                                </div>
+                                <div class="px-torso" style="background: #0284c7;"></div>
+                                <div class="px-arm left"></div>
+                                <div class="px-arm right"></div>
+                                <div class="px-leg left"></div>
+                                <div class="px-leg right"></div>
+                            </div>
+                            <!-- Meja & Laptop -->
+                            <div class="px-desk -mt-2.5">
+                                <div class="px-laptop-screen screen-light">
+                                    <div class="inner">WA</div>
+                                </div>
+                            </div>
+                            <!-- Badge & Tombol Pentung / Suruh Istirahat -->
+                            <div class="mt-2 flex flex-col items-center gap-1">
+                                <span class="text-[9px] font-mono font-bold text-sky-400 bg-zinc-950/80 px-2 py-0.5 rounded border border-sky-500/30">
+                                    CS Customer Bot
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <button wire:click="bonkAgent('cs_bot', 'work')" title="Pentung biar makin rajin!"
+                                        class="text-[10px] px-1.5 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 rounded border border-amber-500/40 active:scale-90 transition">
+                                        🔨 Pentung
+                                    </button>
+                                    <button wire:click="bonkAgent('cs_bot', 'break')" title="Suruh istirahat di sofa"
+                                        class="text-[10px] px-1.5 py-0.5 bg-sky-500/20 hover:bg-sky-500/40 text-sky-300 rounded border border-sky-500/40 active:scale-90 transition">
+                                        🛋️ Istirahat
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="px-torso" style="background: #0284c7;"></div>
-                        <div class="px-arm left"></div>
-                        <div class="px-arm right"></div>
-                        <div class="px-leg left"></div>
-                        <div class="px-leg right"></div>
-                    </div>
-                    <!-- Desk & Laptop -->
-                    <div class="px-desk -mt-2.5">
-                        <div class="px-laptop-screen screen-light">
-                            <div class="inner">WA</div>
+                    @else
+                        <!-- Meja Kosong (Karena CS Bot sedang di sofa) -->
+                        <div class="flex flex-col items-center opacity-65">
+                            <span class="text-[9px] font-mono text-zinc-400 mb-1">Meja CS Kosong</span>
+                            <div class="px-desk">
+                                <div class="px-laptop-screen opacity-50">
+                                    <div class="inner" style="background: #334155; color: #94a3b8;">IDLE</div>
+                                </div>
+                            </div>
+                            <button wire:click="bonkAgent('cs_bot', 'work')" 
+                                class="mt-2 text-[10px] font-bold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded hover:bg-emerald-500/30 active:scale-95 transition">
+                                ⚡ Panggil CS Kerja
+                            </button>
+                        </div>
+                    @endif
+
+                    <!-- AGENT 2: Gemini Core Engine -->
+                    <div class="flex flex-col items-center is-working {{ $bonkedAgent === 'core_bot' ? 'bonked-anim' : '' }}">
+                        <div class="px-bubble mb-1">
+                            <span>🧠 Parsing Intent...</span>
+                        </div>
+                        <div class="px-char">
+                            <div class="px-hair" style="background: #78350f; height: 6px; width: 22px; left: 11px; top: 2px; border-radius: 2px;"></div>
+                            <div class="px-head">
+                                <span class="px-eye-l"></span>
+                                <span class="px-eye-r"></span>
+                            </div>
+                            <div class="px-torso" style="background: #059669;"></div>
+                            <div class="px-arm left"></div>
+                            <div class="px-arm right"></div>
+                            <div class="px-leg left"></div>
+                            <div class="px-leg right"></div>
+                        </div>
+                        <div class="px-desk -mt-2.5">
+                            <div class="px-laptop-screen screen-light" style="background: #064e3b; border-color: #059669;">
+                                <div class="inner" style="background: #10b981; color: #022c22;">AI</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 flex flex-col items-center gap-1">
+                            <span class="text-[9px] font-mono font-bold text-emerald-400 bg-zinc-950/80 px-2 py-0.5 rounded border border-emerald-500/30">
+                                Gemini Core
+                            </span>
+                            <div class="flex items-center gap-1">
+                                <button wire:click="bonkAgent('core_bot', 'work')" title="Pentung Core Bot!"
+                                    class="text-[10px] px-1.5 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 rounded border border-amber-500/40 active:scale-90 transition">
+                                    🔨 Pentung
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <span class="mt-2 text-[10px] font-mono font-bold text-sky-400 bg-zinc-950/70 px-2 py-0.5 rounded border border-sky-500/30">
-                        CS Customer Bot
-                    </span>
+
+                    <!-- AGENT 3: Tim Finance / Report Bot (Jika sedang kerja) -->
+                    @if($reportStatus === 'working')
+                        <div class="flex flex-col items-center is-working {{ $bonkedAgent === 'report_bot' ? 'bonked-anim' : '' }}">
+                            <div class="px-bubble mb-1">
+                                <span>📊 Rekap Omset...</span>
+                            </div>
+                            <div class="px-char">
+                                <div class="px-hair" style="background: #312e81; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
+                                <div class="px-head"><span class="px-eye-l"></span><span class="px-eye-r"></span></div>
+                                <div class="px-torso" style="background: #d97706;"></div>
+                                <div class="px-arm left"></div>
+                                <div class="px-arm right"></div>
+                                <div class="px-leg left"></div>
+                                <div class="px-leg right"></div>
+                            </div>
+                            <div class="px-desk -mt-2.5">
+                                <div class="px-laptop-screen screen-light" style="background: #451a03; border-color: #d97706;">
+                                    <div class="inner" style="background: #f59e0b; color: #451a03;">RPT</div>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex flex-col items-center gap-1">
+                                <span class="text-[9px] font-mono font-bold text-amber-400 bg-zinc-950/80 px-2 py-0.5 rounded border border-amber-500/30">
+                                    Report Bot
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <button wire:click="bonkAgent('report_bot', 'work')"
+                                        class="text-[10px] px-1.5 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 rounded border border-amber-500/40 active:scale-90 transition">
+                                        🔨 Pentung
+                                    </button>
+                                    <button wire:click="bonkAgent('report_bot', 'break')"
+                                        class="text-[10px] px-1.5 py-0.5 bg-sky-500/20 hover:bg-sky-500/40 text-sky-300 rounded border border-sky-500/40 active:scale-90 transition">
+                                        🛋️ Istirahat
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
-                <!-- Workstation 2: Lead AI Core / Dispatcher (Monitoring & Memory) -->
-                <div class="flex flex-col items-center is-working">
-                    <div class="px-bubble mb-2" style="animation-delay: 0.7s;">
-                        <span>🧠 Parsing Intent...</span>
-                    </div>
-                    <!-- Pixel Agent: Hermes Core Agent -->
-                    <div class="px-char">
-                        <div class="px-hair" style="background: #78350f; height: 6px; width: 22px; left: 11px; top: 2px; border-radius: 2px;"></div>
-                        <div class="px-head">
-                            <span class="px-eye-l"></span>
-                            <span class="px-eye-r"></span>
-                        </div>
-                        <div class="px-torso" style="background: #059669;"></div>
-                        <div class="px-arm left"></div>
-                        <div class="px-arm right"></div>
-                        <div class="px-leg left"></div>
-                        <div class="px-leg right"></div>
-                    </div>
-                    <!-- Desk & Dual Laptop -->
-                    <div class="px-desk -mt-2.5">
-                        <div class="px-laptop-screen screen-light" style="background: #064e3b; border-color: #059669;">
-                            <div class="inner" style="background: #10b981; color: #022c22;">AI</div>
-                        </div>
-                    </div>
-                    <span class="mt-2 text-[10px] font-mono font-bold text-emerald-400 bg-zinc-950/70 px-2 py-0.5 rounded border border-emerald-500/30">
-                        Gemini 3.6 Engine
-                    </span>
-                </div>
+                <!-- KANAN: RUANG ISTIRAHAT & LOUNGE SOFA (5 Cols) -->
+                <div class="md:col-span-5 flex flex-col items-center sm:items-end pr-2 sm:pr-8">
+                    <div class="flex items-end gap-3">
+                        <!-- Meja Kopi & Cangkir -->
+                        <div class="px-coffee-table"></div>
 
-                <!-- Workstation 3: Financial & Tim Reporter (Membuat Rekap Omset) -->
-                <div class="flex flex-col items-center is-working">
-                    <div class="px-bubble mb-2" style="animation-delay: 1.4s;">
-                        <span>📊 Rekap Omset...</span>
-                    </div>
-                    <!-- Pixel Agent: Finance/Report Bot -->
-                    <div class="px-char">
-                        <div class="px-hair" style="background: #312e81; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
-                        <div class="px-head">
-                            <span class="px-eye-l"></span>
-                            <span class="px-eye-r"></span>
+                        <!-- Sofa Santai Tempat Duduk Istirahat -->
+                        <div class="flex flex-col items-center">
+                            
+                            <!-- Agen yang sedang istirahat di sofa -->
+                            <div class="flex items-end gap-3 -mb-3 z-10">
+                                <!-- CS Bot istirahat jika tidak ada chat -->
+                                @if($csStatus === 'break')
+                                    <div class="flex flex-col items-center is-resting relative {{ $bonkedAgent === 'cs_bot' ? 'bonked-anim' : '' }}">
+                                        <div class="px-sleep-bubble">
+                                            <span>💤 Gaada chat, santuy dulu</span>
+                                            <span class="px-zzz-effect">zZ</span>
+                                        </div>
+                                        <div class="px-char">
+                                            <div class="px-hair" style="background: #1e1b4b; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
+                                            <div class="px-head"><span class="px-eye-l"></span><span class="px-eye-r"></span></div>
+                                            <div class="px-torso" style="background: #0284c7;"></div>
+                                            <div class="px-arm left"></div>
+                                            <div class="px-arm right"></div>
+                                            <div class="px-leg left"></div>
+                                            <div class="px-leg right"></div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Report Bot istirahat jika belum jadwal rekap -->
+                                @if($reportStatus === 'break')
+                                    <div class="flex flex-col items-center is-resting relative {{ $bonkedAgent === 'report_bot' ? 'bonked-anim' : '' }}">
+                                        <div class="px-sleep-bubble">
+                                            <span>☕ Minum kopi</span>
+                                            <span class="px-zzz-effect" style="animation-delay: 1s;">zZ</span>
+                                        </div>
+                                        <div class="px-char">
+                                            <div class="px-hair" style="background: #312e81; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
+                                            <div class="px-head"><span class="px-eye-l"></span><span class="px-eye-r"></span></div>
+                                            <div class="px-torso" style="background: #d97706;"></div>
+                                            <div class="px-arm left"></div>
+                                            <div class="px-arm right"></div>
+                                            <div class="px-leg left"></div>
+                                            <div class="px-leg right"></div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if($csStatus !== 'break' && $reportStatus !== 'break')
+                                    <div class="text-[10px] font-mono text-zinc-500 mb-4 italic">
+                                        (Semua bot sedang sibuk bekerja)
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Gambar Sofa Biru -->
+                            <div class="px-sofa"></div>
+
+                            <!-- Tombol Bangunkan & Pentung -->
+                            <div class="mt-2 flex items-center gap-1.5">
+                                @if($csStatus === 'break')
+                                    <button wire:click="bonkAgent('cs_bot', 'work')"
+                                        class="text-[10px] font-bold px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded hover:bg-rose-500/30 active:scale-90 transition">
+                                        🔨 Pentung CS Bot!
+                                    </button>
+                                @endif
+                                @if($reportStatus === 'break')
+                                    <button wire:click="bonkAgent('report_bot', 'work')"
+                                        class="text-[10px] font-bold px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded hover:bg-amber-500/30 active:scale-90 transition">
+                                        🔨 Pentung Report Bot!
+                                    </button>
+                                @endif
+                            </div>
                         </div>
-                        <div class="px-torso" style="background: #d97706;"></div>
-                        <div class="px-arm left"></div>
-                        <div class="px-arm right"></div>
-                        <div class="px-leg left"></div>
-                        <div class="px-leg right"></div>
                     </div>
-                    <!-- Desk & Laptop -->
-                    <div class="px-desk -mt-2.5">
-                        <div class="px-laptop-screen screen-light" style="background: #451a03; border-color: #d97706;">
-                            <div class="inner" style="background: #f59e0b; color: #451a03;">RPT</div>
-                        </div>
-                    </div>
-                    <span class="mt-2 text-[10px] font-mono font-bold text-amber-400 bg-zinc-950/70 px-2 py-0.5 rounded border border-amber-500/30">
-                        Group Report Bot
-                    </span>
                 </div>
             </div>
         </div>

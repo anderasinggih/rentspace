@@ -32,6 +32,11 @@ class AiMonitor extends Component
     public $geminiKeyConfigured = false;
     public $autoReplyCustomer = true;
 
+    // Bonk / Pentung Disiplin Interactive State
+    public $bonkedAgent = null;
+    public $bonkMessage = null;
+    public $forcedTask = null; // paksa kerja / bangunkan dari istirahat
+
     protected $queryString = [
         'filterChannel' => ['except' => 'all'],
         'search' => ['except' => ''],
@@ -103,6 +108,40 @@ class AiMonitor extends Component
         }
     }
 
+    /**
+     * Pentung / Tegur Agen AI agar bangun dari sofa santai dan lanjut kerja!
+     */
+    public function bonkAgent(string $agentKey, string $actionType = 'work')
+    {
+        $this->bonkedAgent = $agentKey;
+
+        $agentNames = [
+            'cs_bot' => 'CS Customer Bot',
+            'core_bot' => 'Gemini Core Dispatcher',
+            'report_bot' => 'Tim Finance & Report Bot',
+        ];
+        $name = $agentNames[$agentKey] ?? 'Agent AI';
+
+        if ($actionType === 'break') {
+            $this->forcedTask = 'break';
+            $this->bonkMessage = "💤 {$name} disuruh istirahat santai di sofa dulu!";
+        } else {
+            $this->forcedTask = 'work';
+            $quotes = [
+                "💥 BONK! {$name} terbangun kaget: 'Ampun bos! Langsung duduk di meja kerja!'",
+                "🔨 PLAK! {$name} disentil bos: 'Siap laksanakan, langsung standby pantau chat!'",
+                "⚡ TING! {$name} disiram kopi virtual: 'Mata melek! Langsung ngetik!'",
+            ];
+            $this->bonkMessage = $quotes[array_rand($quotes)];
+        }
+    }
+
+    public function dismissBonk()
+    {
+        $this->bonkedAgent = null;
+        $this->bonkMessage = null;
+    }
+
     public function runTestPrompt()
     {
         $this->validate([
@@ -139,6 +178,42 @@ class AiMonitor extends Component
         // Customer vs Group split
         $customerSessions = AiConversation::where('channel', 'wa_customer')->count();
         $reportGroupSessions = AiConversation::where('channel', 'wa_group_report')->count();
+
+        // 1.b Aktivitas Real-Time (Cek apakah ada pesan baru dalam 5-10 menit terakhir)
+        $latestCustomerMsg = AiMessage::whereHas('conversation', fn($q) => $q->where('channel', 'wa_customer'))
+            ->latest('id')
+            ->first();
+
+        $latestReportMsg = AiMessage::whereHas('conversation', fn($q) => $q->where('channel', 'wa_group_report'))
+            ->latest('id')
+            ->first();
+
+        // CS Bot aktif bekerja jika ada pesan customer < 8 menit yang lalu, atau ada order 'work'
+        $isCustomerActive = false;
+        if ($latestCustomerMsg && $latestCustomerMsg->created_at) {
+            $isCustomerActive = $latestCustomerMsg->created_at->diffInMinutes(now()) <= 8;
+        }
+
+        // Report Bot aktif jika ada pesan report < 15 menit yang lalu
+        $isReportActive = false;
+        if ($latestReportMsg && $latestReportMsg->created_at) {
+            $isReportActive = $latestReportMsg->created_at->diffInMinutes(now()) <= 15;
+        }
+
+        // Terapkan override dari aksi pentung / suruh paksa jika user baru saja klik
+        $csStatus = $isCustomerActive ? 'working' : 'break';
+        $reportStatus = $isReportActive ? 'working' : 'break';
+        $coreStatus = ($isCustomerActive || $isReportActive) ? 'working' : 'break';
+
+        if ($this->forcedTask === 'work') {
+            if ($this->bonkedAgent === 'cs_bot') $csStatus = 'working';
+            if ($this->bonkedAgent === 'report_bot') $reportStatus = 'working';
+            if ($this->bonkedAgent === 'core_bot') $coreStatus = 'working';
+        } elseif ($this->forcedTask === 'break') {
+            if ($this->bonkedAgent === 'cs_bot') $csStatus = 'break';
+            if ($this->bonkedAgent === 'report_bot') $reportStatus = 'break';
+            if ($this->bonkedAgent === 'core_bot') $coreStatus = 'break';
+        }
 
         // 2. Query Conversations list
         $query = AiConversation::with(['messages' => function ($q) {
@@ -180,6 +255,11 @@ class AiMonitor extends Component
             'conversations' => $conversations,
             'activeConversation' => $activeConversation,
             'messages' => $messages,
+            'csStatus' => $csStatus,
+            'reportStatus' => $reportStatus,
+            'coreStatus' => $coreStatus,
+            'latestCustomerMsgTime' => $latestCustomerMsg?->created_at?->diffForHumans() ?? 'Belum ada',
+            'latestReportMsgTime' => $latestReportMsg?->created_at?->diffForHumans() ?? 'Belum ada',
         ])->layout('layouts.admin', ['title' => 'AI Mission Control & Monitoring']);
     }
 }
