@@ -102,6 +102,17 @@ export class NavGrid {
         return !this.blocked[i];
     }
 
+    /**
+     * Is this world point inside a structural wall? Furniture is *not*
+     * included on purpose: agents stand at anchors that sit inside desks,
+     * so only a wall means "this body has gone somewhere impossible" and
+     * the caller should undo the move.
+     */
+    inWall(x, z) {
+        const i = this.index(this.colOf(x), this.rowOf(z));
+        return this.wall[i] === 1;
+    }
+
     /* ---------------- build ---------------- */
 
     _build() {
@@ -138,11 +149,27 @@ export class NavGrid {
         for (let i = 0; i < this.size; i++) this.blocked[i] = this.wall[i] | this.furn[i];
     }
 
+    /**
+     * Cell range that genuinely overlaps [x0,x1].
+     *
+     * Rounding to the nearest cell (colOf) made every wall a full cell
+     * fatter than the plan on each side: a partition ending at x=4.875
+     * claimed the cell spanning 5.00..5.22 as well. Doorways came out
+     * narrower than they are drawn, and a body standing legally in one
+     * read as being inside a wall.
+     */
+    _span(x0, x1, origin, limit) {
+        const a = Math.min(x0, x1);
+        const b = Math.max(x0, x1);
+        return [
+            clamp(Math.floor((a - origin) / this.cell), 0, limit - 1),
+            clamp(Math.ceil((b - origin) / this.cell) - 1, 0, limit - 1),
+        ];
+    }
+
     _fillRect(layer, x0, z0, x1, z1) {
-        const c0 = this.colOf(Math.min(x0, x1));
-        const c1 = this.colOf(Math.max(x0, x1));
-        const r0 = this.rowOf(Math.min(z0, z1));
-        const r1 = this.rowOf(Math.max(z0, z1));
+        const [c0, c1] = this._span(x0, x1, this.minX, this.cols);
+        const [r0, r1] = this._span(z0, z1, this.minZ, this.rows);
         for (let r = r0; r <= r1; r++) {
             for (let c = c0; c <= c1; c++) {
                 const i = this.index(c, r);
@@ -152,16 +179,22 @@ export class NavGrid {
         }
     }
 
-    _clearRect(x0, z0, x1, z1, margin) {
-        const c0 = this.colOf(Math.min(x0, x1) - margin);
-        const c1 = this.colOf(Math.max(x0, x1) + margin);
-        const r0 = this.rowOf(Math.min(z0, z1) - margin);
-        const r1 = this.rowOf(Math.max(z0, z1) + margin);
+    /**
+     * Open a rect back up. `walls: true` also cuts through the structural
+     * layer, which is what a real doorway needs — punching only the
+     * furniture layer left the kitchen pass-through sealed and the grid
+     * walkable only by accident, through whichever cells the wall-fill
+     * quantisation happened to miss.
+     */
+    _clearRect(x0, z0, x1, z1, margin = 0, walls = false) {
+        const [c0, c1] = this._span(x0 - margin, x1 + margin, this.minX, this.cols);
+        const [r0, r1] = this._span(z0 - margin, z1 + margin, this.minZ, this.rows);
         for (let r = r0; r <= r1; r++) {
             for (let c = c0; c <= c1; c++) {
                 if (!this.inBounds(c, r)) continue;
                 const i = this.index(c, r);
                 this.furn[i] = 0;
+                if (walls) this.wall[i] = 0;
                 this.blocked[i] = this.wall[i];
             }
         }

@@ -69,6 +69,25 @@ const CLASS_OF = {
     washFace: 'idleStand',
 };
 
+/**
+ * How long an activity's appetite takes to come back, in seconds. Long
+ * activities (sleep, cooking) stay unsatisfying for a long time, which is
+ * what keeps an agent from cooking a meal every four minutes.
+ */
+const SATIATION_TAU = {
+    nap: 900,
+    shower: 700,
+    cook: 320,
+    washUp: 260,
+    game: 280,
+    work: 200,
+    eat: 300,
+    drink: 150,
+    watchTv: 240,
+    phone: 120,
+    idleStand: 60,
+};
+
 export class AgentBrain {
     /**
      * @param {CharacterController} body
@@ -99,6 +118,16 @@ export class AgentBrain {
         this.recent = [];
         this.cooldowns = new Map();
 
+        /**
+         * Satiation, per activity, in (0, 1].  Finishing something knocks
+         * its appetite down hard; it then recovers toward 1 on a per-activity
+         * timescale.  Without this an agent re-picks whichever thing scores
+         * highest and never does anything else — the classic way a utility AI
+         * looks robotic even though every number is technically correct.
+         */
+        this.appetite = new Map();
+        this.satiationFloor = 0.14;
+
         /* --- what the person is physically doing, for the UI --- */
         this.status = 'idle';
         this.statusLabel = 'idle';
@@ -106,6 +135,7 @@ export class AgentBrain {
         /* --- crowd --- */
         this.vel = new THREE.Vector2();
         this.avoid = new THREE.Vector2();
+        this._lastSafe = null;
         this.busy = 0;
         this.claimedSpot = null;
         this.claimedResource = null;
@@ -123,6 +153,11 @@ export class AgentBrain {
     taste(activityId) {
         const cls = CLASS_OF[activityId] || 'idleStand';
         return this.tasteMap[cls] ?? 1;
+    }
+
+    /** How keen this agent currently is on an activity, 0.14 … 1. */
+    appetiteOf(activityId) {
+        return this.appetite.get(activityId) ?? 1;
     }
 
     cooldownOf(id) {
@@ -143,6 +178,16 @@ export class AgentBrain {
         for (const [k, v] of this.cooldowns) {
             if (v <= 0) this.cooldowns.delete(k);
             else this.cooldowns.set(k, v - dt);
+        }
+
+        // satiation recovers exponentially, so the first few seconds after
+        // finishing something are the interesting ones
+        for (const [k, v] of this.appetite) {
+            if (v >= 0.999) { this.appetite.delete(k); continue; }
+            const tau = SATIATION_TAU[k] ?? 150;
+            const next = v + (1 - v) * (1 - Math.exp(-dt / tau));
+            if (next > 0.999) this.appetite.delete(k);
+            else this.appetite.set(k, next);
         }
 
         switch (this.state) {
@@ -175,23 +220,38 @@ export class AgentBrain {
         this._begin(pick.activity, pick.spot);
     }
 
+    /**
+     * Pick the next activity.
+     *
+     * Normally every activity competes. But some activities declare a
+     * `then` — brewing coffee wants to be followed by drinking it, opening
+     * the fridge by eating what came out. When that follow-up is possible
+     * it *wins outright*, which is what turns a scatter of independent
+     * scores into a sequence an observer reads as a story. If the follow-up
+     * is blocked (someone else at the sink, the table taken) the chain is
+     * dropped and normal scoring resumes, so it never deadlocks.
+     */
     _choose() {
         let best = null;
         let bestScore = 0;
+
+        const forced = this._forceNext ? ACTIVITIES.find((a) => a.id === this._forceNext) : null;
+        this._forceNext = null;
+        if (forced) {
+            for (const spot of forced.spots) {
+                const s = scoreActivity(forced, spot, this._scoreCtx());
+                if (s > bestScore) {
+                    bestScore = s;
+                    best = { activity: forced, spot };
+                }
+            }
+            if (best) return best;
+        }
+
         for (const activity of ACTIVITIES) {
             if (activity.exclusive && this.props?.isOccupiedByOthers(activity.resource, this.id)) continue;
             for (const spot of activity.spots) {
-                const s = scoreActivity(activity, spot, {
-                    hour: this.hour,
-                    x: this.body.pos.x,
-                    z: this.body.pos.z,
-                    busy: this.busy,
-                    lastActivity: this.lastActivity,
-                    recent: this.recent,
-                    cooldownOf: (id) => this.cooldownOf(id),
-                    taste: (id) => this.taste(id),
-                    isTaken: (r, sp) => this.isTaken(r, sp),
-                });
+                const s = scoreActivity(activity, spot, this._scoreCtx());
                 // a little noise so two identical agents do not lock onto
                 // the same choice purely because their scores are equal
                 const jitter = 1 + this.rng.float(-0.12, 0.12);
@@ -202,6 +262,21 @@ export class AgentBrain {
             }
         }
         return best;
+    }
+
+    _scoreCtx() {
+        return {
+            hour: this.hour,
+            x: this.body.pos.x,
+            z: this.body.pos.z,
+            busy: this.busy,
+            lastActivity: this.lastActivity,
+            recent: this.recent,
+            appetite: (id) => this.appetiteOf(id),
+            cooldownOf: (id) => this.cooldownOf(id),
+            taste: (id) => this.taste(id),
+            isTaken: (r, sp) => this.isTaken(r, sp),
+        };
     }
 
     _begin(activity, spot) {
@@ -251,15 +326,31 @@ export class AgentBrain {
         this.status = 'walking';
         const body = this.body;
 
+        // A doorway plus two agents who both want to be first through it is
+        // the one place the steering can lose: the controller turns on damped
+        // facing, so a sideways avoidance shove can carry a shoulder into the
+        // jamb after the aim point was already proven clear. The path is
+        // authoritative, so an inside-a-wall position gets rolled back rather
+        // than allowed to compound.
+        if (this.nav?.inWall(body.pos.x, body.pos.z)) {
+            const safe = this._lastSafe;
+            if (safe) {
+                body.pos.x = safe.x;
+                body.pos.z = safe.z;
+                body.walkTarget = null;
+            }
+        } else {
+            this._lastSafe = { x: body.pos.x, z: body.pos.z };
+        }
+
         // advance along the path
         const path = this.path;
         let guard = 0;
         while (this.pathIdx < path.length && guard++ < 8) {
             const wp = path[this.pathIdx];
             const d = Math.hypot(wp.x - body.pos.x, wp.z - body.pos.z);
-            if (d < 0.22) {
-                this.pathIdx++;
-            } else break;
+            if (d < 0.22) this.pathIdx++;
+            else break;
         }
 
         if (this.pathIdx >= path.length) {
@@ -287,20 +378,30 @@ export class AgentBrain {
                 this.avoid.y += (oz / dist) * push;
             }
         }
-
-        const targetVX = dx * 1.05 + this.avoid.x * 0.85;
-        const targetVZ = dz * 1.05 + this.avoid.y * 0.85;
-        this.vel.x = damp(this.vel.x, targetVX, 5, dt);
-        this.vel.y = damp(this.vel.y, targetVZ, 5, dt);
-
-        // hand steering to the controller as a velocity + heading
-        body.targetSpeed = Math.min(1.15, Math.hypot(this.vel.x, this.vel.y));
-        body.setPose('walk');
-        // face the velocity, not the waypoint, so avoidance reads as a
-        // sidestep rather than as a pivot
-        if (Math.hypot(this.vel.x, this.vel.y) > 0.1) {
-            body.targetFacing = Math.atan2(this.vel.x, this.vel.y);
+        // never shove so hard that the aim point ends up inside a wall
+        const avoidMag = Math.hypot(this.avoid.x, this.avoid.y);
+        if (avoidMag > 1e-4) {
+            const cap = 0.4;
+            const scale = Math.min(1, cap / avoidMag) / avoidMag;
+            this.avoid.multiplyScalar(scale);
+            const ax = wp.x + this.avoid.x * 0.5;
+            const az = wp.z + this.avoid.y * 0.5;
+            if (this.nav && !this.nav.lineOfSight(body.pos.x, body.pos.z, ax, az)) {
+                this.avoid.set(0, 0);
+            }
         }
+
+        this.vel.set(dx + this.avoid.x * 0.6, dz + this.avoid.y * 0.6);
+
+        // CharacterController is a "walk toward this point" model — the gait
+        // is driven by distance travelled, so it needs a target rather than
+        // a velocity. Handing it the steered aim point gives avoidance and
+        // path following at the same time, and the controller's own damped
+        // facing turns the body before the feet commit.
+        const aimX = wp.x + this.avoid.x * 0.5;
+        const aimZ = wp.z + this.avoid.y * 0.5;
+        body.walkTo(aimX, aimZ);
+        body.targetSpeed = clamp(this.vel.length() * 1.15, 0.25, 1.15);
 
         this._glanceAround(time);
     }
@@ -412,6 +513,11 @@ export class AgentBrain {
 
     _finish() {
         const { activity } = this;
+        if (!activity) {
+            this.state = 'decide';
+            this.stateT = 0;
+            return;
+        }
         activity.onExit?.(this._ctx());
         this.props?.release(activity.prop, this.id);
         this.props?.unclaim(activity.resource, this.id);
@@ -422,6 +528,9 @@ export class AgentBrain {
         if (this.recent.length > 3) this.recent.pop();
         this.lastActivity = activity.id;
         this.cooldowns.set(activity.id, activity.cooldown || 60);
+        // and knock the appetite down, so the next decision has to look
+        // somewhere else
+        this.appetite.set(activity.id, this.satiationFloor);
 
         // chain into a follow-up activity (e.g. brew -> drink)
         const next = activity.then;
@@ -467,10 +576,31 @@ export class AgentBrain {
     interrupt(activityId) {
         const a = ACTIVITIES.find((x) => x.id === activityId);
         if (!a || !a.spots || !a.spots.length) return false;
-        this._finish();
-        const spot = a.spots[this.rng.int(0, a.spots.length - 1)];
+        // a live event outranks any chain we were about to follow
+        this._forceNext = null;
+        if (this.activity) this._finish();
+        else {
+            this.state = 'decide';
+            this.stateT = 0;
+            this.body.clearReach();
+            this.body.detachAll();
+        }
+        const spot = this._freeSpotFor(a);
+        if (!spot) return false;
         this._begin(a, spot);
         return true;
+    }
+
+    /**
+     * A spot for `a` that nobody else has reserved. An interrupt is a
+     * command rather than a choice, so it ignores the appetite and the
+     * clock — but it still has to yield if the resource is genuinely
+     * occupied, otherwise a chat message teleports two agents into one sink.
+     */
+    _freeSpotFor(a) {
+        const options = a.spots.filter((s) => !this.isTaken(a.resource, s));
+        const pool = options.length ? options : a.spots;
+        return pool[this.rng.int(0, pool.length - 1)];
     }
 
     /** Drive an agent to the desk right now (chat arrived). */

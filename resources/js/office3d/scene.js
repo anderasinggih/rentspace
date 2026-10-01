@@ -37,6 +37,23 @@ const VIEWS = {
     pantry: { pos: [3.0, 2.4, 0.6], look: [6.0, 1.0, -4.6], fov: 48 },
     bedroom: { pos: [-3.4, 2.2, 1.4], look: [-7.4, 0.9, -3.4], fov: 50 },
     bathroom: { pos: [-4.4, 1.9, 3.0], look: [-7.4, 1.1, 1.0], fov: 50 },
+
+    /* Camera presets the admin toolbar asks for by name. The Blade buttons
+     * have always used these labels, so they live here next to the rest
+     * rather than being reinvented per caller. */
+    top: { pos: [0.2, 14.5, 0.9], look: [0.2, 0, 0.2], fov: 46 },
+    desk: { pos: [-1.45, 1.62, 2.8], look: [-1.95, 1.05, 0.05], fov: 48 },
+    dewiPov: { pos: [-2.6, 1.26, 0.86], look: [-2.5, 1.02, -1.6], fov: 60 },
+    front: { pos: [-1.4, 2.2, 4.7], look: [-6.3, 1.0, 4.4], fov: 48 },
+};
+
+/** The toolbar's view labels, so callers can pass either spelling. */
+const VIEW_ALIASES = {
+    iso: 'overview',
+    top_down: 'top',
+    dewi_pov: 'dewiPov',
+    pov: 'dewiPov',
+    working: 'desk',
 };
 
 export function mountOfficeScene(canvas, opts = {}) {
@@ -172,12 +189,25 @@ export function mountOfficeScene(canvas, opts = {}) {
     };
 
     function setView(name) {
-        const v = VIEWS[name];
-        if (!v) return;
+        const key = VIEW_ALIASES[name] || name;
+        const v = VIEWS[key];
+        if (!v) return false;
         desiredPos.set(...v.pos);
         desiredLook.set(...v.look);
         camFov = v.fov;
         free.on = false;
+        return true;
+    }
+
+    /* Zoom has to work in both modes: in free-cam it is the orbit radius, and
+     * on a preset it is a dolly toward whatever the camera is looking at. */
+    function dolly(factor) {
+        if (free.on) {
+            free.dist = clamp(free.dist / factor, 1.6, 26);
+            return;
+        }
+        desiredPos.sub(desiredLook).multiplyScalar(1 / factor).add(desiredLook);
+        desiredPos.y = clamp(desiredPos.y, 0.55, 22);
     }
 
     /* ---------------- interaction ---------------- */
@@ -246,6 +276,8 @@ export function mountOfficeScene(canvas, opts = {}) {
     // lands, without this module knowing anything about Echo or Pusher.
     const api = {
         setView,
+        zoomIn: () => dolly(1.18),
+        zoomOut: () => dolly(1 / 1.18),
         toggleFreeCam,
         get freeCam() { return free.on; },
         focusAgent(id) {
@@ -274,9 +306,38 @@ export function mountOfficeScene(canvas, opts = {}) {
             label: a.brain.statusLabel,
             activity: a.brain.activity?.id || null,
         })),
+        /** Seconds of simulated time elapsed, for anything that animates
+         *  alongside the scene (speech bubbles, for one). */
+        get time() {
+            return elapsed;
+        },
+        /** Run a callback on every frame. Returns an unsubscribe function. */
+        onTick(fn) {
+            tickSubs.add(fn);
+            return () => tickSubs.delete(fn);
+        },
         dispose() {
+            stop();
+            for (const fn of tickSubs) {
+                try {
+                    fn(0, elapsed);
+                } catch {
+                    /* a dead subscriber must not block teardown */
+                }
+            }
+            tickSubs.clear();
             ro.disconnect();
+            scene.traverse((o) => {
+                if (!o.isMesh && !o.isSprite) return;
+                o.geometry?.dispose?.();
+                const mats = Array.isArray(o.material) ? o.material : [o.material];
+                for (const m of mats) m?.map?.dispose?.(), m?.dispose?.();
+            });
+            composer.dispose?.();
             renderer.dispose();
+            if (typeof window !== 'undefined' && window._office3d === api) {
+                delete window._office3d;
+            }
         },
     };
     if (typeof window !== 'undefined') window._office3d = api;
@@ -287,6 +348,19 @@ export function mountOfficeScene(canvas, opts = {}) {
     let raf = 0;
     let elapsed = 0;
     let running = true;
+    const tickSubs = new Set();
+
+    function stop() {
+        running = false;
+        cancelAnimationFrame(raf);
+    }
+
+    function start() {
+        if (running) return;
+        running = true;
+        clock.getDelta();
+        frame();
+    }
 
     function frame() {
         if (!running) return;
@@ -318,6 +392,8 @@ export function mountOfficeScene(canvas, opts = {}) {
 
         updateCamera(dt);
         sun.target.position.set(0, 0, 0);
+
+        for (const fn of tickSubs) fn(dt, elapsed);
 
         if (usePost) composer.render();
         else renderer.render(scene, camera);
@@ -357,17 +433,19 @@ export function mountOfficeScene(canvas, opts = {}) {
 
     frame();
 
+    // The internals are handed out so the Livewire facade in app.js can expose
+    // scene/camera/renderer and the per-agent groups the Blade page expects,
+    // without this module having to know anything about that page.
     return {
         api,
-        stop() {
-            running = false;
-            cancelAnimationFrame(raf);
-        },
-        start() {
-            if (running) return;
-            running = true;
-            clock.getDelta();
-            frame();
-        },
+        scene,
+        camera,
+        renderer,
+        composer,
+        nav,
+        kit,
+        agents,
+        stop,
+        start,
     };
 }

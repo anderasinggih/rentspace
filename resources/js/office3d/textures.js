@@ -386,7 +386,7 @@ function drawTile(opts) {
     }
     ctx.putImageData(img, 0, 0);
     return pack(canvas, {
-        heightCanvas,
+        heightCanvas: heightC,
         roughCanvas: roughC,
         normalStrength: 1.5,
         ...opts.texOpts,

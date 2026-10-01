@@ -26,6 +26,7 @@ export class PropKit {
         this.props = new Map();      // id -> { mesh, home:{x,y,z}, rotY }
         this.claims = new Map();     // resource -> [{ spotId, agentId }]
         this.holders = new Map();     // propId -> agentId
+        this.bodies = new Map();     // agentId -> CharacterController
         this._pool = new THREE.Group();
         this._pool.name = 'prop-pool';
         scene.add(this._pool);

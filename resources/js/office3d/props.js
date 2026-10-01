@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {
     roundedBoxGeometry, mesh, setShadowRecursive, contactShadow, Rng, lerp,
-    TAU, latheGeometry, pipeGeometry, clamp,
+    TAU, latheGeometry, pipeGeometry, clamp, cssHex, shadeHex,
 } from './lib.js';
 import { P, BODY } from './plan.js';
 import { texMaterial, retile, artworkCanvas, fabric, carpet, woodVeneer } from './textures.js';
@@ -1940,10 +1940,26 @@ export function buildFrame(M, { w = 0.5, h = 0.65, draw, frameColor = 0x1c1f24, 
     return g;
 }
 
+/** Darken/lighten a CSS colour string ("#rrggbb") by `amount` (-1..1). */
+function shadeCss(color, amount) {
+    const m = /^#([0-9a-f]{6})$/i.exec(String(color).trim());
+    return m ? cssHex(shadeHex(parseInt(m[1], 16), amount)) : color;
+}
+
+/**
+ * Poster artwork.
+ *
+ * `bg` accepts either an explicit `[top, bottom]` pair or a single CSS
+ * colour, in which case the second stop is derived by darkening it. Callers
+ * were passing plain strings, so indexing it as `bg[0]` / `bg[1]` handed
+ * addColorStop() the literal '#' and threw a DOMException, which aborted
+ * _buildWorld() and left the canvas blank.
+ */
 export function drawPoster(ctx, w, h, { title, sub, bg, fg, accent }) {
+    const stops = Array.isArray(bg) ? bg : [bg, shadeCss(bg, -0.28)];
     const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, bg[0]);
-    g.addColorStop(1, bg[1]);
+    g.addColorStop(0, stops[0]);
+    g.addColorStop(1, stops[1]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
 

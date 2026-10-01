@@ -1,7 +1,7 @@
 {
-  "_three.module-D2BEbsH5.js": {
-    "file": "assets/three.module-D2BEbsH5.js",
-    "name": "three.module"
+  "_SMAAPass-CXBr39re.js": {
+    "file": "assets/SMAAPass-CXBr39re.js",
+    "name": "SMAAPass"
   },
   "resources/css/app.css": {
     "file": "assets/app-BFzqNMOz.css",
@@ -19,21 +19,21 @@
     "isEntry": true
   },
   "resources/js/office3d/boot.js": {
-    "file": "assets/boot-n7ACPNdu.js",
+    "file": "assets/boot-KDWEvkEX.js",
     "name": "boot",
     "src": "resources/js/office3d/boot.js",
     "isEntry": true,
     "imports": [
-      "_three.module-D2BEbsH5.js"
+      "_SMAAPass-CXBr39re.js"
     ]
   },
   "resources/js/three-office-runtime.js": {
-    "file": "assets/three-office-runtime-BuVu5wV_.js",
+    "file": "assets/three-office-runtime-DTGmUak_.js",
     "name": "three-office-runtime",
     "src": "resources/js/three-office-runtime.js",
     "isEntry": true,
     "imports": [
-      "_three.module-D2BEbsH5.js"
+      "_SMAAPass-CXBr39re.js"
     ]
   }
 }

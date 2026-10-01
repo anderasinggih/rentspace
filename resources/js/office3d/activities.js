@@ -48,10 +48,21 @@ const FOOTPRINTS = {
 const STAND = 0.44; // how far back a person stands from a worktop
 const SEAT_REACH = 0.36; // a seated character's root sits this far behind the hips
 
-/** Standing spot in front of a footprint face, facing into it. */
-function facing(rect, side, { reach = STAND, handY = 0, handOut = 0 } = {}) {
-    const cx = (rect.x0 + rect.x1) / 2;
-    const cz = (rect.z0 + rect.z1) / 2;
+/**
+ * Standing spot in front of a footprint face, facing into it.
+ *
+ * `t` slides the spot along the face (0..1) so a 6 m counter can host a
+ * sink, a brew station and a hob without everyone standing on the same
+ * tile. `id` must be unique: anchors, resource claims and the smoke test
+ * all key off it.
+ */
+function facing(rect, side, { id = side, t = 0.5, reach = STAND, handY = 0, handOut = 0 } = {}) {
+    const horizontal = side === 'north' || side === 'south';
+    const a0 = horizontal ? rect.x0 : rect.z0;
+    const a1 = horizontal ? rect.x1 : rect.z1;
+    const along = a0 + (a1 - a0) * t;
+    const cx = horizontal ? along : (rect.x0 + rect.x1) / 2;
+    const cz = horizontal ? (rect.z0 + rect.z1) / 2 : along;
     let x;
     let z;
     let rotY;
@@ -70,7 +81,7 @@ function facing(rect, side, { reach = STAND, handY = 0, handOut = 0 } = {}) {
             x = cx; z = cz; rotY = 0; break;
     }
     const spot = {
-        id: `${side}`,
+        id,
         x,
         z,
         rotY,
@@ -118,35 +129,36 @@ function seat(key, seatDef) {
 
 export const SPOTS = {
     /* ---- kitchen ---- */
-    sink: facing({ ...FOOTPRINTS.counter, z0: -5.92, z1: -5.28 }, 'north', { reach: 0.46 }),
-    hob: facing(FOOTPRINTS.counter, 'north', { reach: 0.46 }),
-    counterBrew: facing(FOOTPRINTS.counter, 'north', { reach: 0.46 }),
-    islandSouth: facing(FOOTPRINTS.island, 'north', { reach: 0.44 }),
-    islandNorth: facing(FOOTPRINTS.island, 'south', { reach: 0.44 }),
+    // one run, three work points: sink left, brew middle, hob right
+    sink: facing(FOOTPRINTS.counter, 'north', { id: 'sink', t: 0.13, reach: 0.46 }),
+    counterBrew: facing(FOOTPRINTS.counter, 'north', { id: 'counterBrew', t: 0.34, reach: 0.46 }),
+    hob: facing(FOOTPRINTS.counter, 'north', { id: 'hob', t: 0.62, reach: 0.46 }),
+    islandSouth: facing(FOOTPRINTS.island, 'north', { id: 'islandSouth', reach: 0.44 }),
+    islandNorth: facing(FOOTPRINTS.island, 'south', { id: 'islandNorth', reach: 0.44 }),
     fridge: {
-        ...facing(FOOTPRINTS.fridge, 'east', { reach: 0.46 }),
+        ...facing(FOOTPRINTS.fridge, 'east', { id: 'fridge', reach: 0.46 }),
         hand: { x: 3.02, y: 1.24, z: -2.4 }, // the handle
     },
-    cabinet: facing(FOOTPRINTS.cabinet, 'west', { reach: 0.46 }),
+    cabinet: facing(FOOTPRINTS.cabinet, 'west', { id: 'cabinet', reach: 0.46 }),
 
     /* ---- lounge ---- */
     sofa: [seat('sofa0', SEATS.dewiSofa), seat('sofa1', SEATS.singgihSofa), seat('sofa2', SEATS.anderaSofa)],
-    tv: facing(FOOTPRINTS.console, 'east', { reach: 0.55 }),
-    coffeeTable: facing(FOOTPRINTS.coffeeTable, 'south', { reach: 0.5 }),
+    tv: facing(FOOTPRINTS.console, 'east', { id: 'tv', reach: 0.55 }),
+    coffeeTable: facing(FOOTPRINTS.coffeeTable, 'south', { id: 'coffeeTable', reach: 0.5 }),
 
     /* ---- office ---- */
     desk: [seat('dewiDesk', SEATS.dewiDesk), seat('singgihDesk', SEATS.singgihDesk), seat('anderaDesk', SEATS.anderaDesk)],
-    shelf: facing(FOOTPRINTS.shelf, 'north', { reach: 0.5 }),
-    rack: facing(FOOTPRINTS.rack, 'north', { reach: 0.5 }),
-    entryConsole: facing(FOOTPRINTS.entryConsole, 'south', { reach: 0.5 }),
+    shelf: facing(FOOTPRINTS.shelf, 'north', { id: 'shelf', t: 0.28, reach: 0.5 }),
+    rack: facing(FOOTPRINTS.rack, 'north', { id: 'rack', t: 0.5, reach: 0.5 }),
+    entryConsole: facing(FOOTPRINTS.entryConsole, 'south', { id: 'entryConsole', t: 0.6, reach: 0.5 }),
 
     /* ---- bathroom + bedroom ---- */
     shower: {
-        ...facing(FOOTPRINTS.shower, 'south', { reach: 0.4 }),
+        ...facing(FOOTPRINTS.shower, 'south', { id: 'shower', reach: 0.4 }),
         hidden: true,
     },
-    wc: { ...facing(FOOTPRINTS.wc, 'east', { reach: 0.5 }), hidden: true },
-    vanity: facing(FOOTPRINTS.vanity, 'north', { reach: 0.44 }),
+    wc: { ...facing(FOOTPRINTS.wc, 'east', { id: 'wc', reach: 0.5 }), hidden: true },
+    vanity: facing(FOOTPRINTS.vanity, 'north', { id: 'vanity', reach: 0.44 }),
     bed: seat('bed', { x: -7.75, z: -4.55, rotY: T / 2 }),
 
     /* ---- anywhere ---- */
@@ -197,11 +209,12 @@ export const ACTIVITIES = [
         thought: 'menjawab chat',
         pose: 'type',
         spots: SPOTS.desk,
-        weight: 1,
-        cooldown: 20,
-        // the office is the default destination, so it has to lose to
-        // anything interesting when the queue is empty
-        when: () => 1,
+        /* Not the default destination — the office is where a queue sends
+         * you, and the `busy` term in scoreActivity is what pulls an agent
+         * there. A high static weight would make every agent work forever. */
+        weight: 0.62,
+        cooldown: 25,
+        when: (h) => 0.5 + gauss(h, 9.5, 2.6) * 0.6 + gauss(h, 14, 2.4) * 0.55 + gauss(h, 20, 2.4) * 0.45,
         minDuration: [90, 260],
     },
     {
@@ -332,10 +345,13 @@ export const ACTIVITIES = [
         thought: 'minum kopi',
         pose: 'sip',
         spots: [SPOTS.lounge, SPOTS.office],
-        weight: 0.6,
-        cooldown: 70,
-        when: () => 1,
-        minDuration: [25, 50],
+        weight: 0.4,
+        cooldown: 110,
+        // a flat when() made this the default choice from anywhere on the
+        // floor — a mug is within a metre of half the rooms. The curve puts
+        // the coffee breaks where they belong: mid-morning and mid-afternoon.
+        when: (h) => 0.3 + gauss(h, 10.5, 1.3) * 1.1 + gauss(h, 15.5, 1.5) * 1.0,
+        minDuration: [30, 60],
         prop: 'mug',
         onExit(ctx) {
             ctx.detachAll();
@@ -439,10 +455,14 @@ export const ACTIVITIES = [
         thought: 'melamun',
         pose: 'idle',
         spots: [...SPOTS.lounge, ...SPOTS.office, ...SPOTS.entry, ...SPOTS.plants],
-        weight: 0.3,
-        cooldown: 20,
+        // deliberately the lowest-scoring activity in the set. Its spots
+        // cover the whole flat, so anything near zero travel reaches it;
+        // a higher weight turned it into the default and the agents stood
+        // around instead of doing anything.
+        weight: 0.12,
+        cooldown: 40,
         when: () => 1,
-        minDuration: [12, 40],
+        minDuration: [20, 70],
     },
     {
         id: 'stretch',
@@ -510,6 +530,29 @@ export const ACTIVITIES = [
     },
 ];
 
+/* Spots are authored either as a single spot, a list, or a list of lists
+ * (an activity with several destinations). Normalise to one flat list with
+ * a guaranteed `approach`, because a spot without one gives the navigation
+ * nothing to aim for. */
+const flattenSpots = (raw) =>
+    (Array.isArray(raw) ? raw : [raw]).flat(Infinity).filter((s) => s && typeof s.x === 'number');
+
+for (const a of ACTIVITIES) {
+    a.spots = flattenSpots(a.spots);
+    for (const s of a.spots) {
+        if (!s.approach) {
+            // step back along the facing direction, away from whatever the
+            // character is about to interact with
+            s.approach = {
+                x: s.x - Math.sin(s.rotY) * 0.9,
+                z: s.z - Math.cos(s.rotY) * 0.9,
+            };
+        }
+        if (!s.id) s.id = a.id;
+    }
+    if (a.minDuration && typeof a.minDuration === 'number') a.minDuration = [a.minDuration, a.minDuration * 1.5];
+}
+
 export const ACTIVITY_BY_ID = Object.fromEntries(ACTIVITIES.map((a) => [a.id, a]));
 
 /* ------------------------------------------------------------------ *
@@ -535,33 +578,43 @@ export function allSpots() {
  */
 export function travelCost(fromX, fromZ, spot) {
     const d = Math.hypot(spot.approach.x - fromX, spot.approach.z - fromZ);
-    // 12 m across the flat is already a long errand
-    return 1 / (1 + d / 12);
+    // ~7 m is already a long errand — roughly the width of the flat
+    return 1 / (1 + d / 7);
 }
 
 /**
  * Utility for one activity at one spot. Kept separate from the brain so
  * the scoring can be inspected and tuned on its own.
+ *
+ * The terms, in the order they matter:
+ *
+ *   appetite   drops when an activity has just been done and recovers
+ *              over a few minutes. This is what stops an agent from
+ *              looping one behaviour forever, which is the single most
+ *              common failure of a utility AI.
+ *   when       the clock
+ *   taste      personality
+ *   travel     distance
+ *   busy       the chat queue — a busy agent stays at the desk
+ *   last       an immediate block on whatever it was doing one second ago
  */
 export function scoreActivity(activity, spot, ctx) {
-    let s = (activity.weight || 0.5) * (activity.when ? activity.when(ctx.hour) : 1);
+    if (ctx.cooldownOf(activity.id) > 0) return 0;
+    if (activity.resource && ctx.isTaken(activity.resource, spot)) return 0;
+
+    let s = (activity.weight ?? 0.5) * (activity.when ? activity.when(ctx.hour) : 1);
     if (activity.hidden) s *= 0.6;
+
+    s *= ctx.appetite(activity.id);
+    s *= ctx.taste(activity.id);
     s *= travelCost(ctx.x, ctx.z, spot);
 
-    // an agent with a full inbox does not wander off
-    if (activity.id !== 'work') s *= lerp(1, 0.25, clamp(ctx.busy, 0, 1));
-    else s *= lerp(0.25, 1.6, clamp(ctx.busy, 0, 1));
+    // an agent with a full inbox does not wander off, and a free one is
+    // pulled toward the desk whether or not there is anything waiting
+    if (activity.id === 'work') s *= lerp(0.22, 1.9, clamp(ctx.busy, 0, 1));
+    else s *= lerp(1, 0.2, clamp(ctx.busy, 0, 1));
 
-    // never repeat the last thing, and stay off whatever just happened
-    if (activity.id === ctx.lastActivity) s *= 0.12;
-    for (const id of ctx.recent || []) s *= id === activity.id ? 0.45 : 1;
-    if (ctx.cooldownOf(activity.id) > 0) s = 0;
-
-    // personality
-    s *= ctx.taste(activity.id);
-
-    // shared resources
-    if (activity.resource && ctx.isTaken(activity.resource, spot)) s = 0;
+    if (activity.id === ctx.lastActivity) s *= 0.1;
 
     return s;
 }
