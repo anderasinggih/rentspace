@@ -117,568 +117,432 @@
         </div>
     </div>
 
-    <!-- Visual Pixel Office: AI Team Work Simulation & Rest Lounge (ala Ruang / Hermes) -->
+    <!-- 3D Isometric Virtual Office: Three.js WebGL Simulation (ala Ruang / Hermes) -->
     <div class="bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden">
-        <!-- Room Toolbar -->
-        <div class="px-4 py-3 bg-muted/30 border-b border-border/60 flex items-center justify-between flex-wrap gap-2">
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-500 text-xs">🏢</span>
-                <span class="text-xs font-bold text-foreground">RentSpace AI Interactive Office & Lounge</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-bold flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Real-Time Sync (5s)</span>
+        <!-- Room Minimalist Toolbar -->
+        <div class="px-5 py-3 bg-muted/20 border-b border-border/60 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-2.5">
+                <span class="text-sm">🏢</span>
+                <span class="text-xs font-bold text-foreground">Virtual Office & Lounge</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold {{ $csStatus === 'working' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20' }}">
+                    CS: {{ $csStatus === 'working' ? 'Aktif di Meja' : 'Istirahat (Sofa)' }}
                 </span>
             </div>
-            <div class="flex items-center gap-3 text-[11px] text-muted-foreground font-mono">
-                <span class="flex items-center gap-1.5">
-                    <span>CS:</span>
-                    <span class="font-bold {{ $csStatus === 'working' ? 'text-emerald-400' : 'text-amber-400' }}">
-                        {{ $csStatus === 'working' ? '👨‍💻 Di Meja Kerja' : '🛋️ Istirahat (Sofa)' }}
-                    </span>
-                </span>
-                <span class="text-border">|</span>
-                <span class="hidden sm:inline">Pesan CS: {{ $latestCustomerMsgTime }}</span>
+
+            <!-- Simple Clean Controls -->
+            <div class="flex items-center gap-2">
+                <button wire:click="bonkAgent('cs_bot', 'work')" 
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 active:scale-95 transition">
+                    <span>⚡</span>
+                    <span>Tugaskan CS</span>
+                </button>
+                <button wire:click="bonkAgent('cs_bot', 'break')" 
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-muted hover:bg-muted/80 text-muted-foreground border border-border active:scale-95 transition">
+                    <span>🛋️</span>
+                    <span>Istirahat</span>
+                </button>
             </div>
         </div>
 
-        <!-- Feedback Alert dari Pentung / Perintah Bos -->
         @if($bonkMessage)
-            <div class="px-4 py-2.5 bg-amber-500/15 border-b border-amber-500/30 flex items-center justify-between gap-3 text-xs font-bold text-amber-700 dark:text-amber-300">
-                <div class="flex items-center gap-2">
-                    <span class="text-base animate-bounce">🔨</span>
-                    <span>{{ $bonkMessage }}</span>
-                </div>
-                <button wire:click="dismissBonk" class="text-muted-foreground hover:text-foreground text-xs font-mono px-2 py-0.5 rounded bg-background/50 border border-border">✕ Tutup</button>
+            <div class="px-5 py-2 bg-primary/10 border-b border-primary/20 text-xs text-primary font-medium flex items-center justify-between">
+                <span>{{ $bonkMessage }}</span>
+                <button wire:click="dismissBonk" class="text-muted-foreground hover:text-foreground text-xs ml-2">✕</button>
             </div>
         @endif
 
-        <!-- Custom Pixel Office Canvas Styles -->
-        <style>
-            .pixel-office-stage {
-                background-color: #151d1a;
-                background-image: 
-                    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-                    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-                    linear-gradient(135deg, #1d2a25 0%, #15201b 50%, #0d1613 100%);
-                background-size: 16px 16px, 16px 16px, auto;
-                position: relative;
-                overflow: hidden;
-                min-height: 270px;
-                border-bottom: 6px solid #0a110f;
-            }
-            .pixel-floor-line {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 48px;
-                background: linear-gradient(180deg, #1b2622 0%, #111a17 100%);
-                border-top: 3px solid #283933;
-            }
-            .zone-divider {
-                position: absolute;
-                top: 0;
-                bottom: 48px;
-                left: 56%;
-                width: 2px;
-                background: dashed #2a3d36;
-                opacity: 0.6;
-            }
-            /* Pixel Character Anatomy */
-            .px-char {
-                display: inline-block;
-                height: 52px;
-                width: 44px;
-                position: relative;
-                z-index: 20;
-                transition: transform 0.4s ease, filter 0.4s ease;
-            }
-            .px-head, .px-hair, .px-torso, .px-arm, .px-leg {
-                position: absolute;
-                image-rendering: pixelated;
-            }
-            .px-head {
-                background: #e9b57d;
-                box-shadow: inset 3px 0 #d79666;
-                height: 18px;
-                width: 20px;
-                left: 12px;
-                top: 7px;
-                border-radius: 2px;
-            }
-            .px-eye-l, .px-eye-r {
-                position: absolute;
-                background: #17201e;
-                width: 3px;
-                height: 3px;
-                top: 8px;
-            }
-            .px-eye-l { left: 4px; }
-            .px-eye-r { right: 4px; }
-            .px-torso {
-                height: 16px;
-                width: 22px;
-                left: 11px;
-                top: 25px;
-                border-radius: 1px;
-            }
-            .px-arm {
-                background: #e9b57d;
-                height: 13px;
-                width: 5px;
-                top: 27px;
-                border-radius: 1px;
-            }
-            .px-arm.left { left: 6px; }
-            .px-arm.right { right: 6px; }
-            .px-leg {
-                background: #1e293b;
-                bottom: 0;
-                height: 12px;
-                width: 7px;
-            }
-            .px-leg.left { left: 13px; }
-            .px-leg.right { right: 13px; }
+        <!-- 3D Canvas Viewport (Diperluas: height 440px dengan full width) -->
+        <div class="relative w-full h-[400px] sm:h-[460px] bg-[#121816] overflow-hidden" 
+             x-data="threeOffice({ csStatus: @js($csStatus), reportStatus: @js($reportStatus), bonk: @js($bonkedAgent) })" 
+             x-init="init()" 
+             wire:ignore>
+            
+            <div x-ref="canvasContainer" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
 
-            /* Working Animation (Mengetik di laptop) */
-            @keyframes px-typing-l {
-                0%, 100% { transform: translateY(0) rotate(0deg); }
-                50% { transform: translateY(-3px) rotate(-8deg); }
-            }
-            @keyframes px-typing-r {
-                0%, 100% { transform: translateY(0) rotate(0deg); }
-                50% { transform: translateY(-3px) rotate(8deg); }
-            }
-            @keyframes px-screen-glow {
-                0%, 100% { filter: drop-shadow(0 0 2px #38bdf8) brightness(1); }
-                50% { filter: drop-shadow(0 0 6px #38bdf8) brightness(1.4); }
-            }
-            @keyframes px-bob {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-2px); }
-            }
-            @keyframes px-breathe {
-                0%, 100% { transform: translateY(0) scaleY(1); }
-                50% { transform: translateY(2px) scaleY(0.97); }
-            }
-            @keyframes px-zzz {
-                0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
-                50% { opacity: 1; transform: translate(6px, -10px) scale(1); }
-                100% { opacity: 0; transform: translate(12px, -20px) scale(1.2); }
-            }
-            @keyframes px-bonk-shake {
-                0%, 100% { transform: rotate(0deg) scale(1); }
-                20% { transform: rotate(-15deg) scale(1.1); }
-                40% { transform: rotate(15deg) scale(1.1); }
-                60% { transform: rotate(-10deg); }
-                80% { transform: rotate(10deg); }
-            }
-
-            .is-working .px-arm.left {
-                animation: px-typing-l 0.32s infinite ease-in-out;
-            }
-            .is-working .px-arm.right {
-                animation: px-typing-r 0.32s infinite ease-in-out 0.16s;
-            }
-            .is-working .px-head {
-                animation: px-bob 1.4s infinite ease-in-out;
-            }
-            .is-working .screen-light {
-                animation: px-screen-glow 1.2s infinite ease-in-out;
-            }
-
-            /* Resting Animation (Tidur / Duduk Santai di Sofa) */
-            .is-resting .px-char {
-                animation: px-breathe 2.8s infinite ease-in-out;
-                filter: brightness(0.92);
-            }
-            .is-resting .px-eye-l, .is-resting .px-eye-r {
-                height: 1px;
-                top: 10px;
-                background: #4b5563;
-            }
-            .is-resting .px-arm {
-                top: 29px;
-                transform: rotate(15deg);
-            }
-
-            .bonked-anim {
-                animation: px-bonk-shake 0.5s ease-in-out;
-            }
-
-            /* Pixel Furniture */
-            .px-desk {
-                width: 82px;
-                height: 32px;
-                background: #473224;
-                border: 3px solid #1a120c;
-                border-top: 4px solid #785338;
-                position: relative;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.4);
-            }
-            .px-laptop-screen {
-                position: absolute;
-                top: -24px;
-                left: 24px;
-                width: 32px;
-                height: 22px;
-                background: #0f172a;
-                border: 2px solid #334155;
-                border-radius: 2px;
-            }
-            .px-laptop-screen .inner {
-                margin: 2px;
-                height: 14px;
-                background: #0284c7;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: monospace;
-                font-size: 8px;
-                color: #e0f2fe;
-            }
-
-            /* Pixel Sofa & Lounge Furniture */
-            .px-sofa {
-                width: 105px;
-                height: 36px;
-                background: #1e3a5f;
-                border: 3px solid #0f172a;
-                border-top: 5px solid #2563eb;
-                border-radius: 4px 4px 0 0;
-                position: relative;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-            }
-            .px-sofa::before, .px-sofa::after {
-                content: '';
-                position: absolute;
-                top: -12px;
-                width: 18px;
-                height: 24px;
-                background: #1d4ed8;
-                border: 3px solid #0f172a;
-                border-radius: 3px;
-            }
-            .px-sofa::before { left: -8px; }
-            .px-sofa::after { right: -8px; }
-
-            .px-coffee-table {
-                width: 60px;
-                height: 18px;
-                background: #78350f;
-                border: 2px solid #451a03;
-                position: relative;
-            }
-            .px-coffee-table::after {
-                content: '☕';
-                position: absolute;
-                top: -14px;
-                left: 20px;
-                font-size: 11px;
-            }
-
-            .px-bubble {
-                background: #ffffff;
-                color: #0f172a;
-                border: 2px solid #0f172a;
-                border-radius: 6px;
-                font-size: 10px;
-                font-weight: 700;
-                font-family: ui-monospace, monospace;
-                padding: 3px 8px;
-                position: relative;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.25);
-                white-space: nowrap;
-                animation: px-bob 2s infinite ease-in-out;
-            }
-            .px-bubble::after {
-                content: '';
-                position: absolute;
-                bottom: -5px;
-                left: 50%;
-                transform: translateX(-50%);
-                border-width: 5px 5px 0;
-                border-style: solid;
-                border-color: #ffffff transparent;
-                display: block;
-                width: 0;
-            }
-            .px-sleep-bubble {
-                background: #1e293b;
-                color: #93c5fd;
-                border: 1px solid #3b82f6;
-                border-radius: 6px;
-                font-size: 10px;
-                font-family: ui-monospace, monospace;
-                padding: 2px 6px;
-                margin-bottom: 4px;
-            }
-            .px-zzz-effect {
-                position: absolute;
-                top: -14px;
-                right: -8px;
-                font-weight: 900;
-                font-size: 13px;
-                color: #60a5fa;
-                font-family: monospace;
-                animation: px-zzz 2.4s infinite linear;
-            }
-        </style>
-
-        <!-- Room Scene -->
-        <div class="pixel-office-stage p-4 sm:p-6 flex flex-col justify-end">
-            <!-- Zone Labels -->
-            <div class="absolute top-3 left-4 z-10 flex items-center gap-2">
-                <span class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-500/30">
-                    ZONE A: MEJA KERJA (WORKSPACE)
-                </span>
-            </div>
-            <div class="absolute top-3 right-4 z-10 flex items-center gap-2">
-                <span class="text-[10px] font-mono font-bold text-sky-400 bg-sky-950/70 px-2 py-0.5 rounded border border-sky-500/30">
-                    ZONE B: RUANG ISTIRAHAT (LOUNGE)
-                </span>
-            </div>
-
-            <!-- Divider Line between Office and Lounge -->
-            <div class="zone-divider hidden md:block"></div>
-
-            <!-- Background Props: Server Rack & Space Window -->
-            <div class="absolute top-10 left-6 hidden sm:flex items-center gap-3 opacity-60 pointer-events-none">
-                <div class="w-14 h-12 bg-gradient-to-b from-sky-400/20 via-sky-600/20 to-indigo-900/30 border-2 border-emerald-950 rounded-sm p-1 flex items-center justify-center">
-                    <div class="w-full h-full border border-sky-400/20 grid grid-cols-2 grid-rows-2 gap-0.5">
-                        <div class="bg-sky-300/10"></div>
-                        <div class="bg-sky-300/10"></div>
-                        <div class="bg-sky-300/10"></div>
-                        <div class="bg-sky-300/10"></div>
-                    </div>
-                </div>
-                <div class="bg-emerald-950/60 border border-emerald-500/20 rounded px-2 py-1 text-[8px] font-mono text-emerald-400/90 leading-tight">
-                    <p class="font-bold text-emerald-300">⚡ GEMINI AI NODE</p>
-                    <p>STATUS: ONLINE</p>
-                </div>
-            </div>
-
-            <!-- Floor bar -->
-            <div class="pixel-floor-line"></div>
-
-            <!-- Interactive Stage Area -->
-            <div class="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-end pt-12 pb-1">
-                
-                <!-- KIRI: AREA MEJA KERJA (7 Cols) -->
-                <div class="md:col-span-7 flex items-end justify-around sm:justify-start sm:gap-8">
-                    
-                    <!-- AGENT 1: CS Customer Bot (Bisa di meja kerja atau pindah ke sofa) -->
-                    @if($csStatus === 'working')
-                        <div class="flex flex-col items-center is-working {{ $bonkedAgent === 'cs_bot' ? 'bonked-anim' : '' }}">
-                            <div class="px-bubble mb-1">
-                                <span>💬 Balas Chat...</span>
-                            </div>
-                            <!-- Character -->
-                            <div class="px-char">
-                                <div class="px-hair" style="background: #1e1b4b; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
-                                <div class="px-head">
-                                    <span class="px-eye-l"></span>
-                                    <span class="px-eye-r"></span>
-                                </div>
-                                <div class="px-torso" style="background: #0284c7;"></div>
-                                <div class="px-arm left"></div>
-                                <div class="px-arm right"></div>
-                                <div class="px-leg left"></div>
-                                <div class="px-leg right"></div>
-                            </div>
-                            <!-- Meja & Laptop -->
-                            <div class="px-desk -mt-2.5">
-                                <div class="px-laptop-screen screen-light">
-                                    <div class="inner">WA</div>
-                                </div>
-                            </div>
-                            <!-- Badge & Tombol Pentung / Suruh Istirahat -->
-                            <div class="mt-2 flex flex-col items-center gap-1">
-                                <span class="text-[9px] font-mono font-bold text-sky-400 bg-zinc-950/80 px-2 py-0.5 rounded border border-sky-500/30">
-                                    CS Customer Bot
-                                </span>
-                                <div class="flex items-center gap-1">
-                                    <button wire:click="bonkAgent('cs_bot', 'work')" title="Pentung biar makin rajin!"
-                                        class="text-[10px] px-1.5 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 rounded border border-amber-500/40 active:scale-90 transition">
-                                        🔨 Pentung
-                                    </button>
-                                    <button wire:click="bonkAgent('cs_bot', 'break')" title="Suruh istirahat di sofa"
-                                        class="text-[10px] px-1.5 py-0.5 bg-sky-500/20 hover:bg-sky-500/40 text-sky-300 rounded border border-sky-500/40 active:scale-90 transition">
-                                        🛋️ Istirahat
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <!-- Meja Kosong (Karena CS Bot sedang di sofa) -->
-                        <div class="flex flex-col items-center opacity-65">
-                            <span class="text-[9px] font-mono text-zinc-400 mb-1">Meja CS Kosong</span>
-                            <div class="px-desk">
-                                <div class="px-laptop-screen opacity-50">
-                                    <div class="inner" style="background: #334155; color: #94a3b8;">IDLE</div>
-                                </div>
-                            </div>
-                            <button wire:click="bonkAgent('cs_bot', 'work')" 
-                                class="mt-2 text-[10px] font-bold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded hover:bg-emerald-500/30 active:scale-95 transition">
-                                ⚡ Panggil CS Kerja
-                            </button>
-                        </div>
-                    @endif
-
-                    <!-- AGENT 2: Gemini Core Engine -->
-                    <div class="flex flex-col items-center is-working {{ $bonkedAgent === 'core_bot' ? 'bonked-anim' : '' }}">
-                        <div class="px-bubble mb-1">
-                            <span>🧠 Parsing Intent...</span>
-                        </div>
-                        <div class="px-char">
-                            <div class="px-hair" style="background: #78350f; height: 6px; width: 22px; left: 11px; top: 2px; border-radius: 2px;"></div>
-                            <div class="px-head">
-                                <span class="px-eye-l"></span>
-                                <span class="px-eye-r"></span>
-                            </div>
-                            <div class="px-torso" style="background: #059669;"></div>
-                            <div class="px-arm left"></div>
-                            <div class="px-arm right"></div>
-                            <div class="px-leg left"></div>
-                            <div class="px-leg right"></div>
-                        </div>
-                        <div class="px-desk -mt-2.5">
-                            <div class="px-laptop-screen screen-light" style="background: #064e3b; border-color: #059669;">
-                                <div class="inner" style="background: #10b981; color: #022c22;">AI</div>
-                            </div>
-                        </div>
-                        <div class="mt-2 flex flex-col items-center gap-1">
-                            <span class="text-[9px] font-mono font-bold text-emerald-400 bg-zinc-950/80 px-2 py-0.5 rounded border border-emerald-500/30">
-                                Gemini Core
-                            </span>
-                            <div class="flex items-center gap-1">
-                                <button wire:click="bonkAgent('core_bot', 'work')" title="Pentung Core Bot!"
-                                    class="text-[10px] px-1.5 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 rounded border border-amber-500/40 active:scale-90 transition">
-                                    🔨 Pentung
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- AGENT 3: Tim Finance / Report Bot (Jika sedang kerja) -->
-                    @if($reportStatus === 'working')
-                        <div class="flex flex-col items-center is-working {{ $bonkedAgent === 'report_bot' ? 'bonked-anim' : '' }}">
-                            <div class="px-bubble mb-1">
-                                <span>📊 Rekap Omset...</span>
-                            </div>
-                            <div class="px-char">
-                                <div class="px-hair" style="background: #312e81; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
-                                <div class="px-head"><span class="px-eye-l"></span><span class="px-eye-r"></span></div>
-                                <div class="px-torso" style="background: #d97706;"></div>
-                                <div class="px-arm left"></div>
-                                <div class="px-arm right"></div>
-                                <div class="px-leg left"></div>
-                                <div class="px-leg right"></div>
-                            </div>
-                            <div class="px-desk -mt-2.5">
-                                <div class="px-laptop-screen screen-light" style="background: #451a03; border-color: #d97706;">
-                                    <div class="inner" style="background: #f59e0b; color: #451a03;">RPT</div>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex flex-col items-center gap-1">
-                                <span class="text-[9px] font-mono font-bold text-amber-400 bg-zinc-950/80 px-2 py-0.5 rounded border border-amber-500/30">
-                                    Report Bot
-                                </span>
-                                <div class="flex items-center gap-1">
-                                    <button wire:click="bonkAgent('report_bot', 'work')"
-                                        class="text-[10px] px-1.5 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 rounded border border-amber-500/40 active:scale-90 transition">
-                                        🔨 Pentung
-                                    </button>
-                                    <button wire:click="bonkAgent('report_bot', 'break')"
-                                        class="text-[10px] px-1.5 py-0.5 bg-sky-500/20 hover:bg-sky-500/40 text-sky-300 rounded border border-sky-500/40 active:scale-90 transition">
-                                        🛋️ Istirahat
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-
-                <!-- KANAN: RUANG ISTIRAHAT & LOUNGE SOFA (5 Cols) -->
-                <div class="md:col-span-5 flex flex-col items-center sm:items-end pr-2 sm:pr-8">
-                    <div class="flex items-end gap-3">
-                        <!-- Meja Kopi & Cangkir -->
-                        <div class="px-coffee-table"></div>
-
-                        <!-- Sofa Santai Tempat Duduk Istirahat -->
-                        <div class="flex flex-col items-center">
-                            
-                            <!-- Agen yang sedang istirahat di sofa -->
-                            <div class="flex items-end gap-3 -mb-3 z-10">
-                                <!-- CS Bot istirahat jika tidak ada chat -->
-                                @if($csStatus === 'break')
-                                    <div class="flex flex-col items-center is-resting relative {{ $bonkedAgent === 'cs_bot' ? 'bonked-anim' : '' }}">
-                                        <div class="px-sleep-bubble">
-                                            <span>💤 Gaada chat, santuy dulu</span>
-                                            <span class="px-zzz-effect">zZ</span>
-                                        </div>
-                                        <div class="px-char">
-                                            <div class="px-hair" style="background: #1e1b4b; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
-                                            <div class="px-head"><span class="px-eye-l"></span><span class="px-eye-r"></span></div>
-                                            <div class="px-torso" style="background: #0284c7;"></div>
-                                            <div class="px-arm left"></div>
-                                            <div class="px-arm right"></div>
-                                            <div class="px-leg left"></div>
-                                            <div class="px-leg right"></div>
-                                        </div>
-                                    </div>
-                                @endif
-
-                                <!-- Report Bot istirahat jika belum jadwal rekap -->
-                                @if($reportStatus === 'break')
-                                    <div class="flex flex-col items-center is-resting relative {{ $bonkedAgent === 'report_bot' ? 'bonked-anim' : '' }}">
-                                        <div class="px-sleep-bubble">
-                                            <span>☕ Minum kopi</span>
-                                            <span class="px-zzz-effect" style="animation-delay: 1s;">zZ</span>
-                                        </div>
-                                        <div class="px-char">
-                                            <div class="px-hair" style="background: #312e81; height: 5px; width: 22px; left: 11px; top: 3px; border-radius: 2px;"></div>
-                                            <div class="px-head"><span class="px-eye-l"></span><span class="px-eye-r"></span></div>
-                                            <div class="px-torso" style="background: #d97706;"></div>
-                                            <div class="px-arm left"></div>
-                                            <div class="px-arm right"></div>
-                                            <div class="px-leg left"></div>
-                                            <div class="px-leg right"></div>
-                                        </div>
-                                    </div>
-                                @endif
-
-                                @if($csStatus !== 'break' && $reportStatus !== 'break')
-                                    <div class="text-[10px] font-mono text-zinc-500 mb-4 italic">
-                                        (Semua bot sedang sibuk bekerja)
-                                    </div>
-                                @endif
-                            </div>
-
-                            <!-- Gambar Sofa Biru -->
-                            <div class="px-sofa"></div>
-
-                            <!-- Tombol Bangunkan & Pentung -->
-                            <div class="mt-2 flex items-center gap-1.5">
-                                @if($csStatus === 'break')
-                                    <button wire:click="bonkAgent('cs_bot', 'work')"
-                                        class="text-[10px] font-bold px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded hover:bg-rose-500/30 active:scale-90 transition">
-                                        🔨 Pentung CS Bot!
-                                    </button>
-                                @endif
-                                @if($reportStatus === 'break')
-                                    <button wire:click="bonkAgent('report_bot', 'work')"
-                                        class="text-[10px] font-bold px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded hover:bg-amber-500/30 active:scale-90 transition">
-                                        🔨 Pentung Report Bot!
-                                    </button>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Clean Floating HUD Overlay -->
+            <div class="absolute bottom-3 left-4 pointer-events-none flex items-center gap-2 text-[11px] font-mono text-zinc-400/80 bg-zinc-950/60 px-3 py-1.5 rounded-lg border border-white/5 backdrop-blur-xs">
+                <span>Meja Kerja (Kiri)</span>
+                <span>•</span>
+                <span>Lounge Sofa (Kanan)</span>
+                <span>•</span>
+                <span class="text-zinc-500 hidden sm:inline">Geser mouse untuk putar sudut 3D</span>
             </div>
         </div>
     </div>
+
+    <!-- Three.js Library & Custom Isometric Office Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('threeOffice', (config) => ({
+                scene: null,
+                camera: null,
+                renderer: null,
+                csGroup: null,
+                reportGroup: null,
+                coreGroup: null,
+                screenMeshes: [],
+                clock: null,
+                isDragging: false,
+                prevMouse: { x: 0, y: 0 },
+                rotY: 0.45,
+                rotX: 0.38,
+
+                init() {
+                    const container = this.$refs.canvasContainer;
+                    const width = container.clientWidth || 800;
+                    const height = container.clientHeight || 440;
+
+                    this.clock = new THREE.Clock();
+
+                    // 1. Scene
+                    this.scene = new THREE.Scene();
+                    this.scene.background = new THREE.Color(0x131a17);
+                    this.scene.fog = new THREE.Fog(0x131a17, 25, 45);
+
+                    // 2. Camera: Isometric Perspective
+                    const aspect = width / height;
+                    this.camera = new THREE.PerspectiveCamera(40, aspect, 0.1, 100);
+                    this.updateCameraPos();
+
+                    // 3. Renderer
+                    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                    this.renderer.setSize(width, height);
+                    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                    this.renderer.shadowMap.enabled = true;
+                    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                    container.appendChild(this.renderer.domElement);
+
+                    // 4. Lights
+                    const ambient = new THREE.AmbientLight(0xffffff, 0.85);
+                    this.scene.add(ambient);
+
+                    const dirLight = new THREE.DirectionalLight(0xfffaed, 1.2);
+                    dirLight.position.set(12, 20, 10);
+                    dirLight.castShadow = true;
+                    dirLight.shadow.mapSize.width = 1024;
+                    dirLight.shadow.mapSize.height = 1024;
+                    this.scene.add(dirLight);
+
+                    const softBlueLight = new THREE.PointLight(0x38bdf8, 0.8, 15);
+                    softBlueLight.position.set(-3, 3, 0);
+                    this.scene.add(softBlueLight);
+
+                    // 5. Build Room Props
+                    this.buildRoom();
+
+                    // 6. Mouse Orbit Drag
+                    const dom = this.renderer.domElement;
+                    dom.addEventListener('mousedown', (e) => {
+                        this.isDragging = true;
+                        this.prevMouse = { x: e.clientX, y: e.clientY };
+                    });
+                    window.addEventListener('mouseup', () => { this.isDragging = false; });
+                    window.addEventListener('mousemove', (e) => {
+                        if (!this.isDragging) return;
+                        const dx = e.clientX - this.prevMouse.x;
+                        const dy = e.clientY - this.prevMouse.y;
+                        this.rotY -= dx * 0.006;
+                        this.rotX = Math.max(0.2, Math.min(0.7, this.rotX + dy * 0.004));
+                        this.prevMouse = { x: e.clientX, y: e.clientY };
+                        this.updateCameraPos();
+                    });
+
+                    // Resize Listener
+                    window.addEventListener('resize', () => {
+                        if (!container) return;
+                        const w = container.clientWidth;
+                        const h = container.clientHeight;
+                        this.camera.aspect = w / h;
+                        this.camera.updateProjectionMatrix();
+                        this.renderer.setSize(w, h);
+                    });
+
+                    this.animate();
+                },
+
+                updateCameraPos() {
+                    const radius = 17;
+                    this.camera.position.x = radius * Math.sin(this.rotY) * Math.cos(this.rotX);
+                    this.camera.position.y = radius * Math.sin(this.rotX) + 1.5;
+                    this.camera.position.z = radius * Math.cos(this.rotY) * Math.cos(this.rotX);
+                    this.camera.lookAt(0, 0.8, 0);
+                },
+
+                buildRoom() {
+                    // Floor (Isometric Grid Plane)
+                    const floorGeo = new THREE.PlaneGeometry(18, 10);
+                    const floorMat = new THREE.MeshStandardMaterial({ color: 0x1b2420, roughness: 0.8 });
+                    const floor = new THREE.Mesh(floorGeo, floorMat);
+                    floor.rotation.x = -Math.PI / 2;
+                    floor.receiveShadow = true;
+                    this.scene.add(floor);
+
+                    // Subtle Grid Floor
+                    const grid = new THREE.GridHelper(18, 18, 0x2e4238, 0x22312a);
+                    grid.position.y = 0.01;
+                    this.scene.add(grid);
+
+                    // Back Wall
+                    const wallGeo = new THREE.BoxGeometry(18, 4.5, 0.4);
+                    const wallMat = new THREE.MeshStandardMaterial({ color: 0x161e1b, roughness: 0.9 });
+                    const wall = new THREE.Mesh(wallGeo, wallMat);
+                    wall.position.set(0, 2.25, -5);
+                    wall.receiveShadow = true;
+                    this.scene.add(wall);
+
+                    // Server Rack (Background Left)
+                    this.buildServerRack(-7, 0, -4.2);
+
+                    // WORK AREA (Kiri): 2 Work Desks with PC
+                    // Desk 1: CS Bot Desk (x: -4.5, z: -1)
+                    this.buildWorkDesk(-4.5, 0, -1);
+
+                    // Desk 2: Core Engine Desk (x: -1.5, z: -1)
+                    this.buildWorkDesk(-1.5, 0, -1);
+
+                    // LOUNGE AREA (Kanan): Sofa & Coffee Table
+                    this.buildLounge(4.5, 0, -1);
+
+                    // CHARACTERS:
+                    // 1. CS Bot: Jika 'working' duduk di Desk 1, jika 'break' duduk di Sofa
+                    this.csGroup = this.buildCharacter(0x0284c7, 0x1e1b4b);
+                    if (config.csStatus === 'working') {
+                        this.csGroup.position.set(-4.5, 0.55, -1.9); // Kursi Desk 1
+                        this.csGroup.rotation.y = 0;
+                    } else {
+                        this.csGroup.position.set(3.8, 0.45, -0.9); // Sofa
+                        this.csGroup.rotation.y = 0.3;
+                    }
+                    this.scene.add(this.csGroup);
+
+                    // 2. Core Bot: Selalu di Meja 2
+                    this.coreGroup = this.buildCharacter(0x059669, 0x78350f);
+                    this.coreGroup.position.set(-1.5, 0.55, -1.9);
+                    this.scene.add(this.coreGroup);
+
+                    // 3. Report Bot: Duduk di sofa sisi kanan
+                    this.reportGroup = this.buildCharacter(0xd97706, 0x312e81);
+                    this.reportGroup.position.set(5.2, 0.45, -0.9);
+                    this.reportGroup.rotation.y = -0.3;
+                    this.scene.add(this.reportGroup);
+                },
+
+                buildWorkDesk(x, y, z) {
+                    const group = new THREE.Group();
+                    group.position.set(x, y, z);
+
+                    // Top Table (Wood Oak)
+                    const topGeo = new THREE.BoxGeometry(2.2, 0.12, 1.2);
+                    const topMat = new THREE.MeshStandardMaterial({ color: 0x422e1b, roughness: 0.6 });
+                    const top = new THREE.Mesh(topGeo, topMat);
+                    top.position.y = 1.0;
+                    top.castShadow = true;
+                    top.receiveShadow = true;
+                    group.add(top);
+
+                    // Legs (Dark Metal)
+                    const legMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.5 });
+                    const legGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8);
+                    [[-0.95, -0.45], [0.95, -0.45], [-0.95, 0.45], [0.95, 0.45]].forEach(([lx, lz]) => {
+                        const leg = new THREE.Mesh(legGeo, legMat);
+                        leg.position.set(lx, 0.5, lz);
+                        leg.castShadow = true;
+                        group.add(leg);
+                    });
+
+                    // PC Monitor Screen
+                    const screenGeo = new THREE.BoxGeometry(1.0, 0.6, 0.05);
+                    const screenFrameMat = new THREE.MeshStandardMaterial({ color: 0x111827 });
+                    const screenFrame = new THREE.Mesh(screenGeo, screenFrameMat);
+                    screenFrame.position.set(0, 1.5, -0.2);
+                    screenFrame.castShadow = true;
+                    group.add(screenFrame);
+
+                    // Glowing Display
+                    const displayGeo = new THREE.PlaneGeometry(0.92, 0.52);
+                    const displayMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+                    const display = new THREE.Mesh(displayGeo, displayMat);
+                    display.position.set(0, 1.5, -0.17);
+                    group.add(display);
+                    this.screenMeshes.push(display);
+
+                    // Monitor Stand
+                    const standGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.35, 8);
+                    const stand = new THREE.Mesh(standGeo, screenFrameMat);
+                    stand.position.set(0, 1.15, -0.2);
+                    group.add(stand);
+
+                    // Keyboard
+                    const kbGeo = new THREE.BoxGeometry(0.65, 0.03, 0.22);
+                    const kbMat = new THREE.MeshStandardMaterial({ color: 0x374151 });
+                    const kb = new THREE.Mesh(kbGeo, kbMat);
+                    kb.position.set(0, 1.07, 0.15);
+                    group.add(kb);
+
+                    // Mouse
+                    const mouseGeo = new THREE.BoxGeometry(0.08, 0.03, 0.12);
+                    const mouse = new THREE.Mesh(mouseGeo, kbMat);
+                    mouse.position.set(0.45, 1.07, 0.15);
+                    group.add(mouse);
+
+                    // Office Chair (Belakang meja)
+                    const chairGeo = new THREE.BoxGeometry(0.6, 0.1, 0.6);
+                    const chairMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.9 });
+                    const chairSeat = new THREE.Mesh(chairGeo, chairMat);
+                    chairSeat.position.set(0, 0.6, -0.9);
+                    chairSeat.castShadow = true;
+                    group.add(chairSeat);
+
+                    const chairBackGeo = new THREE.BoxGeometry(0.55, 0.7, 0.08);
+                    const chairBack = new THREE.Mesh(chairBackGeo, chairMat);
+                    chairBack.position.set(0, 0.95, -1.2);
+                    group.add(chairBack);
+
+                    this.scene.add(group);
+                },
+
+                buildLounge(x, y, z) {
+                    const group = new THREE.Group();
+                    group.position.set(x, y, z);
+
+                    // Modern Blue Sofa
+                    const sofaMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.8 });
+                    const seatBase = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.45, 1.1), sofaMat);
+                    seatBase.position.set(0, 0.35, 0);
+                    seatBase.castShadow = true;
+                    group.add(seatBase);
+
+                    const seatBack = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.7, 0.25), sofaMat);
+                    seatBack.position.set(0, 0.8, -0.42);
+                    group.add(seatBack);
+
+                    // Armrests
+                    const armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, 1.1), sofaMat);
+                    armL.position.set(-1.3, 0.55, 0);
+                    group.add(armL);
+
+                    const armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, 1.1), sofaMat);
+                    armR.position.set(1.3, 0.55, 0);
+                    group.add(armR);
+
+                    // Coffee Table
+                    const tableMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });
+                    const table = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.35, 0.7), tableMat);
+                    table.position.set(0, 0.2, 1.2);
+                    table.castShadow = true;
+                    group.add(table);
+
+                    // Coffee Cup
+                    const cupMat = new THREE.MeshStandardMaterial({ color: 0xf3f4f6 });
+                    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.12, 12), cupMat);
+                    cup.position.set(0.2, 0.43, 1.2);
+                    group.add(cup);
+
+                    this.scene.add(group);
+                },
+
+                buildServerRack(x, y, z) {
+                    const rackMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.5, metalness: 0.6 });
+                    const rack = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3.2, 0.9), rackMat);
+                    rack.position.set(x, 1.6, z);
+                    rack.castShadow = true;
+                    this.scene.add(rack);
+
+                    // LEDs
+                    const ledMat1 = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+                    const ledMat2 = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+                    for (let i = 0; i < 4; i++) {
+                        const led1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), ledMat1);
+                        led1.position.set(x - 0.3, 1.0 + (i * 0.4), z + 0.46);
+                        this.scene.add(led1);
+
+                        const led2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), ledMat2);
+                        led2.position.set(x + 0.3, 1.0 + (i * 0.4), z + 0.46);
+                        this.scene.add(led2);
+                    }
+                },
+
+                buildCharacter(shirtColor, hairColor) {
+                    const char = new THREE.Group();
+
+                    // Head
+                    const headGeo = new THREE.BoxGeometry(0.38, 0.38, 0.35);
+                    const skinMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.7 });
+                    const head = new THREE.Mesh(headGeo, skinMat);
+                    head.position.y = 0.82;
+                    head.castShadow = true;
+                    char.add(head);
+
+                    // Hair
+                    const hairGeo = new THREE.BoxGeometry(0.4, 0.14, 0.38);
+                    const hairMat = new THREE.MeshStandardMaterial({ color: hairColor });
+                    const hair = new THREE.Mesh(hairGeo, hairMat);
+                    hair.position.set(0, 0.98, -0.01);
+                    char.add(hair);
+
+                    // Eyes
+                    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
+                    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), eyeMat);
+                    eyeL.position.set(-0.09, 0.83, 0.18);
+                    const eyeR = eyeL.clone();
+                    eyeR.position.x = 0.09;
+                    char.add(eyeL);
+                    char.add(eyeR);
+
+                    // Torso (Shirt)
+                    const torsoGeo = new THREE.BoxGeometry(0.42, 0.44, 0.28);
+                    const shirtMat = new THREE.MeshStandardMaterial({ color: shirtColor });
+                    const torso = new THREE.Mesh(torsoGeo, shirtMat);
+                    torso.position.y = 0.45;
+                    torso.castShadow = true;
+                    char.add(torso);
+
+                    // Arms
+                    const armGeo = new THREE.BoxGeometry(0.1, 0.35, 0.12);
+                    const armL = new THREE.Mesh(armGeo, skinMat);
+                    armL.position.set(-0.27, 0.43, 0.05);
+                    armL.rotation.x = 0.3;
+                    const armR = new THREE.Mesh(armGeo, skinMat);
+                    armR.position.set(0.27, 0.43, 0.05);
+                    armR.rotation.x = 0.3;
+                    char.add(armL);
+                    char.add(armR);
+
+                    char.userData = { armL, armR, head, baseHeadY: 0.82 };
+                    return char;
+                },
+
+                animate() {
+                    requestAnimationFrame(() => this.animate());
+
+                    const time = this.clock.getElapsedTime();
+
+                    // Subtle typing / breathing animation
+                    if (this.csGroup && config.csStatus === 'working') {
+                        const data = this.csGroup.userData;
+                        data.armL.rotation.x = 0.4 + Math.sin(time * 12) * 0.15;
+                        data.armR.rotation.x = 0.4 + Math.cos(time * 12) * 0.15;
+                        data.head.position.y = data.baseHeadY + Math.sin(time * 3) * 0.015;
+                    }
+
+                    if (this.coreGroup) {
+                        const data = this.coreGroup.userData;
+                        data.armL.rotation.x = 0.4 + Math.cos(time * 10) * 0.12;
+                        data.armR.rotation.x = 0.4 + Math.sin(time * 10) * 0.12;
+                    }
+
+                    // Screen glow pulse
+                    this.screenMeshes.forEach((mesh, idx) => {
+                        const intensity = 0.85 + Math.sin(time * 4 + idx) * 0.15;
+                        mesh.material.color.setRGB(0.22 * intensity, 0.74 * intensity, 0.97 * intensity);
+                    });
+
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }));
+        });
+    </script>
 
     <!-- Main Workspace: Split Screen (Left: Sessions List, Right: Chat Transcript / Test Sandbox) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
