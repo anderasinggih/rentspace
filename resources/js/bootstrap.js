@@ -9,22 +9,22 @@ import Pusher from 'pusher-js';
 window.Pusher = Pusher;
 
 try {
-    const reverbHost = import.meta.env.VITE_REVERB_HOST || window.location.hostname;
-    const reverbPort = import.meta.env.VITE_REVERB_PORT || (window.location.protocol === 'https:' ? 443 : 8080);
-    const reverbScheme = import.meta.env.VITE_REVERB_SCHEME || (window.location.protocol === 'https:' ? 'https' : 'http');
-    const reverbKey = import.meta.env.VITE_REVERB_APP_KEY || 'bmkxdqurg6bgcqiiuj24';
-
+    const isHttps = window.location.protocol === 'https:';
+    const currentHost = window.location.hostname;
+    
+    // Jika dibuka di domain live (rentspace.id / domain VPS), konek ke host tersebut dan port 8080
+    // Reverb running on host:0.0.0.0 port:8080
     window.Echo = new Echo({
         broadcaster: 'reverb',
-        key: reverbKey,
-        wsHost: reverbHost,
-        wsPort: reverbPort,
-        wssPort: reverbPort,
-        forceTLS: reverbScheme === 'https',
+        key: 'bmkxdqurg6bgcqiiuj24',
+        wsHost: currentHost,
+        wsPort: 8080,
+        wssPort: 8080,
+        forceTLS: isHttps,
         enabledTransports: ['ws', 'wss'],
     });
 
-    console.log('[Echo/Reverb] WebSocket Client initialized for', reverbHost);
+    console.log('[Echo/Reverb] WebSocket Client connected to', currentHost + ':8080', 'TLS:', isHttps);
 } catch (e) {
     console.warn('[Echo/Reverb] Failed to initialize WebSocket Echo:', e);
 }
