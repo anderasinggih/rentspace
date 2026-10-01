@@ -309,13 +309,13 @@
 
                 // Posisi koordinat penting di ruangan (Duduk pas di kursi ergonomis tanpa tembus meja)
                 spots: {
-                    dewiDesk: { x: -3.2, y: 0.44, z: 1.45, rotY: Math.PI },   // Duduk di meja kerja saat ada chat
-                    dewiLounge: { x: 4.2, y: 0.42, z: 1.4, rotY: 0.0 },       // Duduk santai di sofa sebelah kiri
-                    dewiBed: { x: -10.5, y: 0.58, z: 1.3, rotY: Math.PI / 2 }, // Berbaring pas di kasur kamar yang mepet dinding
-                    singgihDesk: { x: -1.2, y: 0.44, z: 1.45, rotY: Math.PI }, // Duduk di meja kerja saat ada task core
-                    singgihLounge: { x: 5.0, y: 0.42, z: 1.4, rotY: 0.0 },     // Duduk santai di sofa tengah (sebelahan tanpa tembus)
-                    anderaDesk: { x: -2.2, y: 0.44, z: -1.25, rotY: 0.0 },     // Duduk di meja seberang saat buat report
-                    anderaLounge: { x: 5.8, y: 0.42, z: 1.4, rotY: 0.0 }       // Duduk santai di sofa sebelah kanan (sebelahan tanpa tembus)
+                    dewiDesk: { x: -3.2, y: 0.44, z: 1.45, rotY: Math.PI },    // Duduk di meja kerja saat ada chat
+                    dewiLounge: { x: 4.4, y: 0.46, z: 1.4, rotY: 0.0 },        // Duduk santai di sofa sebelah kiri
+                    dewiBed: { x: -10.5, y: 0.58, z: 1.3, rotY: Math.PI / 2 },  // Berbaring pas di kasur kamar yang mepet dinding
+                    singgihDesk: { x: -1.2, y: 0.44, z: 1.45, rotY: Math.PI },  // Duduk di meja kerja saat ada task core
+                    singgihLounge: { x: 5.0, y: 0.46, z: 1.4, rotY: 0.0 },      // Duduk santai di sofa tengah jejeran
+                    anderaDesk: { x: -2.2, y: 0.44, z: -1.35, rotY: 0.0 },      // Duduk di kursi seberang meja (menghadap +Z)
+                    anderaLounge: { x: 5.6, y: 0.46, z: 1.4, rotY: 0.0 }        // Duduk santai di sofa sebelah kanan jejeran bertiga
                 },
 
                 // Status real-time masing-masing bot
@@ -457,11 +457,21 @@
                         // 6. Build Multi-Room Studio & Characters
                         this.buildRoom();
 
-                        // Posisi awal Dewi
+                        // Set posisi awal ketiga karakter sesuai status aktual (Anti Loncat saat refresh)
                         if (this.dewiGroup) {
-                            const initSpot = (this.currentCsStatus === 'working') ? this.spots.dewiDesk : this.spots.dewiLounge;
+                            const initSpot = (this.currentCsStatus === 'working') ? this.spots.dewiDesk : (this.currentCsStatus === 'sleeping' ? this.spots.dewiBed : this.spots.dewiLounge);
                             this.dewiGroup.position.set(initSpot.x, initSpot.y, initSpot.z);
                             this.dewiGroup.rotation.y = initSpot.rotY;
+                        }
+                        if (this.singgihGroup) {
+                            const initSinggihSpot = (this.currentSinggihStatus === 'working') ? this.spots.singgihDesk : this.spots.singgihLounge;
+                            this.singgihGroup.position.set(initSinggihSpot.x, initSinggihSpot.y, initSinggihSpot.z);
+                            this.singgihGroup.rotation.y = initSinggihSpot.rotY;
+                        }
+                        if (this.anderaGroup) {
+                            const initAnderaSpot = (this.currentAnderaStatus === 'working') ? this.spots.anderaDesk : this.spots.anderaLounge;
+                            this.anderaGroup.position.set(initAnderaSpot.x, initAnderaSpot.y, initAnderaSpot.z);
+                            this.anderaGroup.rotation.y = initAnderaSpot.rotY;
                         }
 
                         this.renderer.render(this.scene, this.camera);
@@ -573,14 +583,12 @@
                     if (status === 'working') {
                         this.setMood('singgih', '⚙️ Core Processing AI');
                         target = this.spots.singgihDesk;
-                        // Mundur dari sofa ke lorong bebas (z=2.4) -> jalan ke depan meja Singgih -> duduk di meja
                         this.singgihWaypoints.push({ x: curX, z: 2.4 });
                         this.singgihWaypoints.push({ x: target.x, z: 2.4 });
                         this.singgihWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     } else {
-                        this.setMood('singgih', '☕ Istirahat di Sofa');
+                        this.setMood('singgih', '🛋️ Duduk Santai di Sofa');
                         target = this.spots.singgihLounge;
-                        // Mundur dari meja ke lorong bebas (z=2.4) -> jalan ke depan sofa tengah -> duduk di sofa
                         this.singgihWaypoints.push({ x: curX, z: 2.4 });
                         this.singgihWaypoints.push({ x: target.x, z: 2.4 });
                         this.singgihWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
@@ -636,19 +644,25 @@
                     if (status === 'working') {
                         this.setMood('andera', '📊 Menyusun Laporan Keuangan');
                         target = this.spots.anderaDesk;
-                        // Mundur dari sofa ke lorong bebas (z=2.4) -> jalan ke seberang meja Andera (z=-2.2) -> duduk di meja seberang
-                        this.anderaWaypoints.push({ x: curX, z: 2.4 });
-                        this.anderaWaypoints.push({ x: target.x - 1.2, z: 2.4 });
-                        this.anderaWaypoints.push({ x: target.x - 1.2, z: -2.0 });
-                        this.anderaWaypoints.push({ x: target.x, z: -2.0 });
+                        // Rute Anti-Tembus Meja:
+                        // Dari sofa (x=5.6, z=1.4) -> mundur ke lorong bebas (z=2.4) -> jalan ke koridor samping meja (x=1.0, z=2.4)
+                        // -> masuk ke lorong belakang meja (x=1.0, z=-2.1) -> ke belakang kursi Andera (x=-2.2, z=-2.1)
+                        // -> masuk ke kursi meja (x=-2.2, z=-1.35) menghadap meja (+Z)
+                        if (curZ > -1.0) {
+                            this.anderaWaypoints.push({ x: curX, z: 2.4 });
+                            this.anderaWaypoints.push({ x: 1.0, z: 2.4 });
+                            this.anderaWaypoints.push({ x: 1.0, z: -2.1 });
+                        }
+                        this.anderaWaypoints.push({ x: target.x, z: -2.1 });
                         this.anderaWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     } else {
-                        this.setMood('andera', '🍿 Nonton TV di Sofa');
+                        this.setMood('andera', '🛋️ Duduk Santai di Sofa');
                         target = this.spots.anderaLounge;
-                        // Dari meja seberang: mundur ke lorong belakang -> lewat samping meja -> masuk lorong depan -> ke sofa kanan
-                        this.anderaWaypoints.push({ x: curX, z: -2.0 });
-                        this.anderaWaypoints.push({ x: curX - 1.2, z: -2.0 });
-                        this.anderaWaypoints.push({ x: curX - 1.2, z: 2.4 });
+                        // Mundur dari kursi meja ke lorong belakang (z=-2.1) -> keluar lewat koridor samping (x=1.0, z=-2.1)
+                        // -> masuk lorong depan bebas (x=1.0, z=2.4) -> jalan lurus ke depan sofa (x=5.6, z=2.4) -> duduk di sofa
+                        this.anderaWaypoints.push({ x: curX, z: -2.1 });
+                        this.anderaWaypoints.push({ x: 1.0, z: -2.1 });
+                        this.anderaWaypoints.push({ x: 1.0, z: 2.4 });
                         this.anderaWaypoints.push({ x: target.x, z: 2.4 });
                         this.anderaWaypoints.push({ x: target.x, z: target.z, rotY: target.rotY });
                     }
@@ -2277,13 +2291,15 @@
                             }
                         } else {
                             // Dewi bersantai di sofa (tangan santai, kaki selonjor nyaman di sofa)
+                            this.dewiGroup.rotation.x = 0;
+                            this.dewiGroup.rotation.z = 0;
                             if (data.armL && data.armR) {
-                                data.armL.rotation.x = 0.15 + Math.sin(time * 2) * 0.04;
-                                data.armR.rotation.x = 0.15 - Math.sin(time * 2) * 0.04;
+                                data.armL.rotation.x = 0.20 + Math.sin(time * 2) * 0.04;
+                                data.armR.rotation.x = 0.20 - Math.sin(time * 2) * 0.04;
                             }
                             if (data.legL && data.legR) {
-                                data.legL.rotation.x = -1.10;
-                                data.legR.rotation.x = -1.10;
+                                data.legL.rotation.x = 1.25;
+                                data.legR.rotation.x = 1.25;
                             }
                             if (data.head) {
                                 data.head.position.y = data.baseHeadY + Math.sin(time * 2) * 0.010;
@@ -2327,13 +2343,15 @@
                             }
                         } else {
                             this.singgihGroup.position.y = this.spots.singgihLounge.y;
+                            this.singgihGroup.rotation.x = 0;
+                            this.singgihGroup.rotation.z = 0;
                             if (data && data.armL && data.armR) {
-                                data.armL.rotation.x = 0.10 + Math.cos(time * 2) * 0.03;
-                                data.armR.rotation.x = 0.10 - Math.cos(time * 2) * 0.03;
+                                data.armL.rotation.x = 0.20 + Math.cos(time * 2) * 0.03;
+                                data.armR.rotation.x = 0.20 - Math.cos(time * 2) * 0.03;
                             }
                             if (data && data.legL && data.legR) {
-                                data.legL.rotation.x = -1.10;
-                                data.legR.rotation.x = -1.10;
+                                data.legL.rotation.x = 1.25;
+                                data.legR.rotation.x = 1.25;
                             }
                         }
                     }
@@ -2374,13 +2392,15 @@
                             }
                         } else {
                             this.anderaGroup.position.y = this.spots.anderaLounge.y;
+                            this.anderaGroup.rotation.x = 0;
+                            this.anderaGroup.rotation.z = 0;
                             if (data && data.armL && data.armR) {
-                                data.armL.rotation.x = 0.15 + Math.sin(time * 2.2) * 0.04;
-                                data.armR.rotation.x = 0.15 - Math.sin(time * 2.2) * 0.04;
+                                data.armL.rotation.x = 0.20 + Math.sin(time * 2.2) * 0.04;
+                                data.armR.rotation.x = 0.20 - Math.sin(time * 2.2) * 0.04;
                             }
                             if (data && data.legL && data.legR) {
-                                data.legL.rotation.x = -1.10;
-                                data.legR.rotation.x = -1.10;
+                                data.legL.rotation.x = 1.25;
+                                data.legR.rotation.x = 1.25;
                             }
                         }
                     }
@@ -2395,10 +2415,12 @@
              x-data="{
                  isExpanded: false,
                  init() {
-                     window._threeOfficeAlpine = this;
-                     this.$nextTick(() => {
-                         window._threeOfficeApp.currentSinggihStatus = @js($coreStatus);
-                          window._threeOfficeApp.currentAnderaStatus = @js($reportStatus);
+                      window._threeOfficeAlpine = this;
+                      window._threeOfficeApp.currentCsStatus = @js($csStatus);
+                      window._threeOfficeApp.currentSinggihStatus = @js($coreStatus);
+                      window._threeOfficeApp.currentAnderaStatus = @js($reportStatus);
+
+                      this.$nextTick(() => {
                           window._threeOfficeApp.init(this.$refs.canvasContainer, @js($csStatus));
                          @if(!empty($latestCustomerText))
                              window._threeOfficeApp.updateLiveBubble('dewi', @js($latestCustomerText));
