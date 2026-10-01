@@ -39,9 +39,13 @@
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    {{-- Three.js + addon post-processing hanya dimuat di halaman yang benar-benar pakai scene 3D --}}
+    {{-- Three.js + addon post-processing hanya dimuat di halaman yang benar-benar pakai scene 3D.
+         Engine modul (resources/js/office3d/) sengaja TIDAK dimuat di sini: karakter Roblox
+         dan rendering GTAO + bloom + SMAA + RoomEnvironment yang ada di engine inline
+         ai-monitor.blade.php adalah versi yang dipakai. boot.js sengaja dititipkan supaya
+         modulnya tetap ter-build dan mudah diaktifkan lagi. --}}
     @if(request()->routeIs('admin.ai-monitor'))
-        @vite(['resources/js/three-office-runtime.js', 'resources/js/office3d/boot.js'])
+        @vite(['resources/js/three-office-runtime.js'])
     @endif
     <style>
         [x-cloak] { display: none !important; }

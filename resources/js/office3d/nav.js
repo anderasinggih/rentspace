@@ -29,9 +29,14 @@ import { clamp } from './lib.js';
 const SQRT2 = Math.SQRT2;
 
 export class NavGrid {
-    constructor({ clearance = 0.16, cell = NAV.cell } = {}) {
+    constructor({ clearance = 0.16, wallClearance = 0.1, cell = NAV.cell } = {}) {
         this.cell = cell;
         this.clearance = clearance;
+        // Walls get a smaller inflation than furniture. A wall cell is the
+        // test "is a body's centre here clipping the plaster", so it wants
+        // roughly half a torso of padding, not the full working clearance
+        // used to decide whether a chair is in the way.
+        this.wallClearance = wallClearance;
 
         this.minX = NAV.minX;
         this.maxX = NAV.maxX;
@@ -128,7 +133,10 @@ export class NavGrid {
 
     _build() {
         // structural walls first — these are absolute
-        for (const r of BLOCKERS) this._fillRect(this.wall, r.x0, r.z0, r.x1, r.z1);
+        for (const r of BLOCKERS) {
+            const wc = this.wallClearance;
+            this._fillRect(this.wall, r.x0 - wc, r.z0 - wc, r.x1 + wc, r.z1 + wc);
+        }
 
         // furniture, inflated
         const c = this.clearance;
@@ -551,19 +559,27 @@ export class NavGrid {
  *  quietly making a room unreachable.
  * ------------------------------------------------------------------ */
 
+/**
+ * Real openings, mirrored from the partitions in plan.js.
+ *
+ * `margin` is deliberately the same size as the wall inflation: carving any
+ * wider would hand back the jamb padding the inflation exists to provide,
+ * and a body whose centre can reach the plaster is a body that eventually
+ * gets its shoulder into it and wedges.
+ */
 const DOORWAYS = [
     /* bedroom door, on x = partBedroom */
-    { x0: -5.95, z0: -3.05, x1: -5.65, z1: -2.15, margin: 0.2 },
+    { x0: -5.95, z0: -3.05, x1: -5.65, z1: -2.15, margin: 0.1 },
     /* bathroom door */
-    { x0: -5.95, z0: 0.55, x1: -5.65, z1: 1.65, margin: 0.16 },
+    { x0: -5.95, z0: 0.55, x1: -5.65, z1: 1.65, margin: 0.1 },
     /* hall | office cased opening */
-    { x0: -4.6, z0: -3.8, x1: -4.2, z1: -2.6, margin: 0.2 },
+    { x0: -4.6, z0: -3.8, x1: -4.2, z1: -2.6, margin: 0.1 },
     /* office | pantry cased opening */
-    { x0: 1.8, z0: -5.0, x1: 2.2, z1: -3.8, margin: 0.2 },
+    { x0: 1.8, z0: -5.0, x1: 2.2, z1: -3.8, margin: 0.1 },
     /* pantry | lounge glazed door */
-    { x0: 4.85, z0: -1.8, x1: 5.95, z1: -1.4, margin: 0.16 },
+    { x0: 4.85, z0: -1.8, x1: 5.95, z1: -1.4, margin: 0.1 },
     /* front door */
-    { x0: -7.2, z0: 5.7, x1: -6.0, z1: 6.1, margin: 0.2 },
+    { x0: -7.2, z0: 5.7, x1: -6.0, z1: 6.1, margin: 0.1 },
 ];
 
 /* ------------------------------------------------------------------ *

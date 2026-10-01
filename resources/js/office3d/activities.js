@@ -104,20 +104,28 @@ function facing(rect, side, { id = side, t = 0.5, reach = STAND, handY = 0, hand
     return spot;
 }
 
-/** A seat, expressed the way the rig wants it: root 0.36 m behind the hips. */
+/**
+ * A seat, expressed the way the rig wants it: root 0.36 m behind the hips.
+ *
+ * The approach is *in front of* the occupant — same side the seat faces —
+ * because that is the side with floor on it. Deriving it on the wrong side
+ * sent the walk target into the plaster behind the sofa and the bed, and
+ * every agent heading for a seat walked into the wall trying to get there.
+ */
 function seat(key, seatDef) {
     const back = SEAT_REACH;
-    const px = seatDef.x - Math.sin(seatDef.rotY) * back;
-    const pz = seatDef.z - Math.cos(seatDef.rotY) * back;
+    const reachOut = back + 0.85;
+    const fx = Math.sin(seatDef.rotY);
+    const fz = Math.cos(seatDef.rotY);
     return {
         id: key,
         x: seatDef.x,
         z: seatDef.z,
         rotY: seatDef.rotY,
-        root: { x: px, z: pz },
+        root: { x: seatDef.x - fx * back, z: seatDef.z - fz * back },
         approach: {
-            x: seatDef.x - Math.sin(seatDef.rotY) * (back + 0.85),
-            z: seatDef.z - Math.cos(seatDef.rotY) * (back + 0.85),
+            x: seatDef.x + fx * reachOut,
+            z: seatDef.z + fz * reachOut,
         },
         seat: true,
     };

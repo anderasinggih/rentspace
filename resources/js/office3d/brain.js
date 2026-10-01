@@ -136,6 +136,7 @@ export class AgentBrain {
         this.vel = new THREE.Vector2();
         this.avoid = new THREE.Vector2();
         this._lastSafe = null;
+        this._wedged = 0;
         this.busy = 0;
         this.claimedSpot = null;
         this.claimedResource = null;
@@ -288,17 +289,24 @@ export class AgentBrain {
         this.claimedSpot = spot;
         this.claimedResource = activity.resource || null;
         this.statusLabel = activity.label;
+        this._wedged = 0;
 
         // Reserve the resource immediately, before anyone else can decide.
         this.props?.claim(activity.resource, spot, this.id);
 
-        const from = { x: this.body.pos.x, z: this.body.pos.z };
-        const goal = spot.approach || spot;
-        this.path = this.nav?.findPath(from.x, from.z, goal.x, goal.z) || [goal];
-        this.pathIdx = 1;
+        this._repath();
 
         // face the direction of travel while walking
         this.body.setPose('walk');
+    }
+
+    /** (Re)plan from where the body actually is to the current approach. */
+    _repath() {
+        const goal = this.spot?.approach || this.spot;
+        if (!goal || !this.nav) return;
+        const from = { x: this.body.pos.x, z: this.body.pos.z };
+        this.path = this.nav.findPath(from.x, from.z, goal.x, goal.z) || [goal];
+        this.pathIdx = 1;
     }
 
     _arrive() {
@@ -329,10 +337,23 @@ export class AgentBrain {
         // A doorway plus two agents who both want to be first through it is
         // the one place the steering can lose: the controller turns on damped
         // facing, so a sideways avoidance shove can carry a shoulder into the
-        // jamb after the aim point was already proven clear. The path is
-        // authoritative, so an inside-a-wall position gets rolled back rather
-        // than allowed to compound.
+        // jamb after the aim point was already proven clear. Rolling back is
+        // not enough on its own though — reverted in place, the body has no
+        // target and never moves again, so the wedge has to be broken by
+        // putting it back on open floor and re-planning.
         if (this.nav?.inWall(body.pos.x, body.pos.z)) {
+            this._wedged += dt;
+            if (this._wedged > 0.35) {
+                const cell = this.nav.nearestFree(body.pos.x, body.pos.z, 6);
+                if (cell >= 0) {
+                    body.pos.x = this.nav.xOf(this.nav.colOfIndex(cell));
+                    body.pos.z = this.nav.zOf(this.nav.rowOfIndex(cell));
+                    this._repath();
+                    this._wedged = 0;
+                    this._lastSafe = { x: body.pos.x, z: body.pos.z };
+                    return;
+                }
+            }
             const safe = this._lastSafe;
             if (safe) {
                 body.pos.x = safe.x;
@@ -340,6 +361,7 @@ export class AgentBrain {
                 body.walkTarget = null;
             }
         } else {
+            this._wedged = 0;
             this._lastSafe = { x: body.pos.x, z: body.pos.z };
         }
 
