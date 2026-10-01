@@ -168,6 +168,10 @@
                     class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 active:scale-95 transition">
                     Meja Kantor
                 </button>
+                <button type="button" onclick="window._threeOfficeApp?.setView('dewi_pov')" title="POV Menatap Layar Monitor Dewi"
+                    class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/40 hover:bg-pink-500/30 active:scale-95 transition">
+                    💻 POV Layar Dewi
+                </button>
                 <button type="button" onclick="window._threeOfficeApp?.setView('pantry')"
                     class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 active:scale-95 transition">
                     Dapur & Lounge
@@ -248,6 +252,12 @@
                         this.rotX = 0.30;
                         this.cameraRadius = 12.5;
                         this.targetLookAt = { x: 4.8, y: 1.1, z: 0.8 };
+                    } else if (viewName === 'dewi_pov') {
+                        // POV Menatap Langsung ke Layar Monitor Kerja Dewi
+                        this.rotY = 0.05; // Menghadap lurus ke arah monitor dari belakang Dewi
+                        this.rotX = 0.12;
+                        this.cameraRadius = 4.2;
+                        this.targetLookAt = { x: -3.2, y: 1.45, z: 0.70 };
                     } else if (viewName === 'front') {
                         this.rotY = 0.0;
                         this.rotX = 0.12;
@@ -513,6 +523,15 @@
 
                     if (!this.dewiGroup) return;
 
+                    if (status === 'working') {
+                        this.setMood('dewi', '⌨️ Sedang Membalas Chat...');
+                    } else {
+                        // Variasi mood santai saat istirahat (bisa musikan / ngopi santai)
+                        const breakMoods = ['🎧 Lagi Dengerin Musik', '☕ Istirahat Santai', '🥤 Minum & Recharge', '🛋️ Duduk Santai Senang'];
+                        const randomMood = breakMoods[Math.floor(Math.random() * breakMoods.length)];
+                        this.setMood('dewi', randomMood);
+                    }
+
                     const target = (status === 'working') ? this.spots.dewiDesk : this.spots.dewiLounge;
                     
                     this.dewiWalk.isMoving = true;
@@ -583,50 +602,92 @@
                     b.texture.needsUpdate = true;
                     b.mesh.visible = true;
 
+                    if (agent === 'dewi') {
+                        this.setMood('dewi', '💬 Membalas Pesan...');
+                        this.activeCustomerChat = text;
+                    }
+
                     // Auto-hide setelah 8 detik agar balon tidak pernah nyangkut di atas kepala
                     this.bubbleTimers[agent] = setTimeout(() => {
                         b.mesh.visible = false;
+                        if (agent === 'dewi' && this.currentCsStatus === 'working') {
+                            this.setMood('dewi', '⚡ Fokus Standby Chat');
+                        }
                     }, 8000);
                 },
 
-                // Membuat Label Nama 3D Melayang di atas kepala karakter (Elegan & Rapi)
-                createNameTag(name, role, badgeColor) {
+                // Membuat Label Nama 3D Melayang di atas kepala karakter (Elegan & Ada Mood/Ekspresi Realistis)
+                nameTagCanvases: {},
+                nameTagTextures: {},
+
+                createNameTag(agentKey, name, role, badgeColor, initialMood = '✨ Aktif & Siap') {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 384;
-                    canvas.height = 120;
-                    const ctx = canvas.getContext('2d');
+                    canvas.width = 420;
+                    canvas.height = 135;
+                    const texture = new THREE.CanvasTexture(canvas);
+
+                    this.nameTagCanvases[agentKey] = { canvas, name, role, badgeColor, mood: initialMood };
+                    this.nameTagTextures[agentKey] = texture;
+                    this.renderNameTag(agentKey);
+
+                    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+                    const sprite = new THREE.Sprite(mat);
+                    sprite.scale.set(1.45, 0.46, 1);
+                    sprite.position.y = 1.45;
+                    return sprite;
+                },
+
+                renderNameTag(agentKey) {
+                    const item = this.nameTagCanvases[agentKey];
+                    const texture = this.nameTagTextures[agentKey];
+                    if (!item || !texture) return;
+
+                    const ctx = item.canvas.getContext('2d');
+                    ctx.clearRect(0, 0, item.canvas.width, item.canvas.height);
 
                     // Background pill badge elegan
-                    ctx.fillStyle = 'rgba(20, 22, 27, 0.92)';
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+                    ctx.fillStyle = 'rgba(18, 20, 26, 0.94)';
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.20)';
                     ctx.lineWidth = 3;
                     ctx.beginPath();
-                    ctx.roundRect(10, 10, canvas.width - 20, canvas.height - 20, 28);
+                    ctx.roundRect(10, 10, item.canvas.width - 20, item.canvas.height - 20, 26);
                     ctx.fill();
                     ctx.stroke();
 
                     // Indicator dot
-                    ctx.fillStyle = badgeColor;
+                    ctx.fillStyle = item.badgeColor;
                     ctx.beginPath();
-                    ctx.arc(42, 60, 10, 0, Math.PI * 2);
+                    ctx.arc(38, 52, 9, 0, Math.PI * 2);
                     ctx.fill();
 
                     // Text Name & Role
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 34px "Inter", sans-serif';
+                    ctx.font = 'bold 32px "Inter", sans-serif';
                     ctx.textAlign = 'left';
-                    ctx.fillText(name, 70, 54);
+                    ctx.fillText(item.name, 62, 48);
 
-                    ctx.fillStyle = badgeColor;
-                    ctx.font = '600 22px "Inter", sans-serif';
-                    ctx.fillText(role, 70, 88);
+                    ctx.fillStyle = item.badgeColor;
+                    ctx.font = '600 20px "Inter", sans-serif';
+                    ctx.fillText(item.role, 62, 78);
 
-                    const texture = new THREE.CanvasTexture(canvas);
-                    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
-                    const sprite = new THREE.Sprite(mat);
-                    sprite.scale.set(1.35, 0.42, 1);
-                    sprite.position.y = 1.45;
-                    return sprite;
+                    // Mood / Emotion Tag Pill (Bawah)
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+                    ctx.beginPath();
+                    ctx.roundRect(60, 90, item.canvas.width - 85, 30, 12);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#f1f5f9';
+                    ctx.font = '500 17px "Inter", sans-serif';
+                    ctx.fillText(item.mood, 72, 111);
+
+                    texture.needsUpdate = true;
+                },
+
+                setMood(agentKey, moodText) {
+                    if (this.nameTagCanvases[agentKey]) {
+                        this.nameTagCanvases[agentKey].mood = moodText;
+                        this.renderNameTag(agentKey);
+                    }
                 },
 
                 // Membuat Speech Bubble Sprite (Ditempatkan di atas Name Tag agar tidak tumpang tindih)
@@ -740,7 +801,7 @@
                     char.add(legR);
 
                     // Name Tag "Dewi (CS Customer)"
-                    const nameTag = this.createNameTag('Dewi', 'CS Customer Chat', '#f472b6');
+                    const nameTag = this.createNameTag('dewi', 'Dewi', 'CS Customer Chat', '#f472b6', '☕ Istirahat Santai');
                     char.add(nameTag);
 
                     // Speech Bubble
@@ -821,7 +882,7 @@
                     char.add(legR);
 
                     // Name Tag
-                    const nameTag = this.createNameTag(name, role, badgeColor);
+                    const nameTag = this.createNameTag(bubbleKey, name, role, badgeColor, '⚡ Standby & Fokus');
                     char.add(nameTag);
 
                     // Speech Bubble
@@ -1317,37 +1378,69 @@
                         ctx.fillRect(0, 0, 512, 280);
 
                         // Top bar OS
-                        ctx.fillStyle = '#1e293b';
-                        ctx.fillRect(0, 0, 512, 34);
-                        ctx.fillStyle = '#ef4444';
-                        ctx.beginPath(); ctx.arc(20, 17, 6, 0, Math.PI * 2); ctx.fill();
-                        ctx.fillStyle = '#f59e0b';
-                        ctx.beginPath(); ctx.arc(40, 17, 6, 0, Math.PI * 2); ctx.fill();
-                        ctx.fillStyle = '#10b981';
-                        ctx.beginPath(); ctx.arc(60, 17, 6, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = '#111827';
+                        ctx.fillRect(0, 0, 512, 36);
+                        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(20, 18, 5, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(36, 18, 5, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(52, 18, 5, 0, Math.PI * 2); ctx.fill();
 
-                        ctx.fillStyle = '#94a3b8';
-                        ctx.font = 'bold 15px monospace';
-                        ctx.fillText('RentSpace Core OS · Live Terminal', 85, 22);
+                        ctx.fillStyle = '#cbd5e1';
+                        ctx.font = 'bold 13px monospace';
+                        ctx.fillText('RentSpace AI Engine · Live POV Monitor', 72, 22);
 
-                        // Simulated Chat Streams & Code Bars
+                        // Simulated Chat Streams or Active WhatsApp Customer Live Message
                         const wave = Math.sin(time * 6);
-                        for (let i = 0; i < 7; i++) {
-                            const barW = 120 + Math.sin(time * 3 + i * 1.5) * 80;
-                            const isGreen = (i % 2 === 0);
-                            ctx.fillStyle = isGreen ? '#10b981' : '#38bdf8';
-                            ctx.fillRect(25, 55 + i * 28, Math.max(60, barW), 14);
+                        if (this.activeCustomerChat) {
+                            // Layar menampilkan chat customer aktual & AI processing
+                            ctx.fillStyle = '#1e293b';
+                            ctx.fillRect(15, 48, 482, 70);
+                            ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 1.5;
+                            ctx.strokeRect(15, 48, 482, 70);
 
-                            ctx.fillStyle = '#475569';
-                            ctx.fillRect(25 + barW + 15, 55 + i * 28, 80, 14);
+                            ctx.fillStyle = '#f472b6';
+                            ctx.font = 'bold 12px sans-serif';
+                            ctx.fillText('[CUSTOMER WA]:', 25, 68);
+
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = '14px sans-serif';
+                            const preview = this.activeCustomerChat.length > 48 ? this.activeCustomerChat.substring(0, 45) + '...' : this.activeCustomerChat;
+                            ctx.fillText(preview, 25, 96);
+
+                            // AI Generating response box
+                            ctx.fillStyle = '#0f172a';
+                            ctx.fillRect(15, 128, 482, 100);
+                            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1;
+                            ctx.strokeRect(15, 128, 482, 100);
+
+                            ctx.fillStyle = '#38bdf8';
+                            ctx.font = 'bold 12px sans-serif';
+                            ctx.fillText('[GEMINI AI · DEWI CS]: MEMPROSES JAWABAN...', 25, 150);
+
+                            // Typing cursor bar
+                            const barW = 180 + Math.sin(time * 8) * 120;
+                            ctx.fillStyle = '#10b981';
+                            ctx.fillRect(25, 168, Math.max(80, barW), 12);
+                            ctx.fillStyle = '#38bdf8';
+                            ctx.fillRect(25, 192, 140, 10);
+                        } else {
+                            // Layar status streaming data normal
+                            for (let i = 0; i < 6; i++) {
+                                const barW = 120 + Math.sin(time * 3 + i * 1.5) * 80;
+                                const isGreen = (i % 2 === 0);
+                                ctx.fillStyle = isGreen ? '#10b981' : '#38bdf8';
+                                ctx.fillRect(25, 55 + i * 28, Math.max(60, barW), 13);
+
+                                ctx.fillStyle = '#475569';
+                                ctx.fillRect(25 + barW + 15, 55 + i * 28, 80, 13);
+                            }
                         }
 
                         // Status pill running
                         ctx.fillStyle = wave > 0 ? '#10b981' : '#059669';
-                        ctx.fillRect(360, 240, 125, 25);
+                        ctx.fillRect(350, 242, 145, 26);
                         ctx.fillStyle = '#ffffff';
-                        ctx.font = 'bold 13px sans-serif';
-                        ctx.fillText('● SYSTEM READY', 372, 257);
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.fillText('● AI CORE ONLINE', 362, 259);
 
                         this.screenTexture.needsUpdate = true;
                     }
@@ -1455,9 +1548,11 @@
                      });
                  },
                  syncStatus(detail) {
-                     window._threeOfficeApp.updateCsPosition(detail.csStatus);
                      if (detail.customerBubble) {
+                         window._threeOfficeApp.updateCsPosition('working');
                          window._threeOfficeApp.updateLiveBubble('dewi', detail.customerBubble);
+                     } else {
+                         window._threeOfficeApp.updateCsPosition(detail.csStatus);
                      }
                      if (detail.reportBubble) {
                          window._threeOfficeApp.updateLiveBubble('andera', detail.reportBubble);
