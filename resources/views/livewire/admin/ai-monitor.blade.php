@@ -1,4 +1,4 @@
-<div wire:poll.2s class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-28 sm:pb-12">
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-28 sm:pb-12">
     <!-- Header: Title, Engine Status & Toggle -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-5">
         <div class="flex items-center gap-3">
