@@ -364,6 +364,11 @@ async function connectToWhatsApp() {
                 continue;
             }
 
+            // Abaikan WhatsApp Story / Status Broadcast / Pesan Broadcast
+            if (!sender || sender === 'status@broadcast' || sender.endsWith('@broadcast') || msg.broadcast) {
+                continue;
+            }
+
             // 0. Perintah universal !getid / /getid (Untuk cek ID User atau ID Grup WA)
             if (lowerText === '!getid' || lowerText === '/getid') {
                 const chatType = sender.endsWith('@g.us') ? 'Grup WhatsApp' : 'Akun Pribadi';
@@ -524,6 +529,9 @@ async function connectToWhatsApp() {
                     }
                     continue;
                 }
+
+                // Jangan pernah proses chat grup sebagai chat customer
+                continue;
             }
 
 

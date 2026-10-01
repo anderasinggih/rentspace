@@ -25,6 +25,17 @@ class WhatsAppWebhookController extends Controller
         $name = $request->input('name', 'Kak');
         $text = trim((string) $request->input('text', ''));
         $action = $request->input('action');
+        $senderJid = Setting::sanitizeJid($request->input('sender_jid', $phone ?? ''));
+
+        // 0. Abaikan WhatsApp Story / Status Broadcast
+        if (
+            $senderJid === 'status@broadcast' ||
+            str_contains($senderJid, 'broadcast') ||
+            $phone === 'status' ||
+            str_contains(strtolower($name), 'status')
+        ) {
+            return response()->json(['status' => true, 'reply' => null, 'message' => 'Status story ignored']);
+        }
 
         // Jika ada request forward ke admin lain (Customer butuh bantuan admin)
         if ($action === 'forward_admin') {
@@ -128,6 +139,12 @@ class WhatsAppWebhookController extends Controller
                 $broadcastReply = $this->handleBroadcastAdminCommand($text, $phone);
                 return response()->json(['status' => true, 'reply' => $broadcastReply]);
             }
+        }
+
+        // Jika pesan berasal dari grup WhatsApp manapun yang bukan via report_group_query / admin command:
+        // Jangan pernah membalas otomatis sebagai customer chat!
+        if (str_ends_with($senderJid, '@g.us')) {
+            return response()->json(['status' => true, 'reply' => null, 'message' => 'Group message ignored for customer bot']);
         }
 
         // 1. Cek perintah KATALOG / LIST / DAFTAR HARGA
