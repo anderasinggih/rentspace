@@ -706,8 +706,11 @@
             @php
                 $currTrx = \App\Models\Rental::with('units')->find($extendTrxId);
             @endphp
-            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 pt-12 sm:pt-4 overflow-y-auto animate-in fade-in duration-200">
-                <div class="bg-background rounded-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg border border-border flex flex-col max-h-[82vh] sm:max-h-[86vh] my-auto overflow-hidden">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
+                 x-data
+                 x-init="document.body.classList.add('overflow-hidden')"
+                 x-destroy="document.body.classList.remove('overflow-hidden')">
+                <div class="bg-background rounded-2xl shadow-2xl w-full max-w-lg border border-border flex flex-col max-h-[85vh] sm:max-h-[88vh] overflow-hidden my-auto animate-in zoom-in-95 duration-150">
                     
                     {{-- Header (Fixed, aman dari notch HP) --}}
                     <div class="px-3.5 py-3 sm:p-4 border-b border-border flex items-center justify-between bg-muted/20 shrink-0">
@@ -739,7 +742,7 @@
                     {{-- Body: Form Input atau Dialog Konfirmasi Diff --}}
                     @if($isConfirmingExtend)
                         {{-- Tampilan Konfirmasi Diff Perpanjang --}}
-                        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain">
+                        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain touch-pan-y" style="-webkit-overflow-scrolling: touch;">
                             <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300">
                                 <div class="flex items-center gap-1.5 font-bold text-xs mb-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -806,7 +809,7 @@
                         </div>
                     @else
                         {{-- Form Input Perpanjangan --}}
-                        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain">
+                        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain touch-pan-y" style="-webkit-overflow-scrolling: touch;">
                             {{-- Quick Presets --}}
                             <div>
                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Pilihan Durasi</label>
@@ -929,8 +932,11 @@
 
         <!-- Edit Transaction Modal (Staff & Admin Friendly) -->
         @if($isEditingTrx)
-            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-2 sm:p-4 pt-12 sm:pt-4 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
-                <div class="bg-background rounded-2xl shadow-2xl w-full max-w-xl border border-border flex flex-col max-h-[82vh] sm:max-h-[86vh] my-auto overflow-hidden">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4 backdrop-blur-sm overscroll-contain animate-in fade-in duration-200"
+                 x-data
+                 x-init="document.body.classList.add('overflow-hidden')"
+                 x-destroy="document.body.classList.remove('overflow-hidden')">
+                <div class="bg-background rounded-2xl shadow-2xl w-full max-w-xl border border-border flex flex-col max-h-[85vh] sm:max-h-[88vh] overflow-hidden my-auto animate-in zoom-in-95 duration-150">
                     
                     {{-- Header Edit Modal --}}
                     <div class="px-3.5 py-3 border-b border-border flex items-center justify-between bg-muted/20 shrink-0">
@@ -955,7 +961,7 @@
                     {{-- Body: Form Edit atau Konfirmasi Diff --}}
                     @if($isConfirmingEdit)
                         {{-- Tampilan Konfirmasi Diff Sebelum Simpan --}}
-                        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain">
+                        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain touch-pan-y" style="-webkit-overflow-scrolling: touch;">
                             <div class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300">
                                 <div class="flex items-center gap-1.5 font-bold text-xs mb-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
@@ -1000,7 +1006,7 @@
                         </div>
                     @else
                         {{-- Form Edit Transaksi --}}
-                        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain">
+                        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain touch-pan-y" style="-webkit-overflow-scrolling: touch;">
                             
                             {{-- Info Banner Harga Awal (Staf tidak bingung) --}}
                             <div class="p-2.5 rounded-xl bg-muted/40 border border-border flex items-center justify-between text-[11px]">
@@ -1149,6 +1155,18 @@
     document.addEventListener('livewire:init', () => {
         Livewire.on('open-url', (event) => {
             if (event.url) window.open(event.url, '_blank');
+        });
+
+        // Kunci scrolling body ketika modal perpanjang/edit terbuka di mobile
+        Livewire.hook('commit', ({ component, commit, succeed }) => {
+            succeed(() => {
+                const hasModalOpen = document.querySelector('[x-data][x-init*="overflow-hidden"]');
+                if (hasModalOpen) {
+                    document.body.classList.add('overflow-hidden');
+                } else {
+                    document.body.classList.remove('overflow-hidden');
+                }
+            });
         });
     });
 </script>
