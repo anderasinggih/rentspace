@@ -8,12 +8,12 @@
     $variants = [
         'default' => 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
         'primary' => 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
-        'destructive' => 'bg-destructive text-destructive-foreground shadow-sm hover:opacity-90 rounded-full',
+        'destructive' => 'bg-rose-600 hover:bg-rose-500 text-white shadow-sm hover:opacity-90 rounded-full',
         'outline' => 'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
         'secondary' => 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
         'ghost' => 'hover:bg-accent hover:text-accent-foreground',
         'link' => 'text-primary underline-offset-4 hover:underline',
-        'success' => 'bg-success text-success-foreground shadow-sm hover:opacity-90 rounded-full',
+        'success' => 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm hover:opacity-95 rounded-full',
     ];
 
     $sizes = [
