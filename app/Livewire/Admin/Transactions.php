@@ -57,6 +57,12 @@ class Transactions extends Component
     public $edit_status, $edit_metode_pembayaran, $edit_catatan_kerusakan;
     public $edit_unit_ids = [];
     public $allUnitsList = [];
+    public $editOriginalData = []; // Untuk simpan snapshot harga & data awal
+    public $isConfirmingEdit = false;
+    public $editDiffs = [];
+    public $isConfirmingExtend = false;
+    public $extendPendingSendWa = false;
+    public $extendDiffData = [];
 
     public $completingTrxId = null;
     public $dendaAmount = 0;
@@ -451,11 +457,66 @@ class Transactions extends Component
         $this->isExtendingTrx = false;
         $this->extendTrxId = null;
         $this->extendWaUrl = '';
+        $this->isConfirmingExtend = false;
+        $this->extendPendingSendWa = false;
+        $this->extendDiffData = [];
     }
 
-    public function saveExtend($andSendWa = false)
+    public function confirmExtend($andSendWa = false)
     {
         if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+
+        $this->validate([
+            'extendNewSelesai' => 'required',
+            'extendBiayaSewa' => 'required|numeric|min:0',
+            'extendDendaTelat' => 'nullable|numeric|min:0',
+            'extendDiskon' => 'nullable|numeric|min:0',
+        ]);
+
+        $trx = Rental::with('units')->findOrFail($this->extendTrxId);
+        $currentEnd = \Carbon\Carbon::parse($trx->waktu_selesai);
+        $newEnd = \Carbon\Carbon::parse($this->extendNewSelesai);
+
+        if ($newEnd <= $currentEnd) {
+            $this->addError('extendNewSelesai', 'Waktu perpanjangan baru harus setelah jadwal selesai sebelumnya.');
+            return;
+        }
+
+        $biayaSewa = (float) $this->extendBiayaSewa;
+        $dendaTelat = (float) ($this->extendDendaTelat ?: 0);
+        $diskon = (float) ($this->extendDiskon ?: 0);
+        $selisihTagihan = $biayaSewa + $dendaTelat - $diskon;
+
+        $this->extendPendingSendWa = $andSendWa;
+        $this->extendDiffData = [
+            'booking_code' => $trx->booking_code,
+            'nama' => $trx->nama,
+            'unit_names' => $trx->units->pluck('seri')->implode(', ') ?: ($trx->unit->seri ?? 'Unit'),
+            'old_selesai' => $currentEnd->format('d M Y, H:i'),
+            'new_selesai' => $newEnd->format('d M Y, H:i'),
+            'durasi_tambah' => $this->extendHours,
+            'biaya_tambah' => $biayaSewa,
+            'denda_telat' => $dendaTelat,
+            'diskon' => $diskon,
+            'total_tambah' => $selisihTagihan,
+            'grand_total_lama' => $trx->grand_total,
+            'grand_total_baru' => $trx->grand_total + $selisihTagihan,
+            'catatan' => $this->extendCatatan,
+        ];
+
+        $this->isConfirmingExtend = true;
+    }
+
+    public function cancelConfirmExtend()
+    {
+        $this->isConfirmingExtend = false;
+    }
+
+    public function saveExtend($andSendWa = null)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'])) return;
+
+        $actualSendWa = is_null($andSendWa) ? $this->extendPendingSendWa : $andSendWa;
 
         $this->validate([
             'extendNewSelesai' => 'required',
@@ -549,7 +610,7 @@ class Transactions extends Component
 
         session()->flash('message', "Sewa {$trx->booking_code} berhasil diperpanjang s/d {$newEnd->format('d/m/Y H:i')}.");
 
-        if ($andSendWa && $waNumber) {
+        if ($actualSendWa && $waNumber) {
             $this->dispatch('open-url', url: $waUrl);
         }
 
@@ -682,7 +743,7 @@ class Transactions extends Component
     {
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
             return;
-        $trx = Rental::findOrFail($id);
+        $trx = Rental::with('units')->findOrFail($id);
         $this->editTrxId = $trx->id;
         $this->edit_nama = $trx->nama;
         $this->edit_email = $trx->email;
@@ -700,6 +761,29 @@ class Transactions extends Component
         $this->edit_metode_pembayaran = strtolower($trx->metode_pembayaran);
         $this->edit_unit_ids = $trx->units->pluck('id')->toArray();
         $this->allUnitsList = \App\Models\Unit::orderBy('seri')->get();
+
+        // Simpan data awal untuk referensi staf agar tahu harga awal & diff
+        $this->editOriginalData = [
+            'booking_code' => $trx->booking_code,
+            'nama' => $trx->nama,
+            'email' => $trx->email,
+            'no_wa' => $trx->no_wa,
+            'alamat' => $trx->alamat,
+            'waktu_mulai' => $this->edit_waktu_mulai,
+            'waktu_selesai' => $this->edit_waktu_selesai,
+            'subtotal' => (float)$trx->subtotal_harga,
+            'diskon' => (float)$trx->potongan_diskon,
+            'denda' => (float)$trx->denda,
+            'denda_kerusakan' => (float)$trx->denda_kerusakan,
+            'grand_total' => (float)$trx->grand_total,
+            'status' => $trx->status,
+            'metode_pembayaran' => strtolower($trx->metode_pembayaran),
+            'unit_ids' => $this->edit_unit_ids,
+            'unit_names' => $trx->units->pluck('seri')->implode(', ') ?: 'Unit',
+        ];
+
+        $this->isConfirmingEdit = false;
+        $this->editDiffs = [];
         $this->isEditingTrx = true;
     }
 
@@ -730,6 +814,117 @@ class Transactions extends Component
         $this->isEditingTrx = false;
         $this->editTrxId = null;
         $this->edit_unit_ids = [];
+        $this->isConfirmingEdit = false;
+        $this->editDiffs = [];
+        $this->editOriginalData = [];
+    }
+
+    public function confirmEdit()
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+
+        $this->validate([
+            'edit_nama' => 'required',
+            'edit_waktu_mulai' => 'required',
+            'edit_waktu_selesai' => 'required',
+            'edit_subtotal' => 'required|numeric|min:0',
+            'edit_diskon' => 'nullable|numeric|min:0',
+            'edit_denda' => 'nullable|numeric|min:0',
+            'edit_denda_kerusakan' => 'nullable|numeric|min:0',
+        ]);
+
+        $trx = Rental::with('units')->findOrFail($this->editTrxId);
+        $diffs = [];
+
+        if (trim(strtoupper($this->edit_nama)) !== trim(strtoupper($trx->nama))) {
+            $diffs['Nama Pelanggan'] = ['old' => $trx->nama, 'new' => strtoupper($this->edit_nama)];
+        }
+        if (trim($this->edit_no_wa) !== trim($trx->no_wa)) {
+            $diffs['No. WhatsApp'] = ['old' => $trx->no_wa, 'new' => $this->edit_no_wa];
+        }
+        if (trim($this->edit_email) !== trim($trx->email)) {
+            $diffs['Email'] = ['old' => $trx->email ?: '-', 'new' => $this->edit_email ?: '-'];
+        }
+
+        $oldStart = $trx->waktu_mulai->format('Y-m-d\TH:i');
+        if ($this->edit_waktu_mulai !== $oldStart) {
+            $diffs['Waktu Mulai'] = [
+                'old' => \Carbon\Carbon::parse($oldStart)->format('d M Y, H:i'),
+                'new' => \Carbon\Carbon::parse($this->edit_waktu_mulai)->format('d M Y, H:i'),
+            ];
+        }
+
+        $oldEnd = $trx->waktu_selesai->format('Y-m-d\TH:i');
+        if ($this->edit_waktu_selesai !== $oldEnd) {
+            $diffs['Waktu Selesai'] = [
+                'old' => \Carbon\Carbon::parse($oldEnd)->format('d M Y, H:i'),
+                'new' => \Carbon\Carbon::parse($this->edit_waktu_selesai)->format('d M Y, H:i'),
+            ];
+        }
+
+        $oldUnitIds = $trx->units->pluck('id')->sort()->values()->toArray();
+        $newUnitIds = collect($this->edit_unit_ids)->sort()->values()->toArray();
+        if ($oldUnitIds !== $newUnitIds) {
+            $newUnitNames = \App\Models\Unit::whereIn('id', $this->edit_unit_ids)->pluck('seri')->implode(', ');
+            $oldUnitNames = $trx->units->pluck('seri')->implode(', ');
+            $diffs['Pilihan Unit'] = ['old' => $oldUnitNames, 'new' => $newUnitNames ?: '-'];
+        }
+
+        if ((float)$this->edit_subtotal !== (float)$trx->subtotal_harga) {
+            $diffs['Biaya Sewa / Subtotal'] = [
+                'old' => 'Rp ' . number_format($trx->subtotal_harga, 0, ',', '.'),
+                'new' => 'Rp ' . number_format($this->edit_subtotal, 0, ',', '.'),
+            ];
+        }
+
+        if ((float)($this->edit_diskon ?: 0) !== (float)$trx->potongan_diskon) {
+            $diffs['Potongan Diskon'] = [
+                'old' => 'Rp ' . number_format($trx->potongan_diskon, 0, ',', '.'),
+                'new' => 'Rp ' . number_format($this->edit_diskon ?: 0, 0, ',', '.'),
+            ];
+        }
+
+        if ((float)($this->edit_denda ?: 0) !== (float)$trx->denda) {
+            $diffs['Denda Telat'] = [
+                'old' => 'Rp ' . number_format($trx->denda, 0, ',', '.'),
+                'new' => 'Rp ' . number_format($this->edit_denda ?: 0, 0, ',', '.'),
+            ];
+        }
+
+        if ((float)($this->edit_denda_kerusakan ?: 0) !== (float)$trx->denda_kerusakan) {
+            $diffs['Denda Kerusakan'] = [
+                'old' => 'Rp ' . number_format($trx->denda_kerusakan, 0, ',', '.'),
+                'new' => 'Rp ' . number_format($this->edit_denda_kerusakan ?: 0, 0, ',', '.'),
+            ];
+        }
+
+        $newGrandTotal = (float)$this->edit_subtotal - (float)($this->edit_diskon ?: 0) + (float)($this->edit_denda ?: 0) + (float)($this->edit_denda_kerusakan ?: 0) + $trx->kode_unik_pembayaran;
+        if ($newGrandTotal !== (float)$trx->grand_total) {
+            $diffs['Total Akhir (Grand Total)'] = [
+                'old' => 'Rp ' . number_format($trx->grand_total, 0, ',', '.'),
+                'new' => 'Rp ' . number_format($newGrandTotal, 0, ',', '.'),
+            ];
+        }
+
+        if ($this->edit_status !== $trx->status) {
+            $diffs['Status Transaksi'] = ['old' => strtoupper($trx->status), 'new' => strtoupper($this->edit_status)];
+        }
+
+        if (strtolower($this->edit_metode_pembayaran) !== strtolower($trx->metode_pembayaran)) {
+            $diffs['Metode Bayar'] = [
+                'old' => strtoupper($trx->metode_pembayaran),
+                'new' => strtoupper($this->edit_metode_pembayaran),
+            ];
+        }
+
+        $this->editDiffs = $diffs;
+        $this->isConfirmingEdit = true;
+    }
+
+    public function cancelConfirmEdit()
+    {
+        $this->isConfirmingEdit = false;
     }
 
     public function updateTrx()
@@ -741,10 +936,10 @@ class Transactions extends Component
             'edit_nama' => 'required',
             'edit_waktu_mulai' => 'required',
             'edit_waktu_selesai' => 'required',
-            'edit_subtotal' => 'required|numeric',
-            'edit_diskon' => 'required|numeric',
-            'edit_denda' => 'required|numeric',
-            'edit_denda_kerusakan' => 'required|numeric',
+            'edit_subtotal' => 'required|numeric|min:0',
+            'edit_diskon' => 'nullable|numeric|min:0',
+            'edit_denda' => 'nullable|numeric|min:0',
+            'edit_denda_kerusakan' => 'nullable|numeric|min:0',
         ]);
 
         $trx = Rental::findOrFail($this->editTrxId);
@@ -760,7 +955,7 @@ class Transactions extends Component
         ];
 
         // Recalculate Grand Total
-        $grandTotal = $this->edit_subtotal - $this->edit_diskon + $this->edit_denda + $this->edit_denda_kerusakan + $trx->kode_unik_pembayaran;
+        $grandTotal = (float)$this->edit_subtotal - (float)($this->edit_diskon ?: 0) + (float)($this->edit_denda ?: 0) + (float)($this->edit_denda_kerusakan ?: 0) + $trx->kode_unik_pembayaran;
 
         $trx->update([
             'nama' => strtoupper($this->edit_nama),
@@ -771,9 +966,9 @@ class Transactions extends Component
             'waktu_mulai' => $this->edit_waktu_mulai,
             'waktu_selesai' => $this->edit_waktu_selesai,
             'subtotal_harga' => $this->edit_subtotal,
-            'potongan_diskon' => $this->edit_diskon,
-            'denda' => $this->edit_denda,
-            'denda_kerusakan' => $this->edit_denda_kerusakan,
+            'potongan_diskon' => (float)($this->edit_diskon ?: 0),
+            'denda' => (float)($this->edit_denda ?: 0),
+            'denda_kerusakan' => (float)($this->edit_denda_kerusakan ?: 0),
             'catatan_kerusakan' => $this->edit_catatan_kerusakan,
             'grand_total' => $grandTotal,
             'status' => $this->edit_status,
