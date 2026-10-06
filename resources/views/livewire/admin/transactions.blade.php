@@ -698,60 +698,60 @@
             @php
                 $currTrx = \App\Models\Rental::with('units')->find($extendTrxId);
             @endphp
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                <div class="bg-background rounded-2xl shadow-2xl w-full max-w-lg border border-border flex flex-col max-h-[92vh] overflow-hidden">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+                <div class="bg-background rounded-2xl shadow-2xl w-full max-w-lg border border-border flex flex-col max-h-[88vh] sm:max-h-[90vh] my-auto overflow-hidden">
                     
-                    {{-- Header --}}
-                    <div class="p-5 border-b border-border flex items-center justify-between bg-muted/20">
-                        <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    {{-- Header (Fixed, tidak ikut ter-scroll) --}}
+                    <div class="px-4 py-3 sm:p-5 border-b border-border flex items-center justify-between bg-muted/20 shrink-0">
+                        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
+                            <div class="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20 shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" sm:width="20" sm:height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/>
                                 </svg>
                             </div>
-                            <div>
-                                <h3 class="text-base font-bold text-foreground flex items-center gap-2">
-                                    Perpanjang Masa Sewa
-                                    <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono font-semibold">
+                            <div class="min-w-0">
+                                <h3 class="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5 flex-wrap leading-snug">
+                                    <span>Perpanjang Masa Sewa</span>
+                                    <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono font-semibold">
                                         {{ $currTrx?->booking_code }}
                                     </span>
                                 </h3>
-                                <p class="text-xs text-muted-foreground mt-0.5">
+                                <p class="text-[11px] sm:text-xs text-muted-foreground mt-0.5 truncate max-w-[200px] sm:max-w-xs">
                                     {{ $currTrx?->nama }} &bull; {{ $currTrx?->units->pluck('seri')->implode(', ') }}
                                 </p>
                             </div>
                         </div>
-                        <button wire:click="closeExtendModal" class="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+                        <button wire:click="closeExtendModal" class="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                             </svg>
                         </button>
                     </div>
 
-                    {{-- Body --}}
-                    <div class="p-5 overflow-y-auto space-y-5 text-xs">
+                    {{-- Body (Scrollable dengan momentum touch di iOS & Android) --}}
+                    <div class="p-4 sm:p-5 overflow-y-auto space-y-4 sm:space-y-5 text-xs flex-1 overscroll-contain">
                         
                         {{-- Quick Presets --}}
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Pilihan Durasi Cepat</label>
-                            <div class="grid grid-cols-4 gap-2">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 <button type="button" wire:click="$set('extendPreset', '12')"
-                                    class="py-2.5 px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 {{ $extendPreset === '12' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
+                                    class="py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 {{ $extendPreset === '12' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
                                     <span>+12 Jam</span>
                                     <span class="text-[9px] font-normal opacity-80">Setengah Hari</span>
                                 </button>
                                 <button type="button" wire:click="$set('extendPreset', '24')"
-                                    class="py-2.5 px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 {{ $extendPreset === '24' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
+                                    class="py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 {{ $extendPreset === '24' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
                                     <span>+24 Jam</span>
                                     <span class="text-[9px] font-normal opacity-80">1 Hari Penuh</span>
                                 </button>
                                 <button type="button" wire:click="$set('extendPreset', '48')"
-                                    class="py-2.5 px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 {{ $extendPreset === '48' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
+                                    class="py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 {{ $extendPreset === '48' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
                                     <span>+2 Hari</span>
                                     <span class="text-[9px] font-normal opacity-80">48 Jam</span>
                                 </button>
                                 <button type="button" wire:click="$set('extendPreset', 'custom')"
-                                    class="py-2.5 px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 {{ $extendPreset === 'custom' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
+                                    class="py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-xl border text-center font-bold transition-all text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 {{ $extendPreset === 'custom' ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30' : 'bg-muted/40 hover:bg-muted border-border text-foreground' }}">
                                     <span>Custom</span>
                                     <span class="text-[9px] font-normal opacity-80">Pilih Waktu</span>
                                 </button>
@@ -759,15 +759,15 @@
                         </div>
 
                         {{-- Perbandingan Waktu Lama vs Baru --}}
-                        <div class="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-muted/40 border border-border">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-xl bg-muted/40 border border-border">
                             <div>
-                                <span class="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Jadwal Selesai Sebelumnya</span>
+                                <span class="text-[10px] font-bold text-muted-foreground uppercase block mb-0.5 sm:mb-1">Jadwal Selesai Sebelumnya</span>
                                 <div class="font-mono font-semibold text-foreground text-xs">
                                     {{ \Carbon\Carbon::parse($extendCurrentSelesai)->format('d M Y, H:i') }} WIB
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase block mb-1">Jadwal Selesai Baru (+{{ $extendHours }} jam)</span>
+                            <div class="sm:text-right">
+                                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase block mb-0.5 sm:mb-1">Jadwal Selesai Baru (+{{ $extendHours }} jam)</span>
                                 <div class="font-mono font-bold text-amber-600 dark:text-amber-400 text-xs">
                                     {{ $extendNewSelesai ? \Carbon\Carbon::parse($extendNewSelesai)->format('d M Y, H:i') . ' WIB' : '-' }}
                                 </div>
@@ -788,12 +788,12 @@
 
                         {{-- Form Penyesuaian Biaya (Sewa Tambahan, Denda Telat, Diskon) --}}
                         <div class="space-y-3">
-                            <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between flex-wrap gap-1">
                                 <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Kalkulasi Tagihan Tambahan</label>
                                 <span class="text-[10px] text-muted-foreground italic">Dapat disesuaikan manual</span>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                                 <div>
                                     <label class="block text-[10px] font-bold text-foreground mb-1">Biaya Sewa Tambahan</label>
                                     <div class="relative">
@@ -834,17 +834,17 @@
                         </div>
 
                         {{-- Total Tagihan Tambahan Card --}}
-                        <div class="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20">
-                            <div class="flex items-center justify-between">
+                        <div class="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div>
                                     <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 block">Total Tagihan Perpanjangan</span>
                                     <span class="text-[11px] text-muted-foreground">Kekurangan biaya yang harus dibayar customer</span>
                                 </div>
-                                <div class="text-right">
-                                    <div class="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
+                                <div class="text-left sm:text-right">
+                                    <div class="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
                                         Rp {{ number_format($extendTotalTagihan, 0, ',', '.') }}
                                     </div>
-                                    <span class="text-[9px] text-muted-foreground">
+                                    <span class="text-[9px] text-muted-foreground block sm:inline">
                                         (Rp {{ number_format($extendBiayaSewa, 0, ',', '.') }} + Rp {{ number_format($extendDendaTelat, 0, ',', '.') }} - Rp {{ number_format($extendDiskon, 0, ',', '.') }})
                                     </span>
                                 </div>
@@ -853,8 +853,8 @@
 
                     </div>
 
-                    {{-- Footer --}}
-                    <div class="p-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 bg-muted/20">
+                    {{-- Footer (Fixed, tidak ikut ter-scroll) --}}
+                    <div class="p-3 sm:p-4 border-t border-border flex flex-col-reverse sm:flex-row items-center justify-between gap-2 sm:gap-3 bg-muted/20 shrink-0">
                         <x-ui.button wire:click="closeExtendModal" variant="outline" size="sm" class="w-full sm:w-auto rounded-xl">
                             Batal
                         </x-ui.button>
@@ -872,7 +872,7 @@
                             <button type="button" wire:click="saveExtend(true)"
                                 wire:loading.attr="disabled"
                                 wire:target="saveExtend"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all active:scale-95 flex-1 sm:flex-initial">
+                                class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all active:scale-95 flex-1 sm:flex-initial">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                                 </svg>

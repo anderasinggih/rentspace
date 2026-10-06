@@ -178,7 +178,7 @@
 
         <!-- Footer link & Logout -->
         <div class="px-2 pb-2 pt-1 border-t border-border/40 space-y-1">
-            <a href="/" wire:navigate @click="adminMenuOpen = false"
+            <a href="/?pwa_redirect=0" wire:navigate @click="adminMenuOpen = false; sessionStorage.setItem('allow_pwa_public', 'true');"
                 class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-muted text-foreground transition">
                 <div class="h-7 w-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
                     <span class="text-xs">↗</span>
@@ -436,7 +436,7 @@
                             </a>
                         @endif
 
-                        <a href="/" wire:navigate @click="adminMenuOpen = false"
+                        <a href="/?pwa_redirect=0" wire:navigate @click="adminMenuOpen = false; sessionStorage.setItem('allow_pwa_public', 'true');"
                             class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-muted text-foreground transition text-xs font-semibold">
                             <div class="h-6 w-6 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
                                 <span class="text-xs">↗</span>

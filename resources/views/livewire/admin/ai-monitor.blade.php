@@ -1435,28 +1435,67 @@
                     this.lastActivityAt = (typeof performance !== 'undefined') ? performance.now() : Date.now();
                 },
 
-                requestAgentStatus(character, status) {
+                // Timer untuk otomatis kembali santai ke sofa setelah selesai balas chat
+                autoBreakTimers: {},
+
+                scheduleAutoBreak(character, delayMs = 25000) {
+                    if (this.autoBreakTimers[character]) {
+                        clearTimeout(this.autoBreakTimers[character]);
+                        this.autoBreakTimers[character] = null;
+                    }
+                    this.autoBreakTimers[character] = setTimeout(() => {
+                        console.log(`[3D Office] Auto-break triggered for ${character} after ${delayMs}ms idle`);
+                        this.requestAgentStatus(character, 'break');
+                    }, delayMs);
+                },
+
+                clearAutoBreak(character) {
+                    if (this.autoBreakTimers[character]) {
+                        clearTimeout(this.autoBreakTimers[character]);
+                        this.autoBreakTimers[character] = null;
+                    }
+                },
+
+                requestAgentStatus(character, status, force = false) {
                     const cfg = this.agentConfig[character];
                     if (!cfg) return false;
                     const group = this[cfg.group];
 
-                    // Scene belum siap -> antrikan dulu,_flushPendingStatus() akan
+                    // Scene belum siap -> antrikan dulu, flushPendingStatus() akan
                     // memainkannya begitu 3D scene selesai dibangun.
                     if (!group) {
                         this.pendingStatus[character] = status;
                         return false;
                     }
 
-                    const walking = this[cfg.walk].isMoving;
+                    const walking = this[cfg.walk]?.isMoving;
                     const sameStatus = this[cfg.status] === status;
-                    const inPlace = this.isAtSpot(group, this.targetSpotFor(character, status));
+                    const targetSpot = this.targetSpotFor(character, status);
+                    const inPlace = this.isAtSpot(group, targetSpot);
 
-                    // Sudah di tempat, atau masih dalam perjalanan ke target yang sama.
-                    if (sameStatus && (walking || inPlace)) {
+                    // Bila status 'working', reset timer auto-break
+                    if (status === 'working') {
+                        this.clearAutoBreak(character);
+                        // Jadwalkan auto-return ke sofa setelah 25 detik hening
+                        this.scheduleAutoBreak(character, 25000);
+                    } else if (status === 'break') {
+                        this.clearAutoBreak(character);
+                    }
+
+                    // Jika karakter SEDANG berjalan ke spot tujuan yang tepat, jangan ganggu rutenya
+                    if (walking && sameStatus) {
                         this.markActivity();
                         return false;
                     }
 
+                    // Jika sudah tepat di tempat dan status sama (tanpa dipaksa force) -> cukup catat aktivitas
+                    if (!force && sameStatus && inPlace) {
+                        this.markActivity();
+                        return false;
+                    }
+
+                    // Jika karakter berada di luar spot tujuan (misal Dewi di sofa/kamar saat notif chat masuk),
+                    // atau forced oleh WebSocket/sandbox -> eksekusi rute jalan secara instan!
                     this[cfg.move](status);
                     this.markActivity();
                     return true;
@@ -1469,18 +1508,18 @@
                     this.pendingStatus = {};
 
                     if (Object.keys(queued).length) {
-                        Object.keys(queued).forEach((key) => this.requestAgentStatus(key, queued[key]));
+                        Object.keys(queued).forEach((key) => this.requestAgentStatus(key, queued[key], true));
                         return;
                     }
 
                     Object.keys(this.agentConfig).forEach((key) => {
                         const cfg = this.agentConfig[key];
-                        this.requestAgentStatus(key, this[cfg.status]);
+                        this.requestAgentStatus(key, this[cfg.status], false);
                     });
                 },
 
                 // Jaring pengaman terakhir: kalau WebSocket sempat putus atau event
-                // telat datang, karakter tetap CARTUM. Idle >2 detik tanpa sampai ke
+                // telat datang, karakter tetap sinkron. Idle >2 detik tanpa sampai ke
                 // tujuan -> re-path dengan status terakhir yang diketahui.
                 reconcileTick(nowMs) {
                     this.lastActivityAt = nowMs;
@@ -1488,7 +1527,7 @@
                     Object.keys(this.agentConfig).forEach((key) => {
                         const cfg = this.agentConfig[key];
                         const group = this[cfg.group];
-                        if (!group || this[cfg.walk].isMoving) return;
+                        if (!group || this[cfg.walk]?.isMoving) return;
                         const spot = this.targetSpotFor(key, this[cfg.status]);
                         if (!spot || this.isAtSpot(group, spot)) return;
                         this[cfg.move](this[cfg.status]);

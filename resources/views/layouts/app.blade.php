@@ -38,9 +38,18 @@
     @livewireStyles
     <script>
         // Otomatis redirect ke halaman admin / login admin jika dibuka dari PWA (Standalone Mode)
+        // KECUALI jika pengguna secara sengaja membuka Web Publik lewat menu (pwa_redirect=0 / sessionStorage)
         (function() {
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-            if (isStandalone && window.location.pathname === '/') {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('pwa_redirect') === '0' || urlParams.get('force_public') === '1') {
+                sessionStorage.setItem('allow_pwa_public', 'true');
+            }
+
+            const allowPublic = sessionStorage.getItem('allow_pwa_public') === 'true';
+
+            if (isStandalone && window.location.pathname === '/' && !allowPublic) {
                 @auth
                     window.location.replace('/admin');
                 @else

@@ -38,6 +38,14 @@
                     class="text-sm font-medium transition-colors {{ request()->routeIs('public.about') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
                     Tentang & FAQ
                 </a>
+                @auth
+                    @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                        <a href="{{ route('admin.dashboard') }}" wire:navigate
+                            class="text-sm font-bold text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1">
+                            <span>⚡ Dashboard</span>
+                        </a>
+                    @endif
+                @endauth
                 <a href="{{ route('affiliate.login') }}" wire:navigate
                     class="text-sm font-medium transition-colors {{ request()->routeIs('affiliate.*') ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground' }}">
                     Affiliate
@@ -144,6 +152,15 @@
         <a href="{{ route('public.about') }}" wire:navigate
             class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('public.about') ? 'bg-black/5 dark:bg-white/10 text-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground' }}">
             Tentang & FAQ</a>
+        @auth
+            @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                <a href="{{ route('admin.dashboard') }}" wire:navigate
+                    class="px-4 py-2.5 rounded-xl text-sm font-bold text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 transition-all flex items-center justify-between">
+                    <span>⚡ Kembali ke Dashboard</span>
+                    <span class="text-xs">›</span>
+                </a>
+            @endif
+        @endauth
         <a href="{{ route('affiliate.login') }}" wire:navigate
             class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('affiliate.*') ? 'bg-black/5 dark:bg-white/10 text-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground' }}">
             Affiliate Center</a>
