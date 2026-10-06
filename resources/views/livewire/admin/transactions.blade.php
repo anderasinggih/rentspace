@@ -1009,10 +1009,16 @@
                         <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain touch-pan-y" style="-webkit-overflow-scrolling: touch;">
                             
                             {{-- Info Banner Harga Awal (Staf tidak bingung) --}}
-                            <div class="p-2.5 rounded-xl bg-muted/40 border border-border flex items-center justify-between text-[11px]">
+                            <div class="p-2.5 rounded-xl bg-muted/40 border border-border flex items-center justify-between text-[11px] flex-wrap gap-2">
                                 <div>
                                     <span class="text-muted-foreground block text-[10px]">Subtotal Awal:</span>
                                     <span class="font-mono font-bold text-foreground">Rp {{ number_format($editOriginalData['subtotal'] ?? 0, 0, ',', '.') }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-muted-foreground block text-[10px]">Voucher Awal:</span>
+                                    <span class="font-semibold text-emerald-600 dark:text-emerald-400">
+                                        {{ $editOriginalData['promo_name'] ?? '-' }}
+                                    </span>
                                 </div>
                                 <div class="text-right">
                                     <span class="text-muted-foreground block text-[10px]">Grand Total Awal:</span>
@@ -1078,6 +1084,49 @@
                                             <span class="text-[9px] font-mono text-muted-foreground">Rp {{ number_format($unit->harga_per_hari, 0, ',', '.') }}/hr</span>
                                         </label>
                                     @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Voucher / Promo Dipasang --}}
+                            <div class="space-y-1.5 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+                                        <span>Voucher / Kupon Promo</span>
+                                    </label>
+                                    @if($edit_promo_id)
+                                        <button type="button" wire:click="$set('edit_promo_id', null)"
+                                            class="text-[10px] text-rose-500 hover:underline font-semibold">
+                                            Lepas Voucher
+                                        </button>
+                                    @endif
+                                </div>
+                                <div class="grid grid-cols-1 gap-1.5">
+                                    <select wire:model.live="edit_promo_id"
+                                        class="w-full h-8 rounded-lg border border-input bg-background px-2.5 text-xs focus:ring-1 focus:ring-emerald-500 outline-none text-foreground font-medium">
+                                        <option value="">-- Tidak Menggunakan Voucher --</option>
+                                        @foreach($availableVouchersList as $voucher)
+                                            <option value="{{ $voucher->id }}">
+                                                {{ $voucher->nama_promo }}
+                                                @if($voucher->kode_promo) [{{ $voucher->kode_promo }}] @endif
+                                                - 
+                                                @if($voucher->tipe === 'diskon_persen')
+                                                    Diskon {{ $voucher->value }}%
+                                                @elseif($voucher->tipe === 'diskon_nominal')
+                                                    Potongan Rp {{ number_format($voucher->value, 0, ',', '.') }}
+                                                @elseif($voucher->tipe === 'hari_gratis')
+                                                    Gratis {{ $voucher->value }} Hari
+                                                @elseif($voucher->tipe === 'jam_gratis')
+                                                    Gratis {{ $voucher->value }} Jam
+                                                @else
+                                                    {{ ucfirst($voucher->tipe) }}
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <p class="text-[9px] text-muted-foreground leading-tight">
+                                        Memilih voucher akan otomatis menghitung potongan diskon. Staf tetap dapat menyesuaikan nominal diskon secara manual di bawah.
+                                    </p>
                                 </div>
                             </div>
 

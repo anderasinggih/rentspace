@@ -57,6 +57,8 @@ class Transactions extends Component
     public $edit_status, $edit_metode_pembayaran, $edit_catatan_kerusakan;
     public $edit_unit_ids = [];
     public $allUnitsList = [];
+    public $availableVouchersList = [];
+    public $edit_promo_id = null;
     public $editOriginalData = []; // Untuk simpan snapshot harga & data awal
     public $isConfirmingEdit = false;
     public $editDiffs = [];
@@ -761,9 +763,14 @@ class Transactions extends Component
         $this->edit_metode_pembayaran = strtolower($trx->metode_pembayaran);
         $this->edit_unit_ids = $trx->units->pluck('id')->toArray();
         $this->allUnitsList = \App\Models\Unit::orderBy('seri')->get();
+        $this->availableVouchersList = \App\Models\PricingRule::orderBy('nama_promo')->get();
+        $this->edit_promo_id = $trx->applied_promo_id ? (int)$trx->applied_promo_id : null;
 
         // Simpan data awal untuk referensi staf agar tahu harga awal & diff
         $this->editOriginalData = [
+            'promo_id' => $this->edit_promo_id,
+            'promo_name' => $trx->applied_promo_name ?: ($trx->appliedPromo?->nama_promo ?: '-'),
+            'affiliate_code' => $trx->affiliate_code ?: null,
             'booking_code' => $trx->booking_code,
             'nama' => $trx->nama,
             'email' => $trx->email,
@@ -785,6 +792,23 @@ class Transactions extends Component
         $this->isConfirmingEdit = false;
         $this->editDiffs = [];
         $this->isEditingTrx = true;
+    }
+
+    public function updatedEditPromoId($val)
+    {
+        if (empty($val)) {
+            return;
+        }
+
+        $voucher = \App\Models\PricingRule::find($val);
+        if (!$voucher) return;
+
+        if ($voucher->tipe === 'diskon_persen') {
+            $percent = min(100, max(0, (float)$voucher->value));
+            $this->edit_diskon = round(((float)$this->edit_subtotal * $percent) / 100);
+        } elseif ($voucher->tipe === 'diskon_nominal') {
+            $this->edit_diskon = min((float)$this->edit_subtotal, (float)$voucher->value);
+        }
     }
 
     public function recalculateEditSubtotal()
@@ -878,6 +902,18 @@ class Transactions extends Component
             ];
         }
 
+        $oldPromoId = $trx->applied_promo_id ? (int)$trx->applied_promo_id : null;
+        $newPromoId = $this->edit_promo_id ? (int)$this->edit_promo_id : null;
+        if ($oldPromoId !== $newPromoId) {
+            $oldPromoName = $trx->applied_promo_name ?: ($trx->appliedPromo?->nama_promo ?: 'Tanpa Voucher');
+            $newPromo = $this->edit_promo_id ? \App\Models\PricingRule::find($this->edit_promo_id) : null;
+            $newPromoName = $newPromo ? ($newPromo->nama_promo . ($newPromo->kode_promo ? ' (' . $newPromo->kode_promo . ')' : '')) : 'Tanpa Voucher';
+            $diffs['Voucher / Promo'] = [
+                'old' => $oldPromoName,
+                'new' => $newPromoName,
+            ];
+        }
+
         if ((float)($this->edit_diskon ?: 0) !== (float)$trx->potongan_diskon) {
             $diffs['Potongan Diskon'] = [
                 'old' => 'Rp ' . number_format($trx->potongan_diskon, 0, ',', '.'),
@@ -957,6 +993,8 @@ class Transactions extends Component
         // Recalculate Grand Total
         $grandTotal = (float)$this->edit_subtotal - (float)($this->edit_diskon ?: 0) + (float)($this->edit_denda ?: 0) + (float)($this->edit_denda_kerusakan ?: 0) + $trx->kode_unik_pembayaran;
 
+        $selectedPromo = $this->edit_promo_id ? \App\Models\PricingRule::find($this->edit_promo_id) : null;
+
         $trx->update([
             'nama' => strtoupper($this->edit_nama),
             'email' => $this->edit_email,
@@ -973,7 +1011,15 @@ class Transactions extends Component
             'grand_total' => $grandTotal,
             'status' => $this->edit_status,
             'metode_pembayaran' => strtolower($this->edit_metode_pembayaran),
+            'applied_promo_id' => $selectedPromo?->id,
+            'applied_promo_name' => $selectedPromo?->nama_promo,
         ]);
+
+        if ($selectedPromo) {
+            $trx->appliedPromos()->sync([$selectedPromo->id]);
+        } else {
+            $trx->appliedPromos()->detach();
+        }
 
         if (!empty($this->edit_unit_ids)) {
             $syncData = [];
