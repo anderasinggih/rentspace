@@ -20,30 +20,7 @@ class StaffLogResource extends Resource
 {
     protected static ?string $model = StaffLog::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
-
-    protected static ?string $navigationLabel = 'Catatan Aktivitas';
-
-    protected static ?string $modelLabel = 'Catatan Aktivitas';
-
-    protected static ?string $pluralModelLabel = 'Catatan Aktivitas';
-
-    protected static ?int $navigationSort = 10;
-
-    public static function canCreate(): bool
-    {
-        return false;
-    }
-
-    public static function canEdit(mixed $record): bool
-    {
-        return false;
-    }
-
-    public static function canDelete(mixed $record): bool
-    {
-        return false;
-    }
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     public static function form(Schema $schema): Schema
     {
