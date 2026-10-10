@@ -141,7 +141,7 @@
                 <div class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.staff-logs') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
                 </div>
-                <span class="text-xs font-semibold flex-1">Activity Log</span>
+                <span class="text-xs font-semibold flex-1">Log Aktivitas Tim</span>
                 <span class="text-xs text-muted-foreground/40">›</span>
             </a>
 

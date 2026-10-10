@@ -63,7 +63,7 @@ class StaffLogs extends Component
     {
         $categoryMap = [
             'transaksi' => ['mark_as_paid', 'handover_unit', 'cancel_transaction', 'complete_rental', 'edit_transaction', 'extend_rental', 'denda_paid'],
-            'unit' => ['add_unit', 'update_unit', 'delete_unit', 'restore_unit', 'force_delete_unit', 'manage_category', 'manage_unit'],
+            'unit' => ['add_unit', 'create_unit', 'update_unit', 'edit_unit', 'delete_unit', 'restore_unit', 'force_delete_unit', 'manage_category', 'manage_unit'],
             'promo' => ['add_promo', 'update_promo', 'delete_promo', 'restore_promo', 'create_pricing_rule'],
             'system' => ['update_setting', 'whatsapp_broadcast', 'login', 'logout', 'payout_affiliate']
         ];
