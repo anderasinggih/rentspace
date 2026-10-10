@@ -108,10 +108,177 @@
         </div>
 
         <div class="mt-4 flow-root">
-            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        {{-- MOBILE VIEW: Compact List Cards (< md) --}}
+        <div class="block md:hidden space-y-2.5 mb-4">
+            @forelse ($transactions as $trx)
+                @php
+                    $tolerance = (int) \App\Models\Setting::getVal('late_tolerance_minutes', 60);
+                    $isLate = ($trx->status === 'renting' && \Carbon\Carbon::parse($trx->waktu_selesai)->addMinutes($tolerance) < now());
+                @endphp
+                <div wire:click="openInspect({{ $trx->id }})"
+                    class="bg-card border border-border/80 rounded-xl p-3 shadow-2xs hover:border-border transition-all cursor-pointer {{ $trx->status === 'cancelled' ? 'opacity-60' : '' }}">
+                    
+                    {{-- Baris 1: Nama Pelanggan, Booking Code, Badge Status --}}
+                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="font-bold text-foreground text-sm truncate max-w-[150px]" title="{{ $trx->nama }}">{{ $trx->nama }}</span>
+                            <button type="button"
+                                x-data="{ copied: false }"
+                                @click.stop="navigator.clipboard.writeText('{{ $trx->booking_code }}'); copied = true; setTimeout(() => copied = false, 1500)"
+                                class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-tight border transition-colors shrink-0"
+                                :class="copied ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border'">
+                                <span x-text="copied ? 'Tersalin' : '{{ $trx->booking_code }}'"></span>
+                            </button>
+                        </div>
+
+                        <div class="shrink-0">
+                            @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
+                                <x-ui.badge variant="amber" class="text-[10px] px-1.5 py-0">{{ $trx->status === 'pending_confirmation' ? 'Verifikasi' : 'Pending' }}</x-ui.badge>
+                            @elseif($trx->status === 'paid')
+                                <x-ui.badge variant="blue" class="text-[10px] px-1.5 py-0">Siap Ambil</x-ui.badge>
+                            @elseif($trx->status === 'renting')
+                                <x-ui.badge variant="emerald" class="text-[10px] px-1.5 py-0">Sedang Sewa</x-ui.badge>
+                            @elseif($trx->status === 'completed')
+                                <x-ui.badge variant="green" class="text-[10px] px-1.5 py-0">Selesai</x-ui.badge>
+                            @else
+                                <x-ui.badge variant="red" class="text-[10px] px-1.5 py-0">Batal</x-ui.badge>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Baris 2: Unit & Jadwal Sewa --}}
+                    <div class="flex items-center justify-between text-xs text-muted-foreground gap-2 mb-2">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="font-medium text-foreground truncate">
+                                @if($trx->units->isNotEmpty())
+                                    {{ $trx->units->pluck('seri')->implode(', ') }}
+                                @elseif($trx->unit)
+                                    {{ $trx->unit->seri }}
+                                @else
+                                    -
+                                @endif
+                            </span>
+                            @if($isLate)
+                                <span class="px-1 py-0.2 rounded text-[9px] font-bold bg-destructive/15 text-destructive border border-destructive/20 shrink-0">
+                                    Telat
+                                </span>
+                            @endif
+                        </div>
+                        <div class="text-[11px] shrink-0">
+                            {{ \Carbon\Carbon::parse($trx->waktu_mulai)->format('d M H:i') }} - {{ \Carbon\Carbon::parse($trx->waktu_selesai)->format('d M H:i') }}
+                        </div>
+                    </div>
+
+                    {{-- Baris 3: Total Bayar & Aksi Cepat --}}
+                    <div class="flex items-center justify-between pt-2 border-t border-border/60 gap-2">
+                        <div>
+                            <div class="font-bold text-foreground text-sm leading-none">
+                                Rp {{ number_format($trx->grand_total, 0, ',', '.') }}
+                            </div>
+                            <div class="text-[10px] text-muted-foreground uppercase font-mono mt-0.5">
+                                {{ $trx->metode_pembayaran }}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 shrink-0" @click.stop>
+                            <a href="https://wa.me/{{ preg_replace('/^0/', '62', $trx->no_wa) }}" target="_blank"
+                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-500/20 transition-colors"
+                                title="Hubungi WhatsApp">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.075-2.227-.557-1.838-.758-3.018-2.618-3.11-2.74-.09-.122-.738-.981-.738-1.871 0-.89.467-1.328.633-1.506.166-.178.363-.223.484-.223.12 0 .241.002.348.007.112.006.262-.042.41.312.152.365.518 1.265.563 1.357.045.092.076.198.016.32-.06.122-.09.198-.18.304-.09.107-.189.239-.27.321-.09.092-.185.192-.08.373.105.18.468.772 1.004 1.25.688.613 1.27.803 1.45.895.18.091.286.076.392-.046.105-.122.451-.525.572-.707.12-.182.241-.152.406-.091.166.06 1.055.498 1.236.589.18.09.301.137.346.213.045.076.045.441-.099.846z"/>
+                                </svg>
+                            </a>
+
+                            @if($filterStatus === 'trashed')
+                                @if(auth()->user()->role === 'admin')
+                                    <button wire:click.stop="restore({{ $trx->id }})" wire:confirm="Pulihkan transaksi ini?"
+                                        class="h-8 px-2.5 rounded-lg text-xs font-semibold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20">
+                                        Pulihkan
+                                    </button>
+                                    <button wire:click.stop="forceDelete({{ $trx->id }})" wire:confirm="Hapus permanen transaksi ini?"
+                                        class="h-8 px-2.5 rounded-lg text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20">
+                                        Hapus
+                                    </button>
+                                @endif
+                            @else
+                                @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
+                                    @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                        <button wire:click.stop="markAsPaid({{ $trx->id }})" wire:confirm="Konfirmasi pembayaran lunas?"
+                                            wire:loading.attr="disabled" wire:target="markAsPaid({{ $trx->id }})"
+                                            class="h-8 px-2.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs">
+                                            Validasi Lunas
+                                        </button>
+                                    @endif
+                                @elseif($trx->status === 'paid')
+                                    @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                        <button wire:click.stop="handover({{ $trx->id }})" wire:confirm="Serahkan unit ke penyewa?"
+                                            wire:loading.attr="disabled" wire:target="handover({{ $trx->id }})"
+                                            class="h-8 px-2.5 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-xs">
+                                            Serahkan Unit
+                                        </button>
+                                    @endif
+                                @elseif($trx->status === 'renting')
+                                    @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                        <button wire:click.stop="openDendaModal({{ $trx->id }})"
+                                            class="h-8 px-2.5 rounded-lg text-xs font-semibold {{ $isLate ? 'bg-destructive text-destructive-foreground' : 'bg-emerald-600 text-white' }} shadow-xs">
+                                            Unit Kembali
+                                        </button>
+                                    @endif
+                                @else
+                                    <button wire:click.stop="openInspect({{ $trx->id }})"
+                                        class="h-8 px-2.5 rounded-lg text-xs font-medium text-muted-foreground border border-border">
+                                        Detail
+                                    </button>
+                                @endif
+
+                                @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                    <button wire:click.stop="editTrx({{ $trx->id }})"
+                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground border border-border"
+                                        title="Edit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                    </button>
+                                @endif
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Inspeksi Detail di Mobile jika baris ini di-inspect --}}
+                    @if($inspectTrxId === $trx->id && $inspectTrx)
+                        <div class="mt-2.5 pt-2.5 border-t border-border/80 text-xs space-y-2 bg-muted/40 -mx-3 -mb-3 p-3 rounded-b-xl animate-in fade-in duration-200">
+                            <div class="flex items-center justify-between font-bold text-foreground">
+                                <span>Detail Pesanan</span>
+                                <button wire:click.stop="closeInspect" class="text-xs text-muted-foreground hover:text-foreground">Tutup</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                <div>
+                                    <span class="text-muted-foreground block">Mulai:</span>
+                                    <span class="font-medium text-foreground">{{ $inspectTrx->waktu_mulai->format('d M Y, H:i') }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-muted-foreground block">Selesai:</span>
+                                    <span class="font-medium text-foreground">{{ $inspectTrx->waktu_selesai->format('d M Y, H:i') }}</span>
+                                </div>
+                            </div>
+                            @if($inspectTrx->catatan)
+                                <div class="text-[11px]">
+                                    <span class="text-muted-foreground block">Catatan:</span>
+                                    <span class="text-foreground">{{ $inspectTrx->catatan }}</span>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                </div>
+            @empty
+                <div class="py-8 text-center text-xs text-muted-foreground bg-card border border-border rounded-xl">
+                    Belum ada transaksi penyewaan yang masuk.
+                </div>
+            @endforelse
+        </div>
+            <div class="hidden md:block -mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                     <div class="overflow-hidden shadow ring-1 ring-border rounded-lg bg-background">
-                        <table class="min-w-full divide-y divide-border">
+                        <table class="min-w-[760px] w-full divide-y divide-border">
                             <thead>
                                 <tr class="bg-muted/50">
                                     <th scope="col"
@@ -159,7 +326,7 @@
                                         class="cursor-pointer hover:bg-muted/40 transition-colors group/row {{ $trx->status === 'cancelled' ? 'opacity-50' : '' }}">
                                         
                                         {{-- 1. Pelanggan --}}
-                                        <td class="py-3.5 pl-4 pr-3 sm:pl-6 align-top">
+                                        <td class="py-2.5 pl-4 pr-3 sm:pl-6 align-middle">
                                             <div class="flex flex-col gap-1">
                                                 <div class="font-bold text-foreground text-sm leading-tight truncate max-w-[200px]" title="{{ $trx->nama }}">
                                                     {{ $trx->nama }}
@@ -190,7 +357,7 @@
                                         </td>
 
                                         {{-- 2. Unit & Jadwal --}}
-                                        <td class="py-3.5 px-3 align-top">
+                                        <td class="py-2.5 px-3 align-middle">
                                             <div class="flex flex-col gap-1">
                                                 <div class="font-semibold text-foreground text-xs leading-tight">
                                                     @if($trx->units->isNotEmpty())
@@ -214,7 +381,7 @@
                                         </td>
 
                                         {{-- 3. Total Bayar --}}
-                                        <td class="py-3.5 px-3 align-top">
+                                        <td class="py-2.5 px-3 align-middle">
                                             <div class="flex flex-col gap-1">
                                                 <div class="font-bold text-foreground text-sm leading-tight">
                                                     Rp {{ number_format($trx->grand_total, 0, ',', '.') }}
@@ -240,7 +407,7 @@
                                         </td>
 
                                         {{-- 4. Aksi Cepat --}}
-                                        <td class="py-3.5 pl-3 pr-4 sm:pr-6 align-top text-right">
+                                        <td class="py-2.5 pl-3 pr-4 sm:pr-6 align-middle text-right">
                                             <div class="flex items-center justify-end gap-1.5 flex-wrap">
                                                 @if($filterStatus === 'trashed')
                                                     @if(auth()->user()->role === 'admin')
