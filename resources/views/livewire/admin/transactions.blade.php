@@ -150,7 +150,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border text-xs">
-                                @forelse ( as )
+                                @forelse ($transactions as $trx)
                                     @php
                                         $tolerance = (int) \App\Models\Setting::getVal('late_tolerance_minutes', 60);
                                         $isLate = ($trx->status === 'renting' && \Carbon\Carbon::parse($trx->waktu_selesai)->addMinutes($tolerance) < now());
