@@ -8,10 +8,12 @@ use App\Mail\OrderCancelledNotification;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
+use App\Helpers\ImageOptimizer;
 
 class Transactions extends Component
 {
-    use WithPagination, \App\Traits\LogsStaffActivity;
+    use WithPagination, WithFileUploads, \App\Traits\LogsStaffActivity;
 
     public $search = '';
     public $filterStatus = 'all';
@@ -92,6 +94,17 @@ class Transactions extends Component
     // Inspect Modal
     public $inspectTrxId = null;
     public $inspectTrx = null;
+
+    // Modal Validasi Lunas (Foto Bukti Pembayaran)
+    public $confirmingPaymentTrxId = null;
+    public $confirmingPaymentTrx = null;
+    public $buktiBayarFile = null;
+
+    // Modal Serah Terima / Pengambilan (Foto Bukti Penyerahan Unit)
+    public $confirmingHandoverTrxId = null;
+    public $confirmingHandoverTrx = null;
+    public $buktiAmbilFile = null;
+
     public $sortField = 'waktu_mulai';
     public $sortDirection = 'desc';
 
@@ -121,6 +134,42 @@ class Transactions extends Component
         }
     }
 
+    public function openPaymentModal($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+        $this->confirmingPaymentTrxId = $id;
+        $this->confirmingPaymentTrx = Rental::with('units')->find($id);
+        $this->buktiBayarFile = null;
+    }
+
+    public function closePaymentModal()
+    {
+        $this->confirmingPaymentTrxId = null;
+        $this->confirmingPaymentTrx = null;
+        $this->buktiBayarFile = null;
+        $this->resetErrorBag(['buktiBayarFile']);
+    }
+
+    public function confirmMarkAsPaid()
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+
+        if (!$this->confirmingPaymentTrxId)
+            return;
+
+        $this->validate([
+            'buktiBayarFile' => 'nullable|image|max:10240', // max 10MB upload before compression
+        ], [
+            'buktiBayarFile.image' => 'File bukti bayar harus berupa gambar (JPG, PNG, WebP).',
+            'buktiBayarFile.max' => 'Ukuran file bukti bayar maksimal 10MB.',
+        ]);
+
+        $this->markAsPaid($this->confirmingPaymentTrxId);
+        $this->closePaymentModal();
+    }
+
     public function markAsPaid($id)
     {
         if (!in_array(auth()->user()->role, ['admin', 'staff']))
@@ -128,7 +177,23 @@ class Transactions extends Component
         $rental = Rental::findOrFail($id);
         if (in_array($rental->status, ['pending', 'pending_confirmation'])) {
             $before = ['status' => $rental->status];
-            $rental->update(['status' => 'paid', 'paid_at' => now()]);
+            
+            $updateData = [
+                'status' => 'paid',
+                'paid_at' => now(),
+            ];
+
+            // Simpan foto bukti pembayaran jika diunggah & kompres sekecil mungkin (WebP/JPEG, ~30KB-80KB)
+            if ($this->buktiBayarFile) {
+                try {
+                    $savedName = ImageOptimizer::compressAndSave($this->buktiBayarFile, 'bukti_bayar', 1080, 1080, 72);
+                    $updateData['bukti_bayar'] = $savedName;
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("GAGAL KOMPRES BUKTI BAYAR: " . $e->getMessage());
+                }
+            }
+
+            $rental->update($updateData);
             $after = ['status' => 'paid'];
             
             $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
@@ -147,7 +212,45 @@ class Transactions extends Component
                     route('admin.monitoring')
                 );
             } catch (\Exception $e) { }
+
+            session()->flash('message', 'Pembayaran transaksi berhasil divalidasi lunas.');
         }
+    }
+
+    public function openHandoverModal($id)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+        $this->confirmingHandoverTrxId = $id;
+        $this->confirmingHandoverTrx = Rental::with('units')->find($id);
+        $this->buktiAmbilFile = null;
+    }
+
+    public function closeHandoverModal()
+    {
+        $this->confirmingHandoverTrxId = null;
+        $this->confirmingHandoverTrx = null;
+        $this->buktiAmbilFile = null;
+        $this->resetErrorBag(['buktiAmbilFile']);
+    }
+
+    public function confirmHandover()
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff']))
+            return;
+
+        if (!$this->confirmingHandoverTrxId)
+            return;
+
+        $this->validate([
+            'buktiAmbilFile' => 'nullable|image|max:10240',
+        ], [
+            'buktiAmbilFile.image' => 'File bukti penyerahan/pengambilan harus berupa gambar (JPG, PNG, WebP).',
+            'buktiAmbilFile.max' => 'Ukuran file foto maksimal 10MB.',
+        ]);
+
+        $this->handover($this->confirmingHandoverTrxId);
+        $this->closeHandoverModal();
     }
 
     public function handover($id)
@@ -156,7 +259,23 @@ class Transactions extends Component
         $rental = Rental::findOrFail($id);
         if ($rental->status === 'paid') {
             $before = ['status' => $rental->status];
-            $rental->update(['status' => 'renting', 'handed_over_at' => now()]);
+            
+            $updateData = [
+                'status' => 'renting',
+                'handed_over_at' => now(),
+            ];
+
+            // Simpan foto bukti serah terima / pengambilan jika diunggah & kompres sekecil mungkin (WebP/JPEG, ~30KB-80KB)
+            if ($this->buktiAmbilFile) {
+                try {
+                    $savedName = ImageOptimizer::compressAndSave($this->buktiAmbilFile, 'bukti_ambil', 1080, 1080, 72);
+                    $updateData['bukti_ambil'] = $savedName;
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("GAGAL KOMPRES BUKTI AMBIL: " . $e->getMessage());
+                }
+            }
+
+            $rental->update($updateData);
             $after = ['status' => 'renting'];
             $rentalLabel = $rental->nama ? "{$rental->nama} ({$rental->booking_code})" : $rental->booking_code;
             $this->logActivity('handover_unit', $rental, "Validasi ambil unit untuk transaksi {$rentalLabel} (via Transaksi)", $before, $after);

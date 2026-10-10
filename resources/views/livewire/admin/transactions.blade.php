@@ -203,16 +203,16 @@
                             @else
                                 @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
                                     @if(in_array(auth()->user()->role, ['admin', 'staff']))
-                                        <button wire:click.stop="markAsPaid({{ $trx->id }})" wire:confirm="Konfirmasi pembayaran lunas?"
-                                            wire:loading.attr="disabled" wire:target="markAsPaid({{ $trx->id }})"
+                                        <button wire:click.stop="openPaymentModal({{ $trx->id }})"
+                                            wire:loading.attr="disabled" wire:target="openPaymentModal({{ $trx->id }})"
                                             class="h-8 px-2.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs">
                                             Validasi Lunas
                                         </button>
                                     @endif
                                 @elseif($trx->status === 'paid')
                                     @if(in_array(auth()->user()->role, ['admin', 'staff']))
-                                        <button wire:click.stop="handover({{ $trx->id }})" wire:confirm="Serahkan unit ke penyewa?"
-                                            wire:loading.attr="disabled" wire:target="handover({{ $trx->id }})"
+                                        <button wire:click.stop="openHandoverModal({{ $trx->id }})"
+                                            wire:loading.attr="disabled" wire:target="openHandoverModal({{ $trx->id }})"
                                             class="h-8 px-2.5 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-xs">
                                             Serahkan Unit
                                         </button>
@@ -401,12 +401,11 @@
                                                     {{-- Tombol Utama Berdasarkan Status --}}
                                                     @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
                                                         @if(in_array(auth()->user()->role, ['admin', 'staff']))
-                                                            <button wire:click.stop="markAsPaid({{ $trx->id }})"
-                                                                wire:confirm="Konfirmasi pembayaran lunas?"
-                                                                wire:loading.attr="disabled" wire:target="markAsPaid({{ $trx->id }})"
+                                                            <button wire:click.stop="openPaymentModal({{ $trx->id }})"
+                                                                wire:loading.attr="disabled" wire:target="openPaymentModal({{ $trx->id }})"
                                                                 class="h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm active:scale-95 transition-all flex items-center gap-1.5">
-                                                                <span wire:loading.remove wire:target="markAsPaid({{ $trx->id }})">Validasi Lunas</span>
-                                                                <span wire:loading wire:target="markAsPaid({{ $trx->id }})" class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                                                <span wire:loading.remove wire:target="openPaymentModal({{ $trx->id }})">Validasi Lunas</span>
+                                                                <span wire:loading wire:target="openPaymentModal({{ $trx->id }})" class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                                                             </button>
                                                             <button wire:click.stop="cancel({{ $trx->id }})"
                                                                 wire:confirm="Batalkan pesanan ini?" wire:loading.attr="disabled"
@@ -417,13 +416,12 @@
                                                         @endif
                                                     @elseif($trx->status === 'paid')
                                                         @if(in_array(auth()->user()->role, ['admin', 'staff']))
-                                                            <button wire:click.stop="handover({{ $trx->id }})"
-                                                                wire:confirm="Serahkan unit ke penyewa?"
+                                                            <button wire:click.stop="openHandoverModal({{ $trx->id }})"
                                                                 wire:loading.attr="disabled"
-                                                                wire:target="handover({{ $trx->id }})"
+                                                                wire:target="openHandoverModal({{ $trx->id }})"
                                                                 class="h-8 px-3 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-sm active:scale-95 transition-all flex items-center gap-1.5">
-                                                                <span wire:loading.remove wire:target="handover({{ $trx->id }})">Serahkan Unit</span>
-                                                                <span wire:loading wire:target="handover({{ $trx->id }})" class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                                                <span wire:loading.remove wire:target="openHandoverModal({{ $trx->id }})">Serahkan Unit</span>
+                                                                <span wire:loading wire:target="openHandoverModal({{ $trx->id }})" class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                                                             </button>
                                                         @endif
                                                     @elseif($trx->status === 'renting')
@@ -684,6 +682,58 @@
                             </div>
                         </div>
 
+                        {{-- Foto Bukti Bayar & Bukti Ambil (Jika Ada) --}}
+                        @if($inspectTrx->bukti_bayar || $inspectTrx->bukti_ambil)
+                            <div class="space-y-2 pt-2 border-t border-border/60">
+                                <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Foto Bukti Terlampir</span>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    @if($inspectTrx->bukti_bayar)
+                                        <div class="p-3 rounded-xl border border-border/80 bg-card space-y-2">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                                                    Bukti Pembayaran
+                                                </span>
+                                                <a href="{{ asset('uploads/bukti_bayar/' . $inspectTrx->bukti_bayar) }}" target="_blank"
+                                                    class="text-[10px] text-primary hover:underline font-semibold">Buka Penuh</a>
+                                            </div>
+                                            <a href="{{ asset('uploads/bukti_bayar/' . $inspectTrx->bukti_bayar) }}" target="_blank"
+                                                class="block rounded-lg overflow-hidden border border-border/60 bg-muted/20 aspect-video relative group">
+                                                <img src="{{ asset('uploads/bukti_bayar/' . $inspectTrx->bukti_bayar) }}" 
+                                                    alt="Bukti Bayar" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+                                                    Lihat Foto
+                                                </div>
+                                            </a>
+                                        </div>
+                                    @endif
+
+                                    @if($inspectTrx->bukti_ambil)
+                                        <div class="p-3 rounded-xl border border-border/80 bg-card space-y-2">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-[11px] font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                                                    Bukti Serah Terima
+                                                </span>
+                                                <a href="{{ asset('uploads/bukti_ambil/' . $inspectTrx->bukti_ambil) }}" target="_blank"
+                                                    class="text-[10px] text-primary hover:underline font-semibold">Buka Penuh</a>
+                                            </div>
+                                            <a href="{{ asset('uploads/bukti_ambil/' . $inspectTrx->bukti_ambil) }}" target="_blank"
+                                                class="block rounded-lg overflow-hidden border border-border/60 bg-muted/20 aspect-video relative group">
+                                                <img src="{{ asset('uploads/bukti_ambil/' . $inspectTrx->bukti_ambil) }}" 
+                                                    alt="Bukti Serah Terima" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+                                                    Lihat Foto
+                                                </div>
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
                     </div>
 
                     {{-- Footer Aksi Preview --}}
@@ -717,6 +767,204 @@
                         <button type="button" wire:click="closeInspect"
                             class="h-8 px-4 rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:bg-primary/90 transition-all shadow-2xs">
                             Tutup
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        {{-- MODAL VALIDASI LUNAS DENGAN UPLOAD FOTO BUKTI BAYAR --}}
+        @if($confirmingPaymentTrxId && $confirmingPaymentTrx)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+                wire:click.self="closePaymentModal">
+                <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-md overflow-hidden my-auto animate-in zoom-in-95 duration-200">
+                    
+                    {{-- Header --}}
+                    <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-emerald-500/5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-bold text-foreground">Validasi Pembayaran Lunas</h3>
+                                <p class="text-[11px] text-muted-foreground font-mono">{{ $confirmingPaymentTrx->booking_code }} &bull; {{ $confirmingPaymentTrx->nama }}</p>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="closePaymentModal"
+                            class="h-8 w-8 rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- Body Form --}}
+                    <div class="p-4 sm:p-5 space-y-4 text-xs">
+                        <div class="p-3 rounded-xl bg-muted/40 border border-border/70 flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] text-muted-foreground uppercase font-bold block">Tagihan Pesanan</span>
+                                <span class="font-bold text-sm text-foreground">Rp {{ number_format($confirmingPaymentTrx->grand_total, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-muted-foreground uppercase font-bold block">Metode</span>
+                                <span class="font-mono font-semibold text-foreground uppercase">{{ $confirmingPaymentTrx->metode_pembayaran }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Upload Bukti Pembayaran --}}
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-foreground">
+                                Upload Foto Bukti Pembayaran
+                                <span class="text-[10px] text-muted-foreground font-normal ml-1">(Opsional / Jika Ada)</span>
+                            </label>
+                            
+                            <div class="border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-emerald-500/50 transition-colors bg-muted/10 relative">
+                                <input type="file" wire:model="buktiBayarFile" accept="image/*" capture="environment"
+                                    id="bukti-bayar-upload"
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+
+                                @if ($buktiBayarFile)
+                                    <div class="space-y-2">
+                                        <div class="relative w-32 h-32 mx-auto rounded-lg overflow-hidden border border-border shadow-xs">
+                                            <img src="{{ $buktiBayarFile->temporaryUrl() }}" class="w-full h-full object-cover" alt="Preview Bukti Bayar">
+                                        </div>
+                                        <p class="text-[11px] font-semibold text-emerald-600">Foto bukti terpilih! Siap dikompres.</p>
+                                        <p class="text-[10px] text-muted-foreground">Klik lagi di area ini jika ingin mengganti foto.</p>
+                                    </div>
+                                @else
+                                    <div class="space-y-1.5 py-2">
+                                        <div class="w-10 h-10 mx-auto rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                                        </div>
+                                        <p class="font-semibold text-foreground text-xs">Pilih Foto atau Jepret Kamera</p>
+                                        <p class="text-[10px] text-muted-foreground">JPG, PNG, atau WebP. Otomatis dikompres sekecil mungkin ke server (~30KB-80KB).</p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div wire:loading wire:target="buktiBayarFile" class="text-[11px] text-emerald-600 flex items-center gap-1.5">
+                                <span class="h-3 w-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></span>
+                                Memproses upload file...
+                            </div>
+
+                            @error('buktiBayarFile')
+                                <p class="text-[11px] text-destructive font-medium">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- Footer --}}
+                    <div class="p-4 sm:p-5 border-t border-border flex items-center justify-end gap-2 bg-muted/20">
+                        <button type="button" wire:click="closePaymentModal"
+                            class="h-9 px-3.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground font-semibold text-xs transition-colors">
+                            Batal
+                        </button>
+                        <button type="button" wire:click="confirmMarkAsPaid" wire:loading.attr="disabled"
+                            wire:target="confirmMarkAsPaid, buktiBayarFile"
+                            class="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs disabled:opacity-50">
+                            <span wire:loading.remove wire:target="confirmMarkAsPaid">Konfirmasi Lunas</span>
+                            <span wire:loading wire:target="confirmMarkAsPaid" class="inline-flex items-center gap-1.5">
+                                <span class="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                Menyimpan & Mengompres...
+                            </span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        @endif
+
+        {{-- MODAL SERAH TERIMA UNIT DENGAN UPLOAD FOTO BUKTI PENGAMBILAN --}}
+        @if($confirmingHandoverTrxId && $confirmingHandoverTrx)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+                wire:click.self="closeHandoverModal">
+                <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-md overflow-hidden my-auto animate-in zoom-in-95 duration-200">
+                    
+                    {{-- Header --}}
+                    <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-sky-500/5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="h-9 w-9 rounded-xl bg-sky-500/10 text-sky-600 flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-bold text-foreground">Serahkan Unit ke Penyewa</h3>
+                                <p class="text-[11px] text-muted-foreground font-mono">{{ $confirmingHandoverTrx->booking_code }} &bull; {{ $confirmingHandoverTrx->nama }}</p>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="closeHandoverModal"
+                            class="h-8 w-8 rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- Body Form --}}
+                    <div class="p-4 sm:p-5 space-y-4 text-xs">
+                        <div class="p-3 rounded-xl bg-muted/40 border border-border/70 space-y-1.5">
+                            <span class="text-[10px] text-muted-foreground uppercase font-bold block">Unit Yang Diambil:</span>
+                            <div class="flex flex-wrap gap-1">
+                                @forelse($confirmingHandoverTrx->units as $u)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-700 dark:text-sky-300 font-semibold text-[11px] border border-sky-500/20">
+                                        {{ $u->seri }}
+                                    </span>
+                                @empty
+                                    <span class="text-muted-foreground text-xs">-</span>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        {{-- Upload Foto Pengambilan / KTP / Serah Terima --}}
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-foreground">
+                                Upload Foto Bukti Serah Terima / Pengambilan
+                                <span class="text-[10px] text-muted-foreground font-normal ml-1">(Opsional / Jika Ada)</span>
+                            </label>
+                            
+                            <div class="border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-sky-500/50 transition-colors bg-muted/10 relative">
+                                <input type="file" wire:model="buktiAmbilFile" accept="image/*" capture="environment"
+                                    id="bukti-ambil-upload"
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+
+                                @if ($buktiAmbilFile)
+                                    <div class="space-y-2">
+                                        <div class="relative w-32 h-32 mx-auto rounded-lg overflow-hidden border border-border shadow-xs">
+                                            <img src="{{ $buktiAmbilFile->temporaryUrl() }}" class="w-full h-full object-cover" alt="Preview Bukti Ambil">
+                                        </div>
+                                        <p class="text-[11px] font-semibold text-sky-600">Foto bukti terpilih! Siap dikompres.</p>
+                                        <p class="text-[10px] text-muted-foreground">Klik lagi di area ini jika ingin mengganti foto.</p>
+                                    </div>
+                                @else
+                                    <div class="space-y-1.5 py-2">
+                                        <div class="w-10 h-10 mx-auto rounded-full bg-sky-500/10 text-sky-600 flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                        </div>
+                                        <p class="font-semibold text-foreground text-xs">Pilih Foto atau Foto Langsung Kamera</p>
+                                        <p class="text-[10px] text-muted-foreground">Foto serah terima / penyewa / jaminan. Otomatis dikompres sekecil mungkin ke server (~30KB-80KB).</p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div wire:loading wire:target="buktiAmbilFile" class="text-[11px] text-sky-600 flex items-center gap-1.5">
+                                <span class="h-3 w-3 border-2 border-sky-600 border-t-transparent rounded-full animate-spin"></span>
+                                Memproses upload file...
+                            </div>
+
+                            @error('buktiAmbilFile')
+                                <p class="text-[11px] text-destructive font-medium">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- Footer --}}
+                    <div class="p-4 sm:p-5 border-t border-border flex items-center justify-end gap-2 bg-muted/20">
+                        <button type="button" wire:click="closeHandoverModal"
+                            class="h-9 px-3.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground font-semibold text-xs transition-colors">
+                            Batal
+                        </button>
+                        <button type="button" wire:click="confirmHandover" wire:loading.attr="disabled"
+                            wire:target="confirmHandover, buktiAmbilFile"
+                            class="h-9 px-4 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs disabled:opacity-50">
+                            <span wire:loading.remove wire:target="confirmHandover">Konfirmasi Serahkan Unit</span>
+                            <span wire:loading wire:target="confirmHandover" class="inline-flex items-center gap-1.5">
+                                <span class="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                Menyimpan & Mengompres...
+                            </span>
                         </button>
                     </div>
 
