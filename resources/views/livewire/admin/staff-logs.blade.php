@@ -421,18 +421,36 @@
                         </div>
                     </div>
 
-                    <!-- Perbandingan Data Sebelum & Sesudah (Sangat Jelas & Manusiawi) -->
+                    <!-- Perbandingan Data Sebelum & Sesudah (Hanya yang Berubah) -->
                     @php
                         $before = $selectedLog->data_before ?? [];
                         $after = $selectedLog->data_after ?? [];
                         $allKeys = array_unique(array_merge(array_keys($before), array_keys($after)));
+
+                        $changedFields = [];
+                        foreach ($allKeys as $key) {
+                            $bVal = $before[$key] ?? null;
+                            $aVal = $after[$key] ?? null;
+                            $formattedBefore = $formatValue($key, $bVal);
+                            $formattedAfter = $formatValue($key, $aVal);
+
+                            // Hanya masukkan jika ada perubahan nilai yang nyata
+                            if ($formattedBefore !== $formattedAfter) {
+                                $changedFields[] = [
+                                    'key' => $key,
+                                    'label' => $fieldLabels[$key] ?? ucwords(str_replace('_', ' ', $key)),
+                                    'before' => $formattedBefore,
+                                    'after' => $formattedAfter,
+                                ];
+                            }
+                        }
                     @endphp
 
-                    @if(count($allKeys) > 0)
+                    @if(count($changedFields) > 0)
                         <div class="space-y-2 pt-2">
                             <div>
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Perubahan Data yang Terjadi</span>
-                                <p class="text-[11px] text-muted-foreground mt-0.5">Daftar nilai sebelum diubah dibanding setelah disimpan oleh staf.</p>
+                                <p class="text-[11px] text-muted-foreground mt-0.5">Hanya menampilkan rincian bagian yang nilainya diubah oleh staf.</p>
                             </div>
 
                             <div class="rounded-2xl border border-border/60 overflow-hidden text-xs">
@@ -440,35 +458,31 @@
                                     <thead class="bg-muted/50 border-b border-border/60 text-[10px] font-bold uppercase text-muted-foreground">
                                         <tr>
                                             <th class="px-3.5 py-2.5">Bagian yang Diubah</th>
-                                            <th class="px-3.5 py-2.5">Nilai Semula</th>
-                                            <th class="px-3.5 py-2.5 text-primary">Nilai Terbaru</th>
+                                            <th class="px-3.5 py-2.5 text-rose-500">Nilai Semula</th>
+                                            <th class="px-3.5 py-2.5 text-emerald-600 dark:text-emerald-400">Nilai Terbaru</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-border/40 text-[11px]">
-                                        @foreach($allKeys as $key)
-                                            @php
-                                                $bVal = $before[$key] ?? null;
-                                                $aVal = $after[$key] ?? null;
-                                                $isDiff = (string)$bVal !== (string)$aVal;
-                                                $labelName = $fieldLabels[$key] ?? ucwords(str_replace('_', ' ', $key));
-                                                $formattedBefore = $formatValue($key, $bVal);
-                                                $formattedAfter = $formatValue($key, $aVal);
-                                            @endphp
-                                            <tr class="{{ $isDiff ? 'bg-primary/5 font-semibold' : 'opacity-70' }}">
+                                        @foreach($changedFields as $field)
+                                            <tr class="bg-primary/5 font-semibold">
                                                 <td class="px-3.5 py-2.5 font-bold text-foreground">
-                                                    {{ $labelName }}
+                                                    {{ $field['label'] }}
                                                 </td>
                                                 <td class="px-3.5 py-2.5 text-rose-500 line-through">
-                                                    {{ $formattedBefore }}
+                                                    {{ $field['before'] }}
                                                 </td>
                                                 <td class="px-3.5 py-2.5 text-emerald-600 dark:text-emerald-400 font-bold">
-                                                    {{ $formattedAfter }}
+                                                    {{ $field['after'] }}
                                                 </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    @elseif(count($allKeys) > 0)
+                        <div class="p-3.5 rounded-2xl bg-muted/20 border border-border/40 text-center text-xs text-muted-foreground">
+                            Tidak ada perubahan nilai pada rincian data ini.
                         </div>
                     @endif
                 </div>
