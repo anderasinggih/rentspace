@@ -6,9 +6,12 @@ use App\Models\Rental;
 use App\Models\Unit;
 use Carbon\Carbon;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Dashboard extends Component
 {
+    use WithPagination;
+
     public $preset = 'mth';
     public $startDate;
     public $endDate;
@@ -17,6 +20,12 @@ class Dashboard extends Component
     public $availableYears = [];
     public $reportMonth;
     public $reportYear;
+    public $breakdownSearch = '';
+
+    public function updatedBreakdownSearch()
+    {
+        $this->resetPage();
+    }
 
     public function mount()
     {
@@ -426,6 +435,25 @@ class Dashboard extends Component
 
         $isEndMonth = now()->day >= (now()->daysInMonth - 7);
 
+        // Breakdown Transactions according to the Net Income Analysis date range
+        $breakdownQuery = Rental::with(['units' => function($q) { $q->withTrashed(); }, 'commissions'])
+            ->whereIn('status', ['paid', 'renting', 'completed'])
+            ->whereBetween('paid_at', [$start, $end]);
+
+        if (!empty($this->breakdownSearch)) {
+            $s = trim($this->breakdownSearch);
+            $breakdownQuery->where(function($q) use ($s) {
+                $q->where('nama', 'like', "%{$s}%")
+                  ->orWhere('booking_code', 'like', "%{$s}%")
+                  ->orWhere('no_wa', 'like', "%{$s}%")
+                  ->orWhere('metode_pembayaran', 'like', "%{$s}%");
+            });
+        }
+
+        $breakdownRentals = (clone $breakdownQuery)->orderByDesc('paid_at')->paginate(10);
+        $breakdownTotalCount = (clone $breakdownQuery)->count();
+        $breakdownGrossTotal = (clone $breakdownQuery)->sum('grand_total');
+
         return view('livewire.admin.dashboard', compact(
             'totalUnits', 'activeUnits', 'pendingRentals', 'pendingRevenue',
             'periodRentals', 'periodRevenue', 'periodDiscounts', 'todayRevenue', 'todayRentals',
@@ -437,7 +465,8 @@ class Dashboard extends Component
             'prevNetRevenue', 'prevTransactions',
             'paymentLabels', 'paymentCounts',
             'avgOrderValue', 'profitEfficiency', 'avgDuration', 'unrealizedRevenue',
-            'latestRatings', 'isEndMonth'
+            'latestRatings', 'isEndMonth',
+            'breakdownRentals', 'breakdownTotalCount', 'breakdownGrossTotal'
         ))->layout('layouts.admin');
     }
 

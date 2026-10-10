@@ -683,6 +683,161 @@
             </div>
         </div>
 
+        <!-- 8. Net Income Transaction Breakdown (Detail List) -->
+        <div id="net-income-breakdown" class="liquid-glass rounded-2xl overflow-hidden shadow-xl mb-6">
+            <div class="px-5 py-3.5 border-b border-border bg-gradient-to-r from-emerald-500/10 via-primary/5 to-transparent flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center font-bold text-xs shadow-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="1" x2="12" y2="23"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">Breakdown Transaksi Net Income</h3>
+                            <span class="px-2 py-0.5 text-[9px] font-bold rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                {{ $dateRangeLabel }}
+                            </span>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground mt-0.5">
+                            Rincian {{ $breakdownTotalCount }} transaksi terealisasi (Status Paid, Renting, Completed).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <input type="text" wire:model.live.debounce.300ms="breakdownSearch"
+                            placeholder="Cari pelanggan, booking..."
+                            class="h-8 pl-8 pr-3 text-[11px] rounded-xl bg-background/80 border border-border focus:ring-1 focus:ring-emerald-500 text-foreground w-44 sm:w-56 transition-all placeholder:text-muted-foreground/60">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                        </svg>
+                    </div>
+                    <div class="hidden sm:flex flex-col text-right">
+                        <span class="text-[9px] font-semibold text-stock-label uppercase">Total Gross Transaksi</span>
+                        <span class="text-xs font-bold text-emerald-500">
+                            Rp{{ number_format($breakdownGrossTotal, 0, ',', '.') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table content -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left font-sans text-[11px]">
+                    <thead class="text-[9px] font-semibold text-stock-label border-b border-border bg-muted/20 uppercase tracking-wider">
+                        <tr>
+                            <th class="px-4 py-3">Booking & Waktu Bayar</th>
+                            <th class="px-4 py-3">Pelanggan</th>
+                            <th class="px-4 py-3">Unit Sewa</th>
+                            <th class="px-4 py-3 text-center">Metode</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                            <th class="px-4 py-3 text-right">Grand Total</th>
+                            <th class="px-4 py-3 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border font-medium">
+                        @forelse($breakdownRentals as $rental)
+                            <tr class="hover:bg-muted/30 transition-colors">
+                                <td class="px-4 py-3">
+                                    <div class="font-bold text-foreground font-mono text-[11px]">
+                                        #{{ $rental->booking_code ?? $rental->id }}
+                                    </div>
+                                    <div class="text-[9px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-60">
+                                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                        </svg>
+                                        {{ $rental->paid_at ? $rental->paid_at->format('d M Y, H:i') : ($rental->created_at ? $rental->created_at->format('d M Y, H:i') : '-') }}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="font-semibold text-foreground uppercase tracking-tight">
+                                        {{ $rental->nama }}
+                                    </div>
+                                    <div class="text-[9px] text-muted-foreground font-mono mt-0.5">
+                                        {{ $rental->no_wa ?? '-' }}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $unitNames = $rental->units->map(fn($u) => $u->seri . ' ' . $u->memori . 'GB')->implode(', ');
+                                    @endphp
+                                    <div class="text-foreground text-[11px] font-medium max-w-[200px] truncate" title="{{ $unitNames ?: 'Unit #' . $rental->unit_id }}">
+                                        {{ $unitNames ?: ('Unit #' . $rental->unit_id) }}
+                                    </div>
+                                    <div class="text-[9px] text-muted-foreground mt-0.5">
+                                        {{ $rental->waktu_mulai ? $rental->waktu_mulai->format('d/m H:i') : '' }} - {{ $rental->waktu_selesai ? $rental->waktu_selesai->format('d/m H:i') : '' }}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span class="inline-block px-2 py-0.5 text-[9px] font-bold rounded-md bg-muted text-foreground uppercase border border-border/50">
+                                        {{ $rental->metode_pembayaran ?: 'QRIS' }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @php
+                                        $badgeColor = match($rental->status) {
+                                            'completed' => 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                                            'renting' => 'bg-sky-500/10 text-sky-500 border-sky-500/20',
+                                            'paid' => 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                                            default => 'bg-muted text-muted-foreground'
+                                        };
+                                    @endphp
+                                    <span class="inline-block px-2 py-0.5 text-[9px] font-bold rounded-full uppercase border {{ $badgeColor }}">
+                                        {{ $rental->status }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <div class="font-bold text-foreground text-xs font-mono">
+                                        Rp{{ number_format($rental->grand_total, 0, ',', '.') }}
+                                    </div>
+                                    @if($rental->commissions && $rental->commissions->sum('amount') > 0)
+                                        <div class="text-[9px] text-amber-500 font-medium">
+                                            Komisi: -Rp{{ number_format($rental->commissions->sum('amount'), 0, ',', '.') }}
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <a href="{{ route('admin.rentals.show', $rental->id) }}"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary text-[10px] font-semibold transition-all">
+                                        <span>Detail</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"/>
+                                        </svg>
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="px-6 py-12 text-center text-muted-foreground text-[11px] font-medium">
+                                    <div class="flex flex-col items-center justify-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-40">
+                                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                                        </svg>
+                                        <span>Tidak ada transaksi pada filter periode ini.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination & Summary Footer -->
+            @if($breakdownRentals->hasPages() || $breakdownTotalCount > 0)
+                <div class="px-5 py-3 border-t border-border bg-muted/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
+                    <div class="text-muted-foreground text-[10px]">
+                        Menampilkan <span class="font-bold text-foreground">{{ $breakdownRentals->firstItem() ?? 0 }}</span> - <span class="font-bold text-foreground">{{ $breakdownRentals->lastItem() ?? 0 }}</span> dari <span class="font-bold text-foreground">{{ $breakdownTotalCount }}</span> total transaksi
+                    </div>
+                    <div>
+                        {{ $breakdownRentals->links() }}
+                    </div>
+                </div>
+            @endif
+        </div>
+
     </div>
 
     @script
