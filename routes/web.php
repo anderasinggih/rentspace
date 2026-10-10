@@ -29,8 +29,6 @@ Route::get('/login', Login::class)->name('login');
 
 // Admin Routes protected by Authentication
 Route::middleware('auth')->group(function () {
-    Route::redirect('/admin', '/admin/dashboard');
-    
     // Strictly Admin Management
     Route::middleware('admin')->group(function () {
         Route::get('/admin/dashboard', Dashboard::class)->name('admin.dashboard');
@@ -42,7 +40,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/customers', CustomerManager::class)->name('admin.customers');
         Route::get('/admin/settings', Settings::class)->name('admin.settings');
         Route::get('/admin/affiliate', AffiliateManager::class)->name('admin.affiliate');
-        Route::get('/admin/stafflogs', \App\Livewire\Admin\StaffLogs::class)->name('admin.staff-logs');
+        Route::redirect('/admin/stafflogs', '/admin/staff-logs')->name('admin.staff-logs');
         Route::get('/admin/notes', \App\Livewire\Admin\Notes::class)->name('admin.notes');
         Route::get('/admin/ratings', \App\Livewire\Admin\RatingManager::class)->name('admin.ratings');
         Route::get('/admin/scan', \App\Livewire\Admin\QuickScan::class)->name('admin.scan');

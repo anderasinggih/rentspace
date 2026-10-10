@@ -29,10 +29,34 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('RentSpace Admin')
+            ->authGuard('web')
+            ->homeUrl('/admin')
             ->colors([
                 'primary' => Color::Emerald,
             ])
             ->darkMode(true)
+            ->navigationItems([
+                \Filament\Navigation\NavigationItem::make('Dashboard Operasional')
+                    ->url('/admin/dashboard')
+                    ->icon(\Filament\Support\Icons\Heroicon::OutlinedChartBar)
+                    ->group('Menu Kasir')
+                    ->sort(1),
+                \Filament\Navigation\NavigationItem::make('Transaksi Sewa')
+                    ->url('/admin/transactions')
+                    ->icon(\Filament\Support\Icons\Heroicon::OutlinedBanknotes)
+                    ->group('Menu Kasir')
+                    ->sort(2),
+                \Filament\Navigation\NavigationItem::make('Manajemen Unit')
+                    ->url('/admin/units')
+                    ->icon(\Filament\Support\Icons\Heroicon::OutlinedDevicePhoneMobile)
+                    ->group('Menu Kasir')
+                    ->sort(3),
+                \Filament\Navigation\NavigationItem::make('Pengaturan Sistem')
+                    ->url('/admin/settings')
+                    ->icon(\Filament\Support\Icons\Heroicon::OutlinedCog6Tooth)
+                    ->group('Menu Kasir')
+                    ->sort(4),
+            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

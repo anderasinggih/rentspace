@@ -136,12 +136,12 @@
             </a>
 
 
-            <a href="{{ route('admin.staff-logs') }}" wire:navigate @click="adminMenuOpen = false"
-                class="flex items-center gap-2.5 px-3 py-2 rounded-xl transition {{ request()->routeIs('admin.staff-logs') ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground' }}">
-                <div class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 {{ request()->routeIs('admin.staff-logs') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
+            <a href="/admin/staff-logs" @click="adminMenuOpen = false"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl transition {{ request()->is('admin/staff-logs*') ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground' }}">
+                <div class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 {{ request()->is('admin/staff-logs*') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
                 </div>
-                <span class="text-xs font-semibold flex-1">Log Aktivitas Tim</span>
+                <span class="text-xs font-semibold flex-1">Log Aktivitas Tim (Filament)</span>
                 <span class="text-xs text-muted-foreground/40">›</span>
             </a>
 
@@ -233,14 +233,14 @@
             </a>
 
             <!-- Mobile Tab 4: Activity -->
-            <a href="{{ route('admin.staff-logs') }}" wire:navigate
-               class="flex flex-col items-center justify-center flex-1 py-1 gap-0.5 transition-all duration-200 {{ request()->routeIs('admin.staff-logs') ? 'text-primary' : 'text-muted-foreground hover:text-foreground' }}">
-                <div class="relative flex items-center justify-center w-10 h-6 rounded-full transition-all duration-200 {{ request()->routeIs('admin.staff-logs') ? 'bg-primary/10' : '' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ request()->routeIs('admin.staff-logs') ? '2.2' : '1.8' }}" stroke-linecap="round" stroke-linejoin="round">
+            <a href="/admin/staff-logs"
+               class="flex flex-col items-center justify-center flex-1 py-1 gap-0.5 transition-all duration-200 {{ request()->is('admin/staff-logs*') ? 'text-primary' : 'text-muted-foreground hover:text-foreground' }}">
+                <div class="relative flex items-center justify-center w-10 h-6 rounded-full transition-all duration-200 {{ request()->is('admin/staff-logs*') ? 'bg-primary/10' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ request()->is('admin/staff-logs*') ? '2.2' : '1.8' }}" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 20v-6M6 20V10M18 20V4"/>
                     </svg>
                 </div>
-                <span class="text-[10px] leading-none {{ request()->routeIs('admin.staff-logs') ? 'font-semibold' : 'font-medium' }}">
+                <span class="text-[10px] leading-none {{ request()->is('admin/staff-logs*') ? 'font-semibold' : 'font-medium' }}">
                     Activity
                 </span>
             </a>
@@ -293,13 +293,13 @@
                 <span>Transaksi</span>
             </a>
 
-            <!-- Tab: Activity -->
-            <a href="{{ route('admin.staff-logs') }}" wire:navigate
-                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 {{ request()->routeIs('admin.staff-logs') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ request()->routeIs('admin.staff-logs') ? '2.2' : '1.8' }}" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Tab: Activity (Filament) -->
+            <a href="/admin/staff-logs"
+                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 {{ request()->is('admin/staff-logs*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ request()->is('admin/staff-logs*') ? '2.2' : '1.8' }}" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 20v-6M6 20V10M18 20V4"/>
                 </svg>
-                <span>Activity</span>
+                <span>Activity (Filament)</span>
             </a>
 
             <!-- Desktop Direct Links for Database items -->
