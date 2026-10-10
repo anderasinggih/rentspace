@@ -5,71 +5,105 @@
             {{ session('message') }}
         </div>
     @endif
-    <div>
-        <div class="flex items-center justify-end mb-4">
-            <button wire:click="exportCsv"
-                class="inline-flex items-center gap-1.5 justify-center rounded-xl bg-secondary/80 hover:bg-secondary text-secondary-foreground shadow-xs h-8 px-3.5 text-xs font-semibold transition-all active:scale-95">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" x2="12" y1="15" y2="3" />
-                </svg>
-                <span>Export CSV</span>
-            </button>
+    <div class="space-y-3">
+        <!-- Workflow Tabs & Export -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                <button wire:click="setFilterStatus('')"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ empty($filterStatus) || $filterStatus === 'all' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+                    <span>Semua</span>
+                    <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['all'] ?? 0 }}</span>
+                </button>
+
+                <button wire:click="setFilterStatus('pending')"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'pending' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+                    <span>Perlu Validasi</span>
+                    <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['pending'] ?? 0 }}</span>
+                </button>
+
+                <button wire:click="setFilterStatus('paid')"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'paid' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+                    <span>Siap Ambil</span>
+                    <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['paid'] ?? 0 }}</span>
+                </button>
+
+                <button wire:click="setFilterStatus('renting')"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'renting' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+                    <span>Sedang Disewa</span>
+                    <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['renting'] ?? 0 }}</span>
+                </button>
+
+                <button wire:click="setFilterStatus('completed')"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'completed' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+                    <span>Selesai</span>
+                    <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['completed'] ?? 0 }}</span>
+                </button>
+
+                <button wire:click="setFilterStatus('cancelled')"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'cancelled' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
+                    <span>Dibatalkan</span>
+                    <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['cancelled'] ?? 0 }}</span>
+                </button>
+
+                @if(auth()->user()->role === 'admin' && ($statusCounts['trashed'] ?? 0) > 0)
+                    <button wire:click="setFilterStatus('trashed')"
+                        class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'trashed' ? 'bg-destructive text-destructive-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-destructive hover:bg-destructive/5' }}">
+                        <span>Sampah</span>
+                        <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['trashed'] ?? 0 }}</span>
+                    </button>
+                @endif
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+                <button wire:click="exportCsv"
+                    title="Export data ke file CSV"
+                    class="inline-flex items-center gap-1.5 justify-center rounded-xl bg-card border border-border/80 hover:bg-foreground/5 text-foreground shadow-xs h-8 px-3 text-xs font-semibold transition-all active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" x2="12" y1="15" y2="3" />
+                    </svg>
+                    <span>Export CSV</span>
+                </button>
+            </div>
         </div>
 
-        <div class="mt-8 flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between">
-            <div class="flex flex-1 flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <div class="relative flex-1 max-w-sm group">
-                    <div
-                        class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8" />
-                            <path d="m21 21-4.3-4.3" />
+        <!-- Search & Date Filter Bar -->
+        <div class="flex flex-col sm:flex-row items-center gap-2.5">
+            <div class="relative flex-1 w-full">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                </div>
+                <input type="text" wire:model.live.debounce.300ms="search"
+                    class="block w-full h-9 pl-9 pr-8 text-xs rounded-xl border border-border/80 bg-background/60 shadow-xs focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground/60"
+                    placeholder="Cari nama penyewa, booking code, atau nomor WhatsApp...">
+                
+                @if($search)
+                    <button wire:click="$set('search', '')" class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-muted-foreground hover:text-foreground">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
-                    </div>
-                    <input type="text" wire:model.live.debounce.300ms="search"
-                        class="block w-full h-9 pl-10 pr-10 text-sm rounded-md border border-input bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        placeholder="Cari nama, invoice, atau WA...">
-                    
-                    @if($search)
-                        <button wire:click="$set('search', '')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
-                    @endif
-                </div>
+                    </button>
+                @endif
+            </div>
 
-                <div class="hidden sm:flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-end">
-                    <div class="w-full sm:w-auto">
-                        <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Mulai</label>
-                        <input type="date" wire:model.live="dateStart"
-                            class="h-9 w-full sm:w-[140px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                    </div>
-                    <div class="w-full sm:w-auto">
-                        <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Hingga</label>
-                        <input type="date" wire:model.live="dateEnd"
-                            class="h-9 w-full sm:w-[140px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                    </div>
-                    <div class="w-full sm:w-auto">
-                        <label class="text-[10px] font-bold uppercase text-muted-foreground ml-1">Status</label>
-                        <select wire:model.live="filterStatus"
-                            class="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                            <option value="">Semua</option>
-                            <option value="pending">Pending (Auto)</option>
-                            <option value="pending_confirmation">Verifikasi (Manual)</option>
-                            <option value="paid">Paid</option>
-                            <option value="renting">Rent</option>
-                            <option value="completed">Done</option>
-                            <option value="cancelled">Cancel</option>
-                            <option value="trashed">Trashed</option>
-                        </select>
-                    </div>
-                </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <input type="date" wire:model.live="dateStart" title="Tanggal Mulai"
+                    class="h-9 w-full sm:w-[130px] rounded-xl border border-border/80 bg-background px-2.5 text-xs text-foreground focus:outline-none focus:border-primary">
+                <span class="text-xs text-muted-foreground">-</span>
+                <input type="date" wire:model.live="dateEnd" title="Tanggal Selesai"
+                    class="h-9 w-full sm:w-[130px] rounded-xl border border-border/80 bg-background px-2.5 text-xs text-foreground focus:outline-none focus:border-primary">
+
+                @if($search || $dateStart || $dateEnd || $filterStatus)
+                    <button wire:click="$set('search', ''); $set('dateStart', ''); $set('dateEnd', ''); $set('filterStatus', '')"
+                        class="h-9 px-3 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors shrink-0">
+                        Reset
+                    </button>
+                @endif
             </div>
         </div>
 
@@ -81,290 +115,228 @@
                             <thead>
                                 <tr class="bg-muted/50">
                                     <th scope="col"
-                                        class="py-3 pl-3 pr-3 text-left text-xs sm:text-sm font-semibold text-foreground sm:pl-6 cursor-pointer hover:bg-muted transition-colors"
+                                        class="py-3 pl-4 pr-3 text-left text-xs sm:text-sm font-semibold text-foreground sm:pl-6 cursor-pointer hover:bg-muted transition-colors"
                                         wire:click="sortBy('booking_code')">
                                         <div class="flex items-center gap-1">
-                                            Booking Code & Customer
+                                            Pelanggan
                                             @if($sortField === 'booking_code')
                                                 <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
                                             @endif
                                         </div>
                                     </th>
                                     <th scope="col"
-                                        class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
-                                        wire:click="sortBy('created_at')">
-                                        <div class="flex items-center gap-1">
-                                            Tgl Transaksi
-                                            @if($sortField === 'created_at')
-                                                <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
-                                            @endif
-                                        </div>
-                                    </th>
-                                    <th scope="col"
-                                        class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground">
-                                        Unit Sewa</th>
-                                    <th scope="col"
-                                        class="hidden md:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
+                                        class="px-3 py-3.5 text-left text-xs sm:text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
                                         wire:click="sortBy('waktu_mulai')">
                                         <div class="flex items-center gap-1">
-                                            Jadwal Sewa
+                                            Unit & Jadwal
                                             @if($sortField === 'waktu_mulai')
                                                 <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
                                             @endif
                                         </div>
                                     </th>
                                     <th scope="col"
-                                        class="hidden md:table-cell px-3 py-3.5 text-left text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
-                                        wire:click="sortBy('subtotal_harga')">
-                                        <div class="flex items-center gap-1">
-                                            Subtotal
-                                            @if($sortField === 'subtotal_harga')
-                                                <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
-                                            @endif
-                                        </div>
-                                    </th>
-                                    <th scope="col"
-                                        class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-bold text-primary cursor-pointer hover:bg-muted transition-colors"
+                                        class="px-3 py-3.5 text-left text-xs sm:text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
                                         wire:click="sortBy('grand_total')">
                                         <div class="flex items-center gap-1">
-                                            Tagihan & Profit
+                                            Total Bayar
                                             @if($sortField === 'grand_total')
                                                 <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
                                             @endif
                                         </div>
                                     </th>
-                                    <th scope="col"
-                                        class="px-3 py-3 text-left text-xs sm:text-sm font-semibold text-foreground cursor-pointer hover:bg-muted transition-colors"
-                                        wire:click="sortBy('status')">
-                                        <div class="flex items-center gap-1">
-                                            Status
-                                            @if($sortField === 'status')
-                                                <span>{!! $sortDirection === 'asc' ? '↑' : '↓' !!}</span>
-                                            @endif
-                                        </div>
+                                    <th scope="col" class="py-3 pl-3 pr-4 sm:pr-6 text-right text-xs sm:text-sm font-semibold text-foreground">
+                                        Aksi
                                     </th>
-
-                                    <th scope="col" class="relative py-3 pl-3 pr-2 sm:pr-6"><span
-                                            class="sr-only">Aksi</span></th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-border text-[11px]">
-                                @forelse ($transactions as $trx)
-                                                                                                                                                                                                                                        <tr wire:click="openInspect({{ $trx->id }})"
-                                                                                                                                                                                                                                            class="cursor-pointer hover:bg-muted/40 transition-colors group/row {{ $trx->status === 'cancelled' ? 'opacity-40' : '' }}">
-                                                                                                                                                                                                                                            <td class="whitespace-nowrap py-3 pl-3 pr-3 text-xs sm:pl-6">
-                                                                                                                                                                                                                                                <div class="flex flex-col gap-1 tracking-tight">
-                                                                                                                                                                                                                                                    <div class="font-bold text-foreground text-sm tracking-tight leading-none truncate max-w-[120px] sm:max-w-[180px]" title="{{ $trx->nama }}">{{ \Illuminate\Support\Str::limit($trx->nama, 25) }}</div>
-                                                                                                                                                                                                                                                    <div class="flex items-center gap-2">
-                                <span 
-                                    x-data="{ copied: false }"
-                                    @click.stop="navigator.clipboard.writeText('{{ $trx->booking_code }}'); copied = true; setTimeout(() => copied = false, 200)"
-                                    class="relative inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-tight cursor-pointer transition-all duration-200"
-                                    :class="copied ? 'bg-primary text-primary-foreground border-primary' : 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50'">
-                                    {{ $trx->booking_code }}
-                                </span>
-                                                                                                                                                                                                                                                        <a href="https://wa.me/{{ preg_replace('/^0/', '62', $trx->no_wa) }}"
-                                                                                                                                                                                                                                                            target="_blank" wire:click.stop class="text-[10px] text-muted-foreground font-semibold hover:text-primary transition-colors tracking-tight truncate max-w-[90px] inline-block" title="{{ $trx->no_wa }}">{{ \Illuminate\Support\Str::limit($trx->no_wa, 15) }}</a>
-                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                            <td
-                                                                                                                                                                                                                                                class="hidden sm:table-cell whitespace-nowrap px-3 py-3 text-xs text-muted-foreground">
-                                                                                                                                                                                                                                                {{ $trx->created_at->format('d M Y') }}<br />
-                                                                                                                                                                                                                                                <span class="opacity-70">{{ $trx->created_at->format('H:i') }} WIB</span>
-                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                            <td
-                                                                                                                                                                                                                                                class="hidden sm:table-cell whitespace-nowrap px-3 py-3 text-muted-foreground">
-                                                                                                                                                                                                                                                <div class="flex flex-col gap-0">
-                                                                                                                                                                                                                                                    @foreach($trx->units->take(2) as $u)
-                                                                                                                                                                                                                                                        <span
-                                                                                                                                                                                                                                                            class="font-medium text-foreground text-xs leading-none truncate max-w-[80px] sm:max-w-[120px]" title="{{ $u->seri }}">{{ \Illuminate\Support\Str::limit($u->seri, 20) }}</span>
-                                                                                                                                                                                                                                                    @endforeach
-                                                                                                                                                                                                                                                    @if($trx->units->count() > 2)
-                                                                                                                                                                                                                                                        <span
-                                                                                                                                                                                                                                                            class="text-[9px] text-muted-foreground mt-0.5">+{{ $trx->units->count() - 2 }}</span>
-                                                                                                                                                                                                                                                    @endif
-                                                                                                                                                                                                                                                    @if($trx->units->isEmpty() && $trx->unit)
-                                                                                                                                                                                                                                                        <span
-                                                                                                                                                                                                                                                            class="font-medium text-foreground text-xs leading-none truncate max-w-[80px] sm:max-w-[120px]" title="{{ $trx->unit->seri }}">{{ \Illuminate\Support\Str::limit($trx->unit->seri, 20) }}</span>
-                                                                                                                                                                                                                                                    @endif
-                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                            <td
-                                                                                                                                                                                                                                                class="hidden md:table-cell whitespace-nowrap px-3 py-3 text-muted-foreground text-[10px] leading-tight">
-                                                                                                                                                                                                                                                {{ \Carbon\Carbon::parse($trx->waktu_mulai)->format('d/m/y H:i')
-                                                                                                                                                                                                                                                                                }}<br />
-                                                                                                                                                                                                                                                {{ \Carbon\Carbon::parse($trx->waktu_selesai)->format('d/m/y H:i') }}
-                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                            <td
-                                                                                                                                                                                                                                                class="hidden md:table-cell whitespace-nowrap px-3 py-3 text-muted-foreground leading-tight">
-                                                                                                                                                                                                                                                Rp {{ number_format($trx->subtotal_harga, 0, ',', '.') }}<br />
-                                                                                                                                                                                                                                                <span class="text-xs text-red-500">Diskon: -Rp {{
-                                    number_format($trx->potongan_diskon, 0, ',', '.') }}</span>
-                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                            <td
-                                                                                                                                                                                                                                                class="hidden sm:table-cell whitespace-nowrap px-3 py-1.5 text-sm font-bold text-foreground leading-none">
-                                                                                                                                                                                                                                                Rp {{ number_format($trx->grand_total, 0, ',', '.') }}<br />
-                                                                                                                                                                                                                                                @php
-                                                                                                                                                                                                                                                    $trxCommission = $trx->commissions->sum('amount');
-                                                                                                                                                                                                                                                    $trxNet = $trx->grand_total - $trxCommission;
-                                                                                                                                                                                                                                                @endphp
-                                                                                                                                                                                                                                                @if($trxCommission > 0)
-                                                                                                                                                                                                                                                    <div
-                                                                                                                                                                                                                                                        class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-                                                                                                                                                                                                                                                        Net: Rp {{ number_format($trxNet, 0, ',', '.') }}
-                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                @endif
-                                                                                                                                                                                                                                                <div class="mt-0.5 flex flex-wrap gap-1">
-                                                                                                                                                                                                                                                    <span
-                                                                                                                                                                                                                                                        class="inline-flex rounded border bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200/50 dark:border-purple-900/50 px-1 font-mono text-[9px] font-semibold uppercase">
-                                                                                                                                                                                                                                                        {{ $trx->kode_unik_pembayaran }}
-                                                                                                                                                                                                                                                    </span>
-                                                                                                                                                                                                                                                    <span
-                                                                                                                                                                                                                                                        class="inline-flex rounded border bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50 px-1 font-mono text-[9px] font-semibold uppercase">
-                                                                                                                                                                                                                                                        {{ $trx->metode_pembayaran }}
-                                                                                                                                                                                                                                                    </span>
-                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                            <td class="whitespace-nowrap px-2 sm:px-3 py-3">
-                                                                                                                                                                                                                                                @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
-                                                                                                                                                                                                                                                    <x-ui.badge variant="amber" class="text-[9px]">{{ $trx->status === "pending_confirmation" ? "Verifikasi" : "Pending" }}</x-ui.badge>
-                                                                                                                                                                                                                                                @elseif($trx->status === 'paid')
-                                                                                                                                                                                                                                                    <x-ui.badge variant="blue" class="text-[9px]">Paid</x-ui.badge>
-                                                                                                                                                                                                                                                @elseif($trx->status === 'renting')
-                                                                                                                                                                                                                                                    <x-ui.badge variant="emerald" class="text-[9px]">Rent</x-ui.badge>
-                                                                                                                                                                                                                                                @elseif($trx->status === 'completed')
-                                                                                                                                                                                                                                                    <x-ui.badge variant="green" class="text-[9px]">Done</x-ui.badge>
-                                                                                                                                                                                                                                                @else
-                                                                                                                                                                                                                                                    <x-ui.badge variant="red" class="text-[9px]">Cancel</x-ui.badge>
-                                                                                                                                                                                                                                                @endif
-                                                                                                                                                                                                                                                <td class="relative whitespace-nowrap py-3 pl-2 pr-2 sm:pr-6 text-right">
-                                                                                                                                                                                                                                                <div class="flex items-center justify-end gap-2">
-                                                                                                                                                                                                                                                    @if($filterStatus === 'trashed')
-                                                                                                                                                                                                                                                        @if(auth()->user()->role === 'admin')
-                                                                                                                                                                                                                                                            {{-- Restore Button --}}
-                                                                                                                                                                                                                                                            <button wire:click.stop="restore({{ $trx->id }})"
-                                                                                                                                                                                                                                                                wire:confirm="Pulihkan transaksi ini ke daftar aktif?"
-                                                                                                                                                                                                                                                                class="flex h-8 w-8 items-center justify-center rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
-                                                                                                                                                                                                                                                                title="Pulihkan Transaksi">
-                                                                                                                                                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                                                                                                                                                                                                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-                                                                                                                                                                                                                                                                </svg>
-                                                                                                                                                                                                                                                            </button>
+                            <tbody class="divide-y divide-border text-xs">
+                                @forelse ( as )
+                                    @php
+                                        $tolerance = (int) \App\Models\Setting::getVal('late_tolerance_minutes', 60);
+                                        $isLate = ($trx->status === 'renting' && \Carbon\Carbon::parse($trx->waktu_selesai)->addMinutes($tolerance) < now());
+                                    @endphp
+                                    <tr wire:click="openInspect({{ $trx->id }})"
+                                        class="cursor-pointer hover:bg-muted/40 transition-colors group/row {{ $trx->status === 'cancelled' ? 'opacity-50' : '' }}">
+                                        
+                                        {{-- 1. Pelanggan --}}
+                                        <td class="py-3.5 pl-4 pr-3 sm:pl-6 align-top">
+                                            <div class="flex flex-col gap-1">
+                                                <div class="font-bold text-foreground text-sm leading-tight truncate max-w-[200px]" title="{{ $trx->nama }}">
+                                                    {{ $trx->nama }}
+                                                </div>
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span 
+                                                        x-data="{ copied: false }"
+                                                        @click.stop="navigator.clipboard.writeText('{{ $trx->booking_code }}'); copied = true; setTimeout(() => copied = false, 1500)"
+                                                        class="inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-tight cursor-pointer transition-colors"
+                                                        :class="copied ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-foreground border-border hover:bg-muted/80'"
+                                                        title="Klik untuk salin kode">
+                                                        <span x-text="copied ? 'Tersalin' : '{{ $trx->booking_code }}'"></span>
+                                                    </span>
+                                                    <a href="https://wa.me/{{ preg_replace('/^0/', '62', $trx->no_wa) }}"
+                                                        target="_blank" wire:click.stop 
+                                                        class="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-emerald-600 transition-colors font-medium"
+                                                        title="Hubungi via WhatsApp">
+                                                        <svg class="w-3 h-3 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                                            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.075-2.227-.557-1.838-.758-3.018-2.618-3.11-2.74-.09-.122-.738-.981-.738-1.871 0-.89.467-1.328.633-1.506.166-.178.363-.223.484-.223.12 0 .241.002.348.007.112.006.262-.042.41.312.152.365.518 1.265.563 1.357.045.092.076.198.016.32-.06.122-.09.198-.18.304-.09.107-.189.239-.27.321-.09.092-.185.192-.08.373.105.18.468.772 1.004 1.25.688.613 1.27.803 1.45.895.18.091.286.076.392-.046.105-.122.451-.525.572-.707.12-.182.241-.152.406-.091.166.06 1.055.498 1.236.589.18.09.301.137.346.213.045.076.045.441-.099.846z"/>
+                                                        </svg>
+                                                        <span>{{ $trx->no_wa }}</span>
+                                                    </a>
+                                                </div>
+                                                <div class="text-[10px] text-muted-foreground">
+                                                    {{ $trx->created_at->format('d/m/Y H:i') }}
+                                                </div>
+                                            </div>
+                                        </td>
 
-                                                                                                                                                                                                                                                            {{-- Force Delete Button --}}
-                                                                                                                                                                                                                                                            <button wire:click.stop="forceDelete({{ $trx->id }})"
-                                                                                                                                                                                                                                                                wire:confirm="PERINGATAN: Data ini akan dihapus PERMANEN dari database dan tidak bisa dikembalikan lagi. Lanjutkan?"
-                                                                                                                                                                                                                                                                class="flex h-8 w-8 items-center justify-center rounded-lg text-red-600 hover:bg-red-100 dark:hover:bg-red-950 transition-colors"
-                                                                                                                                                                                                                                                                title="Hapus Permanen">
-                                                                                                                                                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                                                                                                                                                                                                                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="m10 11 4 4"/><path d="m14 11-4 4"/>
-                                                                                                                                                                                                                                                                </svg>
-                                                                                                                                                                                                                                                            </button>
-                                                                                                                                                                                                                                                        @endif
-                                                                                                                                                                                                                                                    @else
-                                                                                                                                                                                                                                                        @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
-                                                                                                                                                                                                                                                            @if(in_array(auth()->user()->role, ['admin', 'staff']))
-                                                                                                                                                                                                                                                                {{-- Validasi --}}
-                                                                                                                                                                    <button wire:click.stop="markAsPaid({{ $trx->id }})"
-                                                                                                                                                                        wire:confirm="Transaksi ini sudah valid transfer?"
-                                                                                                                                                                        wire:loading.attr="disabled" wire:target="markAsPaid({{ $trx->id }})"
-                                                                                                                                                                        class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-600/20 active:scale-95 transition-all">
-                                                                                                                                                                        <svg wire:loading.remove wire:target="markAsPaid({{ $trx->id }})"
-                                                                                                                                                                            xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                                                                                                                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                                                                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                                                                                                                                            <polyline points="20 6 9 17 4 12" />
-                                                                                                                                                                        </svg>
-                                                                                                                                                                        <span wire:loading wire:target="markAsPaid({{ $trx->id }})"
-                                                                                                                                                                            class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                                                                                                                                                        Validasi
-                                                                                                                                                                    </button>
-                                                                                                                                                                    <button wire:click.stop="cancel({{ $trx->id }})"
-                                                                                                                                                                        wire:confirm="Batalkan pesanan ini?" wire:loading.attr="disabled"
-                                                                                                                                                                        wire:target="cancel({{ $trx->id }})"
-                                                                                                                                                                        class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600/15 hover:bg-rose-600 text-rose-500 hover:text-white border border-rose-500/20 active:scale-95 transition-all">
-                                                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                                                                                                                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                                                                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                                                                                                                                            <circle cx="12" cy="12" r="10" />
-                                                                                                                                                                            <line x1="15" y1="9" x2="9" y2="15" />
-                                                                                                                                                                            <line x1="9" y1="9" x2="15" y2="15" />
-                                                                                                                                                                        </svg>
-                                                                                                                                                                        Batal
-                                                                                                                                                                    </button>
-                                                                                                                                                                @endif
-                                                                                                                                                                                                                                                        @elseif($trx->status === 'paid')
-                                                                                                                                                                                                                                                            @if(in_array(auth()->user()->role, ['admin', 'staff']))
-                                                                                                                                                                    <button wire:click.stop="handover({{ $trx->id }})"
-                                                                                                                                                                        wire:confirm="Validasi ambil unit sekarang?"
-                                                                                                                                                                        wire:loading.attr="disabled"
-                                                                                                                                                                        wire:target="handover({{ $trx->id }})"
-                                                                                                                                                                        class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-sm shadow-sky-600/20 active:scale-95 transition-all">
-                                                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
-                                                                                                                                                                        Validasi Ambil
-                                                                                                                                                                    </button>
-                                                                                                                                                                @endif
-                                                                                                                                                                                                                                                        @elseif($trx->status === 'renting')
-                                                                                                                                                                                                                                                            @php
-                                                                                                                                                                                                                                                                $tolerance = (int) \App\Models\Setting::getVal('late_tolerance_minutes', 60);
-                                                                                                                                                                                                                                                                $isLate = (\Carbon\Carbon::parse($trx->waktu_selesai)->addMinutes($tolerance) < now());
-                                                                                                                                                                                                                                                            @endphp
-                                                                                                                                                                                                                                                            @if(in_array(auth()->user()->role, ['admin', 'staff']))
-                                                                                                                                                                                                                                                                {{-- Tombol Cepat Perpanjang --}}
-                                                                                                                                                                                                                                                                <button wire:click.stop="openExtendModal({{ $trx->id }})"
-                                                                                                                                                                                                                                                                    wire:loading.attr="disabled"
-                                                                                                                                                                                                                                                                    wire:target="openExtendModal({{ $trx->id }})"
-                                                                                                                                                                                                                                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 transition-all active:scale-95 shadow-sm shadow-amber-500/5 mr-1.5">
-                                                                                                                                                                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                                                                                                                                                                                                                                                                    <span>Perpanjang</span>
-                                                                                                                                                                                                                                                                </button>
-                                                                                                                                                                                                                                                                <x-ui.button wire:click.stop="openDendaModal({{ $trx->id }})"
-                                                                                                                                                                                                                                                                    wire:loading.attr="disabled"
-                                                                                                                                                                                                                                                                    wire:target="openDendaModal({{ $trx->id }})" :variant="$isLate ? 'destructive' : 'default'" size="sm" class="gap-1.5 shadow-lg">
-                                                                                                                                                                                                                                                                    <svg wire:loading.remove wire:target="openDendaModal({{ $trx->id }})"
-                                                                                                                                                                                                                                                                        xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                                                                                                                                                                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                                                                                                                                                                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                                                                                                                                                                                                                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                                                                                                                                                                                                                                                        <polyline points="22 4 12 14.01 9 11.01" />
-                                                                                                                                                                                                                                                                    </svg>
-                                                                                                                                                                                                                                                                    <span wire:loading wire:target="openDendaModal({{ $trx->id }})"
-                                                                                                                                                                                                                                                                        class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                                                                                                                                                                                                                                                    Validasi Pengembalian
-                                                                                                                                                                                                                                                                </x-ui.button>
-                                                                                                                                                                                                                                                            @endif
-                                                                                                                                                                                                                                                        @endif
+                                        {{-- 2. Unit & Jadwal --}}
+                                        <td class="py-3.5 px-3 align-top">
+                                            <div class="flex flex-col gap-1">
+                                                <div class="font-semibold text-foreground text-xs leading-tight">
+                                                    @if($trx->units->isNotEmpty())
+                                                        {{ $trx->units->pluck('seri')->implode(', ') }}
+                                                    @elseif($trx->unit)
+                                                        {{ $trx->unit->seri }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </div>
+                                                <div class="text-[11px] text-muted-foreground flex flex-col">
+                                                    <span>{{ \Carbon\Carbon::parse($trx->waktu_mulai)->format('d M H:i') }} - {{ \Carbon\Carbon::parse($trx->waktu_selesai)->format('d M H:i') }}</span>
+                                                    <span class="text-[10px] opacity-75">({{ \Carbon\Carbon::parse($trx->waktu_mulai)->diffInHours(\Carbon\Carbon::parse($trx->waktu_selesai)) }} jam)</span>
+                                                </div>
+                                                @if($isLate)
+                                                    <span class="inline-flex items-center w-fit px-1.5 py-0.5 rounded text-[10px] font-bold bg-destructive/15 text-destructive border border-destructive/20">
+                                                        Terlambat
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </td>
 
-                                                                                                                                                                                                                                @if(in_array(auth()->user()->role, ['admin', 'staff']))
-                                                                                                                                                                                                                                    <button wire:click.stop="editTrx({{ $trx->id }})"
-                                                                                                                                                                                                                                        wire:loading.attr="disabled"
-                                                                                                                                                                                                                                        wire:target="editTrx({{ $trx->id }})"
-                                                                                                                                                                                                                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-muted/70 hover:bg-muted text-foreground border border-border transition-all active:scale-95 shadow-sm mr-1">
-                                                                                                                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                                                                                                                                                                                                                                        <span>Edit</span>
-                                                                                                                                                                                                                                    </button>
-                                                                                                                                                                                                                                @endif
-                                                                                                                                                                                                                                                        {{-- Soft Delete Button --}}
-                                                                                                                                                                                                                                                        @if(auth()->user()->role === 'admin')
-                                                                                                                                                                                                                                                            <button wire:click.stop="deleteRow({{ $trx->id }})"
-                                                                                                                                                                                                                                                                wire:confirm="Pindahkan transaksi ini ke kotak sampah?"
-                                                                                                                                                                                                                                                                class="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                                                                                                                                                                                                                                                                title="Buang ke Sampah">
-                                                                                                                                                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                                                                                                                                                                                                                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
-                                                                                                                                                                                                                                                                </svg>
-                                                                                                                                                                                                                                                            </button>
-                                                                                                                                                                                                                                                        @endif
-                                                                                                                                                                                                                                                    @endif
-                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                        </tr>
+                                        {{-- 3. Total Bayar --}}
+                                        <td class="py-3.5 px-3 align-top">
+                                            <div class="flex flex-col gap-1">
+                                                <div class="font-bold text-foreground text-sm leading-tight">
+                                                    Rp {{ number_format($trx->grand_total, 0, ',', '.') }}
+                                                </div>
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
+                                                        <x-ui.badge variant="amber" class="text-[10px] px-1.5 py-0">{{ $trx->status === 'pending_confirmation' ? 'Perlu Verifikasi' : 'Pending' }}</x-ui.badge>
+                                                    @elseif($trx->status === 'paid')
+                                                        <x-ui.badge variant="blue" class="text-[10px] px-1.5 py-0">Siap Ambil</x-ui.badge>
+                                                    @elseif($trx->status === 'renting')
+                                                        <x-ui.badge variant="emerald" class="text-[10px] px-1.5 py-0">Sedang Disewa</x-ui.badge>
+                                                    @elseif($trx->status === 'completed')
+                                                        <x-ui.badge variant="green" class="text-[10px] px-1.5 py-0">Selesai</x-ui.badge>
+                                                    @else
+                                                        <x-ui.badge variant="red" class="text-[10px] px-1.5 py-0">Batal</x-ui.badge>
+                                                    @endif
+
+                                                    <span class="text-[10px] text-muted-foreground uppercase font-mono">
+                                                        {{ $trx->metode_pembayaran }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {{-- 4. Aksi Cepat --}}
+                                        <td class="py-3.5 pl-3 pr-4 sm:pr-6 align-top text-right">
+                                            <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                                                @if($filterStatus === 'trashed')
+                                                    @if(auth()->user()->role === 'admin')
+                                                        <button wire:click.stop="restore({{ $trx->id }})"
+                                                            wire:confirm="Pulihkan transaksi ini?"
+                                                            class="h-8 px-2.5 rounded-lg text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-500/20 transition-colors"
+                                                            title="Pulihkan">
+                                                            Pulihkan
+                                                        </button>
+                                                        <button wire:click.stop="forceDelete({{ $trx->id }})"
+                                                            wire:confirm="Hapus permanen transaksi ini?"
+                                                            class="h-8 px-2.5 rounded-lg text-xs font-semibold text-destructive hover:bg-destructive/10 border border-destructive/20 transition-colors"
+                                                            title="Hapus Permanen">
+                                                            Hapus
+                                                        </button>
+                                                    @endif
+                                                @else
+                                                    {{-- Tombol Utama Berdasarkan Status --}}
+                                                    @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
+                                                        @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                                            <button wire:click.stop="markAsPaid({{ $trx->id }})"
+                                                                wire:confirm="Konfirmasi pembayaran lunas?"
+                                                                wire:loading.attr="disabled" wire:target="markAsPaid({{ $trx->id }})"
+                                                                class="h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm active:scale-95 transition-all flex items-center gap-1.5">
+                                                                <span wire:loading.remove wire:target="markAsPaid({{ $trx->id }})">Validasi Lunas</span>
+                                                                <span wire:loading wire:target="markAsPaid({{ $trx->id }})" class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                                            </button>
+                                                            <button wire:click.stop="cancel({{ $trx->id }})"
+                                                                wire:confirm="Batalkan pesanan ini?" wire:loading.attr="disabled"
+                                                                wire:target="cancel({{ $trx->id }})"
+                                                                class="h-8 px-2.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border transition-colors">
+                                                                Batal
+                                                            </button>
+                                                        @endif
+                                                    @elseif($trx->status === 'paid')
+                                                        @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                                            <button wire:click.stop="handover({{ $trx->id }})"
+                                                                wire:confirm="Serahkan unit ke penyewa?"
+                                                                wire:loading.attr="disabled"
+                                                                wire:target="handover({{ $trx->id }})"
+                                                                class="h-8 px-3 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-sm active:scale-95 transition-all flex items-center gap-1.5">
+                                                                <span wire:loading.remove wire:target="handover({{ $trx->id }})">Serahkan Unit</span>
+                                                                <span wire:loading wire:target="handover({{ $trx->id }})" class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                                            </button>
+                                                        @endif
+                                                    @elseif($trx->status === 'renting')
+                                                        @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                                            <button wire:click.stop="openExtendModal({{ $trx->id }})"
+                                                                wire:loading.attr="disabled"
+                                                                wire:target="openExtendModal({{ $trx->id }})"
+                                                                class="h-8 px-2.5 rounded-lg text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors">
+                                                                Perpanjang
+                                                            </button>
+                                                            <button wire:click.stop="openDendaModal({{ $trx->id }})"
+                                                                wire:loading.attr="disabled"
+                                                                wire:target="openDendaModal({{ $trx->id }})"
+                                                                class="h-8 px-3 rounded-lg text-xs font-semibold {{ $isLate ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-emerald-600 hover:bg-emerald-500 text-white' }} shadow-sm active:scale-95 transition-all flex items-center gap-1.5">
+                                                                <span wire:loading.remove wire:target="openDendaModal({{ $trx->id }})">Unit Kembali</span>
+                                                                <span wire:loading wire:target="openDendaModal({{ $trx->id }})" class="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                                            </button>
+                                                        @endif
+                                                    @else
+                                                        <button wire:click.stop="openInspect({{ $trx->id }})"
+                                                            class="h-8 px-2.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors">
+                                                            Detail
+                                                        </button>
+                                                    @endif
+
+                                                    {{-- Opsi Edit & Hapus --}}
+                                                    @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                                        <button wire:click.stop="editTrx({{ $trx->id }})"
+                                                            wire:loading.attr="disabled"
+                                                            wire:target="editTrx({{ $trx->id }})"
+                                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted border border-border transition-colors"
+                                                            title="Edit Transaksi">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                                        </button>
+                                                    @endif
+
+                                                    @if(auth()->user()->role === 'admin')
+                                                        <button wire:click.stop="deleteRow({{ $trx->id }})"
+                                                            wire:confirm="Pindahkan transaksi ini ke kotak sampah?"
+                                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border transition-colors"
+                                                            title="Hapus">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                                        </button>
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
                                                                                                                                                                                                                                             {{-- Expanded Inspection Area (Dark Shadcn Minimalist) --}}
                                                                                                                                                                                                                                             @if($inspectTrxId === $trx->id && $inspectTrx)
                                                                                                                                                                                                                                                                             <tr
                                                                                                                                                                                                                                                                                 class="bg-background animate-in fade-in slide-in-from-top-1 duration-300">
-                                                                                                                                                                                                                                                                                <td colspan="8" class="p-0 border-none">
+                                                                                                                                                                                                                                                                                <td colspan="4" class="p-0 border-none">
                                                                                                                                                                                                                                                                                     <div class="p-6 md:p-8 bg-background border-b border-border shadow-inner">
                                                                                                                                                                                                                                                                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-start">
 
@@ -519,7 +491,7 @@
                                                                                                                                                                                                                                             @endif
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="py-10 text-center text-sm text-muted-foreground">Belum ada
+                                        <td colspan="4" class="py-10 text-center text-sm text-muted-foreground">Belum ada
                                             transaksi penyewaan yang masuk.</td>
                                     </tr>
                                 @endforelse
