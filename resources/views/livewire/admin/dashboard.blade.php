@@ -800,7 +800,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    <a href="{{ route('admin.rentals.show', $rental->id) }}"
+                                    <a href="{{ route('admin.transactions', ['search' => $rental->booking_code ?: $rental->nama]) }}"
                                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary text-[10px] font-semibold transition-all">
                                         <span>Detail</span>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
