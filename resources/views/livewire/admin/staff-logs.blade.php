@@ -240,51 +240,24 @@
                     </div>
                 </div>
 
-                <!-- Post Narrative Content -->
-                <div class="mt-3 text-xs sm:text-sm text-foreground font-normal leading-relaxed pl-0 sm:pl-[52px]">
+                <!-- Post Narrative Content (Super Simple & Clean) -->
+                <div class="mt-2 text-xs sm:text-sm text-foreground leading-relaxed pl-0 sm:pl-[52px]">
                     <p class="font-medium text-foreground">
                         {{ $displayDesc }}
                     </p>
-
-                    <!-- Target Penyewa Tag -->
-                    @if($log->target && ($log->target_type === 'App\Models\Rental' || $log->target_type === 'Rental'))
-                        <div class="mt-2.5 flex items-center gap-2 flex-wrap">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[11px] font-semibold">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                                <span>Penyewa: {{ $log->target->nama ?? 'Penyewa' }}</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border/80 font-mono text-[10px] font-medium">
-                                Kode: #{{ $log->target->booking_code ?? '-' }}
-                            </span>
-                        </div>
-                    @endif
-
-                    <!-- Highlight Perubahan Cepat (Ramah Orang Awam) -->
-                    @if(count($diffHighlights) > 0)
-                        <div class="mt-2.5 p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs space-y-1">
-                            <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">Rincian Perubahan:</span>
-                            @foreach($diffHighlights as $dh)
-                                <div class="flex items-center gap-1.5 text-foreground/90 font-medium text-[11px]">
-                                    <span class="text-amber-500 font-bold">•</span>
-                                    <span>{{ $dh }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @elseif($hasDiff)
-                        <div class="mt-2 flex items-center gap-1.5 text-[11px] text-primary font-medium">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                            <span>Ada perbandingan nilai data sebelum & sesudah</span>
-                        </div>
-                    @endif
                 </div>
 
-                <!-- Footer: Klik untuk Detail -->
-                <div class="mt-3 pt-2.5 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground pl-0 sm:pl-[52px]">
-                    <span class="text-[10px] text-muted-foreground/70">Nomor Catatan #{{ $log->id }}</span>
-                    <span class="text-primary font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform text-xs">
-                        <span>Lihat Rincian Lengkap</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                    </span>
+                <!-- Footer: Ringkas dan Bersih -->
+                <div class="mt-2.5 pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground pl-0 sm:pl-[52px]">
+                    <span class="text-[10px] text-muted-foreground/60">{{ $fullTime }}</span>
+                    @if($hasDiff)
+                        <span class="text-primary font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform text-xs">
+                            <span>Lihat Detail Perubahan</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </span>
+                    @else
+                        <span class="text-[10px] text-muted-foreground/50">Tercatat di sistem</span>
+                    @endif
                 </div>
             </article>
         @empty
@@ -446,18 +419,6 @@
                         <div class="p-3.5 rounded-2xl bg-muted/30 border border-border/60 text-xs leading-relaxed text-foreground font-medium">
                             {{ $mDesc }}
                         </div>
-
-                        @if($selectedLog->target && ($selectedLog->target_type === 'App\Models\Rental' || $selectedLog->target_type === 'Rental'))
-                            <div class="flex items-center gap-2 pt-1 flex-wrap">
-                                <span class="text-[10px] uppercase font-bold text-muted-foreground">Data Terkait:</span>
-                                <span class="px-2.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-semibold">
-                                    {{ $selectedLog->target->nama }}
-                                </span>
-                                <span class="px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-mono text-[10px]">
-                                    #{{ $selectedLog->target->booking_code }}
-                                </span>
-                            </div>
-                        @endif
                     </div>
 
                     <!-- Perbandingan Data Sebelum & Sesudah (Sangat Jelas & Manusiawi) -->
@@ -521,5 +482,4 @@
             </div>
         </div>
     @endif
-</div>f
 </div>
