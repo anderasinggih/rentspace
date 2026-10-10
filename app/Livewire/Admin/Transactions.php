@@ -1154,52 +1154,31 @@ class Transactions extends Component
         return response()->streamDownload($callback, "export_transaksi_" . now()->format('Ymd_Hi') . ".csv", $headers);
     }
 
-    public function setFilterStatus($status)
-    {
-        $this->filterStatus = $status;
-        $this->resetPage();
-    }
-
     public function render()
     {
-        $statusCounts = [
-            'all' => Rental::count(),
-            'pending' => Rental::whereIn('status', ['pending', 'pending_confirmation'])->count(),
-            'paid' => Rental::where('status', 'paid')->count(),
-            'renting' => Rental::where('status', 'renting')->count(),
-            'completed' => Rental::where('status', 'completed')->count(),
-            'cancelled' => Rental::where('status', 'cancelled')->count(),
-            'trashed' => auth()->check() && auth()->user()->role === 'admin' ? Rental::onlyTrashed()->count() : 0,
-        ];
-
         $query = Rental::with(['units', 'affiliator', 'commissions'])
             ->when($this->filterStatus === 'trashed', fn($q) => $q->onlyTrashed())
             ->when($this->search, function ($q) {
-                $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
-                    ->orWhere('id', 'like', '%' . $this->search . '%')
-                    ->orWhere('booking_code', 'like', '%' . $this->search . '%')
-                    ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
-            })
+            $q->where(fn($qq) => $qq->where('nama', 'like', '%' . $this->search . '%')
+            ->orWhere('id', 'like', '%' . $this->search . '%')
+            ->orWhere('booking_code', 'like', '%' . $this->search . '%')
+            ->orWhere('no_wa', 'like', '%' . $this->search . '%'));
+        })
             ->when($this->filterStatus && $this->filterStatus !== 'all' && $this->filterStatus !== 'trashed', function ($q) {
-                if ($this->filterStatus === 'pending') {
-                    $q->whereIn('status', ['pending', 'pending_confirmation']);
-                } else {
-                    $q->where('status', $this->filterStatus);
-                }
-            })
+            $q->where(fn($qq) => $qq->where('status', $this->filterStatus));
+        })
             ->when($this->dateStart, function ($q) {
-                $q->whereDate('waktu_mulai', '>=', $this->dateStart);
-            })
+            $q->whereDate('waktu_mulai', '>=', $this->dateStart);
+        })
             ->when($this->dateEnd, function ($q) {
-                $q->whereDate('waktu_mulai', '<=', $this->dateEnd);
-            })
+            $q->whereDate('waktu_mulai', '<=', $this->dateEnd);
+        })
             ->orderByRaw("CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END ASC")
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
         return view('livewire.admin.transactions', [
-            'transactions' => $query,
-            'statusCounts' => $statusCounts,
+            'transactions' => $query
         ])->layout('layouts.admin');
     }
 }
