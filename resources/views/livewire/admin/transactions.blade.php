@@ -911,23 +911,25 @@
                                 <span class="text-[10px] text-muted-foreground font-medium">Klik untuk lihat rincian</span>
                             </div>
 
-                            {{-- Pure Vertical Dot Timeline (Tanpa box container per item, garis vertikal jelas) --}}
-                            <div class="relative pl-7 sm:pl-8 py-1">
+                            {{-- Timeline Milestone Murni (Kolom Kiri Garis + Dot, Kolom Kanan Konten Teks) --}}
+                            <div class="space-y-0">
                                 @foreach($milestones as $idx => $m)
-                                    <div x-data="{ expanded: false }" class="relative pb-6 last:pb-1">
-                                        {{-- Garis Vertikal Penghubung antar titik --}}
-                                        @if(!$loop->last)
-                                            <div class="absolute left-[-17px] sm:left-[-19px] top-3 bottom-0 w-[2px] bg-border dark:bg-border/80"></div>
-                                        @endif
+                                    <div x-data="{ expanded: false }" class="flex items-start gap-3.5 group/item relative">
+                                        {{-- Kolom Kiri: Titik Dot & Garis Vertikal Terhubung --}}
+                                        <div class="flex flex-col items-center self-stretch shrink-0 w-4">
+                                            {{-- Bullet Dot --}}
+                                            <div class="w-3 h-3 rounded-full {{ $m['dot_color'] }} ring-4 {{ $m['dot_ring'] }} shadow-xs shrink-0 mt-0.5"></div>
+                                            {{-- Garis Penghubung ke Milestone Berikutnya --}}
+                                            @if(!$loop->last)
+                                                <div class="w-[2px] bg-border dark:bg-border/80 flex-1 my-1"></div>
+                                            @endif
+                                        </div>
 
-                                        {{-- Dot Milestone --}}
-                                        <div class="absolute left-[-22px] sm:left-[-24px] top-1.5 w-3 h-3 rounded-full {{ $m['dot_color'] }} ring-4 {{ $m['dot_ring'] }} bg-current shadow-xs"></div>
-
-                                        {{-- Konten Milestone (Header & Accordion) --}}
-                                        <div class="space-y-1">
-                                            <div @click="expanded = !expanded" class="cursor-pointer select-none group/item">
+                                        {{-- Kolom Kanan: Teks & Accordion Milestone --}}
+                                        <div class="flex-1 pb-6 last:pb-1 min-w-0">
+                                            <div @click="expanded = !expanded" class="cursor-pointer select-none">
                                                 <div class="flex items-center justify-between gap-2 flex-wrap">
-                                                    <div class="flex items-center gap-2">
+                                                    <div class="flex items-center gap-2 min-w-0">
                                                         <span class="font-bold text-xs text-foreground group-hover/item:text-primary transition-colors">
                                                             {{ $m['title'] }}
                                                         </span>
@@ -935,7 +937,7 @@
                                                             {{ $m['badge'] }}
                                                         </span>
                                                     </div>
-                                                    <div class="flex items-center gap-2">
+                                                    <div class="flex items-center gap-2 shrink-0">
                                                         <time class="text-[10.5px] font-mono text-muted-foreground font-medium">
                                                             {{ $m['time']->translatedFormat('d M Y, H:i') }}
                                                         </time>
