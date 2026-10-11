@@ -59,6 +59,28 @@ const lastCustomerMessage = new Map(); // jid -> text
 const humanTakeoverMap = new Map(); // jid -> timestampMs
 const HUMAN_TAKEOVER_TIMEOUT_MS = 5 * 60 * 1000; // 5 menit
 
+// Cache Initial Promo Data
+let cachedInitialPromo = null;
+const customerGreetedSet = new Set(); // nomor customer yang sudah menerima sapaan/promo awal sesi ini
+
+async function fetchInitialPromo() {
+    try {
+        const syncUrl = LARAVEL_WEBHOOK_URL.replace('/wa/webhook', '/wa/initial-promo');
+        const res = await axios.get(syncUrl, {
+            headers: { 'X-API-KEY': API_KEY },
+            timeout: 5000
+        });
+        if (res.data && res.data.status && res.data.data) {
+            cachedInitialPromo = res.data.data;
+            console.log('[RentSpace WA Bot] 📦 Initial promo data loaded successfully.');
+        } else {
+            cachedInitialPromo = null;
+        }
+    } catch (e) {
+        // Abaikan jika Laravel belum siap
+    }
+}
+
 // Contacts Cache: Menyimpan nama kontak yang di-save admin di HP/Google Kontak
 // Map: jid/phone -> { name, notify, verifiedName }
 const contactsMap = new Map();
@@ -427,7 +449,7 @@ async function connectToWhatsApp() {
             }
 
             if (isGroup) {
-                const isAdminCommand = lowerText.startsWith('/rentspacesettings') || lowerText.startsWith('/broadcast');
+                const isAdminCommand = lowerText.startsWith('/rentspacesettings') || lowerText.startsWith('/broadcast') || lowerText.startsWith('/initialchat');
                 // Perintah memori AI tidak perlu @mention (dipetakan ke grup report di sisi Laravel)
                 const isMemoryCommand = lowerText.startsWith('/memori')
                     || lowerText.startsWith('/ingat')
@@ -456,6 +478,107 @@ async function connectToWhatsApp() {
                     && mentionedJids.some((jid) => botIds.includes(stripJid(jid)));
 
                 console.log(`[RentSpace WA Bot] Grup pesan: isAdminCmd=${isAdminCommand}, isMemoryCmd=${isMemoryCommand}, isMentioned=${isBotMentioned}, botIds=${JSON.stringify(botIds)}, mentions=${JSON.stringify(mentionedJids)}`);
+
+                // Perintah cepat di grup: reply pesan dengan /initialchat untuk simpan foto + caption promo
+                if (lowerText.startsWith('/initialchat')) {
+                    const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+                    const quotedStanzaId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
+                    const quotedParticipant = msg.message?.extendedTextMessage?.contextInfo?.participant;
+
+                    // Jika membalas pesan yang memiliki media (foto / video / teks)
+                    if (quotedMsg) {
+                        try {
+                            const isImg = !!quotedMsg.imageMessage;
+                            const isVid = !!quotedMsg.videoMessage;
+                            let mediaBase64 = '';
+                            let mediaType = isImg ? 'image' : (isVid ? 'video' : null);
+                            let captionText = (isImg ? quotedMsg.imageMessage?.caption : (isVid ? quotedMsg.videoMessage?.caption : '')) ||
+                                              quotedMsg.conversation ||
+                                              quotedMsg.extendedTextMessage?.text ||
+                                              '';
+
+                            // Jika ada teks tambahan di samping perintah /initialchat, gunakan teks tersebut sebagai caption
+                            const customCaption = trimmedText.replace(/^\/initialchat\s*/i, '').trim();
+                            if (customCaption) {
+                                captionText = customCaption;
+                            }
+
+                            if (isImg || isVid) {
+                                await sock.sendMessage(sender, {
+                                    text: '⏳ Sedang mengunduh foto & menyimpan draf *Initial Chat Promo*... Mohon tunggu sebentar.'
+                                }, { quoted: msg });
+
+                                const mediaBuffer = await downloadMediaMessage(
+                                    {
+                                        message: quotedMsg,
+                                        key: {
+                                            id: quotedStanzaId,
+                                            remoteJid: sender,
+                                            participant: quotedParticipant
+                                        }
+                                    },
+                                    'buffer',
+                                    {}
+                                );
+                                mediaBase64 = mediaBuffer.toString('base64');
+                            }
+
+                            // Kirim ke endpoint Laravel untuk disimpan di Setting
+                            const syncUrl = LARAVEL_WEBHOOK_URL.replace('/wa/webhook', '/wa/initial-promo');
+                            await axios.post(syncUrl, {
+                                caption: captionText,
+                                media_base64: mediaBase64,
+                                media_type: mediaType || 'text'
+                            }, {
+                                headers: { 'X-API-KEY': API_KEY },
+                                timeout: 15000
+                            });
+
+                            // Update local cache
+                            cachedInitialPromo = {
+                                active: true,
+                                caption: captionText,
+                                media_base64: mediaBase64,
+                                media_type: mediaType || 'text'
+                            };
+
+                            const hasMediaTxt = mediaBase64 ? '📸 Foto / Media tersimpan' : '📝 Teks tersimpan';
+                            await sock.sendMessage(sender, {
+                                text: `✅ *INITIAL CHAT & PROMO BERHASIL DISIMPAN!*\n------------------------------------\n• *Status*: AKTIF 🟢\n• *Tipe*: ${hasMediaTxt}\n• *Caption/Pesan*:\n"${captionText || '-(tanpa teks)-'}"\n\n💡 _Pesan promo ini akan otomatis dikirimkan ke pelanggan yang baru pertama kali chat atau saat menanyakan promo/pricelist._\n\nKetik \`/initialchat off\` jika ingin menonaktifkan sementara.`
+                            }, { quoted: msg });
+                            continue;
+                        } catch (initErr) {
+                            console.error('[RentSpace WA Bot] Gagal simpan initialchat:', initErr);
+                            await sock.sendMessage(sender, {
+                                text: `⚠️ Gagal menyimpan initial chat: ${initErr.message}`
+                            }, { quoted: msg });
+                            continue;
+                        }
+                    } else {
+                        // Tidak me-reply pesan, teruskan perintah status / on / off / clear ke Laravel
+                        try {
+                            const res = await axios.post(LARAVEL_WEBHOOK_URL, {
+                                sender_jid: sender,
+                                phone: senderNumber,
+                                actual_phone: actualPhone,
+                                name: pushName,
+                                text: trimmedText
+                            }, {
+                                headers: { 'X-API-KEY': API_KEY },
+                                timeout: 15000
+                            });
+
+                            if (res.data && res.data.reply) {
+                                await sock.sendMessage(sender, { text: res.data.reply }, { quoted: msg });
+                            }
+                            // Refresh cache
+                            await fetchInitialPromo();
+                        } catch (cmdErr) {
+                            console.error('[RentSpace WA Bot] Gagal memproses /initialchat:', cmdErr);
+                        }
+                        continue;
+                    }
+                }
 
                 // Perintah cepat di grup: reply pesan dengan !pin untuk langsung pin ke Web Notes
                 const isPinCmd = lowerText === '!pin' || lowerText === '/pin';
@@ -869,8 +992,48 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
         }
     }
 
-    // 1. Menu Bantuan / Halo
-    if (['halo', 'hai', 'hi', 'p', 'menu', 'bantuan', 'start', 'info'].includes(lower) || isGreetingOnly(lower)) {
+    // 1. Cek apakah customer baru pertama kali chat dan ada initial promo yang aktif
+    const isFirstTimeCustomer = !customerGreetedSet.has(sender);
+    const isGreeting = ['halo', 'hai', 'hi', 'p', 'menu', 'bantuan', 'start', 'info'].includes(lower) || isGreetingOnly(lower);
+    const isPromoKeyword = /\b(promo|diskon|potongan|voucher|pricelist|daftar\s*harga|katalog|paket)\b/i.test(lower);
+
+    // Ambil cache initial promo jika belum ada
+    if (!cachedInitialPromo) {
+        await fetchInitialPromo();
+    }
+
+    if (cachedInitialPromo && cachedInitialPromo.active && (isFirstTimeCustomer || isPromoKeyword)) {
+        customerGreetedSet.add(sender);
+
+        const caption = cachedInitialPromo.caption || '';
+        const mediaBase64 = cachedInitialPromo.media_base64;
+        const mediaType = cachedInitialPromo.media_type || 'image';
+
+        if (mediaBase64) {
+            try {
+                const buffer = Buffer.from(mediaBase64, 'base64');
+                if (mediaType === 'video') {
+                    await send({ video: buffer, caption: caption });
+                } else {
+                    await send({ image: buffer, caption: caption });
+                }
+                return;
+            } catch (mediaErr) {
+                console.error('[RentSpace WA Bot] Gagal kirim initial promo media:', mediaErr);
+                if (caption) {
+                    await sendChatReply(caption);
+                    return;
+                }
+            }
+        } else if (caption) {
+            await sendChatReply(caption);
+            return;
+        }
+    }
+
+    // 1b. Menu Bantuan / Halo (Jika tidak ada initial promo aktif)
+    if (isGreeting) {
+        customerGreetedSet.add(sender);
         const replyMenu = `Halo Kak *${pushName}*! 👋\n` +
             `Selamat datang di WhatsApp Official *Rent Space Purwokerto* 🎮📷\n\n` +
             `Ada yang bisa kami bantu? Silakan balas dengan angka atau kata kunci:\n\n` +
@@ -898,9 +1061,6 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
         const reply = `Mohon tunggu sebentar ya Kak *${pushName}*, pesan Kakak sudah kami teruskan ke Admin Rent Space. Admin kami akan segera menghubungi atau merespon chat Kakak di nomor ini. 🙏`;
         await send({ text: reply });
 
-        // Forward notifikasi ke webhook Laravel agar bisa memberitahu admin sekunder/tim admin.
-        // Yang diteruskan pertanyaan customer sebelumnya (atau teks ini bila tidak ada),
-        // ditandai "-admin", bukan kata pemicu "ADMIN" yang tidak menjelaskan apa-apa.
         const forwardText = (lastCustomerMessage.get(sender) || text.trim()) + ' -admin';
         const savedContactName = getSavedContactName(sender, actualPhone || senderNumber);
         const adminFacingName = savedContactName || pushName;
@@ -945,6 +1105,23 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
             const savedContactName = getSavedContactName(sender, actualPhone || senderNumber);
             await forwardToAdmin(sender, actualPhone || senderNumber, savedContactName || pushName, text, reason);
             return;
+        }
+
+        // Jika respons dari Laravel menyertakan media promo
+        if (res.data && res.data.media_base64) {
+            try {
+                const buffer = Buffer.from(res.data.media_base64, 'base64');
+                const caption = res.data.reply || '';
+                const mType = res.data.media_type || 'image';
+                if (mType === 'video') {
+                    await send({ video: buffer, caption: caption });
+                } else {
+                    await send({ image: buffer, caption: caption });
+                }
+                return;
+            } catch (mErr) {
+                console.error('[RentSpace WA Bot] Gagal mengirim media balasan:', mErr);
+            }
         }
 
         if (res.data && res.data.reply) {

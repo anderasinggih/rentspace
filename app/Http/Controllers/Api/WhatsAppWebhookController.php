@@ -116,8 +116,12 @@ class WhatsAppWebhookController extends Controller
         }
 
 
-        // 0. Cek Perintah Khusus Admin: /rentspacesettings & /broadcast
-        if (str_starts_with(strtolower($text), '/rentspacesettings') || str_starts_with(strtolower($text), '/broadcast')) {
+        // 0. Cek Perintah Khusus Admin: /rentspacesettings, /broadcast, & /initialchat
+        if (
+            str_starts_with(strtolower($text), '/rentspacesettings') ||
+            str_starts_with(strtolower($text), '/broadcast') ||
+            str_starts_with(strtolower($text), '/initialchat')
+        ) {
             $senderJid = Setting::sanitizeJid($request->input('sender_jid', ''));
             $authorizedGroupId = Setting::sanitizeJid(Setting::getVal('admin_wa_group_id', ''));
 
@@ -147,12 +151,31 @@ class WhatsAppWebhookController extends Controller
                 $broadcastReply = $this->handleBroadcastAdminCommand($text, $phone);
                 return response()->json(['status' => true, 'reply' => $broadcastReply]);
             }
+
+            if (str_starts_with(strtolower($text), '/initialchat')) {
+                $initialReply = $this->handleInitialChatAdminCommand($text, $phone);
+                return response()->json(['status' => true, 'reply' => $initialReply]);
+            }
         }
 
         // Jika pesan berasal dari grup WhatsApp manapun yang bukan via report_group_query / admin command:
         // Jangan pernah membalas otomatis sebagai customer chat!
         if (str_ends_with($senderJid, '@g.us')) {
             return response()->json(['status' => true, 'reply' => null, 'message' => 'Group message ignored for customer bot']);
+        }
+
+        // 0b. Cek apakah customer meminta promo / pricelist spesifik dan ada initial promo yang aktif
+        $isPromoQuery = preg_match('/\b(promo|diskon|potongan|voucher|pricelist|daftar\s*harga|katalog|paket)\b/i', $text);
+        if ($isPromoQuery) {
+            $initialPromo = $this->getInitialPromoData();
+            if ($initialPromo && !empty($initialPromo['active'])) {
+                return response()->json([
+                    'status' => true,
+                    'reply' => $initialPromo['caption'] ?: null,
+                    'media_base64' => $initialPromo['media_base64'] ?? null,
+                    'media_type' => $initialPromo['media_type'] ?? null,
+                ]);
+            }
         }
 
         // 1. Cek perintah KATALOG / LIST / DAFTAR HARGA
@@ -946,6 +969,139 @@ class WhatsAppWebhookController extends Controller
             'group_name' => $targetGroup['name'] ?? 'Grup ' . $groupNumber,
             'numbers' => $targetGroup['numbers'] ?? [],
             'count' => count($targetGroup['numbers'] ?? [])
+        ]);
+    }
+
+    /**
+     * Handler untuk /initialchat (Kelola Pesan Sambutan / Promo Awal)
+     */
+    private function handleInitialChatAdminCommand(string $text, ?string $phone): string
+    {
+        $raw = trim(substr($text, strlen('/initialchat')));
+        $promo = $this->getInitialPromoData();
+
+        // 1. Cek status / bantuan
+        if (empty($raw) || strtolower($raw) === 'help' || strtolower($raw) === 'check' || strtolower($raw) === 'status') {
+            $msg = "✨ *RENT SPACE INITIAL CHAT & PROMO* ✨\n";
+            $msg .= "------------------------------------\n";
+            $msg .= "Pesan dan media promo yang otomatis dikirim ke customer baru atau yang menanyakan promo/pricelist.\n\n";
+
+            if ($promo && !empty($promo['active'])) {
+                $hasMedia = !empty($promo['media_base64']) ? '📸 Ada Foto/Media' : '📝 Teks Saja';
+                $captionPreview = !empty($promo['caption']) ? mb_substr($promo['caption'], 0, 100) . '...' : '-(tanpa caption)-';
+                $updatedAt = $promo['updated_at'] ?? '-';
+
+                $msg .= "🟢 *Status*: AKTIF\n";
+                $msg .= "• *Tipe*: {$hasMedia}\n";
+                $msg .= "• *Terakhir Diupdate*: {$updatedAt}\n";
+                $msg .= "• *Pratinjau Pesan*:\n\"{$captionPreview}\"\n\n";
+            } else {
+                $msg .= "🔴 *Status*: NONAKTIF / BELUM DISETTING\n\n";
+            }
+
+            $msg .= "📋 *Cara Mengatur:* \n";
+            $msg .= "1️⃣ *Kirim Foto + Caption* di grup ini.\n";
+            $msg .= "2️⃣ *Balas (Reply)* foto tersebut dan ketik `/initialchat`\n";
+            $msg .= "   _(Bot akan otomatis menyimpan foto dan caption tersebut)_\n\n";
+            $msg .= "⚙️ *Perintah Lainnya:*\n";
+            $msg .= "• `/initialchat on` : Aktifkan pengiriman otomatis\n";
+            $msg .= "• `/initialchat off` : Nonaktifkan sementara\n";
+            $msg .= "• `/initialchat clear` : Hapus foto dan pesan promo tersimpan\n";
+            return $msg;
+        }
+
+        if (strtolower($raw) === 'on') {
+            if (!$promo) {
+                return "⚠️ Belum ada pesan/foto promo yang tersimpan. Silakan balas foto dengan `/initialchat` terlebih dahulu.";
+            }
+            $promo['active'] = true;
+            $promo['updated_at'] = now()->toDateTimeString();
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'wa_initial_promo_data'],
+                ['value' => json_encode($promo)]
+            );
+            return "🟢 *Initial Chat Berhasil Diaktifkan!*\nCustomer baru atau yang menanyakan promo akan otomatis menerima promo ini.";
+        }
+
+        if (strtolower($raw) === 'off') {
+            if ($promo) {
+                $promo['active'] = false;
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => 'wa_initial_promo_data'],
+                    ['value' => json_encode($promo)]
+                );
+            }
+            return "🔴 *Initial Chat Dinonaktifkan Sementara.*\nBot tidak akan mengirimkan foto/promo otomatis sampai diaktifkan kembali (`/initialchat on`).";
+        }
+
+        if (strtolower($raw) === 'clear') {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'wa_initial_promo_data'],
+                ['value' => json_encode([])]
+            );
+            return "🗑️ *Initial Chat & Media Promo Berhasil Dihapus!*";
+        }
+
+        return "⚠️ Perintah tidak dikenali. Ketik `/initialchat help` untuk bantuan.";
+    }
+
+    /**
+     * Ambil data promo awal dari Setting
+     */
+    private function getInitialPromoData(): ?array
+    {
+        $raw = \App\Models\Setting::getVal('wa_initial_promo_data', '');
+        if (empty($raw)) return null;
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) && !empty($decoded) ? $decoded : null;
+    }
+
+    /**
+     * Endpoint untuk bot Node.js menyimpan atau membaca initial promo data
+     */
+    public function syncInitialPromo(Request $request)
+    {
+        $apiKey = $request->header('X-API-KEY');
+        $expectedKey = config('services.whatsapp.api_key', 'rentspace_secret_wa_token_2026');
+
+        if ($apiKey !== $expectedKey) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        if ($request->isMethod('get')) {
+            $data = $this->getInitialPromoData();
+            return response()->json([
+                'status' => true,
+                'data' => $data
+            ]);
+        }
+
+        // POST: Simpan data initial promo
+        $caption = (string) $request->input('caption', '');
+        $mediaBase64 = (string) $request->input('media_base64', '');
+        $mediaType = (string) $request->input('media_type', 'image');
+
+        $promoData = [
+            'active' => true,
+            'caption' => $caption,
+            'media_base64' => $mediaBase64,
+            'media_type' => $mediaType,
+            'updated_at' => now()->toDateTimeString(),
+        ];
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_initial_promo_data'],
+            ['value' => json_encode($promoData)]
+        );
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Initial promo data berhasil disimpan.',
+            'data' => [
+                'has_media' => !empty($mediaBase64),
+                'caption_length' => strlen($caption),
+                'active' => true,
+            ]
         ]);
     }
 }
