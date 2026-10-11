@@ -759,41 +759,70 @@
                             $milestones = [];
 
                             // 1. Dibuat (Booking)
+                            $bookingDetails = [
+                                'Kode Booking' => $inspectTrx->booking_code,
+                                'Pelanggan' => $inspectTrx->nama,
+                                'No. WhatsApp' => $inspectTrx->no_wa,
+                                'Waktu Mulai' => \Carbon\Carbon::parse($inspectTrx->waktu_mulai)->translatedFormat('d M Y, H:i'),
+                                'Waktu Selesai' => \Carbon\Carbon::parse($inspectTrx->waktu_selesai)->translatedFormat('d M Y, H:i'),
+                                'Metode Bayar' => strtoupper($inspectTrx->metode_pembayaran ?: 'QRIS'),
+                                'Total Tagihan' => 'Rp ' . number_format($inspectTrx->grand_total, 0, ',', '.'),
+                            ];
+                            if ($inspectTrx->alamat) {
+                                $bookingDetails['Alamat'] = $inspectTrx->alamat;
+                            }
                             $milestones[] = [
                                 'title' => 'Booking Dibuat',
-                                'desc' => 'Transaksi dibuat dengan kode ' . $inspectTrx->booking_code . ($inspectTrx->alamat ? ' (' . \Illuminate\Support\Str::limit($inspectTrx->alamat, 30) . ')' : ''),
+                                'summary' => 'Pesanan berhasil dibuat oleh pelanggan (' . $inspectTrx->booking_code . ')',
                                 'time' => $inspectTrx->created_at,
                                 'badge' => 'Dibuat',
                                 'badge_color' => 'bg-muted text-muted-foreground border-border',
-                                'dot_color' => 'bg-muted-foreground/50 ring-muted',
-                                'icon' => 'calendar',
+                                'dot_color' => 'bg-muted-foreground',
+                                'dot_ring' => 'ring-muted',
+                                'details' => $bookingDetails,
                             ];
 
                             // 2. Pembayaran (jika paid_at ada atau status paid/renting/completed)
                             if ($inspectTrx->paid_at) {
                                 $paidLog = $rentalLogs->firstWhere('action', 'mark_as_paid');
+                                $paidDetails = [
+                                    'Status' => 'Lunas Terverifikasi',
+                                    'Waktu Validasi' => $inspectTrx->paid_at->translatedFormat('d M Y, H:i:s'),
+                                    'Divalidasi Oleh' => ($paidLog && $paidLog->user) ? $paidLog->user->name : 'Sistem / Admin',
+                                    'Jumlah Lunas' => 'Rp ' . number_format($inspectTrx->grand_total, 0, ',', '.'),
+                                    'Bukti Bayar' => $inspectTrx->bukti_bayar ? 'Tersedia (dapat dilihat di detail pembayaran)' : 'Tidak ada lampiran foto',
+                                ];
                                 $milestones[] = [
-                                    'title' => 'Pembayaran Terverifikasi (Lunas)',
-                                    'desc' => ($paidLog && $paidLog->user ? 'Divalidasi oleh ' . $paidLog->user->name : 'Pembayaran lunas') . ($inspectTrx->bukti_bayar ? ' • Bukti foto terlampir' : ''),
+                                    'title' => 'Pembayaran Lunas',
+                                    'summary' => 'Pembayaran telah divalidasi dan dikonfirmasi lunas',
                                     'time' => $inspectTrx->paid_at,
-                                    'badge' => 'Lunas',
-                                    'badge_color' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
-                                    'dot_color' => 'bg-emerald-500 ring-emerald-500/20',
-                                    'icon' => 'check-circle',
+                                    'badge' => 'Paid',
+                                    'badge_color' => 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
+                                    'dot_color' => 'bg-blue-500',
+                                    'dot_ring' => 'ring-blue-500/20',
+                                    'details' => $paidDetails,
                                 ];
                             }
 
                             // 3. Serah Terima Unit (handed_over_at)
                             if ($inspectTrx->handed_over_at) {
                                 $handoverLog = $rentalLogs->firstWhere('action', 'handover_unit');
+                                $unitList = $inspectTrx->units->pluck('seri')->implode(', ') ?: '-';
+                                $handoverDetails = [
+                                    'Unit Diserahkan' => $unitList,
+                                    'Waktu Penyerahan' => $inspectTrx->handed_over_at->translatedFormat('d M Y, H:i:s'),
+                                    'Petugas Penyerah' => ($handoverLog && $handoverLog->user) ? $handoverLog->user->name : 'Staff Lapangan',
+                                    'Foto Serah Terima' => $inspectTrx->bukti_ambil ? 'Tersedia (foto pengambilan tersimpan)' : 'Tanpa foto lampiran',
+                                ];
                                 $milestones[] = [
-                                    'title' => 'Unit Diserahkan ke Penyewa',
-                                    'desc' => ($handoverLog && $handoverLog->user ? 'Diserahkan oleh ' . $handoverLog->user->name : 'Unit diserahkan') . ($inspectTrx->bukti_ambil ? ' • Bukti serah terima terlampir' : ''),
+                                    'title' => 'Unit Diserahkan (Renting)',
+                                    'summary' => 'Unit kamera/peralatan diserahkan kepada penyewa',
                                     'time' => $inspectTrx->handed_over_at,
-                                    'badge' => 'Diserahkan',
-                                    'badge_color' => 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20',
-                                    'dot_color' => 'bg-sky-500 ring-sky-500/20',
-                                    'icon' => 'package',
+                                    'badge' => 'Renting',
+                                    'badge_color' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
+                                    'dot_color' => 'bg-emerald-500',
+                                    'dot_ring' => 'ring-emerald-500/20',
+                                    'details' => $handoverDetails,
                                 ];
                             }
 
@@ -801,23 +830,33 @@
                             foreach ($rentalLogs as $log) {
                                 if ($log->action === 'extend_rental') {
                                     $milestones[] = [
-                                        'title' => 'Perpanjangan Sewa Diproses',
-                                        'desc' => $log->description . ($log->user ? ' (oleh ' . $log->user->name . ')' : ''),
+                                        'title' => 'Perpanjangan Sewa',
+                                        'summary' => $log->description,
                                         'time' => $log->created_at,
                                         'badge' => 'Perpanjang',
                                         'badge_color' => 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
-                                        'dot_color' => 'bg-amber-500 ring-amber-500/20',
-                                        'icon' => 'clock',
+                                        'dot_color' => 'bg-amber-500',
+                                        'dot_ring' => 'ring-amber-500/20',
+                                        'details' => [
+                                            'Keterangan' => $log->description,
+                                            'Diproses Oleh' => $log->user ? $log->user->name : 'Admin',
+                                            'Waktu Input' => $log->created_at->translatedFormat('d M Y, H:i:s'),
+                                        ],
                                     ];
                                 } elseif ($log->action === 'denda_paid') {
                                     $milestones[] = [
-                                        'title' => 'Denda Diselesaikan',
-                                        'desc' => $log->description . ($log->user ? ' (oleh ' . $log->user->name . ')' : ''),
+                                        'title' => 'Penyelesaian Denda',
+                                        'summary' => $log->description,
                                         'time' => $log->created_at,
                                         'badge' => 'Denda',
                                         'badge_color' => 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20',
-                                        'dot_color' => 'bg-rose-500 ring-rose-500/20',
-                                        'icon' => 'alert-triangle',
+                                        'dot_color' => 'bg-rose-500',
+                                        'dot_ring' => 'ring-rose-500/20',
+                                        'details' => [
+                                            'Detail Denda' => $log->description,
+                                            'Diverifikasi Oleh' => $log->user ? $log->user->name : 'Petugas',
+                                            'Waktu Bayar Denda' => $log->created_at->translatedFormat('d M Y, H:i:s'),
+                                        ],
                                     ];
                                 }
                             }
@@ -827,23 +866,33 @@
                                 $completeLog = $rentalLogs->firstWhere('action', 'complete_rental');
                                 $milestones[] = [
                                     'title' => 'Sewa Selesai & Unit Kembali',
-                                    'desc' => ($completeLog ? $completeLog->description : 'Sewa telah diselesaikan') . ($completeLog && $completeLog->user ? ' (oleh ' . $completeLog->user->name . ')' : ''),
+                                    'summary' => 'Unit telah diterima kembali oleh staf dan sewa ditutup',
                                     'time' => $inspectTrx->completed_at,
-                                    'badge' => 'Selesai',
+                                    'badge' => 'Completed',
                                     'badge_color' => 'bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20',
-                                    'dot_color' => 'bg-teal-500 ring-teal-500/20',
-                                    'icon' => 'check-all',
+                                    'dot_color' => 'bg-teal-500',
+                                    'dot_ring' => 'ring-teal-500/20',
+                                    'details' => [
+                                        'Status Akhir' => 'Selesai Sempurna',
+                                        'Waktu Pengembalian' => $inspectTrx->completed_at->translatedFormat('d M Y, H:i:s'),
+                                        'Penerima Unit' => ($completeLog && $completeLog->user) ? $completeLog->user->name : 'Staf / Admin',
+                                        'Keterangan' => $completeLog ? $completeLog->description : 'Peralatan telah dicek dan dikembalikan ke stok.',
+                                    ],
                                 ];
                             } elseif ($inspectTrx->status === 'cancelled') {
                                 $cancelLog = $rentalLogs->firstWhere('action', 'cancel_transaction');
                                 $milestones[] = [
                                     'title' => 'Transaksi Dibatalkan',
-                                    'desc' => $cancelLog ? $cancelLog->description : 'Transaksi dibatalkan',
+                                    'summary' => $cancelLog ? $cancelLog->description : 'Pesanan telah dibatalkan',
                                     'time' => $cancelLog ? $cancelLog->created_at : $inspectTrx->updated_at,
-                                    'badge' => 'Dibatalkan',
+                                    'badge' => 'Cancel',
                                     'badge_color' => 'bg-destructive/10 text-destructive border-destructive/20',
-                                    'dot_color' => 'bg-destructive ring-destructive/20',
-                                    'icon' => 'x-circle',
+                                    'dot_color' => 'bg-destructive',
+                                    'dot_ring' => 'ring-destructive/20',
+                                    'details' => [
+                                        'Alasan / Catatan' => $cancelLog ? $cancelLog->description : 'Dibatalkan oleh staf / pemesan',
+                                        'Waktu Pembatalan' => ($cancelLog ? $cancelLog->created_at : $inspectTrx->updated_at)->translatedFormat('d M Y, H:i:s'),
+                                    ],
                                 ];
                             }
 
@@ -853,44 +902,68 @@
                             });
                         @endphp
 
-                        <div class="space-y-3 pt-4 border-t border-border/80">
+                        <div class="space-y-3 pt-3 border-t border-border/80">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Milestone & Timeline</span>
+                                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Milestone Transaksi</span>
                                     <span class="px-1.5 py-0.2 rounded-full bg-primary/10 text-primary text-[9px] font-mono font-bold">{{ count($milestones) }}</span>
                                 </div>
-                                <span class="text-[10px] text-muted-foreground font-medium">Histori status</span>
+                                <span class="text-[10px] text-muted-foreground font-medium">Klik untuk buka detail</span>
                             </div>
 
-                            <div class="rounded-xl border border-border/70 bg-card p-3 sm:p-4 divide-y divide-border/60">
-                                @foreach($milestones as $idx => $m)
-                                    <div class="flex items-start gap-3 {{ $loop->first ? 'pb-3' : ($loop->last ? 'pt-3' : 'py-3') }}">
-                                        {{-- Step Indicator --}}
-                                        <div class="mt-0.5 shrink-0 flex flex-col items-center">
-                                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border {{ $m['badge_color'] }}">
-                                                {{ $idx + 1 }}
-                                            </div>
-                                        </div>
+                            {{-- Vertical Timeline with Left Connected Dot Line & Accordion --}}
+                            <div class="relative pl-6">
+                                {{-- Garis vertikal penghubung titik milestone --}}
+                                <div class="absolute left-2 top-2 bottom-3 w-0.5 bg-border/80"></div>
 
-                                        {{-- Content --}}
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex flex-wrap items-center justify-between gap-1.5 mb-0.5">
-                                                <div class="flex items-center gap-1.5">
-                                                    <span class="font-bold text-foreground text-xs">{{ $m['title'] }}</span>
-                                                    <span class="text-[9.5px] px-1.5 py-0.2 rounded font-semibold border {{ $m['badge_color'] }}">
-                                                        {{ $m['badge'] }}
-                                                    </span>
-                                                </div>
-                                                <time class="text-[10px] font-mono text-muted-foreground shrink-0 font-medium">
-                                                    {{ $m['time']->translatedFormat('d M Y, H:i') }}
-                                                </time>
+                                <div class="space-y-4">
+                                    @foreach($milestones as $idx => $m)
+                                        <div x-data="{ expanded: false }" class="relative group">
+                                            {{-- Titik Bullet Dot di garis vertikal --}}
+                                            <div class="absolute -left-6 top-1 w-4 h-4 rounded-full flex items-center justify-center bg-background ring-4 {{ $m['dot_ring'] }}">
+                                                <div class="w-2 h-2 rounded-full {{ $m['dot_color'] }}"></div>
                                             </div>
-                                            <p class="text-[11px] text-muted-foreground leading-normal">
-                                                {{ $m['desc'] }}
-                                            </p>
+
+                                            {{-- Header Milestone (Accordion Trigger) --}}
+                                            <div @click="expanded = !expanded"
+                                                class="cursor-pointer select-none rounded-xl p-2.5 hover:bg-muted/30 transition-all border border-border/50 bg-card/60">
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <div class="flex items-center gap-2 min-w-0 flex-wrap">
+                                                        <span class="font-bold text-xs text-foreground">{{ $m['title'] }}</span>
+                                                        <span class="text-[9.5px] px-1.5 py-0.2 rounded font-semibold border {{ $m['badge_color'] }}">
+                                                            {{ $m['badge'] }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex items-center gap-2 shrink-0">
+                                                        <time class="text-[10px] font-mono text-muted-foreground font-medium">
+                                                            {{ $m['time']->translatedFormat('d M Y, H:i') }}
+                                                        </time>
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200"
+                                                            :class="expanded ? 'rotate-180 text-foreground' : ''"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                            <path d="m6 9 6 6 6-6"/>
+                                                        </svg>
+                                                    </div>
+                                                </div>
+
+                                                <p class="text-[11px] text-muted-foreground mt-1 leading-snug">
+                                                    {{ $m['summary'] }}
+                                                </p>
+
+                                                {{-- Accordion Detail Content --}}
+                                                <div x-show="expanded" x-collapse x-cloak class="mt-2.5 pt-2 border-t border-border/50 text-[11px] space-y-1.5">
+                                                    @foreach($m['details'] as $lbl => $val)
+                                                        <div class="flex items-start justify-between gap-3 text-[10.5px]">
+                                                            <span class="text-muted-foreground shrink-0 font-medium">{{ $lbl }}:</span>
+                                                            <span class="font-semibold text-foreground text-right break-words">{{ $val }}</span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                @endforeach
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
 
