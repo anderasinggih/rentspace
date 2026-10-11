@@ -759,16 +759,28 @@ async function connectToWhatsApp() {
                         let failCount = 0;
                         const total = numbers.length;
 
-                        const greetings = ['Halo Kak! 😊', 'Halo Kak,', 'Hai Kak! ✨', 'Halo Kak, salam hangat dari Rent Space! 🙏'];
+                        const greetings = [
+                            'Halo Kak! 😊',
+                            'Hai Kak! ✨',
+                            'Halo Kak, salam hangat dari Rent Space! 🙏',
+                            'Hai Kak, semoga harinya menyenangkan! 🌟',
+                            'Halo Kak, apa kabar? Semoga sehat selalu ya! 🙌'
+                        ];
 
                         for (let i = 0; i < total; i++) {
                             const num = numbers[i];
                             const targetJid = formatToJid(num);
 
                             let personalizedCaption = finalCaption;
-                            if (finalCaption.startsWith('Halo Kak')) {
-                                const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
-                                personalizedCaption = finalCaption.replace(/^Halo Kak(!|,\s*|\s*)/, randomGreeting + ' ');
+                            const greetingRegex = /^(halo|hai|selamat\s+(pagi|siang|sore|malam))\s+kak(!|,\s*|\s*)/i;
+                            const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+
+                            if (greetingRegex.test(finalCaption)) {
+                                // Ganti salam yang ada dengan salam acak bervariasi
+                                personalizedCaption = finalCaption.replace(greetingRegex, randomGreeting + ' ');
+                            } else if (finalCaption.trim().length > 0) {
+                                // Jika caption tidak ada salam pembuka, selipkan salam acak di awal agar struktur pesan berbeda-beda
+                                personalizedCaption = randomGreeting + '\n\n' + finalCaption;
                             }
 
                             try {
@@ -1098,17 +1110,27 @@ async function handleIncomingCustomerMessage(sender, senderNumber, actualPhone, 
                 let failCount = 0;
                 const total = numbers.length;
 
-                // Salam acak anti-spam
-                const greetings = ['Halo Kak! 😊', 'Halo Kak,', 'Hai Kak! ✨', 'Halo Kak, salam hangat dari Rent Space!'];
+                // Salam acak anti-spam (Spintax)
+                const greetings = [
+                    'Halo Kak! 😊',
+                    'Hai Kak! ✨',
+                    'Halo Kak, salam hangat dari Rent Space! 🙏',
+                    'Hai Kak, semoga harinya menyenangkan! 🌟',
+                    'Halo Kak, apa kabar? Semoga sehat selalu ya! 🙌'
+                ];
 
                 for (let i = 0; i < total; i++) {
                     const num = numbers[i];
                     const targetJid = formatToJid(num);
 
                     let personalizedCaption = finalCaption;
-                    if (finalCaption.startsWith('Halo Kak')) {
-                        const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
-                        personalizedCaption = finalCaption.replace(/^Halo Kak(!|,\s*|\s*)/, randomGreeting + ' ');
+                    const greetingRegex = /^(halo|hai|selamat\s+(pagi|siang|sore|malam))\s+kak(!|,\s*|\s*)/i;
+                    const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+
+                    if (greetingRegex.test(finalCaption)) {
+                        personalizedCaption = finalCaption.replace(greetingRegex, randomGreeting + ' ');
+                    } else if (finalCaption.trim().length > 0) {
+                        personalizedCaption = randomGreeting + '\n\n' + finalCaption;
                     }
 
                     try {
