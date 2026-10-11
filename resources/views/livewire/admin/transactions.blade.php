@@ -222,6 +222,11 @@
                                     @endif
                                 @elseif($trx->status === 'renting')
                                     @if(in_array(auth()->user()->role, ['admin', 'staff']))
+                                        <button wire:click.stop="openExtendModal({{ $trx->id }})" wire:loading.attr="disabled"
+                                            wire:target="openExtendModal({{ $trx->id }})"
+                                            class="h-8 px-2.5 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors">
+                                            Perpanjang
+                                        </button>
                                         <button wire:click.stop="openDendaModal({{ $trx->id }})"
                                             class="h-8 px-2.5 rounded-lg text-xs font-semibold {{ $isLate ? 'bg-destructive text-destructive-foreground' : 'bg-emerald-600 text-white' }} shadow-xs">
                                             Unit Kembali
@@ -742,6 +747,150 @@
                             </div>
                         @endif
 
+                        {{-- Timeline & Milestone Transaksi --}}
+                        @php
+                            $rentalLogs = \App\Models\StaffLog::with('user')
+                                ->where('target_type', 'App\\Models\\Rental')
+                                ->where('target_id', $inspectTrx->id)
+                                ->orderBy('created_at', 'asc')
+                                ->get();
+
+                            $milestones = [];
+
+                            // 1. Dibuat (Booking)
+                            $milestones[] = [
+                                'title' => 'Booking Dibuat',
+                                'desc' => 'Transaksi dibuat dengan kode ' . $inspectTrx->booking_code . ($inspectTrx->alamat ? ' (' . \Illuminate\Support\Str::limit($inspectTrx->alamat, 30) . ')' : ''),
+                                'time' => $inspectTrx->created_at,
+                                'badge' => 'Dibuat',
+                                'badge_color' => 'bg-muted text-muted-foreground border-border',
+                                'dot_color' => 'bg-muted-foreground/50 ring-muted',
+                                'icon' => 'calendar',
+                            ];
+
+                            // 2. Pembayaran (jika paid_at ada atau status paid/renting/completed)
+                            if ($inspectTrx->paid_at) {
+                                $paidLog = $rentalLogs->firstWhere('action', 'mark_as_paid');
+                                $milestones[] = [
+                                    'title' => 'Pembayaran Terverifikasi (Lunas)',
+                                    'desc' => ($paidLog && $paidLog->user ? 'Divalidasi oleh ' . $paidLog->user->name : 'Pembayaran lunas') . ($inspectTrx->bukti_bayar ? ' • Bukti foto terlampir' : ''),
+                                    'time' => $inspectTrx->paid_at,
+                                    'badge' => 'Lunas',
+                                    'badge_color' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
+                                    'dot_color' => 'bg-emerald-500 ring-emerald-500/20',
+                                    'icon' => 'check-circle',
+                                ];
+                            }
+
+                            // 3. Serah Terima Unit (handed_over_at)
+                            if ($inspectTrx->handed_over_at) {
+                                $handoverLog = $rentalLogs->firstWhere('action', 'handover_unit');
+                                $milestones[] = [
+                                    'title' => 'Unit Diserahkan ke Penyewa',
+                                    'desc' => ($handoverLog && $handoverLog->user ? 'Diserahkan oleh ' . $handoverLog->user->name : 'Unit diserahkan') . ($inspectTrx->bukti_ambil ? ' • Bukti serah terima terlampir' : ''),
+                                    'time' => $inspectTrx->handed_over_at,
+                                    'badge' => 'Diserahkan',
+                                    'badge_color' => 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20',
+                                    'dot_color' => 'bg-sky-500 ring-sky-500/20',
+                                    'icon' => 'package',
+                                ];
+                            }
+
+                            // 4. Riwayat Perpanjangan atau Log Lainnya (StaffLog)
+                            foreach ($rentalLogs as $log) {
+                                if ($log->action === 'extend_rental') {
+                                    $milestones[] = [
+                                        'title' => 'Perpanjangan Sewa Diproses',
+                                        'desc' => $log->description . ($log->user ? ' (oleh ' . $log->user->name . ')' : ''),
+                                        'time' => $log->created_at,
+                                        'badge' => 'Perpanjang',
+                                        'badge_color' => 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
+                                        'dot_color' => 'bg-amber-500 ring-amber-500/20',
+                                        'icon' => 'clock',
+                                    ];
+                                } elseif ($log->action === 'denda_paid') {
+                                    $milestones[] = [
+                                        'title' => 'Denda Diselesaikan',
+                                        'desc' => $log->description . ($log->user ? ' (oleh ' . $log->user->name . ')' : ''),
+                                        'time' => $log->created_at,
+                                        'badge' => 'Denda',
+                                        'badge_color' => 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20',
+                                        'dot_color' => 'bg-rose-500 ring-rose-500/20',
+                                        'icon' => 'alert-triangle',
+                                    ];
+                                }
+                            }
+
+                            // 5. Unit Selesai / Pengembalian (completed_at)
+                            if ($inspectTrx->completed_at) {
+                                $completeLog = $rentalLogs->firstWhere('action', 'complete_rental');
+                                $milestones[] = [
+                                    'title' => 'Sewa Selesai & Unit Kembali',
+                                    'desc' => ($completeLog ? $completeLog->description : 'Sewa telah diselesaikan') . ($completeLog && $completeLog->user ? ' (oleh ' . $completeLog->user->name . ')' : ''),
+                                    'time' => $inspectTrx->completed_at,
+                                    'badge' => 'Selesai',
+                                    'badge_color' => 'bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20',
+                                    'dot_color' => 'bg-teal-500 ring-teal-500/20',
+                                    'icon' => 'check-all',
+                                ];
+                            } elseif ($inspectTrx->status === 'cancelled') {
+                                $cancelLog = $rentalLogs->firstWhere('action', 'cancel_transaction');
+                                $milestones[] = [
+                                    'title' => 'Transaksi Dibatalkan',
+                                    'desc' => $cancelLog ? $cancelLog->description : 'Transaksi dibatalkan',
+                                    'time' => $cancelLog ? $cancelLog->created_at : $inspectTrx->updated_at,
+                                    'badge' => 'Dibatalkan',
+                                    'badge_color' => 'bg-destructive/10 text-destructive border-destructive/20',
+                                    'dot_color' => 'bg-destructive ring-destructive/20',
+                                    'icon' => 'x-circle',
+                                ];
+                            }
+
+                            // Urutkan milestone berdasarkan waktu asc
+                            usort($milestones, function($a, $b) {
+                                return $a['time'] <=> $b['time'];
+                            });
+                        @endphp
+
+                        <div class="space-y-3 pt-3 border-t border-border/70">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                                    Milestone & Timeline Aktivitas
+                                </span>
+                                <span class="text-[10px] font-mono text-muted-foreground">{{ count($milestones) }} Aktivitas</span>
+                            </div>
+
+                            <div class="p-3.5 sm:p-4 rounded-xl border border-border/80 bg-muted/20">
+                                <div class="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
+                                    @foreach($milestones as $idx => $m)
+                                        <div class="relative group">
+                                            {{-- Titik bullet --}}
+                                            <div class="absolute -left-6 top-1.5 w-5 h-5 rounded-full flex items-center justify-center bg-background ring-4 {{ $m['dot_color'] }}">
+                                                <div class="w-2 h-2 rounded-full bg-current"></div>
+                                            </div>
+
+                                            <div class="space-y-0.5">
+                                                <div class="flex flex-wrap items-center justify-between gap-1.5">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="font-bold text-xs text-foreground">{{ $m['title'] }}</span>
+                                                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold border {{ $m['badge_color'] }}">
+                                                            {{ $m['badge'] }}
+                                                        </span>
+                                                    </div>
+                                                    <span class="text-[10px] font-medium text-muted-foreground font-mono">
+                                                        {{ $m['time']->translatedFormat('d M Y, H:i') }}
+                                                    </span>
+                                                </div>
+                                                <p class="text-[11px] text-muted-foreground leading-relaxed">
+                                                    {{ $m['desc'] }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     {{-- Footer Aksi Preview --}}
@@ -766,6 +915,13 @@
                             </a>
 
                             @if(in_array(auth()->user()->role, ["admin", "staff"]))
+                                @if($inspectTrx->status === 'renting')
+                                    <button type="button" wire:click="openExtendModal({{ $inspectTrx->id }})"
+                                        class="h-8 px-3 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors inline-flex items-center gap-1.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>
+                                        Perpanjang
+                                    </button>
+                                @endif
                                 <button type="button" wire:click="editTrx({{ $inspectTrx->id }})"
                                     class="h-8 px-3 rounded-lg border border-border bg-background hover:bg-muted text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
@@ -831,7 +987,7 @@
                             </label>
                             
                             <div class="border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-emerald-500/50 transition-colors bg-muted/10 relative">
-                                <input type="file" wire:model="buktiBayarFile" accept="image/*" capture="environment"
+                                <input type="file" wire:model="buktiBayarFile" accept="image/*"
                                     id="bukti-bayar-upload"
                                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
 
@@ -840,16 +996,16 @@
                                         <div class="relative w-32 h-32 mx-auto rounded-lg overflow-hidden border border-border shadow-xs">
                                             <img src="{{ $buktiBayarFile->temporaryUrl() }}" class="w-full h-full object-cover" alt="Preview Bukti Bayar">
                                         </div>
-                                        <p class="text-[11px] font-semibold text-emerald-600">Foto bukti terpilih! Siap dikompres.</p>
-                                        <p class="text-[10px] text-muted-foreground">Klik lagi di area ini jika ingin mengganti foto.</p>
+                                        <p class="text-[11px] font-semibold text-emerald-600">Foto bukti terpilih</p>
+                                        <p class="text-[10px] text-muted-foreground">Klik di area ini jika ingin mengganti foto.</p>
                                     </div>
                                 @else
                                     <div class="space-y-1.5 py-2">
                                         <div class="w-10 h-10 mx-auto rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
                                         </div>
-                                        <p class="font-semibold text-foreground text-xs">Pilih Foto atau Jepret Kamera</p>
-                                        <p class="text-[10px] text-muted-foreground">JPG, PNG, atau WebP. Otomatis dikompres sekecil mungkin ke server (~30KB-80KB).</p>
+                                        <p class="font-semibold text-foreground text-xs">Pilih dari Galeri atau Kamera</p>
+                                        <p class="text-[10px] text-muted-foreground">Format JPG, PNG, atau WebP</p>
                                     </div>
                                 @endif
                             </div>
@@ -877,7 +1033,7 @@
                             <span wire:loading.remove wire:target="confirmMarkAsPaid">Konfirmasi Lunas</span>
                             <span wire:loading wire:target="confirmMarkAsPaid" class="inline-flex items-center gap-1.5">
                                 <span class="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                Menyimpan & Mengompres...
+                                Menyimpan...
                             </span>
                         </button>
                     </div>
@@ -935,7 +1091,7 @@
                             </label>
                             
                             <div class="border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-sky-500/50 transition-colors bg-muted/10 relative">
-                                <input type="file" wire:model="buktiAmbilFile" accept="image/*" capture="environment"
+                                <input type="file" wire:model="buktiAmbilFile" accept="image/*"
                                     id="bukti-ambil-upload"
                                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
 
@@ -944,16 +1100,16 @@
                                         <div class="relative w-32 h-32 mx-auto rounded-lg overflow-hidden border border-border shadow-xs">
                                             <img src="{{ $buktiAmbilFile->temporaryUrl() }}" class="w-full h-full object-cover" alt="Preview Bukti Ambil">
                                         </div>
-                                        <p class="text-[11px] font-semibold text-sky-600">Foto bukti terpilih! Siap dikompres.</p>
-                                        <p class="text-[10px] text-muted-foreground">Klik lagi di area ini jika ingin mengganti foto.</p>
+                                        <p class="text-[11px] font-semibold text-sky-600">Foto bukti terpilih</p>
+                                        <p class="text-[10px] text-muted-foreground">Klik di area ini jika ingin mengganti foto.</p>
                                     </div>
                                 @else
                                     <div class="space-y-1.5 py-2">
                                         <div class="w-10 h-10 mx-auto rounded-full bg-sky-500/10 text-sky-600 flex items-center justify-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                         </div>
-                                        <p class="font-semibold text-foreground text-xs">Pilih Foto atau Foto Langsung Kamera</p>
-                                        <p class="text-[10px] text-muted-foreground">Foto serah terima / penyewa / jaminan. Otomatis dikompres sekecil mungkin ke server (~30KB-80KB).</p>
+                                        <p class="font-semibold text-foreground text-xs">Pilih dari Galeri atau Kamera</p>
+                                        <p class="text-[10px] text-muted-foreground">Format JPG, PNG, atau WebP</p>
                                     </div>
                                 @endif
                             </div>
@@ -981,7 +1137,7 @@
                             <span wire:loading.remove wire:target="confirmHandover">Konfirmasi Serahkan Unit</span>
                             <span wire:loading wire:target="confirmHandover" class="inline-flex items-center gap-1.5">
                                 <span class="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                Menyimpan & Mengompres...
+                                Menyimpan...
                             </span>
                         </button>
                     </div>
