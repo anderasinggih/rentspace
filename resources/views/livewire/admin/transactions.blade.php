@@ -902,57 +902,60 @@
                             });
                         @endphp
 
-                        <div class="space-y-3 pt-3 border-t border-border/80">
+                        <div class="space-y-4 pt-4 border-t border-border/80">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Milestone Transaksi</span>
+                                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Milestone & Timeline</span>
                                     <span class="px-1.5 py-0.2 rounded-full bg-primary/10 text-primary text-[9px] font-mono font-bold">{{ count($milestones) }}</span>
                                 </div>
-                                <span class="text-[10px] text-muted-foreground font-medium">Klik untuk buka detail</span>
+                                <span class="text-[10px] text-muted-foreground font-medium">Klik untuk lihat rincian</span>
                             </div>
 
-                            {{-- Vertical Timeline with Left Connected Dot Line & Accordion --}}
-                            <div class="relative pl-6">
-                                {{-- Garis vertikal penghubung titik milestone --}}
-                                <div class="absolute left-2 top-2 bottom-3 w-0.5 bg-border/80"></div>
+                            {{-- Pure Vertical Dot Timeline (Tanpa box container per item, garis vertikal jelas) --}}
+                            <div class="relative pl-7 sm:pl-8 py-1">
+                                @foreach($milestones as $idx => $m)
+                                    <div x-data="{ expanded: false }" class="relative pb-6 last:pb-1">
+                                        {{-- Garis Vertikal Penghubung antar titik --}}
+                                        @if(!$loop->last)
+                                            <div class="absolute left-[-17px] sm:left-[-19px] top-3 bottom-0 w-[2px] bg-border dark:bg-border/80"></div>
+                                        @endif
 
-                                <div class="space-y-4">
-                                    @foreach($milestones as $idx => $m)
-                                        <div x-data="{ expanded: false }" class="relative group">
-                                            {{-- Titik Bullet Dot di garis vertikal --}}
-                                            <div class="absolute -left-6 top-1 w-4 h-4 rounded-full flex items-center justify-center bg-background ring-4 {{ $m['dot_ring'] }}">
-                                                <div class="w-2 h-2 rounded-full {{ $m['dot_color'] }}"></div>
-                                            </div>
+                                        {{-- Dot Milestone --}}
+                                        <div class="absolute left-[-22px] sm:left-[-24px] top-1.5 w-3 h-3 rounded-full {{ $m['dot_color'] }} ring-4 {{ $m['dot_ring'] }} bg-current shadow-xs"></div>
 
-                                            {{-- Header Milestone (Accordion Trigger) --}}
-                                            <div @click="expanded = !expanded"
-                                                class="cursor-pointer select-none rounded-xl p-2.5 hover:bg-muted/30 transition-all border border-border/50 bg-card/60">
-                                                <div class="flex items-center justify-between gap-2">
-                                                    <div class="flex items-center gap-2 min-w-0 flex-wrap">
-                                                        <span class="font-bold text-xs text-foreground">{{ $m['title'] }}</span>
+                                        {{-- Konten Milestone (Header & Accordion) --}}
+                                        <div class="space-y-1">
+                                            <div @click="expanded = !expanded" class="cursor-pointer select-none group/item">
+                                                <div class="flex items-center justify-between gap-2 flex-wrap">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="font-bold text-xs text-foreground group-hover/item:text-primary transition-colors">
+                                                            {{ $m['title'] }}
+                                                        </span>
                                                         <span class="text-[9.5px] px-1.5 py-0.2 rounded font-semibold border {{ $m['badge_color'] }}">
                                                             {{ $m['badge'] }}
                                                         </span>
                                                     </div>
-                                                    <div class="flex items-center gap-2 shrink-0">
-                                                        <time class="text-[10px] font-mono text-muted-foreground font-medium">
+                                                    <div class="flex items-center gap-2">
+                                                        <time class="text-[10.5px] font-mono text-muted-foreground font-medium">
                                                             {{ $m['time']->translatedFormat('d M Y, H:i') }}
                                                         </time>
                                                         <svg xmlns="http://www.w3.org/2000/svg"
                                                             class="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200"
-                                                            :class="expanded ? 'rotate-180 text-foreground' : ''"
+                                                            :class="expanded ? 'rotate-180 text-primary' : ''"
                                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                                             <path d="m6 9 6 6 6-6"/>
                                                         </svg>
                                                     </div>
                                                 </div>
 
-                                                <p class="text-[11px] text-muted-foreground mt-1 leading-snug">
+                                                <p class="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
                                                     {{ $m['summary'] }}
                                                 </p>
+                                            </div>
 
-                                                {{-- Accordion Detail Content --}}
-                                                <div x-show="expanded" x-collapse x-cloak class="mt-2.5 pt-2 border-t border-border/50 text-[11px] space-y-1.5">
+                                            {{-- Accordion Dropdown Rincian --}}
+                                            <div x-show="expanded" x-collapse x-cloak class="pt-2">
+                                                <div class="rounded-xl border border-border/80 bg-muted/40 p-3 space-y-1.5 text-[11px]">
                                                     @foreach($m['details'] as $lbl => $val)
                                                         <div class="flex items-start justify-between gap-3 text-[10.5px]">
                                                             <span class="text-muted-foreground shrink-0 font-medium">{{ $lbl }}:</span>
@@ -962,8 +965,8 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    @endforeach
-                                </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
 
