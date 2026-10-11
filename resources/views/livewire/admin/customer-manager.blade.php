@@ -208,7 +208,12 @@
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <span class="font-bold text-sm">#{{ $rent->booking_code }}</span>
-                                            <span class="text-[10px] text-muted-foreground">{{ $rent->created_at->format('d M Y') }}</span>
+                                            <span class="text-[10px] text-muted-foreground">{{ $rent->created_at->format('d M Y, H:i') }}</span>
+                                            @if($rent->nama && $rent->nama !== $customerDetails->first()->nama)
+                                                <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 font-semibold border border-amber-500/20" title="Atas nama order ini">
+                                                    {{ $rent->nama }}
+                                                </span>
+                                            @endif
                                         </div>
                                         <div class="flex flex-wrap gap-1 mt-1">
                                             @foreach($rent->units as $u)

@@ -185,11 +185,12 @@
                                 $cleanMobileWa = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', (string)$trx->no_wa));
                             @endphp
                             <a href="https://wa.me/{{ $cleanMobileWa }}" target="_blank"
-                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/60 border border-emerald-500/30 transition-colors shadow-2xs shrink-0"
+                                class="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/60 border border-emerald-500/30 transition-colors shadow-2xs shrink-0 text-xs font-semibold"
                                 title="Hubungi WhatsApp {{ $trx->no_wa }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#10b981" class="shrink-0 text-emerald-600 dark:text-emerald-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 fill-current text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24">
                                     <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.075-2.227-.557-1.838-.758-3.018-2.618-3.11-2.74-.09-.122-.738-.981-.738-1.871 0-.89.467-1.328.633-1.506.166-.178.363-.223.484-.223.12 0 .241.002.348.007.112.006.262-.042.41.312.152.365.518 1.265.563 1.357.045.092.076.198.016.32-.06.122-.09.198-.18.304-.09.107-.189.239-.27.321-.09.092-.185.192-.08.373.105.18.468.772 1.004 1.25.688.613 1.27.803 1.45.895.18.091.286.076.392-.046.105-.122.451-.525.572-.707.12-.182.241-.152.406-.091.166.06 1.055.498 1.236.589.18.09.301.137.346.213.045.076.045.441-.099.846z"/>
                                 </svg>
+                                <span>WA</span>
                             </a>
 
                             @if($filterStatus === 'trashed')
@@ -853,42 +854,44 @@
                             });
                         @endphp
 
-                        <div class="space-y-3 pt-3 border-t border-border/70">
+                        <div class="space-y-3 pt-4 border-t border-border/80">
                             <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
-                                    Milestone & Timeline Aktivitas
-                                </span>
-                                <span class="text-[10px] font-mono text-muted-foreground">{{ count($milestones) }} Aktivitas</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Milestone & Timeline</span>
+                                    <span class="px-1.5 py-0.2 rounded-full bg-primary/10 text-primary text-[9px] font-mono font-bold">{{ count($milestones) }}</span>
+                                </div>
+                                <span class="text-[10px] text-muted-foreground font-medium">Histori status</span>
                             </div>
 
-                            <div class="p-3.5 sm:p-4 rounded-xl border border-border/80 bg-muted/20">
-                                <div class="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-                                    @foreach($milestones as $idx => $m)
-                                        <div class="relative group">
-                                            {{-- Titik bullet --}}
-                                            <div class="absolute -left-6 top-1.5 w-5 h-5 rounded-full flex items-center justify-center bg-background ring-4 {{ $m['dot_color'] }}">
-                                                <div class="w-2 h-2 rounded-full bg-current"></div>
-                                            </div>
-
-                                            <div class="space-y-0.5">
-                                                <div class="flex flex-wrap items-center justify-between gap-1.5">
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="font-bold text-xs text-foreground">{{ $m['title'] }}</span>
-                                                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold border {{ $m['badge_color'] }}">
-                                                            {{ $m['badge'] }}
-                                                        </span>
-                                                    </div>
-                                                    <span class="text-[10px] font-medium text-muted-foreground font-mono">
-                                                        {{ $m['time']->translatedFormat('d M Y, H:i') }}
-                                                    </span>
-                                                </div>
-                                                <p class="text-[11px] text-muted-foreground leading-relaxed">
-                                                    {{ $m['desc'] }}
-                                                </p>
+                            <div class="rounded-xl border border-border/70 bg-card p-3 sm:p-4 divide-y divide-border/60">
+                                @foreach($milestones as $idx => $m)
+                                    <div class="flex items-start gap-3 {{ $loop->first ? 'pb-3' : ($loop->last ? 'pt-3' : 'py-3') }}">
+                                        {{-- Step Indicator --}}
+                                        <div class="mt-0.5 shrink-0 flex flex-col items-center">
+                                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border {{ $m['badge_color'] }}">
+                                                {{ $idx + 1 }}
                                             </div>
                                         </div>
-                                    @endforeach
-                                </div>
+
+                                        {{-- Content --}}
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex flex-wrap items-center justify-between gap-1.5 mb-0.5">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-foreground text-xs">{{ $m['title'] }}</span>
+                                                    <span class="text-[9.5px] px-1.5 py-0.2 rounded font-semibold border {{ $m['badge_color'] }}">
+                                                        {{ $m['badge'] }}
+                                                    </span>
+                                                </div>
+                                                <time class="text-[10px] font-mono text-muted-foreground shrink-0 font-medium">
+                                                    {{ $m['time']->translatedFormat('d M Y, H:i') }}
+                                                </time>
+                                            </div>
+                                            <p class="text-[11px] text-muted-foreground leading-normal">
+                                                {{ $m['desc'] }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
 

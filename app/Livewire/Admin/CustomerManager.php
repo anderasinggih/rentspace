@@ -49,8 +49,14 @@ class CustomerManager extends Component
 
     public function render()
     {
-        // Query to get unique customers based on No. WA
-        $customersQuery = Rental::selectRaw('no_wa, MAX(nama) as nama, COUNT(id) as total_orders, SUM(grand_total) as ltv, MAX(created_at) as last_order')
+        // Query to get unique customers based on No. WA using the latest booking data
+        $customersQuery = Rental::selectRaw('
+                no_wa, 
+                SUBSTRING_INDEX(GROUP_CONCAT(nama ORDER BY id DESC SEPARATOR "|||"), "|||", 1) as nama, 
+                COUNT(id) as total_orders, 
+                SUM(grand_total) as ltv, 
+                MAX(created_at) as last_order
+            ')
             ->where(function($q) {
                 $q->where('nama', 'like', '%' . $this->search . '%')
                   ->orWhere('no_wa', 'like', '%' . $this->search . '%');
