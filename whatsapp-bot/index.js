@@ -656,6 +656,7 @@ async function connectToWhatsApp() {
                 // Jika perintah admin (/broadcast, /rentspacesettings, dll) diketik di grup
                 if (isAdminCommand) {
                     try {
+                        console.log(`[RentSpace WA Bot] Mengirim perintah admin grup ke Laravel: "${trimmedText}" dari ${pushName} (${actualPhone || senderNumber}) di grup ${sender}`);
                         const res = await axios.post(LARAVEL_WEBHOOK_URL, {
                             sender_jid: sender,
                             phone: senderNumber,
@@ -664,8 +665,10 @@ async function connectToWhatsApp() {
                             text: trimmedText
                         }, {
                             headers: { 'X-API-KEY': API_KEY },
-                            timeout: 25000
+                            timeout: 35000
                         });
+
+                        console.log(`[RentSpace WA Bot] Hasil perintah admin grup dari Laravel: status=${res.data?.status}, reply_len=${res.data?.reply ? res.data.reply.length : 0}`);
 
                         if (res.data && res.data.reply) {
                             await sock.sendMessage(sender, { text: res.data.reply }, { quoted: msg });
