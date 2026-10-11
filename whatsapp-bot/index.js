@@ -653,6 +653,30 @@ async function connectToWhatsApp() {
                     continue;
                 }
 
+                // Jika perintah admin (/broadcast, /rentspacesettings, dll) diketik di grup
+                if (isAdminCommand) {
+                    try {
+                        const res = await axios.post(LARAVEL_WEBHOOK_URL, {
+                            sender_jid: sender,
+                            phone: senderNumber,
+                            actual_phone: actualPhone,
+                            name: pushName,
+                            text: trimmedText
+                        }, {
+                            headers: { 'X-API-KEY': API_KEY },
+                            timeout: 25000
+                        });
+
+                        if (res.data && res.data.reply) {
+                            await sock.sendMessage(sender, { text: res.data.reply }, { quoted: msg });
+                        }
+                    } catch (err) {
+                        console.error('[RentSpace WA Bot] Group Admin Command Error:', err.message);
+                        await sock.sendMessage(sender, { text: '⚠️ Terjadi kesalahan saat memproses perintah admin di grup: ' + err.message }, { quoted: msg });
+                    }
+                    continue;
+                }
+
                 // Jangan pernah proses chat grup sebagai chat customer
                 continue;
             }
