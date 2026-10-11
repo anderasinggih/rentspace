@@ -975,6 +975,9 @@ app.get('/status', (req, res) => {
 
 app.get('/qr', async (req, res) => {
     if (connectionStatus === 'open') {
+        const botName = botUser?.name || 'Rent Space Bot';
+        const botPhone = (botUser?.id || '').split(':')[0].split('@')[0] || '-';
+
         const html = `
         <!DOCTYPE html>
         <html>
@@ -982,21 +985,67 @@ app.get('/qr', async (req, res) => {
             <title>RentSpace WA Bot - Connected</title>
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: white; margin: 0; }
-                .card { background: #1e293b; padding: 2.5rem; border-radius: 1.25rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 400px; width: 90%; }
-                .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 8px 16px; border-radius: 9999px; font-weight: 600; font-size: 0.95rem; margin-bottom: 1.5rem; border: 1px solid rgba(16, 185, 129, 0.4); }
-                .btn { display: inline-block; margin-top: 1.5rem; padding: 10px 20px; background: #0284c7; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; }
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0b1120; color: white; margin: 0; padding: 1.5rem; box-sizing: border-box; }
+                .card { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); padding: 2.25rem 2rem; border-radius: 1.25rem; text-align: center; box-shadow: 0 20px 35px -10px rgba(0,0,0,0.6); max-width: 440px; width: 100%; box-sizing: border-box; }
+                .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 6px 14px; border-radius: 9999px; font-weight: 600; font-size: 0.85rem; margin-bottom: 1.25rem; border: 1px solid rgba(16, 185, 129, 0.35); }
+                .badge-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+                h2 { margin: 0 0 8px 0; font-size: 1.35rem; font-weight: 700; color: #f8fafc; }
+                p.desc { color: #94a3b8; font-size: 0.85rem; line-height: 1.5; margin: 0 0 1.5rem 0; }
+                .info-box { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.82rem; }
+                .info-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+                .info-label { color: #64748b; }
+                .info-value { font-weight: 600; color: #f1f5f9; font-family: monospace; }
+                .btn-group { display: flex; flex-direction: column; gap: 0.65rem; }
+                .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 16px; border-radius: 9px; font-weight: 600; font-size: 0.875rem; text-decoration: none; border: none; cursor: pointer; transition: all 0.15s ease; box-sizing: border-box; }
+                .btn-primary { background: #0284c7; color: white; }
+                .btn-primary:hover { background: #0369a1; }
+                .btn-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+                .btn-warning:hover { background: rgba(245, 158, 11, 0.25); }
+                .btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+                .btn-danger:hover { background: rgba(239, 68, 68, 0.25); color: #ef4444; }
             </style>
         </head>
         <body>
             <div class="card">
                 <div class="badge">
-                    <span style="width: 10px; height: 10px; background: #10b981; border-radius: 50%;"></span>
-                    WhatsApp Bot Terhubung!
+                    <span class="badge-dot"></span>
+                    WhatsApp Bot Terhubung
                 </div>
                 <h2>Bot Sedang Aktif</h2>
-                <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">Akun WhatsApp resmi Rent Space sudah berhasil terhubung dan siap membalas pesan secara otomatis.</p>
-                <a href="/admin/settings?tab=whatsapp" class="btn">Kembali ke Dashboard</a>
+                <p class="desc">Akun WhatsApp resmi Rent Space sudah berhasil terhubung dan siap merespons chat pelanggan & staf.</p>
+                
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="info-label">Nama Perangkat:</span>
+                        <span class="info-value">${botName}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Nomor WhatsApp:</span>
+                        <span class="info-value">+${botPhone}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status Koneksi:</span>
+                        <span class="info-value" style="color: #34d399;">ONLINE</span>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <a href="/admin/settings?tab=whatsapp" class="btn btn-primary">
+                        Kembali ke Dashboard
+                    </a>
+                    
+                    <form method="POST" action="/restart-bot" style="margin: 0;" onsubmit="return confirm('Restart koneksi bot sekarang?');">
+                        <button type="submit" class="btn btn-warning">
+                            🔄 Restart Koneksi Bot
+                        </button>
+                    </form>
+
+                    <form method="POST" action="/logout-bot" style="margin: 0;" onsubmit="return confirm('YAKIN INGIN LOGOUT?\\n\\nSesi WhatsApp ini akan diputus dan dihapus dari server. Anda harus scan QR ulang dari HP untuk menghubungkan kembali.');">
+                        <button type="submit" class="btn btn-danger">
+                            🚪 Putuskan Sesi & Logout
+                        </button>
+                    </form>
+                </div>
             </div>
         </body>
         </html>
@@ -1066,6 +1115,56 @@ app.get('/qr', async (req, res) => {
         res.send(html);
     } catch (e) {
         res.status(500).send('Gagal membuat gambar QR: ' + e.message);
+    }
+});
+
+// Endpoint untuk Logout & Putuskan Sesi WhatsApp dari UI Web
+app.post('/logout-bot', async (req, res) => {
+    try {
+        console.log('[RentSpace WA Bot] 🚪 Menerima permintaan Logout dari UI Web...');
+        connectionStatus = 'close';
+        qrCodeRaw = null;
+        botUser = null;
+
+        if (sock) {
+            try {
+                await sock.logout();
+            } catch (_) {
+                try { sock.end(new Error('Manual Web Logout')); } catch (__) {}
+            }
+        }
+
+        // Hapus folder sesi autentikasi
+        if (fs.existsSync(sessionDir)) {
+            fs.rmSync(sessionDir, { recursive: true, force: true });
+            console.log('[RentSpace WA Bot] 🗑️ Sesi auth_info_baileys berhasil dihapus.');
+        }
+
+        setTimeout(() => {
+            connectToWhatsApp();
+        }, 1500);
+
+        return res.redirect('/qr');
+    } catch (err) {
+        console.error('[RentSpace WA Bot] Logout error:', err);
+        return res.status(500).send('Gagal logout: ' + err.message);
+    }
+});
+
+// Endpoint untuk Restart Koneksi Bot
+app.post('/restart-bot', async (req, res) => {
+    try {
+        console.log('[RentSpace WA Bot] 🔄 Menerima permintaan Restart dari UI Web...');
+        if (sock) {
+            try { sock.end(new Error('Manual Web Restart')); } catch (_) {}
+        }
+        setTimeout(() => {
+            connectToWhatsApp();
+        }, 1500);
+        return res.redirect('/qr');
+    } catch (err) {
+        console.error('[RentSpace WA Bot] Restart error:', err);
+        return res.status(500).send('Gagal restart: ' + err.message);
     }
 });
 
