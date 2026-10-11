@@ -163,9 +163,9 @@
                                         @elseif($activeRental->status === 'paid')
                                             <x-ui.badge variant="blue" class="text-[9px]">Paid</x-ui.badge>
                                         @elseif($activeRental->status === 'renting')
-                                            <x-ui.badge variant="emerald" class="text-[9px]">Rent</x-ui.badge>
+                                            <x-ui.badge variant="emerald" class="text-[9px]">Renting</x-ui.badge>
                                         @elseif($activeRental->status === 'completed')
-                                            <x-ui.badge variant="green" class="text-[9px]">Done</x-ui.badge>
+                                            <x-ui.badge variant="green" class="text-[9px]">Completed</x-ui.badge>
                                         @else
                                             <x-ui.badge variant="red" class="text-[9px]">Cancel</x-ui.badge>
                                         @endif

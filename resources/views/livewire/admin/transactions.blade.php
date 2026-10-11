@@ -17,31 +17,31 @@
 
                 <button wire:click="setFilterStatus('pending')"
                     class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'pending' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
-                    <span>Perlu Validasi</span>
+                    <span>Pending</span>
                     <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['pending'] ?? 0 }}</span>
                 </button>
 
                 <button wire:click="setFilterStatus('paid')"
                     class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'paid' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
-                    <span>Siap Ambil</span>
+                    <span>Paid</span>
                     <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['paid'] ?? 0 }}</span>
                 </button>
 
                 <button wire:click="setFilterStatus('renting')"
                     class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'renting' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
-                    <span>Sedang Disewa</span>
+                    <span>Renting</span>
                     <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['renting'] ?? 0 }}</span>
                 </button>
 
                 <button wire:click="setFilterStatus('completed')"
                     class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'completed' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
-                    <span>Selesai</span>
+                    <span>Completed</span>
                     <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['completed'] ?? 0 }}</span>
                 </button>
 
                 <button wire:click="setFilterStatus('cancelled')"
                     class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 {{ $filterStatus === 'cancelled' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-foreground/5' }}">
-                    <span>Dibatalkan</span>
+                    <span>Cancel</span>
                     <span class="text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10">{{ $statusCounts['cancelled'] ?? 0 }}</span>
                 </button>
 
@@ -135,13 +135,13 @@
                             @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
                                 <x-ui.badge variant="amber" class="text-[10px] px-1.5 py-0">{{ $trx->status === 'pending_confirmation' ? 'Verifikasi' : 'Pending' }}</x-ui.badge>
                             @elseif($trx->status === 'paid')
-                                <x-ui.badge variant="blue" class="text-[10px] px-1.5 py-0">Siap Ambil</x-ui.badge>
+                                <x-ui.badge variant="blue" class="text-[10px] px-1.5 py-0">Paid</x-ui.badge>
                             @elseif($trx->status === 'renting')
-                                <x-ui.badge variant="emerald" class="text-[10px] px-1.5 py-0">Sedang Sewa</x-ui.badge>
+                                <x-ui.badge variant="emerald" class="text-[10px] px-1.5 py-0">Renting</x-ui.badge>
                             @elseif($trx->status === 'completed')
-                                <x-ui.badge variant="green" class="text-[10px] px-1.5 py-0">Selesai</x-ui.badge>
+                                <x-ui.badge variant="green" class="text-[10px] px-1.5 py-0">Completed</x-ui.badge>
                             @else
-                                <x-ui.badge variant="red" class="text-[10px] px-1.5 py-0">Batal</x-ui.badge>
+                                <x-ui.badge variant="red" class="text-[10px] px-1.5 py-0">Cancel</x-ui.badge>
                             @endif
                         </div>
                     </div>
@@ -369,15 +369,15 @@
                                                 </div>
                                                 <div class="flex items-center gap-1.5 flex-wrap">
                                                     @if($trx->status === 'pending' || $trx->status === 'pending_confirmation')
-                                                        <x-ui.badge variant="amber" class="text-[10px] px-1.5 py-0">{{ $trx->status === 'pending_confirmation' ? 'Perlu Verifikasi' : 'Pending' }}</x-ui.badge>
+                                                        <x-ui.badge variant="amber" class="text-[10px] px-1.5 py-0">{{ $trx->status === 'pending_confirmation' ? 'Verifikasi' : 'Pending' }}</x-ui.badge>
                                                     @elseif($trx->status === 'paid')
-                                                        <x-ui.badge variant="blue" class="text-[10px] px-1.5 py-0">Siap Ambil</x-ui.badge>
+                                                        <x-ui.badge variant="blue" class="text-[10px] px-1.5 py-0">Paid</x-ui.badge>
                                                     @elseif($trx->status === 'renting')
-                                                        <x-ui.badge variant="emerald" class="text-[10px] px-1.5 py-0">Sedang Disewa</x-ui.badge>
+                                                        <x-ui.badge variant="emerald" class="text-[10px] px-1.5 py-0">Renting</x-ui.badge>
                                                     @elseif($trx->status === 'completed')
-                                                        <x-ui.badge variant="green" class="text-[10px] px-1.5 py-0">Selesai</x-ui.badge>
+                                                        <x-ui.badge variant="green" class="text-[10px] px-1.5 py-0">Completed</x-ui.badge>
                                                     @else
-                                                        <x-ui.badge variant="red" class="text-[10px] px-1.5 py-0">Batal</x-ui.badge>
+                                                        <x-ui.badge variant="red" class="text-[10px] px-1.5 py-0">Cancel</x-ui.badge>
                                                     @endif
 
                                                     <span class="text-[10px] text-muted-foreground uppercase font-mono">
@@ -580,15 +580,15 @@
                                 <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Status Sewa</span>
                                 <div>
                                     @if($inspectTrx->status === "pending" || $inspectTrx->status === "pending_confirmation")
-                                        <x-ui.badge variant="amber" class="text-xs px-2 py-0.5">{{ $inspectTrx->status === "pending_confirmation" ? "Perlu Verifikasi" : "Pending Pembayaran" }}</x-ui.badge>
+                                        <x-ui.badge variant="amber" class="text-xs px-2 py-0.5">{{ $inspectTrx->status === "pending_confirmation" ? "Verifikasi" : "Pending" }}</x-ui.badge>
                                     @elseif($inspectTrx->status === "paid")
-                                        <x-ui.badge variant="blue" class="text-xs px-2 py-0.5">Lunas (Siap Diambil)</x-ui.badge>
+                                        <x-ui.badge variant="blue" class="text-xs px-2 py-0.5">Paid</x-ui.badge>
                                     @elseif($inspectTrx->status === "renting")
-                                        <x-ui.badge variant="emerald" class="text-xs px-2 py-0.5">Sedang Disewa</x-ui.badge>
+                                        <x-ui.badge variant="emerald" class="text-xs px-2 py-0.5">Renting</x-ui.badge>
                                     @elseif($inspectTrx->status === "completed")
-                                        <x-ui.badge variant="green" class="text-xs px-2 py-0.5">Selesai</x-ui.badge>
+                                        <x-ui.badge variant="green" class="text-xs px-2 py-0.5">Completed</x-ui.badge>
                                     @else
-                                        <x-ui.badge variant="red" class="text-xs px-2 py-0.5">Dibatalkan</x-ui.badge>
+                                        <x-ui.badge variant="red" class="text-xs px-2 py-0.5">Cancel</x-ui.badge>
                                     @endif
                                 </div>
                             </div>
@@ -1735,8 +1735,8 @@
                                         class="w-full h-8 rounded-lg border border-input bg-background px-2 text-xs focus:ring-1 focus:ring-primary outline-none">
                                         <option value="pending">Pending</option>
                                         <option value="paid">Paid</option>
-                                        <option value="renting">Rent</option>
-                                        <option value="completed">Done</option>
+                                        <option value="renting">Renting</option>
+                                        <option value="completed">Completed</option>
                                         <option value="cancelled">Cancel</option>
                                     </select>
                                 </div>

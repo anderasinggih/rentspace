@@ -455,9 +455,9 @@
                                     @elseif($rental->status === 'paid')
                                         <x-ui.badge variant="blue" class="text-[9px]">Paid</x-ui.badge>
                                     @elseif($rental->status === 'renting')
-                                        <x-ui.badge variant="emerald" class="text-[9px]">Rent</x-ui.badge>
+                                        <x-ui.badge variant="emerald" class="text-[9px]">Renting</x-ui.badge>
                                     @elseif($rental->status === 'completed')
-                                        <x-ui.badge variant="green" class="text-[9px]">Done</x-ui.badge>
+                                        <x-ui.badge variant="green" class="text-[9px]">Completed</x-ui.badge>
                                     @else
                                         <x-ui.badge variant="red" class="text-[9px]">Cancel</x-ui.badge>
                                     @endif
@@ -778,15 +778,23 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     @php
+                                        $statusLabel = match($rental->status) {
+                                            'completed' => 'COMPLETED',
+                                            'renting' => 'RENTING',
+                                            'paid' => 'PAID',
+                                            'pending', 'pending_confirmation' => 'PENDING',
+                                            default => 'CANCEL'
+                                        };
                                         $badgeColor = match($rental->status) {
                                             'completed' => 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
                                             'renting' => 'bg-sky-500/10 text-sky-500 border-sky-500/20',
-                                            'paid' => 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-                                            default => 'bg-muted text-muted-foreground'
+                                            'paid' => 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                                            'pending', 'pending_confirmation' => 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                                            default => 'bg-red-500/10 text-red-500 border-red-500/20'
                                         };
                                     @endphp
                                     <span class="inline-block px-2 py-0.5 text-[9px] font-bold rounded-full uppercase border {{ $badgeColor }}">
-                                        {{ $rental->status }}
+                                        {{ $statusLabel }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
