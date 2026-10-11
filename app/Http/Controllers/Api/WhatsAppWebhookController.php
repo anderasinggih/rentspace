@@ -688,38 +688,79 @@ class WhatsAppWebhookController extends Controller
                 }
             }
 
-            // Eksekusi pengiriman dengan proteksi anti-banned
+            // Eksekusi pengiriman dengan proteksi anti-banned tingkat tinggi
             $waService = app(\App\Services\WhatsAppService::class);
             $total = count($targetNumbers);
             $success = 0;
             $failed = 0;
 
-            // Variasi awalan agar pesan tidak identik 100% (anti-spam flag)
-            $greetings = ['Halo Kak! 😊', 'Halo Kak,', 'Hai Kak! ✨', 'Halo Kak, salam dari Rent Space!'];
+            // Mapping nama pelanggan dari database berdasarkan nomor WA untuk personalisasi otomatis
+            $customerNameMap = \App\Models\Rental::whereNotNull('no_wa')
+                ->where('no_wa', '!=', '')
+                ->orderBy('id', 'desc')
+                ->get(['nama', 'no_wa'])
+                ->mapWithKeys(function ($item) {
+                    $clean = preg_replace('/[^0-9]/', '', (string)$item->no_wa);
+                    $firstName = trim(explode(' ', trim($item->nama))[0] ?? '');
+                    return [$clean => $firstName];
+                })
+                ->toArray();
+
+            // Kumpulan variasi salam ramah & personal (Spintax)
+            $greetings = [
+                'Halo Kak :name! 😊',
+                'Hai Kak :name! ✨',
+                'Halo Kak :name, salam hangat dari Rent Space! 🙏',
+                'Hai Kak :name, semoga harinya menyenangkan! 🌟',
+                'Halo Kak :name, apa kabar? Semoga sehat selalu ya! 🙌',
+            ];
+
+            // Variasi footer opt-out / ajakan interaksi agar terjalin chat 2 arah (anti-spam trigger)
+            $optOutFooters = [
+                "\n\n_Balas 'MAU' jika tertarik atau ketik 'STOP' jika tidak ingin menerima info lagi ya Kak._ 🙏",
+                "\n\n_Boleh balas chat ini jika ada yang ingin ditanyakan ya Kak. Ketik 'STOP' untuk berhenti langganan info._ 😊",
+                "\n\n_Ketik 'MINAT' untuk booking sekarang, atau ketik 'STOP' bila info ini mengganggu ya Kak._ ✨",
+            ];
 
             foreach ($targetNumbers as $i => $num) {
-                // Beri variasi salam acak jika pesan dimulai dengan 'Halo Kak'
+                $cleanNum = preg_replace('/[^0-9]/', '', (string)$num);
+                $custName = !empty($customerNameMap[$cleanNum]) ? $customerNameMap[$cleanNum] : 'Kak';
+
                 $finalMessage = $actualMessage;
-                if (str_starts_with($actualMessage, 'Halo Kak')) {
-                    $randomGreeting = $greetings[array_rand($greetings)];
-                    $finalMessage = preg_replace('/^Halo Kak(!|,\s*|\s*)/', $randomGreeting . ' ', $actualMessage);
+
+                // 1. Dukungan placeholder [nama] / [name] jika admin menulisnya di template
+                $finalMessage = str_ireplace(['[nama]', '{nama}', '[name]', '{name}'], $custName !== 'Kak' ? $custName : 'Kakak', $finalMessage);
+
+                // 2. Jika pesan diawali "Halo Kak" atau "Hai Kak", ganti dengan salam acak bervariasi + nama
+                if (preg_match('/^(halo|hai|selamat\s+(pagi|siang|sore|malam))\s+kak/i', $finalMessage)) {
+                    $selectedGreeting = $greetings[array_rand($greetings)];
+                    $personalizedGreeting = str_replace(':name', $custName !== 'Kak' ? $custName : '', $selectedGreeting);
+                    $personalizedGreeting = preg_replace('/\s+/', ' ', trim($personalizedGreeting));
+                    $finalMessage = preg_replace('/^(halo|hai|selamat\s+(pagi|siang|sore|malam))\s+kak(!|,\s*|\s*)/i', $personalizedGreeting . ' ', $finalMessage);
                 }
 
-                $res = $waService->sendMessage($num, $finalMessage);
+                // 3. Tambahkan footer interaksi / opt-out jika belum ada opsi stop
+                if (!str_contains(strtolower($finalMessage), 'stop')) {
+                    $finalMessage .= $optOutFooters[array_rand($optOutFooters)];
+                }
+
+                $res = $waService->sendMessage($num, trim($finalMessage));
                 if ($res) {
                     $success++;
                 } else {
                     $failed++;
                 }
 
-                // JEDA AMAN ANTI-BANNED (Human-like delay):
-                // Jeda acak antara 2 sampai 4 detik per nomor
-                $delayUs = rand(2000000, 4000000); // 2.0 s/d 4.0 detik
-                usleep($delayUs);
+                // JEDA AMAN ANTI-BANNED (Humanized Random Delay):
+                // Jeda acak antara 8 sampai 16 detik per pesan (simulasi orang mengetik manual)
+                if (($i + 1) < $total) {
+                    $delaySeconds = rand(8, 16);
+                    sleep($delaySeconds);
 
-                // Tambahan jeda istirahat ekstra setiap 10 pesan (istirahat 5 detik)
-                if (($i + 1) % 10 === 0 && ($i + 1) < $total) {
-                    sleep(5);
+                    // Jeda istirahat ekstra setiap 10 pesan (istirahat 20-30 detik antar batch)
+                    if (($i + 1) % 10 === 0) {
+                        sleep(rand(20, 30));
+                    }
                 }
             }
 
@@ -730,7 +771,7 @@ class WhatsAppWebhookController extends Controller
                    "• *Berhasil Terkirim*: {$success}\n" .
                    "• *Gagal*: {$failed}\n" .
                    "• *Waktu*: " . now()->translatedFormat('d M Y H:i') . " WIB\n\n" .
-                   "_Semua pesan terkirim dengan jeda aman anti-banned._";
+                   "🛡️ _Pesan dikirim dengan proteksi Spintax, nama personal, ajakan interaksi 2 arah, dan jeda human-like (8-16 detik)._";
         }
 
         return "⚠️ Perintah tidak dikenali. Ketik `/broadcast help` untuk petunjuk lengkap.";
