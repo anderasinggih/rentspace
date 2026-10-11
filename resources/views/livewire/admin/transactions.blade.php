@@ -1767,27 +1767,39 @@
                 </div>
             </div>
         @endif
-    </div>
-
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('open-url', (event) => {
-            if (event.url) window.open(event.url, '_blank');
-        });
-
-        // Pastikan scroll body selalu pulih jika tidak ada modal aktif
-        function syncBodyScrollLock() {
-            const openModals = document.querySelectorAll('.fixed.inset-0.z-50');
-            if (openModals.length > 0) {
-                document.body.classList.add('overflow-hidden');
-            } else {
-                document.body.classList.remove('overflow-hidden');
+    <script>
+        (function() {
+            function syncBodyScrollLock() {
+                // Beri sedikit jeda mikro agar DOM update selesai jika ada transisi Livewire
+                requestAnimationFrame(() => {
+                    const openModals = document.querySelectorAll('.fixed.inset-0.z-50');
+                    if (openModals.length > 0) {
+                        document.body.classList.add('overflow-hidden');
+                    } else {
+                        document.body.classList.remove('overflow-hidden');
+                    }
+                });
             }
-        }
 
-        Livewire.hook('morph.updated', () => syncBodyScrollLock());
-        Livewire.hook('morph.removed', () => syncBodyScrollLock());
-        window.addEventListener('popstate', () => document.body.classList.remove('overflow-hidden'));
-    });
-</script>
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('open-url', (event) => {
+                    if (event.url) window.open(event.url, '_blank');
+                });
+
+                Livewire.hook('morph.updated', () => syncBodyScrollLock());
+                Livewire.hook('morph.removed', () => syncBodyScrollLock());
+                Livewire.hook('commit', () => {
+                    setTimeout(syncBodyScrollLock, 50);
+                });
+            });
+
+            window.addEventListener('popstate', () => {
+                document.body.classList.remove('overflow-hidden');
+            });
+
+            document.addEventListener('livewire:navigated', () => {
+                document.body.classList.remove('overflow-hidden');
+            });
+        })();
+    </script>
 </div>
