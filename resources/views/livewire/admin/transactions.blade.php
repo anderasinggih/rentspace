@@ -777,8 +777,8 @@
                                 'time' => $inspectTrx->created_at,
                                 'badge' => 'Dibuat',
                                 'badge_color' => 'bg-muted text-muted-foreground border-border',
-                                'dot_color' => 'bg-muted-foreground',
-                                'dot_ring' => 'ring-muted',
+                                'dot_color' => 'bg-slate-500 text-slate-500',
+                                'dot_ring' => 'ring-slate-500/20',
                                 'details' => $bookingDetails,
                             ];
 
@@ -798,7 +798,7 @@
                                     'time' => $inspectTrx->paid_at,
                                     'badge' => 'Paid',
                                     'badge_color' => 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
-                                    'dot_color' => 'bg-blue-500',
+                                    'dot_color' => 'bg-blue-500 text-blue-500',
                                     'dot_ring' => 'ring-blue-500/20',
                                     'details' => $paidDetails,
                                 ];
@@ -820,7 +820,7 @@
                                     'time' => $inspectTrx->handed_over_at,
                                     'badge' => 'Renting',
                                     'badge_color' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
-                                    'dot_color' => 'bg-emerald-500',
+                                    'dot_color' => 'bg-emerald-500 text-emerald-500',
                                     'dot_ring' => 'ring-emerald-500/20',
                                     'details' => $handoverDetails,
                                 ];
@@ -835,7 +835,7 @@
                                         'time' => $log->created_at,
                                         'badge' => 'Perpanjang',
                                         'badge_color' => 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
-                                        'dot_color' => 'bg-amber-500',
+                                        'dot_color' => 'bg-amber-500 text-amber-500',
                                         'dot_ring' => 'ring-amber-500/20',
                                         'details' => [
                                             'Keterangan' => $log->description,
@@ -850,7 +850,7 @@
                                         'time' => $log->created_at,
                                         'badge' => 'Denda',
                                         'badge_color' => 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20',
-                                        'dot_color' => 'bg-rose-500',
+                                        'dot_color' => 'bg-rose-500 text-rose-500',
                                         'dot_ring' => 'ring-rose-500/20',
                                         'details' => [
                                             'Detail Denda' => $log->description,
@@ -870,7 +870,7 @@
                                     'time' => $inspectTrx->completed_at,
                                     'badge' => 'Completed',
                                     'badge_color' => 'bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20',
-                                    'dot_color' => 'bg-teal-500',
+                                    'dot_color' => 'bg-teal-500 text-teal-500',
                                     'dot_ring' => 'ring-teal-500/20',
                                     'details' => [
                                         'Status Akhir' => 'Selesai Sempurna',
@@ -887,8 +887,8 @@
                                     'time' => $cancelLog ? $cancelLog->created_at : $inspectTrx->updated_at,
                                     'badge' => 'Cancel',
                                     'badge_color' => 'bg-destructive/10 text-destructive border-destructive/20',
-                                    'dot_color' => 'bg-destructive',
-                                    'dot_ring' => 'ring-destructive/20',
+                                    'dot_color' => 'bg-rose-600 text-rose-600',
+                                    'dot_ring' => 'ring-rose-600/20',
                                     'details' => [
                                         'Alasan / Catatan' => $cancelLog ? $cancelLog->description : 'Dibatalkan oleh staf / pemesan',
                                         'Waktu Pembatalan' => ($cancelLog ? $cancelLog->created_at : $inspectTrx->updated_at)->translatedFormat('d M Y, H:i:s'),
@@ -911,23 +911,24 @@
                                 <span class="text-[10px] text-muted-foreground font-medium">Klik untuk lihat rincian</span>
                             </div>
 
-                            {{-- Timeline Milestone Murni (Kolom Kiri Garis + Dot, Kolom Kanan Konten Teks) --}}
+                            {{-- Timeline Milestone Murni (Tanpa Container, Dot Solid & Garis Vertikal Jelas) --}}
                             <div class="space-y-0">
                                 @foreach($milestones as $idx => $m)
-                                    <div x-data="{ expanded: false }" class="flex items-start gap-3.5 group/item relative">
-                                        {{-- Kolom Kiri: Titik Dot & Garis Vertikal Terhubung --}}
-                                        <div class="flex flex-col items-center self-stretch shrink-0 w-4">
-                                            {{-- Bullet Dot --}}
-                                            <div class="w-3 h-3 rounded-full {{ $m['dot_color'] }} ring-4 {{ $m['dot_ring'] }} shadow-xs shrink-0 mt-0.5"></div>
-                                            {{-- Garis Penghubung ke Milestone Berikutnya --}}
+                                    <div x-data="{ expanded: false }" class="flex items-start gap-3 relative">
+                                        {{-- Kolom Kiri: Dot & Garis Vertikal Nyata --}}
+                                        <div class="relative flex flex-col items-center shrink-0 w-4 self-stretch">
+                                            {{-- Garis Vertikal Solid Antar Dot --}}
                                             @if(!$loop->last)
-                                                <div class="w-[2px] bg-border dark:bg-border/80 flex-1 my-1"></div>
+                                                <div class="absolute top-2 bottom-0 left-1/2 -translate-x-1/2 w-[2px] bg-border dark:bg-border/80"></div>
                                             @endif
+
+                                            {{-- Bullet Dot Solid --}}
+                                            <div class="relative z-10 w-3 h-3 rounded-full {{ $m['dot_color'] }} ring-4 {{ $m['dot_ring'] }} bg-current shadow-xs shrink-0 mt-1"></div>
                                         </div>
 
-                                        {{-- Kolom Kanan: Teks & Accordion Milestone --}}
+                                        {{-- Kolom Kanan: Teks & Rincian Bebas Container Box --}}
                                         <div class="flex-1 pb-6 last:pb-1 min-w-0">
-                                            <div @click="expanded = !expanded" class="cursor-pointer select-none">
+                                            <div @click="expanded = !expanded" class="cursor-pointer select-none group/item">
                                                 <div class="flex items-center justify-between gap-2 flex-wrap">
                                                     <div class="flex items-center gap-2 min-w-0">
                                                         <span class="font-bold text-xs text-foreground group-hover/item:text-primary transition-colors">
@@ -955,12 +956,12 @@
                                                 </p>
                                             </div>
 
-                                            {{-- Accordion Dropdown Rincian --}}
+                                            {{-- Rincian Milestone (Tanpa Box Container!) --}}
                                             <div x-show="expanded" x-collapse x-cloak class="pt-2">
-                                                <div class="rounded-xl border border-border/80 bg-muted/40 p-3 space-y-1.5 text-[11px]">
+                                                <div class="space-y-1.5 py-1 text-[11px]">
                                                     @foreach($m['details'] as $lbl => $val)
-                                                        <div class="flex items-start justify-between gap-3 text-[10.5px]">
-                                                            <span class="text-muted-foreground shrink-0 font-medium">{{ $lbl }}:</span>
+                                                        <div class="flex items-start justify-between gap-3 text-[10.5px] py-0.5 border-b border-border/40 last:border-b-0">
+                                                            <span class="text-muted-foreground shrink-0 font-medium">{{ $lbl }}</span>
                                                             <span class="font-semibold text-foreground text-right break-words">{{ $val }}</span>
                                                         </div>
                                                     @endforeach
