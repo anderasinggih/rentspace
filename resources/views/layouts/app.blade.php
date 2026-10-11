@@ -7,20 +7,26 @@
 
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 
-    <title>{{ $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}</title>
+    @php
+        $cityName = \App\Models\Setting::getVal('city_name', 'Purwokerto');
+        $defaultTitle = 'IPHONE ' . config('app.name', 'RENT SPACE') . ($cityName ? ' ' . strtoupper($cityName) : '');
+        $defaultDesc = 'Penyewaan iPhone Terpercaya' . ($cityName ? ' di ' . $cityName : '') . '. Proses cepat, unit berkualitas.';
+    @endphp
+
+    <title>{{ $title ?? $defaultTitle }}</title>
     
     <!-- Open Graph / Link Preview Meta Tags -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="{{ $metaTitle ?? $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}">
-    <meta property="og:description" content="{{ $metaDescription ?? 'Penyewaan iPhone Terpercaya di Purwokerto. Proses cepat, unit berkualitas.' }}">
+    <meta property="og:title" content="{{ $metaTitle ?? $title ?? $defaultTitle }}">
+    <meta property="og:description" content="{{ $metaDescription ?? $defaultDesc }}">
     <meta property="og:image" content="{{ $metaImage ?? asset('logo.png') }}">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ url()->current() }}">
-    <meta property="twitter:title" content="{{ $metaTitle ?? $title ?? 'IPHONE RENT SPACE PURWOKERTO' }}">
-    <meta property="twitter:description" content="{{ $metaDescription ?? 'Penyewaan iPhone Terpercaya di Purwokerto. Proses cepat, unit berkualitas.' }}">
+    <meta property="twitter:title" content="{{ $metaTitle ?? $title ?? $defaultTitle }}">
+    <meta property="twitter:description" content="{{ $metaDescription ?? $defaultDesc }}">
     <meta property="twitter:image" content="{{ $metaImage ?? asset('logo.png') }}">
     
     <!-- PWA Meta Tags -->

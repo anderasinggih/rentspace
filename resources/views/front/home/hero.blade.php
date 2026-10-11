@@ -69,8 +69,11 @@
         @endif
 
         {{-- Pill Tagline --}}
-        <div class="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1 text-xs font-semibold text-primary mb-6 shadow-xs tracking-wide">
-            <span>RENT SPACE PURWOKERTO</span>
+        @php
+            $cityName = \App\Models\Setting::getVal('city_name', 'Purwokerto');
+        @endphp
+        <div class="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1 text-xs font-semibold text-primary mb-6 shadow-xs tracking-wide uppercase">
+            <span>{{ config('app.name', 'RENT SPACE') }} {{ $cityName }}</span>
         </div>
 
         {{-- Main Headline --}}

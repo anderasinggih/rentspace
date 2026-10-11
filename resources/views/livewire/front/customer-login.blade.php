@@ -2,9 +2,12 @@
 
     <div class="w-full max-w-sm">
         {{-- Logo / Brand --}}
+        @php
+            $cityName = \App\Models\Setting::getVal('city_name', 'Purwokerto');
+        @endphp
         <div class="text-center mb-8">
             <a href="{{ route('public.home') }}" wire:navigate class="inline-block">
-                <span class="text-2xl font-extrabold tracking-tight text-foreground">RENT SPACE PURWOKERTO</span>
+                <span class="text-2xl font-extrabold tracking-tight text-foreground uppercase">{{ config('app.name', 'RENT SPACE') }} {{ $cityName }}</span>
             </a>
         </div>
 

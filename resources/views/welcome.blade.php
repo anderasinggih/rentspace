@@ -58,9 +58,10 @@
         $customerLtv = \App\Helpers\CustomerHelper::getLtv($customerSession['no_wa']);
         $customerTier = \App\Helpers\CustomerHelper::getTier($customerLtv);
     }
+    $cityName = \App\Models\Setting::getVal('city_name', 'Purwokerto');
 @endphp
 
-@component('layouts.app', ['title' => config('app.name', 'RENT SPACE') . ' PURWOKERTO'])
+@component('layouts.app', ['title' => config('app.name', 'RENT SPACE') . ($cityName ? ' ' . strtoupper($cityName) : '')])
     {{-- Hero Section & Showcase Carousel --}}
     @include('front.home.hero', [
         'greeting' => $greeting,

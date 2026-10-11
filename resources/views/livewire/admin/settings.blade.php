@@ -738,6 +738,12 @@
 
                     <form wire:submit="saveGeneralSettings" class="flex flex-col gap-4 ">
                         <div>
+                            <label class="block text-sm font-medium mb-1">Nama Kota / Wilayah Cabang</label>
+                            <input type="text" wire:model="city_name" placeholder="Misal: Purwokerto, Cilacap, Jakarta, Bali"
+                                class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <p class="text-xs text-muted-foreground mt-1">Nama kota ini akan otomatis dipakai di seluruh judul beranda, tagline, meta tag SEO, dan halaman login.</p>
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium mb-1">Judul Beranda (Mendukung Enter)</label>
                             <textarea wire:model="home_title" rows="2"
                                 class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"></textarea>

@@ -49,7 +49,7 @@ class Settings extends Component
     public $affiliate_referral_code = '', $affiliate_commission_rate = 10;
     public $affiliate_bank_name = '', $affiliate_bank_account_number = '', $affiliate_bank_account_name = '';
 
-    public $home_title = '', $home_description = '', $late_tolerance_minutes = 60;
+    public $home_title = '', $home_description = '', $city_name = '', $late_tolerance_minutes = 60;
     public $admin_wa = '', $admin_address = '', $terms_conditions = '';
     public $payment_methods = [
         'qris' => true, 
@@ -168,6 +168,7 @@ class Settings extends Component
         }
         $this->home_title = \App\Models\Setting::getVal('home_title', 'Sewa iPhone Mudah, Cepat, dan Aman');
         $this->home_description = \App\Models\Setting::getVal('home_description', 'Pilih tipe iPhone sesuai kebutuhan Anda. Bebas atur jadwal sewa, harga bersahabat, tanpa syarat ribet!');
+        $this->city_name = \App\Models\Setting::getVal('city_name', 'Purwokerto');
         $this->late_tolerance_minutes = \App\Models\Setting::getVal('late_tolerance_minutes', 60);
         $this->admin_wa = \App\Models\Setting::getVal('admin_wa', '6281234567890');
         $this->admin_address = \App\Models\Setting::getVal('admin_address', 'Jl. Jend. Sudirman, Purwokerto');
@@ -461,6 +462,7 @@ class Settings extends Component
 
         \App\Models\Setting::updateOrCreate(['key' => 'home_title'], ['value' => $this->home_title]);
         \App\Models\Setting::updateOrCreate(['key' => 'home_description'], ['value' => $this->home_description]);
+        \App\Models\Setting::updateOrCreate(['key' => 'city_name'], ['value' => trim($this->city_name ?: 'Purwokerto')]);
         \App\Models\Setting::updateOrCreate(['key' => 'late_tolerance_minutes'], ['value' => $this->late_tolerance_minutes]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_wa'], ['value' => $this->admin_wa]);
         \App\Models\Setting::updateOrCreate(['key' => 'admin_address'], ['value' => $this->admin_address]);
