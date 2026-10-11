@@ -549,8 +549,7 @@
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
                 x-data
                 x-init="document.body.classList.add('overflow-hidden')"
-                x-destroy="document.body.classList.remove('overflow-hidden')"
-                wire:click.self="closeInspect">
+                @click.self="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = ''; $wire.closeInspect()">
                 <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-xl max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200">
                     
                     {{-- Header Modal --}}
@@ -566,7 +565,7 @@
                                 </p>
                             </div>
                         </div>
-                        <button type="button" wire:click="closeInspect"
+                        <button type="button" wire:click="closeInspect" @click="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = '';"
                             class="h-8 w-8 rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         </button>
@@ -934,7 +933,7 @@
                             @endif
                         </div>
 
-                        <button type="button" wire:click="closeInspect"
+                        <button type="button" wire:click="closeInspect" @click="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = '';"
                             class="h-8 px-4 rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:bg-primary/90 transition-all shadow-2xs">
                             Tutup
                         </button>
@@ -949,8 +948,7 @@
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
                 x-data
                 x-init="document.body.classList.add('overflow-hidden')"
-                x-destroy="document.body.classList.remove('overflow-hidden')"
-                wire:click.self="closePaymentModal">
+                @click.self="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = ''; $wire.closePaymentModal()">
                 <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-md max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200">
                     
                     {{-- Header --}}
@@ -964,7 +962,7 @@
                                 <p class="text-[11px] text-muted-foreground font-mono">{{ $confirmingPaymentTrx->booking_code }} &bull; {{ $confirmingPaymentTrx->nama }}</p>
                             </div>
                         </div>
-                        <button type="button" wire:click="closePaymentModal"
+                        <button type="button" wire:click="closePaymentModal" @click="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = '';"
                             class="h-8 w-8 rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         </button>
@@ -1027,7 +1025,7 @@
 
                     {{-- Footer --}}
                     <div class="p-4 sm:p-5 border-t border-border flex items-center justify-end gap-2 bg-muted/20 shrink-0">
-                        <button type="button" wire:click="closePaymentModal"
+                        <button type="button" wire:click="closePaymentModal" @click="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = '';"
                             class="h-9 px-3.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground font-semibold text-xs transition-colors">
                             Batal
                         </button>
@@ -1051,8 +1049,7 @@
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
                 x-data
                 x-init="document.body.classList.add('overflow-hidden')"
-                x-destroy="document.body.classList.remove('overflow-hidden')"
-                wire:click.self="closeHandoverModal">
+                @click.self="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = ''; $wire.closeHandoverModal()">
                 <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-md max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200">
                     
                     {{-- Header --}}
@@ -1066,7 +1063,7 @@
                                 <p class="text-[11px] text-muted-foreground font-mono">{{ $confirmingHandoverTrx->booking_code }} &bull; {{ $confirmingHandoverTrx->nama }}</p>
                             </div>
                         </div>
-                        <button type="button" wire:click="closeHandoverModal"
+                        <button type="button" wire:click="closeHandoverModal" @click="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = '';"
                             class="h-8 w-8 rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         </button>
@@ -1131,7 +1128,7 @@
 
                     {{-- Footer --}}
                     <div class="p-4 sm:p-5 border-t border-border flex items-center justify-end gap-2 bg-muted/20 shrink-0">
-                        <button type="button" wire:click="closeHandoverModal"
+                        <button type="button" wire:click="closeHandoverModal" @click="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = '';"
                             class="h-9 px-3.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground font-semibold text-xs transition-colors">
                             Batal
                         </button>
@@ -1155,8 +1152,7 @@
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
                 x-data
                 x-init="document.body.classList.add('overflow-hidden')"
-                x-destroy="document.body.classList.remove('overflow-hidden')"
-                wire:click.self="closeDendaModal">
+                @click.self="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = ''; $wire.closeDendaModal()">
                 <div class="bg-background rounded-2xl p-5 sm:p-6 shadow-2xl w-full max-w-md max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-y-auto border border-border my-auto animate-in zoom-in-95 duration-200">
                     <h3 class="text-lg font-bold mb-1 text-foreground">Validasi Pengembalian Unit</h3>
                     <p class="text-[11px] text-muted-foreground mb-1 leading-relaxed italic">Catat jika ada denda tambahan
@@ -1282,7 +1278,7 @@
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
                  x-data
                  x-init="document.body.classList.add('overflow-hidden')"
-                 x-destroy="document.body.classList.remove('overflow-hidden')">
+                 @click.self="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = ''; $wire.closeExtendModal()">
                 <div class="bg-background rounded-2xl shadow-2xl w-full max-w-lg border border-border flex flex-col max-h-[85vh] sm:max-h-[88vh] overflow-hidden my-auto animate-in zoom-in-95 duration-150">
                     
                     {{-- Header (Fixed, aman dari notch HP) --}}
@@ -1305,7 +1301,7 @@
                                 </p>
                             </div>
                         </div>
-                        <button wire:click="closeExtendModal" class="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0">
+                        <button wire:click="closeExtendModal" @click="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = '';" class="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                             </svg>
@@ -1481,7 +1477,7 @@
 
                         {{-- Footer Form Input Extend (Ringkas & Sederhana) --}}
                         <div class="p-2.5 sm:p-3.5 border-t border-border flex items-center justify-between gap-1.5 bg-muted/20 shrink-0">
-                            <button type="button" wire:click="closeExtendModal" class="px-2.5 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground">
+                            <button type="button" wire:click="closeExtendModal" @click="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = '';" class="px-2.5 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground">
                                 Batal
                             </button>
                             
@@ -1508,7 +1504,7 @@
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4 backdrop-blur-sm overscroll-contain animate-in fade-in duration-200"
                  x-data
                  x-init="document.body.classList.add('overflow-hidden')"
-                 x-destroy="document.body.classList.remove('overflow-hidden')">
+                 @click.self="document.body.classList.remove('overflow-hidden'); document.body.style.overflow = ''; $wire.closeEditModal()">
                 <div class="bg-background rounded-2xl shadow-2xl w-full max-w-xl border border-border flex flex-col max-h-[85vh] sm:max-h-[88vh] overflow-hidden my-auto animate-in zoom-in-95 duration-150">
                     
                     {{-- Header Edit Modal --}}
@@ -1774,7 +1770,9 @@
     <script>
         (function() {
             function syncBodyScrollLock() {
-                const openModals = document.querySelectorAll('.fixed.inset-0.z-50');
+                const openModals = Array.from(document.querySelectorAll('.fixed.inset-0.z-50')).filter(el => {
+                    return el.offsetParent !== null || window.getComputedStyle(el).display !== 'none';
+                });
                 if (openModals.length > 0) {
                     document.body.classList.add('overflow-hidden');
                 } else {
@@ -1791,17 +1789,26 @@
 
                 Livewire.hook('morph.updated', () => {
                     requestAnimationFrame(syncBodyScrollLock);
-                    setTimeout(syncBodyScrollLock, 80);
+                    setTimeout(syncBodyScrollLock, 50);
+                    setTimeout(syncBodyScrollLock, 150);
                 });
                 Livewire.hook('morph.removed', () => {
                     requestAnimationFrame(syncBodyScrollLock);
-                    setTimeout(syncBodyScrollLock, 80);
+                    setTimeout(syncBodyScrollLock, 50);
+                    setTimeout(syncBodyScrollLock, 150);
                 });
                 Livewire.hook('commit', () => {
+                    requestAnimationFrame(syncBodyScrollLock);
                     setTimeout(syncBodyScrollLock, 50);
                     setTimeout(syncBodyScrollLock, 150);
                 });
             });
+
+            // MutationObserver to watch if any .fixed.inset-0.z-50 is removed from DOM
+            const observer = new MutationObserver(() => {
+                syncBodyScrollLock();
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
 
             window.addEventListener('popstate', () => {
                 document.body.classList.remove('overflow-hidden');
