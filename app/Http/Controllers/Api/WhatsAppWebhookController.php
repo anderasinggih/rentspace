@@ -1053,7 +1053,17 @@ class WhatsAppWebhookController extends Controller
         $raw = \App\Models\Setting::getVal('wa_initial_promo_data', '');
         if (empty($raw)) return null;
         $decoded = json_decode($raw, true);
-        return is_array($decoded) && !empty($decoded) ? $decoded : null;
+        if (!is_array($decoded) || empty($decoded)) return null;
+
+        // Jika tersimpan sebagai path file fisik, muat base64-nya saat diminta
+        if (!empty($decoded['media_path'])) {
+            $fullPath = storage_path('app/public/' . $decoded['media_path']);
+            if (file_exists($fullPath)) {
+                $decoded['media_base64'] = base64_encode(file_get_contents($fullPath));
+            }
+        }
+
+        return $decoded;
     }
 
     /**
@@ -1080,11 +1090,25 @@ class WhatsAppWebhookController extends Controller
         $caption = (string) $request->input('caption', '');
         $mediaBase64 = (string) $request->input('media_base64', '');
         $mediaType = (string) $request->input('media_type', 'image');
+        $mediaRelativePath = null;
+
+        // Simpan file media fisik ke storage disk (bukan di database TEXT column)
+        if (!empty($mediaBase64)) {
+            $ext = $mediaType === 'video' ? 'mp4' : 'jpg';
+            $fileName = 'initial_promo_' . time() . '.' . $ext;
+            $dir = storage_path('app/public/wa_promo');
+            if (!file_exists($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            $filePath = $dir . '/' . $fileName;
+            file_put_contents($filePath, base64_decode($mediaBase64));
+            $mediaRelativePath = 'wa_promo/' . $fileName;
+        }
 
         $promoData = [
             'active' => true,
             'caption' => $caption,
-            'media_base64' => $mediaBase64,
+            'media_path' => $mediaRelativePath,
             'media_type' => $mediaType,
             'updated_at' => now()->toDateTimeString(),
         ];
@@ -1098,7 +1122,7 @@ class WhatsAppWebhookController extends Controller
             'status' => true,
             'message' => 'Initial promo data berhasil disimpan.',
             'data' => [
-                'has_media' => !empty($mediaBase64),
+                'has_media' => !empty($mediaRelativePath),
                 'caption_length' => strlen($caption),
                 'active' => true,
             ]
