@@ -66,6 +66,22 @@ Route::middleware('auth')->group(function () {
             }
         })->name('admin.whatsapp-qr');
 
+        Route::post('/logout-bot', function() {
+            $botUrl = config('services.whatsapp.url', 'http://localhost:3001');
+            try {
+                \Illuminate\Support\Facades\Http::timeout(5)->post("{$botUrl}/logout-bot");
+            } catch (\Exception $e) {}
+            return redirect()->route('admin.whatsapp-qr');
+        });
+
+        Route::post('/restart-bot', function() {
+            $botUrl = config('services.whatsapp.url', 'http://localhost:3001');
+            try {
+                \Illuminate\Support\Facades\Http::timeout(5)->post("{$botUrl}/restart-bot");
+            } catch (\Exception $e) {}
+            return redirect()->route('admin.whatsapp-qr');
+        });
+
         // Printable Report Routes
         Route::get('/admin/report/monthly', [\App\Http\Controllers\Admin\ReportController::class, 'monthly'])->name('admin.report.monthly');
         Route::get('/admin/report/yearly', [\App\Http\Controllers\Admin\ReportController::class, 'yearly'])->name('admin.report.yearly');
