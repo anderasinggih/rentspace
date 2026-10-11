@@ -738,12 +738,6 @@ class WhatsAppWebhookController extends Controller
                 'Halo Kak :name, apa kabar? Semoga sehat selalu ya! 🙌',
             ];
 
-            // Variasi footer opt-out / ajakan interaksi agar terjalin chat 2 arah (anti-spam trigger)
-            $optOutFooters = [
-                "\n\n_Balas 'MAU' jika tertarik atau ketik 'STOP' jika tidak ingin menerima info lagi ya Kak._ 🙏",
-                "\n\n_Boleh balas chat ini jika ada yang ingin ditanyakan ya Kak. Ketik 'STOP' untuk berhenti langganan info._ 😊",
-                "\n\n_Ketik 'MINAT' untuk booking sekarang, atau ketik 'STOP' bila info ini mengganggu ya Kak._ ✨",
-            ];
 
             foreach ($targetNumbers as $i => $num) {
                 $cleanNum = preg_replace('/[^0-9]/', '', (string)$num);
@@ -760,11 +754,6 @@ class WhatsAppWebhookController extends Controller
                     $personalizedGreeting = str_replace(':name', $custName !== 'Kak' ? $custName : '', $selectedGreeting);
                     $personalizedGreeting = preg_replace('/\s+/', ' ', trim($personalizedGreeting));
                     $finalMessage = preg_replace('/^(halo|hai|selamat\s+(pagi|siang|sore|malam))\s+kak(!|,\s*|\s*)/i', $personalizedGreeting . ' ', $finalMessage);
-                }
-
-                // 3. Tambahkan footer interaksi / opt-out jika belum ada opsi stop
-                if (!str_contains(strtolower($finalMessage), 'stop')) {
-                    $finalMessage .= $optOutFooters[array_rand($optOutFooters)];
                 }
 
                 $res = $waService->sendMessage($num, trim($finalMessage));
