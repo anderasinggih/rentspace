@@ -541,6 +541,7 @@
                 </div>
             </div>
         </div>
+    </div>
 
         {{-- MODAL PREVIEW DETAIL (POPUP PREVIEW TRANSAKSI) --}}
         @if($inspectTrxId && $inspectTrx)
@@ -1520,7 +1521,7 @@
                                 {{ $editOriginalData['nama'] ?? '' }} &bull; {{ $editOriginalData['unit_names'] ?? '' }}
                             </p>
                         </div>
-                        <button wire:click="closeEditModal" class="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0">
+                        <button wire:click="closeEditModal" @click="document.body.classList.remove('overflow-hidden')" class="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                             </svg>
@@ -1753,7 +1754,7 @@
 
                         {{-- Footer Form Input Edit --}}
                         <div class="p-2.5 sm:p-3.5 border-t border-border flex items-center justify-between gap-1.5 bg-muted/20 shrink-0">
-                            <button type="button" wire:click="closeEditModal" class="px-2.5 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground">
+                            <button type="button" wire:click="closeEditModal" @click="document.body.classList.remove('overflow-hidden')" class="px-2.5 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground">
                                 Batal
                             </button>
                             <button type="button" wire:click="confirmEdit"
@@ -1770,15 +1771,14 @@
     <script>
         (function() {
             function syncBodyScrollLock() {
-                // Beri sedikit jeda mikro agar DOM update selesai jika ada transisi Livewire
-                requestAnimationFrame(() => {
-                    const openModals = document.querySelectorAll('.fixed.inset-0.z-50');
-                    if (openModals.length > 0) {
-                        document.body.classList.add('overflow-hidden');
-                    } else {
-                        document.body.classList.remove('overflow-hidden');
-                    }
-                });
+                const openModals = document.querySelectorAll('.fixed.inset-0.z-50');
+                if (openModals.length > 0) {
+                    document.body.classList.add('overflow-hidden');
+                } else {
+                    document.body.classList.remove('overflow-hidden');
+                    document.body.style.overflow = '';
+                    document.documentElement.style.overflow = '';
+                }
             }
 
             document.addEventListener('livewire:init', () => {
@@ -1786,19 +1786,28 @@
                     if (event.url) window.open(event.url, '_blank');
                 });
 
-                Livewire.hook('morph.updated', () => syncBodyScrollLock());
-                Livewire.hook('morph.removed', () => syncBodyScrollLock());
+                Livewire.hook('morph.updated', () => {
+                    requestAnimationFrame(syncBodyScrollLock);
+                    setTimeout(syncBodyScrollLock, 80);
+                });
+                Livewire.hook('morph.removed', () => {
+                    requestAnimationFrame(syncBodyScrollLock);
+                    setTimeout(syncBodyScrollLock, 80);
+                });
                 Livewire.hook('commit', () => {
                     setTimeout(syncBodyScrollLock, 50);
+                    setTimeout(syncBodyScrollLock, 150);
                 });
             });
 
             window.addEventListener('popstate', () => {
                 document.body.classList.remove('overflow-hidden');
+                document.body.style.overflow = '';
             });
 
             document.addEventListener('livewire:navigated', () => {
                 document.body.classList.remove('overflow-hidden');
+                document.body.style.overflow = '';
             });
         })();
     </script>
