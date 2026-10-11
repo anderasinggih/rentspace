@@ -911,65 +911,64 @@
                                 <span class="text-[10px] text-muted-foreground font-medium">Klik untuk lihat rincian</span>
                             </div>
 
-                            {{-- Timeline Milestone Murni (Tanpa Container, Dot Solid & Garis Vertikal Jelas) --}}
-                            <div class="space-y-0">
-                                @foreach($milestones as $idx => $m)
-                                    <div x-data="{ expanded: false }" class="flex items-start gap-3 relative">
-                                        {{-- Kolom Kiri: Dot & Garis Vertikal Nyata --}}
-                                        <div class="relative flex flex-col items-center shrink-0 w-4 self-stretch">
-                                            {{-- Garis Vertikal Solid Antar Dot --}}
-                                            @if(!$loop->last)
-                                                <div class="absolute top-2 bottom-0 left-1/2 -translate-x-1/2 w-[2px] bg-border dark:bg-border/80"></div>
-                                            @endif
+                            {{-- Timeline Milestone Murni (Jalur Garis Nyata di Antara Titik, Rincian Bersih Tanpa Separator) --}}
+                            <div class="relative">
+                                {{-- Jalur Garis Vertikal Utama Menghubungkan Semua Titik dari Atas ke Bawah --}}
+                                <div class="absolute left-[7px] top-2.5 bottom-4 w-[2px] bg-neutral-300 dark:bg-neutral-700"></div>
 
-                                            {{-- Bullet Dot Solid --}}
-                                            <div class="relative z-10 w-3 h-3 rounded-full {{ $m['dot_color'] }} ring-4 {{ $m['dot_ring'] }} bg-current shadow-xs shrink-0 mt-1"></div>
-                                        </div>
-
-                                        {{-- Kolom Kanan: Teks & Rincian Bebas Container Box --}}
-                                        <div class="flex-1 pb-6 last:pb-1 min-w-0">
-                                            <div @click="expanded = !expanded" class="cursor-pointer select-none group/item">
-                                                <div class="flex items-center justify-between gap-2 flex-wrap">
-                                                    <div class="flex items-center gap-2 min-w-0">
-                                                        <span class="font-bold text-xs text-foreground group-hover/item:text-primary transition-colors">
-                                                            {{ $m['title'] }}
-                                                        </span>
-                                                        <span class="text-[9.5px] px-1.5 py-0.2 rounded font-semibold border {{ $m['badge_color'] }}">
-                                                            {{ $m['badge'] }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="flex items-center gap-2 shrink-0">
-                                                        <time class="text-[10.5px] font-mono text-muted-foreground font-medium">
-                                                            {{ $m['time']->translatedFormat('d M Y, H:i') }}
-                                                        </time>
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                            class="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200"
-                                                            :class="expanded ? 'rotate-180 text-primary' : ''"
-                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                            <path d="m6 9 6 6 6-6"/>
-                                                        </svg>
-                                                    </div>
-                                                </div>
-
-                                                <p class="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
-                                                    {{ $m['summary'] }}
-                                                </p>
+                                <div class="space-y-6">
+                                    @foreach($milestones as $idx => $m)
+                                        <div x-data="{ expanded: false }" class="flex items-start gap-3.5 relative group/item">
+                                            {{-- Kolom Kiri: Titik Bullet Solid Berada di Atas Jalur Garis --}}
+                                            <div class="shrink-0 w-4 flex justify-center pt-0.5">
+                                                <div class="relative z-10 w-3.5 h-3.5 rounded-full {{ $m['dot_color'] }} ring-4 ring-background shadow-xs"></div>
                                             </div>
 
-                                            {{-- Rincian Milestone (Tanpa Box Container!) --}}
-                                            <div x-show="expanded" x-collapse x-cloak class="pt-2">
-                                                <div class="space-y-1.5 py-1 text-[11px]">
-                                                    @foreach($m['details'] as $lbl => $val)
-                                                        <div class="flex items-start justify-between gap-3 text-[10.5px] py-0.5 border-b border-border/40 last:border-b-0">
-                                                            <span class="text-muted-foreground shrink-0 font-medium">{{ $lbl }}</span>
-                                                            <span class="font-semibold text-foreground text-right break-words">{{ $val }}</span>
+                                            {{-- Kolom Kanan: Teks & Rincian Bebas Container & Bebas Garis Pemisah --}}
+                                            <div class="flex-1 min-w-0">
+                                                <div @click="expanded = !expanded" class="cursor-pointer select-none">
+                                                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                                                        <div class="flex items-center gap-2 min-w-0">
+                                                            <span class="font-bold text-xs text-foreground group-hover/item:text-primary transition-colors">
+                                                                {{ $m['title'] }}
+                                                            </span>
+                                                            <span class="text-[9.5px] px-1.5 py-0.2 rounded font-semibold border {{ $m['badge_color'] }}">
+                                                                {{ $m['badge'] }}
+                                                            </span>
                                                         </div>
-                                                    @endforeach
+                                                        <div class="flex items-center gap-2 shrink-0">
+                                                            <time class="text-[10.5px] font-mono text-muted-foreground font-medium">
+                                                                {{ $m['time']->translatedFormat('d M Y, H:i') }}
+                                                            </time>
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                class="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200"
+                                                                :class="expanded ? 'rotate-180 text-primary' : ''"
+                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="m6 9 6 6 6-6"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+
+                                                    <p class="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+                                                        {{ $m['summary'] }}
+                                                    </p>
+                                                </div>
+
+                                                {{-- Rincian Milestone (Clean Text Tanpa Box Container & Tanpa Garis Separator) --}}
+                                                <div x-show="expanded" x-collapse x-cloak class="pt-2 pl-0.5">
+                                                    <div class="space-y-1.5 text-[11px]">
+                                                        @foreach($m['details'] as $lbl => $val)
+                                                            <div class="flex items-start justify-between gap-3 text-[10.5px]">
+                                                                <span class="text-muted-foreground shrink-0 font-medium">{{ $lbl }}</span>
+                                                                <span class="font-semibold text-foreground text-right break-words">{{ $val }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                @endforeach
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
 
