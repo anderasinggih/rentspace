@@ -536,12 +536,15 @@
 
         {{-- MODAL PREVIEW DETAIL (POPUP PREVIEW TRANSAKSI) --}}
         @if($inspectTrxId && $inspectTrx)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
+                x-data
+                x-init="document.body.classList.add('overflow-hidden')"
+                x-destroy="document.body.classList.remove('overflow-hidden')"
                 wire:click.self="closeInspect">
-                <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-xl overflow-hidden my-auto animate-in zoom-in-95 duration-200">
+                <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-xl max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200">
                     
                     {{-- Header Modal --}}
-                    <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                    <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-muted/20 shrink-0">
                         <div class="flex items-center gap-2.5 min-w-0">
                             <div class="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 0 3-3h7z"/></svg>
@@ -737,7 +740,7 @@
                     </div>
 
                     {{-- Footer Aksi Preview --}}
-                    <div class="p-4 sm:p-5 border-t border-border flex flex-wrap items-center justify-between gap-2.5 bg-muted/20">
+                    <div class="p-4 sm:p-5 border-t border-border flex flex-wrap items-center justify-between gap-2.5 bg-muted/20 shrink-0">
                         <div class="flex flex-wrap items-center gap-2">
                             <a href="{{ route("public.success", $inspectTrx->booking_code) }}" target="_blank"
                                 class="h-8 px-3 rounded-lg border border-border bg-background hover:bg-muted text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors">
@@ -776,12 +779,15 @@
 
         {{-- MODAL VALIDASI LUNAS DENGAN UPLOAD FOTO BUKTI BAYAR --}}
         @if($confirmingPaymentTrxId && $confirmingPaymentTrx)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
+                x-data
+                x-init="document.body.classList.add('overflow-hidden')"
+                x-destroy="document.body.classList.remove('overflow-hidden')"
                 wire:click.self="closePaymentModal">
-                <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-md overflow-hidden my-auto animate-in zoom-in-95 duration-200">
+                <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-md max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200">
                     
                     {{-- Header --}}
-                    <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-emerald-500/5">
+                    <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-emerald-500/5 shrink-0">
                         <div class="flex items-center gap-2.5">
                             <div class="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -798,7 +804,7 @@
                     </div>
 
                     {{-- Body Form --}}
-                    <div class="p-4 sm:p-5 space-y-4 text-xs">
+                    <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto">
                         <div class="p-3 rounded-xl bg-muted/40 border border-border/70 flex justify-between items-center">
                             <div>
                                 <span class="text-[10px] text-muted-foreground uppercase font-bold block">Tagihan Pesanan</span>
@@ -853,7 +859,7 @@
                     </div>
 
                     {{-- Footer --}}
-                    <div class="p-4 sm:p-5 border-t border-border flex items-center justify-end gap-2 bg-muted/20">
+                    <div class="p-4 sm:p-5 border-t border-border flex items-center justify-end gap-2 bg-muted/20 shrink-0">
                         <button type="button" wire:click="closePaymentModal"
                             class="h-9 px-3.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground font-semibold text-xs transition-colors">
                             Batal
@@ -875,12 +881,15 @@
 
         {{-- MODAL SERAH TERIMA UNIT DENGAN UPLOAD FOTO BUKTI PENGAMBILAN --}}
         @if($confirmingHandoverTrxId && $confirmingHandoverTrx)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
+                x-data
+                x-init="document.body.classList.add('overflow-hidden')"
+                x-destroy="document.body.classList.remove('overflow-hidden')"
                 wire:click.self="closeHandoverModal">
-                <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-md overflow-hidden my-auto animate-in zoom-in-95 duration-200">
+                <div class="relative bg-background border border-border shadow-2xl rounded-2xl w-full max-w-md max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200">
                     
                     {{-- Header --}}
-                    <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-sky-500/5">
+                    <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-sky-500/5 shrink-0">
                         <div class="flex items-center gap-2.5">
                             <div class="h-9 w-9 rounded-xl bg-sky-500/10 text-sky-600 flex items-center justify-center shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
@@ -897,7 +906,7 @@
                     </div>
 
                     {{-- Body Form --}}
-                    <div class="p-4 sm:p-5 space-y-4 text-xs">
+                    <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto">
                         <div class="p-3 rounded-xl bg-muted/40 border border-border/70 space-y-1.5">
                             <span class="text-[10px] text-muted-foreground uppercase font-bold block">Unit Yang Diambil:</span>
                             <div class="flex flex-wrap gap-1">
@@ -954,7 +963,7 @@
                     </div>
 
                     {{-- Footer --}}
-                    <div class="p-4 sm:p-5 border-t border-border flex items-center justify-end gap-2 bg-muted/20">
+                    <div class="p-4 sm:p-5 border-t border-border flex items-center justify-end gap-2 bg-muted/20 shrink-0">
                         <button type="button" wire:click="closeHandoverModal"
                             class="h-9 px-3.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground font-semibold text-xs transition-colors">
                             Batal
@@ -976,8 +985,12 @@
 
         <!-- Denda Modal -->
         @if($completingTrxId)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                <div class="bg-background rounded-xl p-6 shadow-xl w-full max-w-md border border-border">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overscroll-contain animate-in fade-in duration-200"
+                x-data
+                x-init="document.body.classList.add('overflow-hidden')"
+                x-destroy="document.body.classList.remove('overflow-hidden')"
+                wire:click.self="closeDendaModal">
+                <div class="bg-background rounded-2xl p-5 sm:p-6 shadow-2xl w-full max-w-md max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-y-auto border border-border my-auto animate-in zoom-in-95 duration-200">
                     <h3 class="text-lg font-bold mb-1 text-foreground">Validasi Pengembalian Unit</h3>
                     <p class="text-[11px] text-muted-foreground mb-1 leading-relaxed italic">Catat jika ada denda tambahan
                         sebelum menutup pesanan.</p>
