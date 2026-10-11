@@ -835,13 +835,45 @@
 
             <!-- Pagination & Summary Footer -->
             @if($breakdownRentals->hasPages() || $breakdownTotalCount > 0)
-                <div class="px-5 py-3 border-t border-border bg-muted/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
-                    <div class="text-muted-foreground text-[10px]">
+                <div class="px-5 py-3.5 border-t border-border bg-muted/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <div class="text-muted-foreground text-xs font-medium">
                         Menampilkan <span class="font-bold text-foreground">{{ $breakdownRentals->firstItem() ?? 0 }}</span> - <span class="font-bold text-foreground">{{ $breakdownRentals->lastItem() ?? 0 }}</span> dari <span class="font-bold text-foreground">{{ $breakdownTotalCount }}</span> total transaksi
                     </div>
-                    <div>
-                        {{ $breakdownRentals->links() }}
-                    </div>
+                    
+                    @if($breakdownRentals->hasPages())
+                        <div class="flex items-center gap-2">
+                            {{-- Previous Page --}}
+                            @if ($breakdownRentals->onFirstPage())
+                                <button class="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-background opacity-40 cursor-not-allowed text-muted-foreground shadow-xs" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                </button>
+                            @else
+                                <button wire:click="previousPage" wire:loading.attr="disabled"
+                                    class="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-xs hover:bg-muted transition-all active:scale-95">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                </button>
+                            @endif
+
+                            {{-- Page Indicator --}}
+                            <div class="flex items-center gap-1.5 px-3 h-8 bg-muted/50 rounded-lg border border-border/60">
+                                <span class="text-xs font-black text-foreground">{{ $breakdownRentals->currentPage() }}</span>
+                                <span class="text-[10px] font-bold text-muted-foreground/60 uppercase">/</span>
+                                <span class="text-xs font-black text-foreground">{{ $breakdownRentals->lastPage() }}</span>
+                            </div>
+
+                            {{-- Next Page --}}
+                            @if ($breakdownRentals->hasMorePages())
+                                <button wire:click="nextPage" wire:loading.attr="disabled"
+                                    class="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-xs hover:bg-muted transition-all active:scale-95">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                            @else
+                                <button class="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-background opacity-40 cursor-not-allowed text-muted-foreground shadow-xs" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>
