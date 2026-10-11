@@ -772,6 +772,8 @@
 
                 </div>
             </div>
+        @endif
+
         {{-- MODAL VALIDASI LUNAS DENGAN UPLOAD FOTO BUKTI BAYAR --}}
         @if($confirmingPaymentTrxId && $confirmingPaymentTrx)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
