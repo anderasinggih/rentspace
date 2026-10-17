@@ -1254,22 +1254,25 @@ class Settings extends Component
     {
         if (auth()->user()->role !== 'admin') return;
         $this->validate([
-            'qris_photo' => 'required|image|max:2048', // 2MB Max
+            'qris_photo' => 'required|image|max:6144', // 6MB Max
         ]);
 
         $filename = 'qris_' . time() . '.' . $this->qris_photo->getClientOriginalExtension();
 
-        // Menggunakan DOCUMENT_ROOT untuk langsung mengarah ke 'htdocs' di InfinityFree
-        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/uploads';
+        // 1. Simpan ke public_path('uploads') standar Laravel
+        $paths = [
+            public_path('uploads'),
+            rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/') . '/uploads',
+        ];
 
-        // Buat folder jika belum ada
-        if (!file_exists($uploadPath)) {
-            mkdir($uploadPath, 0755, true);
+        foreach (array_unique($paths) as $dir) {
+            if ($dir && !file_exists($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            if ($dir && is_dir($dir)) {
+                @file_put_contents($dir . '/' . $filename, file_get_contents($this->qris_photo->getRealPath()));
+            }
         }
-
-        // Pindahkan file foto dari direktori temporary Livewire ke htdocs/uploads
-        $destination = $uploadPath . '/' . $filename;
-        file_put_contents($destination, file_get_contents($this->qris_photo->getRealPath()));
 
         \App\Models\Setting::updateOrCreate(
             ['key' => 'qris'],
@@ -1277,6 +1280,7 @@ class Settings extends Component
         );
 
         $this->qris = $filename;
+        $this->reset('qris_photo');
 
         session()->flash('message', 'QRIS Photo successfully updated.');
     }
